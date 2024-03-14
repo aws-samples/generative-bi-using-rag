@@ -1,0 +1,51 @@
+{
+    "models": {
+        "Claude 2": {}
+    },
+    "data_sources": {
+        "shopping_guide": {
+            "is_demo": true,
+            "comments": "This is a user behavior analysis dataset.",
+            "db_url": "mysql+pymysql://{RDS_MYSQL_USERNAME}:{RDS_MYSQL_PASSWORD}@{RDS_MYSQL_HOST}:{RDS_MYSQL_PORT}/{RDS_MYSQL_DBNAME}",
+            "tables_info": {
+                "interactions": {
+                    "ddl": "CREATE TABLE `interactions`(\n`item_id` string, --商品ID\n`user_id` int, --用户ID\n`event_type` string, --交互事件类型，例如浏览、购买等\n`timestamp` bigint, --交互事件发生的时间戳\n`discount` string --折扣信息\n)",
+                    "description": "记录用户与商品交互的数据，包括用户对商品的浏览、购买等行为。每条记录都有一个唯一的商品ID（列'item_id'）和一个用户ID（列'user_id'）。"
+                },
+                "items": {
+                    "ddl": "CREATE TABLE `items`(\n`item_id` string, --商品ID\n`price` float, --商品价格\n`category_l1` string, --一级分类\n`category_l2` string, --二级分类\n`product_description` string, --商品描述\n`gender` string, --适用性别\n`promoted` string --是否为促销商品\n)\n",
+                    "description": "商品信息表，记录了每个商品的价格、分类、描述等信息。共有7列。每条记录都有一个唯一的商品ID（列'item_id'）。"
+                },
+                "users": {
+                    "ddl": "CREATE TABLE `users`(\n`user_id` string, --用户ID\n`age` int, --用户年龄\n`gender` string --用户性别\n)",
+                    "description": "用户信息表，记录了每个用户的年龄和性别。共有3列。每条记录都有一个唯一的用户ID（列'user_id'）。"
+                }
+            },
+            "hints": "For timestamp column, please use function FROM_UNIXTIME(int) to convert it to date datatype",
+            "search_samples": [
+                "销量前十的商品是什么?",
+                "用户的平均年龄是多少？",
+                "商品的平均价格是多少？",
+                "30岁以下女性用户购买商品的平均价格是多少?",
+                "40岁以上男性用户浏览次数最多的前3个商品类别是什么?",
+                "18-25岁用户购买打折商品的数量有多少?",
+                "每个商品类别从浏览到购买的转换率是多少?",
+                "30岁以下用户浏览次数最多的前5个商品是什么?",
+                "过去30天内,男性和女性用户中有多少人完成了购买?",
+                "购买价格在50美元以上的商品,用户年龄分布如何?",
+                "25岁以下女性用户购买打折商品最常见的类别是什么?",
+                "有多少商品被同一用户购买了多次?",
+                "有哪些商品被浏览过但从未被购买?"
+            ],
+            "opensearch": {
+                "opensearch_host": "$AOS_HOST",
+                "opensearch_port": "$AOS_PORT",
+                "region_name": "$AOS_AWS_REGION",
+                "domain": "$AOS_DOMAIN",
+                "index_name": "$AOS_INDEX",
+                "opensearch_user": "$AOS_USER",
+                "opensearch_password": "$AOS_PASSWORD"
+            }
+        }
+    }
+}
