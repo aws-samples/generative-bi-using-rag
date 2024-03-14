@@ -7,4 +7,4 @@ opensearch-py==2.4.2
 PyMySQL==1.1.0
 python-dotenv~=1.0.0
 plotly~=5.18.0
-cryptography==41.0.7
+cryptography==42.0.4
