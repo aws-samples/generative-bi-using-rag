@@ -1,4 +1,10 @@
-## 智能BI演示
+# 智能BI演示
+
+## 介绍
+
+一个利用了Amazon Bedrock, Amazon OpenSearch服务和RAG技术来实现的NLQ(自然语言数据查询)演示应用
+
+![Screenshot](./assets/screenshot-genbi.png)
 
 ## 部署指南
 

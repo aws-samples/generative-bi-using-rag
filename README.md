@@ -1,6 +1,11 @@
-## Intelligent BI Demo
+# Intelligent BI Demo
 
 [中文文档](README_CN.md)
+## Introduction
+
+A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
+
+![Screenshot](./assets/screenshot-genbi.png)
 
 ## Deployment Guide
 
@@ -33,7 +38,7 @@ And attach an inline policy to this IAM Role with following permissions:
 }
 ```
 
-Make sure you have enabled model access in AWS Console in us-west-2 (美国西部 (俄勒冈州)) region for Anthropic Claude model and Amazon Titan embedding model.
+Make sure you have enabled model access in AWS Console in us-west-2 (Oregon) region for Anthropic Claude model and Amazon Titan embedding model.
 
 ### 3. Install Docker and Docker Compose
 
