@@ -1,5 +1,5 @@
 loguru==0.7.0
-streamlit~=1.28.2
+streamlit~=1.30.0
 boto3~=1.33.4
 psycopg2-binary==2.9.9
 SQLAlchemy==2.0.21
