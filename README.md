@@ -1,11 +1,135 @@
-## My Project
+## Intelligent BI Demo
 
-TODO: Fill this README out!
+[中文文档](README_CN.md)
 
-Be sure to:
+## Deployment Guide
 
-* Change the title in this README
-* Edit your repository description on GitHub
+### 1. Prepare EC2 Instance
+Create an EC2 with following configuration:
+
+    - Software Image (AMI): Amazon Linux 2023
+    - Virtual server type (instance type): t3.large or higher
+    - Firewall (security group): Allow 22, 80 port
+    - Storage (volumes): 1 GP3 volume(s) - 30 GiB
+
+### 2. Config Permission
+Bind an IAM Role to your EC2 instance.
+And attach an inline policy to this IAM Role with following permissions:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:*",
+                "secretsmanager:GetSecretValue",
+                "dynamodb:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+Make sure you have enabled model access in AWS Console in us-west-2 (美国西部 (俄勒冈州)) region for Anthropic Claude model and Amazon Titan embedding model.
+
+### 3. Install Docker and Docker Compose
+
+On the EC2 instance, log in to the SSH command line as the ec2-user user or use the AWS EC2 Instance Connect feature in the EC2 console to log in to the command line. In the session, execute the following commands. If you are not this user, you can switch with the following command: 
+
+Note: Execute each command one line at a time.
+
+```bash
+sudo su - ec2-user
+```
+
+```bash  
+# Install components
+sudo dnf install docker python3-pip git -y && pip3 install docker-compose
+
+# Fix docker python wrapper 7.0 SSL version issue  
+pip3 install docker==6.1.3
+
+# Configure components
+sudo systemctl enable docker && sudo systemctl start docker && sudo usermod -aG docker $USER
+
+# Exit the terminal
+exit
+```
+
+### 4. Install the Demo Application
+
+Reopen a terminal session and continue executing the following commands:
+
+Note: Execute each command one line at a time.
+
+```bash
+# Log in as user ec2-user
+
+# Configure OpenSearch server parameters
+sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
+
+# Clone the code
+git clone https://github.com/aws-samples/generative-bi-using-rag.git
+
+# Build docker images locally  
+cd generative-bi-using-rag/application && cp .env.template .env && docker-compose build
+
+# Start all services
+docker-compose up -d
+
+# Wait 3 minutes for MySQL and OpenSearch to initialize
+sleep 180
+```
+ Here is the English translation:
+
+### 5. Initialize MySQL
+
+In the terminal, continue executing the following commands:
+
+```bash
+cd initial_data && unzip init_mysql_db.sql.zip && cd ..
+docker exec nlq-mysql sh -c "mysql -u root -ppassword -D llm  < /opt/data/init_mysql_db.sql" 
+```
+
+### 6. Initialize OpenSearch
+
+6.1 Initialize the index for the sample data by creating a new index:
+
+```bash 
+docker exec nlq-webserver python opensearch_deploy.py
+```
+
+If the script fails due to any errors, delete the index and rerun the previous command:
+
+```bash
+curl -XDELETE -k -u admin:admin "https://localhost:9200/uba"
+```
+
+6.2 (Optional) Bulk import custom QA data by appending to an existing index: 
+
+```bash
+docker exec nlq-webserver python opensearch_deploy.py custom false
+```
+
+### 7. Access the Streamlit Web UI
+
+Open in your browser: `http://<your-ec2-public-ip>`
+
+Note: Use HTTP instead of HTTPS. 
+
+## How to use custom data sources with the demo app
+1. First create the corresponding Data Profile in Data Connection Management and Data Profile Management.
+2. After selecting the Data Profile, start asking questions. For simple questions, the LLM can directly generate the correct SQL. If the generated SQL is incorrect, try adding more annotations to the Schema.  
+3. Use the Schema Management page, select the Data Profile, and add comments to the tables and fields. These comments will be included in the prompt sent to the LLM.
+   (1) For some fields, add values to the Annotation attribute, e.g. "Values: Y|N", "Values: Shanghai|Jiangsu".
+   (2) For table comments, add domain knowledge to help answer business questions.
+4. Ask the question again. If still unable to generate the correct SQL, add Sample QA pairs to OpenSearch.
+   (1) Using the Index Management page, select the Data Profile then you can add, view and delete QA pairs.
+   
+5. Ask again. In theory, the RAG approach (PE uses Few shots) should now be able to generate the correct SQL.
 
 ## Security
 
