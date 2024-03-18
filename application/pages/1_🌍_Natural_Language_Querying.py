@@ -10,7 +10,7 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
-from utils.llm import claude_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
+from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
     upload_results_to_opensearch
 
 def sample_question_clicked(sample):
@@ -128,10 +128,8 @@ def main():
     if 'nlq_chain' not in st.session_state:
         st.session_state['nlq_chain'] = None
 
-    bedrock_model_ids = ['anthropic.claude-v2:1', 'anthropic.claude-3-sonnet-20240229-v1:0',
-                         'anthropic.claude-v2', 'anthropic.claude-v1',
-                         'meta.llama2-70b-chat-v1', 'mistral.mistral-7b-instruct-v0:2',
-                         'mistral.mixtral-8x7b-instruct-v0:1']
+    bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
+                         'anthropic.claude-v2:1']
 
     with st.sidebar:
         st.title('Setting')
@@ -147,14 +145,6 @@ def main():
         st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
         model_type = st.selectbox("Choose your model", bedrock_model_ids)
         model_provider = None
-        # Commented because if only for specific customer's demo
-        # model_provider = st.text_input("Model Provider", value='replicate')
-        # model_type = st.selectbox("Model", ['CodeLlama', 'DeepSeek'])
-        # model_type_def = {
-        #     'DeepSeek': 'kcaverly/deepseek-coder-33b-instruct-gguf:ea964345066a8868e43aca432f314822660b72e29cab6b4b904b779014fe58fd',
-        #     'CodeLlama': 'meta/codellama-34b-instruct:eeb928567781f4e90d2aba57a51baef235de53f907c214a4ab42adabf5bb9736',
-        # }
-        # model_type = model_type_def[model_type]
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
@@ -276,13 +266,13 @@ def main():
                             conn_name = database_profile['conn_name']
                             db_url = ConnectionManagement.get_db_url_by_name(conn_name)
                             database_profile['db_url'] = db_url
-                        response = claude_to_sql(database_profile['tables_info'],
-                                                 database_profile['hints'],
-                                                 search_box,
-                                                 model_id=model_type,
-                                                 examples=retrieve_result,
-                                                 dialect=get_db_url_dialect(database_profile['db_url']),
-                                                 model_provider=model_provider)
+                        response = claude3_to_sql(database_profile['tables_info'],
+                                                  database_profile['hints'],
+                                                  search_box,
+                                                  model_id=model_type,
+                                                  examples=retrieve_result,
+                                                  dialect=get_db_url_dialect(database_profile['db_url']),
+                                                  model_provider=model_provider)
 
                         logger.info(f'got llm response: {response}')
                         current_nlq_chain.set_generated_sql_response(response)
