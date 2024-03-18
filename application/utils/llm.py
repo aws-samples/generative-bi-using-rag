@@ -5,6 +5,8 @@ import boto3
 from botocore.config import Config
 from opensearchpy import OpenSearch
 from utils import opensearch
+from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
+    DEFAULT_DIALECT_PROMPT
 import os
 from loguru import logger
 
@@ -32,55 +34,33 @@ def get_bedrock_client():
     return bedrock
 
 
-def sqlcoder(SQLCODER_API_ENDPOINT, payload):
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    response = requests.post(SQLCODER_API_ENDPOINT, headers=headers, data=json.dumps(payload))
-    return response
+def invoke_model_claude3(model_id, system_prompt, messages, max_tokens):
+    body = json.dumps(
+        {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": max_tokens,
+            "system": system_prompt,
+            "messages": messages,
+            "temperature": 0.01
+        }
+    )
 
-
-def invoke_model(payload, model_id):
-    body = json.dumps(payload)
-
-    accept = 'application/json'
-    contentType = 'application/json'
-
-    response = get_bedrock_client().invoke_model(body=body, modelId=model_id, accept=accept, contentType=contentType)
+    response = get_bedrock_client().invoke_model(body=body, modelId=model_id)
     response_body = json.loads(response.get('body').read())
-    # logger.info(f'{response_body=}')
-    if 'anthropic.claude' in model_id:
-        result_key = 'completion'
-    elif 'meta.llama2' in model_id:
-        result_key = 'generation'
-    return response_body[result_key]
+
+    return response_body
 
 
 def claude_select_table():
     pass
 
 
-DEFAULT_DIALECT_PROMPT = '''You are a data analyst who writes SQL statements.'''
-
-TOP_K = 100
-POSTGRES_DIALECT_PROMPT = """You are a PostgreSQL expert. Given an input question, first create a syntactically correct PostgreSQL query to run, then look at the results of the query and return the answer to the input question.
-Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per PostgreSQL. You can order the results to return the most informative data in the database.
-Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
-Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
-Pay attention to use CURRENT_DATE function to get the current date, if the question involves "today".""".format(top_k=TOP_K)
-
-MYSQL_DIALECT_PROMPT = """You are a MySQL expert. Given an input question, create a syntactically correct MySQL query to run.
-Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per MySQL. You can order the results to return the most informative data in the database.
-Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in backticks (`) to denote them as delimited identifiers.
-Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
-Pay attention to use CURDATE() function to get the current date, if the question involves "today".""".format(top_k=TOP_K)
-
-def claude_to_sql(ddl, hints, search_box, examples=None, model_id='anthropic.claude-v2:1', dialect='mysql', model_provider=None):
+def generate_prompt(ddl, hints, search_box, examples=None, model_id=None, dialect='mysql'):
     long_string = ""
     for table_name, table_data in ddl.items():
-
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
-        long_string += "-- {}表：{}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data["description"])
+        long_string += "-- {}表：{}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
+            "description"])
         long_string += ddl_string
         long_string += "\n"
 
@@ -88,88 +68,59 @@ def claude_to_sql(ddl, hints, search_box, examples=None, model_id='anthropic.cla
 
     logger.info(f'{dialect=}')
     if dialect == 'postgresql':
-        dialect_prompt = POSTGRES_DIALECT_PROMPT
+        dialect_prompt = POSTGRES_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'mysql':
-        dialect_prompt = MYSQL_DIALECT_PROMPT
+        dialect_prompt = MYSQL_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'redshift':
-        dialect_prompt = '''You are a Amazon Redshift expert. Given an input question, first create a syntactically correct Redshift query to run, then look at the results of the query and return the answer to the input question.'''
+        dialect_prompt = '''You are a Amazon Redshift expert. Given an input question, first create a syntactically 
+        correct Redshift query to run, then look at the results of the query and return the answer to the input 
+        question.'''
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
     example_prompt = ""
     if not examples:
-        prompt = '''Human:
-{dialect_prompt}
-Here is DDL of the database you are working on:
-```sql
-{ddl}
-```
-Please do not perform any modifications to SQL tables.
-Absolutely do not output any columns, tables, or other information that is not mentioned in the database. Ensure that the program runs without errors.
-Here are some hints:
-{hints}
-You need to answer the question: "{question}" in SQL. Please give the SQL statement that can answer the question. Aside from giving the SQL answer, concisely explain yourself after giving the answer in same language as the question.
-Assistant:'''.format(dialect_prompt=dialect_prompt, ddl=ddl, hints=hints, question=search_box)
-        logger.info(f'{prompt=}')
-        claude_prompt = prompt
+        claude_prompt = '''Here is DDL of the database you are working on: 
+        ```
+        {ddl} 
+        ```
+        Here are some hints: {hints}
+        You need to answer the question: "{question}" in SQL. 
+        '''.format(ddl=ddl, hints=hints, question=search_box)
     else:
         # assemble examples into a string
         for item in examples:
             example_prompt += "Q: " + item['_source']['text'] + "\n"
             example_prompt += "A: ```sql\n" + item['_source']['sql'] + "```\n"
 
-        claude_prompt = '''Human:
-{dialect_prompt}
-Here is DDL of the database you are working on:
-```sql
-{ddl}
-```
-Please do not perform any modifications to SQL tables.
-Absolutely do not output any columns, tables, or other information that is not mentioned in the database. Ensure that the program runs without errors.
-Here are some hints:
-{hints}
-DO NOT use window function in another function's argument.
-Also, here are some examples of generating SQL using natural language:
-{examples}
-Now, you need to answer the question: "{question}" in SQL. Please give the SQL statement that can answer the question. Aside from giving the SQL answer, concisely explain yourself after giving the answer in same language as the question.
-Assistant:'''.format(dialect_prompt=dialect_prompt, ddl=ddl, hints=hints, examples=example_prompt, question=search_box)
+        claude_prompt = '''Here is DDL of the database you are working on:
+        ```
+        {ddl}
+        ```
+        Here are some hints: {hints}
+        Also, here are some examples of generating SQL using natural language: 
+        {examples}
+        Now, you need to answer the question: "{question}" in SQL. 
+        '''.format(ddl=ddl, hints=hints, examples=example_prompt, question=search_box)
 
-        llama_prompt = '''[INST]{dialect_prompt}[/INST]
-Here is DDL of the database you are working on:
-```sql
-{ddl}
-```
-Please do not perform any modifications to SQL tables.
-Absolutely do not output any columns, tables, or other information that is not mentioned in the database. Ensure that the program runs without errors.
-Here are some hints:
-{hints}
-Also, here are some examples of generating SQL using natural language:
-{examples}
-Now, you need to answer the question: "{question}" in SQL. 
-Please give the SQL statement that can answer the question. 
-SQL Query:'''.format(dialect_prompt=dialect_prompt, ddl=ddl, hints=hints, examples=example_prompt, question=search_box)
+    return claude_prompt, dialect_prompt
 
-    if model_provider == 'replicate':
-        response = None
-        # from utils.opensource_llm import invoke_model_replicate
-        # response = invoke_model_replicate(model_id, ddl, hints, dialect_prompt, example_prompt, search_box)
-    else:
-        payload = {
-            # "prompt": prompt,
-            # "max_tokens_to_sample": 1024,
-            "temperature": 0.01,
-            "top_p": 0.9,
-        }
-        if 'anthropic.claude' in model_id:
-            payload['max_tokens_to_sample'] = 1024
-            payload['prompt'] = claude_prompt
-        elif 'meta.llama2' in model_id:
-            payload['max_gen_len'] = 1024
-            payload['prompt'] = llama_prompt
-        logger.info(f"{payload['prompt']=}")
-        print(payload['prompt'])
-        response = invoke_model(payload, model_id=model_id)
-    return response
+
+@logger.catch
+def claude3_to_sql(ddl, hints, search_box, examples=None, model_id=None, dialect='mysql', model_provider=None):
+    user_prompt, system_prompt = generate_prompt(ddl, hints, search_box, examples, model_id, dialect=dialect)
+
+    max_tokens = 2048
+
+    # Prompt with user turn only.
+    user_message = {"role": "user", "content": user_prompt}
+    messages = [user_message]
+    logger.info(f'{system_prompt=}')
+    logger.info(f'{messages=}')
+    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+    final_response = response.get("content")[0].get("text")
+
+    return final_response
 
 
 def create_vector_embedding_with_bedrock(text, index_name):
@@ -210,9 +161,9 @@ def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch
         "query": {
             "bool": {
                 "filter": {
-                      "match_phrase": {
+                    "match_phrase": {
                         "profile": profile_name
-                      }
+                    }
                 },
                 "must": [
                     {
