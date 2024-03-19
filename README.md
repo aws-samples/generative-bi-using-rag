@@ -1,4 +1,4 @@
-# Intelligent BI Demo
+# Generative BI Demo Application
 
 [中文文档](README_CN.md)
 ## Introduction
@@ -12,14 +12,24 @@ A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with 
 ### 1. Prepare EC2 Instance
 Create an EC2 with following configuration:
 
-    - Software Image (AMI): Amazon Linux 2023
-    - Virtual server type (instance type): t3.large or higher
-    - Firewall (security group): Allow 22, 80 port
+    - OS Image (AMI): Amazon Linux 2023
+    - Instance type: t3.large or higher
+    - VPC: use default one and choose a public subnet
+    - Security group: Allow access to 22, 80 port from anywhere (Select "Allow SSH traffic from Anywhere" and "Allow HTTP traffic from the internet")
     - Storage (volumes): 1 GP3 volume(s) - 30 GiB
 
 ### 2. Config Permission
-Bind an IAM Role to your EC2 instance.
-And attach an inline policy to this IAM Role with following permissions:
+
+2.1 IAM Role's permission
+
+Create a new IAM role with name genbirag-service-role and settings below:
+   - Trusted entity type: AWS Service
+   - Service: EC2
+   - Use Case: EC2 - Allows EC2 instances to call AWS services on your behalf.
+
+Skip "Add permission" and create this role first.
+
+After the role is created, and then add permission by creating inline policy as below:
 ```json
 {
     "Version": "2012-10-17",
@@ -29,7 +39,6 @@ And attach an inline policy to this IAM Role with following permissions:
             "Effect": "Allow",
             "Action": [
                 "bedrock:*",
-                "secretsmanager:GetSecretValue",
                 "dynamodb:*"
             ],
             "Resource": "*"
@@ -38,21 +47,27 @@ And attach an inline policy to this IAM Role with following permissions:
 }
 ```
 
+Finally, Bind this IAM instance profile (IAM Role) to your EC2 instance.
+
+2.2 Amazon Bedrock's Model Permission
+
 Make sure you have enabled model access in AWS Console in us-west-2 (Oregon) region for Anthropic Claude model and Amazon Titan embedding model.
+![Bedrock](assets/bedrock_model_access.png)
 
 ### 3. Install Docker and Docker Compose
 
-On the EC2 instance, log in to the SSH command line as the ec2-user user or use the AWS EC2 Instance Connect feature in the EC2 console to log in to the command line. In the session, execute the following commands. If you are not this user, you can switch with the following command: 
+Log in to the EC2 instance using SSH command as the ec2-user user or use the AWS EC2 Instance Connect feature in the EC2 console to log in to the command line. 
 
-Note: Execute each command one line at a time.
+In the session, execute the following commands. **Note: Execute each command one line at a time.**
 
+If you are not this user, you can switch with the following command: 
 ```bash
 sudo su - ec2-user
 ```
 
 ```bash  
 # Install components
-sudo dnf install docker python3-pip git -y && pip3 install docker-compose
+sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
 # Fix docker python wrapper 7.0 SSL version issue  
 pip3 install docker==6.1.3
@@ -79,8 +94,11 @@ sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
 # Clone the code
 git clone https://github.com/aws-samples/generative-bi-using-rag.git
 
-# Build docker images locally  
-cd generative-bi-using-rag/application && cp .env.template .env && docker-compose build
+# Config the Environment Variable in .env file, modify AWS_DEFAULT_REGION to the region same as the EC2 instance.
+cd generative-bi-using-rag/application && cp .env.template .env 
+
+# Build docker images locally
+docker-compose build
 
 # Start all services
 docker-compose up -d
@@ -88,18 +106,20 @@ docker-compose up -d
 # Wait 3 minutes for MySQL and OpenSearch to initialize
 sleep 180
 ```
- Here is the English translation:
 
 ### 5. Initialize MySQL
 
 In the terminal, continue executing the following commands:
 
 ```bash
-cd initial_data && unzip init_mysql_db.sql.zip && cd ..
+cd initial_data && wget https://github.com/fengxu1211/generative-bi-using-rag/raw/demo_data/application/initial_data/init_mysql_db.sql.zip
+
+unzip init_mysql_db.sql.zip && cd ..
+
 docker exec nlq-mysql sh -c "mysql -u root -ppassword -D llm  < /opt/data/init_mysql_db.sql" 
 ```
 
-### 6. Initialize OpenSearch
+### 6. Initialize Amazon OpenSearch docker version
 
 6.1 Initialize the index for the sample data by creating a new index:
 
@@ -107,7 +127,7 @@ docker exec nlq-mysql sh -c "mysql -u root -ppassword -D llm  < /opt/data/init_m
 docker exec nlq-webserver python opensearch_deploy.py
 ```
 
-If the script fails due to any errors, delete the index and rerun the previous command:
+If the command fails due to any errors, delete the index and rerun the previous command:
 
 ```bash
 curl -XDELETE -k -u admin:admin "https://localhost:9200/uba"
