@@ -120,6 +120,9 @@ def main():
     if 'nlq_chain' not in st.session_state:
         st.session_state['nlq_chain'] = None
 
+    if "messages" not in st.session_state:
+        st.session_state.messages = {}
+
     bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
                          'anthropic.claude-v2:1']
 
@@ -182,9 +185,6 @@ def main():
                     col_num = 0
                 else:
                     col_num += 1
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = {}
 
     # Display chat messages from history
     if selected_profile in st.session_state.messages:
