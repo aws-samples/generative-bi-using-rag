@@ -299,8 +299,7 @@ def main():
 
                 if search_intent_flag:
                     # Add user message to chat history
-                    st.session_state.messages[selected_profile].append(
-                        {"role": "user", "content": st.session_state['selected_sample']})
+                    st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
                     # Add assistant response to chat history
                     st.session_state.messages[selected_profile].append(
