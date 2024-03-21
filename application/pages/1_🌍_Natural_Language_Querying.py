@@ -330,7 +330,7 @@ def main():
                 else:
                     st.markdown('Your query statement is currently not supported by the system')
 
-            if visualize_results:
+            if visualize_results and search_intent_flag:
                 do_visualize_results(current_nlq_chain)
         else:
             st.error("Please enter a valid query.")
