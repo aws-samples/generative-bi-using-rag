@@ -10,8 +10,10 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
+from nlq.business.vector_store import VectorStore
 from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
-    upload_results_to_opensearch
+    upload_results_to_opensearch, get_query_intent
+
 
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""
@@ -20,19 +22,9 @@ def sample_question_clicked(sample):
 
 def upvote_clicked(question, sql, env_vars):
     # HACK: configurable opensearch endpoint
-    target_profile = 'shopping_guide'
-    aos_config = env_vars['data_sources'][target_profile]['opensearch']
-    upload_results_to_opensearch(
-        region_name=['region_name'],
-        domain=aos_config['domain'],
-        opensearch_user=aos_config['opensearch_user'],
-        opensearch_password=aos_config['opensearch_password'],
-        index_name=aos_config['index_name'],
-        query=question,
-        sql=sql,
-        host=aos_config['opensearch_host'],
-        port=aos_config['opensearch_port']
-    )
+
+    current_profile = st.session_state.current_profile
+    VectorStore.add_sample(current_profile, question, sql)
     logger.info(f'up voted "{question}" with sql "{sql}"')
 
 
@@ -128,6 +120,9 @@ def main():
     if 'nlq_chain' not in st.session_state:
         st.session_state['nlq_chain'] = None
 
+    if "messages" not in st.session_state:
+        st.session_state.messages = {}
+
     bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
                          'anthropic.claude-v2:1']
 
@@ -139,7 +134,8 @@ def main():
             # clear session state
             st.session_state.selected_sample = ''
             st.session_state.current_profile = selected_profile
-
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
         st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
@@ -174,7 +170,8 @@ def main():
 
     # Display the predefined search samples as buttons within columns
     for i, sample in enumerate(search_samples[0:question_column_number]):
-        search_sample_columns[i].button(sample, use_container_width=True, on_click=sample_question_clicked, args=[sample])
+        search_sample_columns[i].button(sample, use_container_width=True, on_click=sample_question_clicked,
+                                        args=[sample])
 
     # Display more predefined search samples as buttons within columns, if there are more samples than columns
     if len(search_samples) > question_column_number:
@@ -189,19 +186,32 @@ def main():
                 else:
                     col_num += 1
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Display chat messages from history
+    if selected_profile in st.session_state.messages:
+        for message in st.session_state.messages[selected_profile]:
+            with st.chat_message(message["role"]):
+                if "SQL:" in message["content"]:
+                    st.code(message["content"].replace("SQL:", ""), language="sql")
+                elif isinstance(message["content"], pd.DataFrame):
+                    st.table(message["content"])
+                else:
+                    st.markdown(message["content"])
 
-    search_box = st.text_input('Search Box', value=st.session_state['selected_sample'],
-                               placeholder='Type your query here...', max_chars=1000, key='search_box',
-                               label_visibility='collapsed')
+    text_placeholder = "Type your query here..."
+
+    search_box = st.chat_input(placeholder=text_placeholder)
+    if st.session_state['selected_sample'] != "":
+        search_box = st.session_state['selected_sample']
+        st.session_state['selected_sample'] = ""
 
     current_nlq_chain = st.session_state.nlq_chain
 
+    search_intent_flag = True
+
     # add select box for which model to use
-    if st.button('Run', type='primary', use_container_width=True) or \
+    if search_box != "Type your query here..." or \
             current_nlq_chain.is_visualization_config_changed():
-        if len(search_box) > 0:
+        if search_box is not None and len(search_box) > 0:
             with st.chat_message("user"):
                 current_nlq_chain.set_question(search_box)
                 st.markdown(current_nlq_chain.get_question())
@@ -266,52 +276,61 @@ def main():
                             conn_name = database_profile['conn_name']
                             db_url = ConnectionManagement.get_db_url_by_name(conn_name)
                             database_profile['db_url'] = db_url
-                        response = claude3_to_sql(database_profile['tables_info'],
-                                                  database_profile['hints'],
-                                                  search_box,
-                                                  model_id=model_type,
-                                                  examples=retrieve_result,
-                                                  dialect=get_db_url_dialect(database_profile['db_url']),
-                                                  model_provider=model_provider)
 
-                        logger.info(f'got llm response: {response}')
-                        current_nlq_chain.set_generated_sql_response(response)
+                        intent_response = get_query_intent(model_type, search_box)
+
+                        intent = intent_response.get("intent", "normal_search")
+                        if intent == "reject_search":
+                            search_intent_flag = False
+
+                        if search_intent_flag:
+                            response = claude3_to_sql(database_profile['tables_info'],
+                                                      database_profile['hints'],
+                                                      search_box,
+                                                      model_id=model_type,
+                                                      examples=retrieve_result,
+                                                      dialect=get_db_url_dialect(database_profile['db_url']),
+                                                      model_provider=model_provider)
+
+                            logger.info(f'got llm response: {response}')
+                            current_nlq_chain.set_generated_sql_response(response)
                 else:
                     logger.info('get generated sql from memory')
 
-                st.session_state.messages = []
+                if search_intent_flag:
+                    # Add user message to chat history
+                    st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
-                # Add user message to chat history
-                st.session_state.messages.append({"role": "user", "content": st.session_state['selected_sample']})
+                    # Add assistant response to chat history
+                    st.session_state.messages[selected_profile].append(
+                        {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
+                    st.session_state.messages[selected_profile].append(
+                        {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
 
-                # Add assistant response to chat history
-                st.session_state.messages.append({"role": "assistant", "content":
-                    current_nlq_chain.get_generated_sql()})
-                st.session_state.messages.append({"role": "assistant", "content":
-                    current_nlq_chain.get_generated_sql_explain()})
+                    st.markdown('The generated SQL statement is:')
+                    st.code(current_nlq_chain.get_generated_sql(), language="sql")
 
-                st.markdown('The generated SQL statement is:')
-                st.code(current_nlq_chain.get_generated_sql(), language="sql")
+                    st.markdown('Generation process explanations:')
+                    st.markdown(current_nlq_chain.get_generated_sql_explain())
 
-                st.markdown('Generation process explanations:')
-                st.markdown(current_nlq_chain.get_generated_sql_explain())
+                    st.markdown('You can provide feedback:')
 
-                st.markdown('You can provide feedback:')
+                    # add a upvote(green)/downvote button with logo
+                    feedback = st.columns(2)
+                    feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                       use_container_width=True,
+                                       on_click=upvote_clicked,
+                                       args=[current_nlq_chain.get_question(),
+                                             current_nlq_chain.get_generated_sql(),
+                                             env_vars])
 
-                # add a upvote(green)/downvote button with logo
-                feedback = st.columns(2)
-                feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                   use_container_width=True,
-                                   on_click=upvote_clicked,
-                                   args=[current_nlq_chain.get_question(),
-                                         current_nlq_chain.get_generated_sql(),
-                                         env_vars])
+                    if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                        # do something here
+                        pass
+                else:
+                    st.markdown('Your query statement is currently not supported by the system')
 
-                if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                    # do something here
-                    pass
-
-            if visualize_results:
+            if visualize_results and search_intent_flag:
                 do_visualize_results(current_nlq_chain)
         else:
             st.error("Please enter a valid query.")

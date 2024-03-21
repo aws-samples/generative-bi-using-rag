@@ -6,9 +6,10 @@ from botocore.config import Config
 from opensearchpy import OpenSearch
 from utils import opensearch
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT
+    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3
 import os
 from loguru import logger
+from langchain_core.output_parsers import JsonOutputParser
 
 BEDROCK_AWS_REGION = os.environ.get('BEDROCK_REGION', 'us-west-2')
 
@@ -24,6 +25,7 @@ config = Config(
 # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-claude.html
 
 bedrock = None
+json_parse = JsonOutputParser()
 
 
 @logger.catch
@@ -121,6 +123,22 @@ def claude3_to_sql(ddl, hints, search_box, examples=None, model_id=None, dialect
     final_response = response.get("content")[0].get("text")
 
     return final_response
+
+
+def get_query_intent(model_id, search_box):
+    default_intent = {"intent": "normal_search"}
+    try:
+        system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
+        max_tokens = 2048
+        user_message = {"role": "user", "content": search_box}
+        messages = [user_message]
+        response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+        final_response = response.get("content")[0].get("text")
+        logger.info(f'{final_response=}')
+        intent_result_dict = json_parse.parse(final_response)
+        return intent_result_dict
+    except Exception as e:
+        return default_intent
 
 
 def create_vector_embedding_with_bedrock(text, index_name):
