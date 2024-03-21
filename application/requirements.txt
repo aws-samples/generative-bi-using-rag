@@ -8,3 +8,5 @@ PyMySQL==1.1.0
 python-dotenv~=1.0.0
 plotly~=5.18.0
 cryptography==42.0.4
+langchain~=0.1.11
+langchain-core~=0.1.30
