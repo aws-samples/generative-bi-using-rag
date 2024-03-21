@@ -131,7 +131,8 @@ def main():
             # clear session state
             st.session_state.selected_sample = ''
             st.session_state.current_profile = selected_profile
-
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
         st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
@@ -210,7 +211,7 @@ def main():
     # add select box for which model to use
     if search_box != "Type your query here..." or \
             current_nlq_chain.is_visualization_config_changed():
-        if len(search_box) > 0:
+        if search_box is not None and len(search_box) > 0:
             with st.chat_message("user"):
                 current_nlq_chain.set_question(search_box)
                 st.markdown(current_nlq_chain.get_question())
