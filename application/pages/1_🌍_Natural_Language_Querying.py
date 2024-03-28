@@ -65,6 +65,40 @@ def do_visualize_results(nlq_chain):
         else:
             st.markdown('No visualization generated.')
 
+def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, score_threshold):
+    demo_profile_suffix = '(demo)'
+    origin_selected_profile = selected_profile
+    selected_profile = "shopping_guide"
+
+    if search_type == "query":
+        index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name']
+    else:
+        index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name'] + "_ner"
+
+    records_with_embedding = create_vector_embedding_with_bedrock(
+        query,
+        index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+    retrieve_result = retrieve_results_from_opensearch(
+        index_name=index_name,
+        region_name=env_vars['data_sources'][selected_profile]['opensearch']['region_name'],
+        domain=env_vars['data_sources'][selected_profile]['opensearch']['domain'],
+        opensearch_user=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_user'],
+        opensearch_password=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_password'],
+        host=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_host'],
+        port=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_port'],
+        query_embedding=records_with_embedding['vector_field'],
+        top_k=3,
+        profile_name=origin_selected_profile.replace(demo_profile_suffix, ''))
+
+    filter_retrieve_result = []
+    for item in retrieve_result:
+        if item["Score"] > score_threshold:
+            filter_retrieve_result.append(item)
+    return filter_retrieve_result
 
 def main():
     load_dotenv()
@@ -280,10 +314,17 @@ def main():
                         intent_response = get_query_intent(model_type, search_box)
 
                         intent = intent_response.get("intent", "normal_search")
+                        entity_slot = intent_response.get("slot", [])
                         if intent == "reject_search":
                             search_intent_flag = False
 
                         if search_intent_flag:
+                            entity_slot_info_list = []
+                            if len(entity_slot) > 0:
+                                for each_entity in entity_slot:
+                                    pass
+
+
                             response = claude3_to_sql(database_profile['tables_info'],
                                                       database_profile['hints'],
                                                       search_box,
