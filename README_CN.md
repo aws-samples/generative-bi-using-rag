@@ -66,6 +66,10 @@ sudo su - ec2-user
 # 安装组件
 sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
+# 对于 Amazon Linux 2，可以使用yum 替换 dnf
+
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && sudo pip3 install docker-compose
+
 # 修复docker的python包装器7.0 SSL版本问题
 pip3 install docker==6.1.3 
 

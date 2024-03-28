@@ -69,6 +69,10 @@ sudo su - ec2-user
 # Install components
 sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
+# For Amazon Linux 2，use yum to replace dnf
+
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && sudo pip3 install docker-compose
+
 # Fix docker python wrapper 7.0 SSL version issue  
 pip3 install docker==6.1.3
 
