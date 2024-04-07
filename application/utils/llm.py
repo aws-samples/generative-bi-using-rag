@@ -236,3 +236,19 @@ def upload_results_to_opensearch(region_name, domain, opensearch_user, opensearc
     else:
         logger.error("Failed to create records using Amazon Bedrock Titan text embedding")
         return False
+
+
+def generate_suggested_question(search_box, system_prompt, model_id=None):
+    max_tokens = 2048
+    user_prompt = """
+    Here is the input query: {question}. 
+    Please generate queries based on the input query.
+    """.format(question=search_box)
+    user_message = {"role": "user", "content": user_prompt}
+    messages = [user_message]
+    logger.info(f'{system_prompt=}')
+    logger.info(f'{messages=}')
+    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+    final_response = response.get("content")[0].get("text")
+
+    return final_response

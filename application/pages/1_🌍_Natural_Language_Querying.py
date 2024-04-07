@@ -9,10 +9,12 @@ from loguru import logger
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
+from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
 from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
-    upload_results_to_opensearch, get_query_intent
+    upload_results_to_opensearch, get_query_intent, generate_suggested_question
+from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
 
 def sample_question_clicked(sample):
@@ -123,6 +125,15 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
+    # Suggested question prompt
+    if 'sq_prompt' not in st.session_state:
+        demo_profile = {}
+        active_sq_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME)
+        st.session_state['sq_prompt'] = active_sq_prompt
+
+    logger.info("prompt=======")
+    logger.info(st.session_state['sq_prompt'])
+
     bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
                          'anthropic.claude-v2:1']
 
@@ -144,6 +155,7 @@ def main():
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
+        gen_suggested_question = st.checkbox("Generate Suggested Questions", True)
 
     # Part II: Search Section
     st.subheader("Start Searching")
@@ -332,6 +344,36 @@ def main():
 
             if visualize_results and search_intent_flag:
                 do_visualize_results(current_nlq_chain)
+            
+            if gen_suggested_question:
+                active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME)
+                generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+                logger.info("======generated_sq")
+                logger.info(generated_sq)
+                # Generate 3 queries according to the template by LLM
+                # Show the generate item as a button on UI
+                sq_result = st.columns(3)
+                sq_result[0].button('query 1', type='secondary',
+                                    use_container_width=True,
+                                    # on_click TBD
+                                    on_click=upvote_clicked,
+                                    args=[current_nlq_chain.get_question(),
+                                            current_nlq_chain.get_generated_sql(),
+                                            env_vars])
+                sq_result[1].button('query 2', type='secondary',
+                                    use_container_width=True,
+                                    # on_click TBD
+                                    on_click=upvote_clicked,
+                                    args=[current_nlq_chain.get_question(),
+                                            current_nlq_chain.get_generated_sql(),
+                                            env_vars])
+                sq_result[2].button('query 3', type='secondary',
+                                    use_container_width=True,
+                                    # on_click TBD
+                                    on_click=upvote_clicked,
+                                    args=[current_nlq_chain.get_question(),
+                                            current_nlq_chain.get_generated_sql(),
+                                            env_vars])
         else:
             st.error("Please enter a valid query.")
 

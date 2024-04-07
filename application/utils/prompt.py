@@ -53,3 +53,9 @@ answer :
 
 Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
 """
+
+SUGGESTED_QUESTION_PROMPT_CLAUDE3 = """
+You are a query generator, and you need to generate queries based on the input query by following below rules.
+1. The generated query should be related to the input query.
+2. You should generate 3 queries.
+"""

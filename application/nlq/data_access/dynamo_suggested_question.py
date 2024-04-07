@@ -1,21 +1,13 @@
+from datetime import datetime, timezone
+from application.utils.prompt import SUGGESTED_QUESTION_PROMPT_CLAUDE3
 import boto3
 from loguru import logger
-from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-from enum import Enum, unique
-
-@unique
-class PromptStatus(Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-
-# DynamoDB table name
-PROFILE_QUESTION_TABLE_NAME = 'NlqSuggestedQuestion'
-DEFAULT_PROMPT_NAME = 'suggested_question_prompt'
+from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
 class SuggestedQuestionEntity:
 
-    def __init__(self, prompt: str, create_time: str, prompt_name: str = DEFAULT_PROMPT_NAME):
+    def __init__(self, prompt: str, create_time: str, prompt_name: str = ACTIVE_PROMPT_NAME):
         self.prompt_name = prompt_name
         self.prompt = prompt
         self.create_time = create_time
@@ -28,7 +20,6 @@ class SuggestedQuestionEntity:
             'create_time': self.create_time
         }
         return base_props
-
 
 class SuggestedQuestionDao:
 
@@ -82,9 +73,35 @@ class SuggestedQuestionDao:
                 },
             )
             self.table.wait_until_exists()
-            logger.info(f"DynamoDB Table {self.table_name} created")
+            
+            # Add default prompt
+            current_time = datetime.now(timezone.utc)
+            formatted_time = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            item = {
+                "prompt_name": {"S": DEFAULT_PROMPT_NAME},
+                "prompt": {"S": SUGGESTED_QUESTION_PROMPT_CLAUDE3},
+                "create_time": {"S": formatted_time},
+            }
+            self.dynamodb.put_item(
+                TableName=self.table_name,
+                Item=item,
+            )
+
+            # Add active prompt
+            current_time = datetime.now(timezone.utc)
+            formatted_time = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            item = {
+                "prompt_name": {"S": ACTIVE_PROMPT_NAME},
+                "prompt": {"S": SUGGESTED_QUESTION_PROMPT_CLAUDE3},
+                "create_time": {"S": formatted_time},
+            }
+            self.dynamodb.put_item(
+                TableName=self.table_name,
+                Item=item,
+            )
+            logger.info(f"Item added successfully to table %s.", self.table_name)
         except ClientError as err:
-            print(type(err))
+            logger.error(type(err))
             logger.error(
                 "Couldn't create table %s. Here's why: %s: %s",
                 self.table_name,
@@ -98,21 +115,14 @@ class SuggestedQuestionDao:
         if 'Item' in response:
             return SuggestedQuestionEntity(**response['Item'])
 
-    def add(self, entity):
-        self.table.put_item(Item=entity.to_dict())
-
     def update(self, entity):
         self.table.put_item(Item=entity.to_dict())
-
-    def delete(self, prompt_name):
-        self.table.delete_item(Key={'prompt_name': prompt_name})
-        return True
 
     def get_profile_list(self):
         response = self.table.scan()
         return [SuggestedQuestionEntity(**item) for item in response['Items']]
 
-    def update_prompt(self, prompt: str, create_time: str, prompt_name: str = DEFAULT_PROMPT_NAME):
+    def update_prompt(self, prompt: str, create_time: str, prompt_name: str = ACTIVE_PROMPT_NAME):
         """Update prompt template in DynamoDB table
 
         Args:
