@@ -3,8 +3,9 @@ from sqlalchemy import text
 from utils.env_var import RDS_MYSQL_HOST, RDS_MYSQL_PORT, RDS_MYSQL_USERNAME, RDS_MYSQL_PASSWORD, RDS_MYSQL_DBNAME, RDS_PQ_SCHEMA
 import pandas as pd
 from loguru import logger
+import sqlparse
 
-
+ALLOWED_QUERY_TYPES = ['SELECT']
 def query_from_database(p_db_url: str, query, schema=None):
     """
     Query the database
@@ -22,9 +23,13 @@ def query_from_database(p_db_url: str, query, schema=None):
             engine = db.create_engine(p_db_url)
         with engine.connect() as connection:
             logger.info(f'{query=}')
+            sanitized_query = sqlparse.format(query, strip_comments=True)
+            query_type = sqlparse.parse(sanitized_query)[0].get_type()
+            if query_type not in ALLOWED_QUERY_TYPES:
+                return {"status": "error", "message": f"Query type '{query_type}' is not allowed."}
             # if schema and 'postgres' in p_db_url:
             #     query = f'SET search_path TO {schema}; {query}'
-            cursor = connection.execute(text(query))
+            cursor = connection.execute(text(sanitized_query))
             results = cursor.fetchall()
             columns = list(cursor.keys())
     except ValueError as e:
@@ -33,7 +38,7 @@ def query_from_database(p_db_url: str, query, schema=None):
     return {
         "status": "ok",
         "data": str(results),
-        "query": query,
+        "query": sanitized_query,
         "columns": columns
     }
 
