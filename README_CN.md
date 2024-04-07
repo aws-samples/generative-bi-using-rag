@@ -11,7 +11,7 @@
 ### 1. 准备EC2实例
 创建具有以下配置的EC2实例:
 
-    - OS镜像(AMI): Amazon Linux 2023
+    - OS镜像(AMI): Amazon Linux 2023, Amazon Linux 2(AL2将在2025-06-30结束支持)
     - 实例类型: t3.large或更高配置
     - VPC: 使用默认的VPC并部署在公有子网
     - 安全组: 允许任何位置访问22, 80端口 (勾选允许来自以下对象的SSH流量和允许来自互联网的HTTP流量）
@@ -64,7 +64,7 @@ sudo su - ec2-user
 
 ```bash
 # 安装组件
-sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
 # 修复docker的python包装器7.0 SSL版本问题
 pip3 install docker==6.1.3 
