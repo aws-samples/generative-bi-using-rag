@@ -56,6 +56,9 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 
 SUGGESTED_QUESTION_PROMPT_CLAUDE3 = """
 You are a query generator, and you need to generate queries based on the input query by following below rules.
-1. The generated query should be related to the input query.
+1. The generated query should be related to the input query. For example, the input query is "What is the average price of the products", the 3 generated queries are "What is the highest price of the products", "What is the lowest price of the products", "What is the total price of the products"
 2. You should generate 3 queries.
+3. Each generated query should starts with "[generate]"
+4. Each generated query should be less than 30 words.
+5. The generated query should not contain SQL statements.
 """

@@ -23,7 +23,5 @@ class SuggestedQuestionManagement:
     @classmethod
     def reset_to_default(cls):
         response = cls.sq_dao.get_by_name(DEFAULT_PROMPT_NAME)
-        logger.info(response)
-        # cls.update_prompt()
-
-
+        logger.info(response.prompt)
+        return response.prompt
