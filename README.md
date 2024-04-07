@@ -12,7 +12,7 @@ A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with 
 ### 1. Prepare EC2 Instance
 Create an EC2 with following configuration:
 
-    - OS Image (AMI): Amazon Linux 2023
+    - OS Image (AMI): Amazon Linux 2023, Amazon Linux 2(AL2 End of Life is 2025-06-30)
     - Instance type: t3.large or higher
     - VPC: use default one and choose a public subnet
     - Security group: Allow access to 22, 80 port from anywhere (Select "Allow SSH traffic from Anywhere" and "Allow HTTP traffic from the internet")
@@ -67,7 +67,7 @@ sudo su - ec2-user
 
 ```bash  
 # Install components
-sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
 # For Amazon Linux 2，use yum to replace dnf
 
