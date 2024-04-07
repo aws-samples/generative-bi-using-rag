@@ -112,32 +112,3 @@ class SuggestedQuestionDao:
 
     def update(self, entity):
         self.table.put_item(Item=entity.to_dict())
-
-    # def update_prompt(self, prompt: str, create_time: str, prompt_name: str = ACTIVE_PROMPT_NAME):
-    #     """Update prompt template in DynamoDB table
-
-    #     Args:
-    #         prompt_name (str): prompt item name
-    #         prompt (str): prompt content
-    #         create_time (str): creation time
-    #     """
-    #     try:
-    #         response = self.table.update_item(
-    #             Key={"prompt_name": prompt_name},
-    #             UpdateExpression="SET prompt = :prompt, create_time = :create_time",
-    #             ExpressionAttributeValues={
-    #                 ":prompt": prompt,
-    #                 ":create_time": create_time,
-    #             }
-    #         )
-    #     except ClientError as err:
-    #         logger.error(
-    #             "Couldn't update profile %s in table %s. Here's why: %s: %s",
-    #             prompt_name,
-    #             self.table.name,
-    #             err.response["Error"]["Code"],
-    #             err.response["Error"]["Message"],
-    #         )
-    #         raise
-    #     else:
-    #         return response["Attributes"]
