@@ -32,12 +32,12 @@ def upvote_clicked(question, sql, env_vars):
 
 def do_visualize_results(nlq_chain):
     with st.chat_message("assistant"):
-        if nlq_chain.get_executed_result_df(force_execute_query=False) is None:
+        if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
             logger.info('try to execute the generated sql')
             with st.spinner('Querying database...'):
-                sql_query_result = nlq_chain.get_executed_result_df()
+                sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         else:
-            sql_query_result = nlq_chain.get_executed_result_df()
+            sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         st.markdown('Visualizing the results:')
         if sql_query_result is not None:
             # Reset change flag to False

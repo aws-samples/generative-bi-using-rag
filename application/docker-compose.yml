@@ -93,6 +93,21 @@ services:
       - ./deployment:/app/deployment
     networks:
       - opensearch-net
+  api:
+    container_name: nlq-api
+    build:
+      context: .
+      dockerfile: Dockerfile-api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    volumes:
+      - ./config_files:/app/config_files
+    networks:
+      - opensearch-net
 volumes:
   opensearch-data1:
   opensearch-data2:
