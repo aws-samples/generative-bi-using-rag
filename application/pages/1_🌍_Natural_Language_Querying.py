@@ -163,11 +163,6 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
-    # Suggested question prompt
-    if 'sq_prompt' not in st.session_state:
-        active_sq_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
-        st.session_state['sq_prompt'] = active_sq_prompt
-
     bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
                          'anthropic.claude-v2:1']
 
