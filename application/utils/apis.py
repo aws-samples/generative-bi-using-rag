@@ -4,7 +4,6 @@ from utils.env_var import RDS_MYSQL_HOST, RDS_MYSQL_PORT, RDS_MYSQL_USERNAME, RD
 import pandas as pd
 from loguru import logger
 
-
 def query_from_database(p_db_url: str, query, schema=None):
     """
     Query the database

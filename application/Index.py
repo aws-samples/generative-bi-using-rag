@@ -1,11 +1,19 @@
 import streamlit as st
 
+try:
+    import streamlit_debug
+
+    streamlit_debug.set(flag=True, wait_for_client=True, host='0.0.0.0', port=8765)
+
+except Exception as e:
+    print(f"non debug mode")
+
 st.set_page_config(
     page_title="Intelligent BI",
     page_icon="👋",
 )
 
-st.write("## Welcome to Intelligent BI Playground! 👋")
+st.write("## Welcome to Intelligent BI Playground! Aoyu👋")
 
 st.sidebar.success("Select a demo above.")
 
