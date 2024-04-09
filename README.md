@@ -149,6 +149,25 @@ Open in your browser: `http://<your-ec2-public-ip>`
 
 Note: Use HTTP instead of HTTPS. 
 
+## CDK Deployment Guide
+
+### 1. Prepare CDK Pre-requisites
+
+Please follow the instructions in the [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) to install the CDK toolkit.
+
+### 2. Deploy the CDK Stack
+
+```bash
+cd generative-bi-using-rag/source/resources
+npm install
+npx cdk deploy
+```
+
+### 3. Access the Streamlit Web UI
+After the CDK stack is deployed, wait around 10 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: `http://<your-ec2-public-ip>`
+
+Note: Use HTTP instead of HTTPS. 
+
 ## How to use custom data sources with the demo app
 1. First create the corresponding Data Profile in Data Connection Management and Data Profile Management.
 2. After selecting the Data Profile, start asking questions. For simple questions, the LLM can directly generate the correct SQL. If the generated SQL is incorrect, try adding more annotations to the Schema.  
