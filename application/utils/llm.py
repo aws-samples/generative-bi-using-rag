@@ -282,3 +282,23 @@ def generate_suggested_question(search_box, system_prompt, model_id=None):
     final_response = response.get("content")[0].get("text")
 
     return final_response
+
+
+def generate_business_insight(result, model_id):
+
+    user_prompt = '''You are a professional financial data analysts, base on the given context to generate business insight in comprehensive manner with bullet points, reply in Chinese.
+        ```
+        {context} 
+        ```
+        '''.format(context=result)
+    
+    max_tokens = 2048
+
+    # Prompt with user turn only.
+    user_message = {"role": "user", "content": user_prompt}
+    messages = [user_message]
+    logger.info(f'{messages=}')
+    response = invoke_model_claude3(model_id, '', messages, max_tokens)
+    final_response = response.get("content")[0].get("text")
+
+    return final_response

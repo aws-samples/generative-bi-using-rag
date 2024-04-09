@@ -13,6 +13,7 @@ class NLQChain:
         self.generated_sql_response = ''
         self.executed_result_df: pd.DataFrame | None = None
         self.visualization_config_change: bool = False
+        self.formmated_json_result = None
 
     def set_question(self, question):
         if self.question != question:
@@ -60,6 +61,12 @@ class NLQChain:
             self.executed_result_df = query_from_sql_pd(
                 p_db_url=db_url,
                 query=self.get_generated_sql())
+            
+            try:
+                self.set_formmated_json_result()
+
+            except Exception as e:
+                print(f"Unable to perform business insight generation. Error: {e}.")
 
         return self.executed_result_df
 
@@ -68,4 +75,11 @@ class NLQChain:
 
     def is_visualization_config_changed(self):
         return self.visualization_config_change
+    
+    def get_formmated_json_result(self):
+        return self.formmated_json_result
+    
+    def set_formmated_json_result(self):
+        # get get_executed_result_df
+        self.formmated_json_result = self.executed_result_df.to_json(orient='records')
 

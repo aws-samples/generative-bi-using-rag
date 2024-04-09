@@ -13,7 +13,7 @@ from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
 from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
-    upload_results_to_opensearch, get_query_intent, generate_suggested_question
+    upload_results_to_opensearch, get_query_intent, generate_suggested_question, generate_business_insight
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
 
@@ -105,6 +105,13 @@ def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, top_
             filter_retrieve_result.append(item)
     return filter_retrieve_result
 
+
+def show_business_insight(nlq_chain, model_id):
+    with st.chat_message("assistant"):
+        st.markdown('Generated Business Insight:')
+        with st.spinner('Generating... (Take up to 10s)'):
+            st.markdown(generate_business_insight(nlq_chain.get_formmated_json_result(), model_id=model_id))
+        
 
 def main():
     load_dotenv()
@@ -384,6 +391,9 @@ def main():
 
             if visualize_results and search_intent_flag:
                 do_visualize_results(current_nlq_chain)
+                
+                # Display Business Insight
+                show_business_insight(current_nlq_chain, model_type)
 
             if gen_suggested_question:
                 active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt

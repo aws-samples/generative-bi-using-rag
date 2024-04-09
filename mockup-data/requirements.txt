@@ -1,0 +1,5 @@
+openpyxl
+sqlalchemy
+pandas
+pymysql
+sqlalchemy-utils
