@@ -11,7 +11,7 @@
 ### 1. 准备EC2实例
 创建具有以下配置的EC2实例:
 
-    - OS镜像(AMI): Amazon Linux 2023
+    - OS镜像(AMI): Amazon Linux 2023, Amazon Linux 2(AL2将在2025-06-30结束支持)
     - 实例类型: t3.large或更高配置
     - VPC: 使用默认的VPC并部署在公有子网
     - 安全组: 允许任何位置访问22, 80端口 (勾选允许来自以下对象的SSH流量和允许来自互联网的HTTP流量）
@@ -64,7 +64,11 @@ sudo su - ec2-user
 
 ```bash
 # 安装组件
-sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
+
+# 对于 Amazon Linux 2，可以使用yum 替换 dnf
+
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && sudo pip3 install docker-compose
 
 # 修复docker的python包装器7.0 SSL版本问题
 pip3 install docker==6.1.3 
@@ -139,12 +143,30 @@ docker exec nlq-webserver python opensearch_deploy.py custom false
 
 ## Demo应用使用自定义数据源的方法
 1. 先在Data Connection Management和Data Profile Management页面创建对应的Data Profile
+
+![AddConnect](assets/add_database_connect.png)
+
 2. 选择Data Profile后，开始提问，简单的问题，LLM能直接生成对的SQL，如果生成的SQL不对，可以尝试给Schema增加描述。
+
+![CreateProfile](assets/create_data_profile.png)
+
+刷新这个页面，然后点击Fetch table definition
+
+![UpdateProfile](assets/update_data_profile.png)
+
 3. 使用Schema Management页面，选中Data Profile后，给表和字段都加上注释，这个注释会写进提示词发送给LLM。
    (1) 给一些字段的Annotation属性加上这个字段可能出现的值, 比如"Values: Y|N", "Values:上海市|江苏省"
    (2) 给表的注释加上能回答业务问题的领域知识
+
+![AddSchema](assets/add_schema_management.png)
+
+
+![UpdateSchema](assets/update_schema_management.png)
+
 4. 重新提问，如果还是不能生成对的SQL，则添加Sample QA对到OpenSearch
    (1) 使用Index Management页面，选中Data Profile后，可以添加、浏览和删除QA问题对。
+
+![AddIndex](assets/add_index_sample.png) 
    
 5. 再重新提问, 理论上通过RAG方式(PE使用Few shots)应该可以生成正确的SQL。
 

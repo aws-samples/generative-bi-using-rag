@@ -9,10 +9,12 @@ from loguru import logger
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
+from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
 from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
-    upload_results_to_opensearch, get_query_intent
+    upload_results_to_opensearch, get_query_intent, generate_suggested_question
+from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
 
 def sample_question_clicked(sample):
@@ -64,6 +66,44 @@ def do_visualize_results(nlq_chain):
                 st.plotly_chart(px.pie(sql_query_result, names=x_column, values=y_column))
         else:
             st.markdown('No visualization generated.')
+
+
+def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, top_k, score_threshold=0.7):
+    demo_profile_suffix = '(demo)'
+    origin_selected_profile = selected_profile
+    selected_profile = "shopping_guide"
+
+    if search_type == "query":
+        index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name']
+    else:
+        index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name'] + "_ner"
+
+    records_with_embedding = create_vector_embedding_with_bedrock(
+        query,
+        index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+    retrieve_result = retrieve_results_from_opensearch(
+        index_name=index_name,
+        region_name=env_vars['data_sources'][selected_profile]['opensearch']['region_name'],
+        domain=env_vars['data_sources'][selected_profile]['opensearch']['domain'],
+        opensearch_user=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_user'],
+        opensearch_password=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_password'],
+        host=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_host'],
+        port=env_vars['data_sources'][selected_profile]['opensearch'][
+            'opensearch_port'],
+        query_embedding=records_with_embedding['vector_field'],
+        top_k=top_k,
+        profile_name=origin_selected_profile.replace(demo_profile_suffix, ''))
+
+    selected_profile = origin_selected_profile
+
+    filter_retrieve_result = []
+    for item in retrieve_result:
+        if item["Score"] > score_threshold:
+            filter_retrieve_result.append(item)
+    return filter_retrieve_result
 
 
 def main():
@@ -123,8 +163,7 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
-    bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
-                         'anthropic.claude-v2:1']
+    bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0']
 
     with st.sidebar:
         st.title('Setting')
@@ -144,6 +183,8 @@ def main():
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
+        intent_ner_recognition = st.checkbox("Intent Ner Recognition", False)
+        gen_suggested_question = st.checkbox("Generate Suggested Questions", True)
 
     # Part II: Search Section
     st.subheader("Start Searching")
@@ -217,6 +258,7 @@ def main():
                 st.markdown(current_nlq_chain.get_question())
             with st.chat_message("assistant"):
                 retrieve_result = []
+                entity_slot_retrieve = []
                 if not current_nlq_chain.get_retrieve_samples():
                     logger.info(f'try to get retrieve samples from open search')
                     with st.spinner('Retrieving Q/A (Take up to 5s)'):
@@ -277,23 +319,32 @@ def main():
                             db_url = ConnectionManagement.get_db_url_by_name(conn_name)
                             database_profile['db_url'] = db_url
 
-                        intent_response = get_query_intent(model_type, search_box)
+                        if intent_ner_recognition:
+                            intent_response = get_query_intent(model_type, search_box)
 
-                        intent = intent_response.get("intent", "normal_search")
-                        if intent == "reject_search":
-                            search_intent_flag = False
+                            intent = intent_response.get("intent", "normal_search")
+                            entity_slot = intent_response.get("slot", [])
+                            if intent == "reject_search":
+                                search_intent_flag = False
 
-                        if search_intent_flag:
-                            response = claude3_to_sql(database_profile['tables_info'],
+                            if search_intent_flag:
+                                if len(entity_slot) > 0:
+                                    for each_entity in entity_slot:
+                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", selected_profile, 1, 0.7 )
+                                        if len(entity_retrieve) > 0:
+                                            entity_slot_retrieve.extend(entity_retrieve)
+
+                        response = claude3_to_sql(database_profile['tables_info'],
                                                       database_profile['hints'],
                                                       search_box,
                                                       model_id=model_type,
-                                                      examples=retrieve_result,
+                                                      sql_examples=retrieve_result,
+                                                      ner_example = entity_slot_retrieve,
                                                       dialect=get_db_url_dialect(database_profile['db_url']),
                                                       model_provider=model_provider)
 
-                            logger.info(f'got llm response: {response}')
-                            current_nlq_chain.set_generated_sql_response(response)
+                        logger.info(f'got llm response: {response}')
+                        current_nlq_chain.set_generated_sql_response(response)
                 else:
                     logger.info('get generated sql from memory')
 
@@ -332,6 +383,25 @@ def main():
 
             if visualize_results and search_intent_flag:
                 do_visualize_results(current_nlq_chain)
+
+            if gen_suggested_question:
+                active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
+                generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+                split_strings = generated_sq.split("[generate]")
+                gen_sq_list = [s.strip() for s in split_strings if s.strip()]
+                sq_result = st.columns(3)
+                sq_result[0].button(gen_sq_list[0], type='secondary',
+                                    use_container_width=True,
+                                    on_click=sample_question_clicked,
+                                    args=[gen_sq_list[0]])
+                sq_result[1].button(gen_sq_list[1], type='secondary',
+                                    use_container_width=True,
+                                    on_click=sample_question_clicked,
+                                    args=[gen_sq_list[1]])
+                sq_result[2].button(gen_sq_list[2], type='secondary',
+                                    use_container_width=True,
+                                    on_click=sample_question_clicked,
+                                    args=[gen_sq_list[2]])
         else:
             st.error("Please enter a valid query.")
 

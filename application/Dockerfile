@@ -2,6 +2,8 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+RUN adduser --disabled-password --gecos '' appuser
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -24,6 +26,8 @@ ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 ENV STREAMLIT_THEME_BASE="light"
 
 EXPOSE 8501
+
+USER appuser
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
