@@ -57,7 +57,7 @@ class ProfileManagement:
                 # print(old_tables_info)
                 for table_name, table_info in tables_info.items():
                     # copy annotation to new table info if old table has annotation
-                    if table_name in old_tables_info:
+                    if table_name in old_tables_info and 'tbl_a' in old_tables_info[table_name]:
                         table_info['tbl_a'] = old_tables_info[table_name]['tbl_a']
                         table_info['col_a'] = old_tables_info[table_name]['col_a']
 
