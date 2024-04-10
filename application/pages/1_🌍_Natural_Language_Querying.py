@@ -404,7 +404,10 @@ def main():
                                     on_click=sample_question_clicked,
                                     args=[gen_sq_list[2]])
         else:
-            st.error("Please enter a valid query.")
+            # st.error("Please enter a valid query.")
+            if current_nlq_chain.is_visualization_config_changed():
+                if visualize_results:
+                    do_visualize_results(current_nlq_chain)
 
 
 if __name__ == '__main__':
