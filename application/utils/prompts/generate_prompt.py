@@ -137,11 +137,11 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
             example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
             example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
 
-    system_prompt = system_prompt_mapper.get_variable[name]
-    table_prompt = table_prompt_mapper.get_variable[name]
-    guidance_prompt = guidance_prompt_mapper.get_variable[name]
+    system_prompt = system_prompt_mapper.get_variable(name)
+    table_prompt = table_prompt_mapper.get_variable(name)
+    guidance_prompt = guidance_prompt_mapper.get_variable(name)
     
-    system_prompt = system_prompt.format(dialect_prompt=dialect_prompt, sql_schema=table_prompt, sql_quidance=guidance_prompt, examples=example_sql_prompt, ner_info=example_ner_prompt)
+    system_prompt = system_prompt.format(dialect_prompt=dialect_prompt, sql_schema=table_prompt, sql_guidance=guidance_prompt, examples=example_sql_prompt, ner_info=example_ner_prompt)
 
     user_prompt = search_box
 
