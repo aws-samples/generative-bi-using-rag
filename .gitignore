@@ -160,3 +160,12 @@ cython_debug/
 #.idea/
 
 *_test.py
+# CDK
+node_modules/
+
+# CDK asset staging directory
+cdk.out
+cdk.context.json
+**/cdk.out
+package-lock.json
+!source/resources/lib/

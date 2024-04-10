@@ -57,11 +57,64 @@ class OpenSearchDao:
 
         return response['hits']['hits']
 
+    def retrieve_entity_samples(self, index_name, profile_name):
+        # search all docs in the index filtered by profile_name
+        search_query = {
+          "sort": [
+            {
+              "_score": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": {
+              "includes": ["entity", "comment"]
+          },
+          "size": 20,
+          "query": {
+            "bool": {
+              "must": [],
+              "filter": [
+                {
+                  "match_all": {}
+                },
+                {
+                  "match_phrase": {
+                    "profile": profile_name
+                  }
+                }
+              ],
+              "should": [],
+              "must_not": []
+            }
+          }
+        }
+
+        # Execute the search query
+        response = self.opensearch_client.search(
+            body=search_query,
+            index=index_name
+        )
+
+        return response['hits']['hits']
+
     def add_sample(self, index_name, profile_name, question, answer, embedding):
         record = {
             '_index': index_name,
             'text': question,
             'sql': answer,
+            'profile': profile_name,
+            'vector_field': embedding
+        }
+
+        success, failed = opensearch.put_bulk_in_opensearch([record], self.opensearch_client)
+        return success == 1
+
+    def add_entity_sample(self, index_name, profile_name, entity, comment, embedding):
+        record = {
+            '_index': index_name,
+            'entity': entity,
+            'comment': comment,
             'profile': profile_name,
             'vector_field': embedding
         }

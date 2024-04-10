@@ -69,6 +69,10 @@ sudo su - ec2-user
 # Install components
 sudo yum install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
+# For Amazon Linux 2，use yum to replace dnf
+
+sudo yum install docker python3-pip git -y && pip3 install -U awscli && sudo pip3 install docker-compose
+
 # Fix docker python wrapper 7.0 SSL version issue  
 pip3 install docker==6.1.3
 
@@ -145,15 +149,54 @@ Open in your browser: `http://<your-ec2-public-ip>`
 
 Note: Use HTTP instead of HTTPS. 
 
+## CDK Deployment Guide
+
+### 1. Prepare CDK Pre-requisites
+
+Please follow the instructions in the [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) to install the CDK toolkit.
+
+### 2. Deploy the CDK Stack
+
+```bash
+cd generative-bi-using-rag/source/resources
+npm install
+npx cdk deploy
+```
+
+### 3. Access the Streamlit Web UI
+After the CDK stack is deployed, wait around 10 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: `http://<your-ec2-public-ip>`
+
+Note: Use HTTP instead of HTTPS. 
+
 ## How to use custom data sources with the demo app
 1. First create the corresponding Data Profile in Data Connection Management and Data Profile Management.
+
+![AddConnect](assets/add_database_connect.png)
+
 2. After selecting the Data Profile, start asking questions. For simple questions, the LLM can directly generate the correct SQL. If the generated SQL is incorrect, try adding more annotations to the Schema.  
+
+![CreateProfile](assets/create_data_profile.png)
+
+Then Refresh This Webpage, Click Fetch table definition 
+
+![UpdateProfile](assets/update_data_profile.png)
+
+
+
 3. Use the Schema Management page, select the Data Profile, and add comments to the tables and fields. These comments will be included in the prompt sent to the LLM.
    (1) For some fields, add values to the Annotation attribute, e.g. "Values: Y|N", "Values: Shanghai|Jiangsu".
    (2) For table comments, add domain knowledge to help answer business questions.
+
+![AddSchema](assets/add_schema_management.png)
+
+
+![UpdateSchema](assets/update_schema_management.png)
+
 4. Ask the question again. If still unable to generate the correct SQL, add Sample QA pairs to OpenSearch.
    (1) Using the Index Management page, select the Data Profile then you can add, view and delete QA pairs.
-   
+
+![AddIndex](assets/add_index_sample.png) 
+
 5. Ask again. In theory, the RAG approach (PE uses Few shots) should now be able to generate the correct SQL.
 
 ## Security

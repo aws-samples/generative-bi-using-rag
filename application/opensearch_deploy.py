@@ -15,12 +15,14 @@ AOS_PASSWORD = os.getenv('AOS_PASSWORD', 'admin')
 AOS_DOMAIN = os.getenv('AOS_DOMAIN', 'llm-data-analytics')
 AOS_REGION = os.getenv('AOS_REGION')
 AOS_INDEX = os.getenv('AOS_INDEX', 'uba')
+AOS_INDEX_NER = os.getenv('AOS_INDEX_NER', 'uba_ner')
 AOS_TYPE = os.getenv('AOS_TYPE', 'uba')
 BEDROCK_REGION = os.getenv('BEDROCK_REGION')
 
 REGION_NAME = AOS_REGION
 early_stop_record_count = 100
 index_name = AOS_INDEX
+index_name_ner = AOS_INDEX_NER
 opensearch_user = AOS_USER
 opensearch_password = AOS_PASSWORD
 # create opensearch domain
@@ -75,7 +77,7 @@ def index_to_opensearch():
         # initiate AWS OpenSearch client and insert new data into the index
         opensearch_client = opensearch.get_opensearch_cluster_client(domain, opensearch_user, opensearch_password,
                                                                      REGION_NAME,
-                                                                     index_name)
+                                                                 index_name)
     else:
         auth = (opensearch_user, opensearch_password)
         host = AOS_HOST
@@ -153,6 +155,21 @@ def index_to_opensearch():
             print(f"Documents saved {success}, documents failed to save {failed}")
 
     print("Finished creating records using Amazon Bedrock Titan text embedding")
+
+    # init index_name_ner
+    if AOS_HOST == '':
+        opensearch_client = opensearch.get_opensearch_cluster_client(domain, opensearch_user, opensearch_password,
+                                                                     REGION_NAME,
+                                                                     index_name_ner)
+
+    exists_ner = opensearch.check_opensearch_index(opensearch_client, index_name_ner)
+    if not exists_ner:
+        print("Creating OpenSearch Ner index")
+        success = opensearch.create_index(opensearch_client, index_name_ner)
+        if success:
+            print("Creating OpenSearch index mapping")
+            success = opensearch.create_index_mapping(opensearch_client, index_name_ner)
+            print(f"OpenSearch Index mapping created")
 
 
 if __name__ == "__main__":

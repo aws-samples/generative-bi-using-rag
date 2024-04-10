@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Tuple
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -7,7 +8,7 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
-from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, \
+from utils.llm import claude3_to_sql, claude3_to_sql_with_response_stream, create_vector_embedding_with_bedrock, \
     retrieve_results_from_opensearch, get_query_intent
 from .schemas import Question, Answer, Example
 from .exception_handler import BizException
@@ -29,18 +30,9 @@ all_profiles = ProfileManagement.get_all_profiles_with_info()
 all_profiles.update(datasource_profile)
 
 
-def verify_parameters(question: Question):
-    if question.bedrock_model_id not in const.BEDROCK_MODEL_IDS:
-        raise BizException(ErrorEnum.INVAILD_BEDROCK_MODEL_ID)
-
-
-def ask(question: Question) -> Answer:
-    logger.debug(question)
-    verify_parameters(question)
-
+def __process_nlq_chain(question: Question) -> NLQChain:
     current_nlq_chain = NLQChain(question.profile_name)
 
-    search_intent_flag = True
     current_nlq_chain.set_question(question.keywords)
     retrieve_result = []
     if not current_nlq_chain.get_retrieve_samples():
@@ -80,6 +72,15 @@ def ask(question: Question) -> Answer:
     else:
         logger.info(f'get retrieve samples from memory: {len(current_nlq_chain.get_retrieve_samples())}')
 
+    return current_nlq_chain
+
+
+def verify_parameters(question: Question):
+    if question.bedrock_model_id not in const.BEDROCK_MODEL_IDS:
+        raise BizException(ErrorEnum.INVAILD_BEDROCK_MODEL_ID)
+
+
+def get_example(current_nlq_chain: NLQChain) -> list[Example]:
     examples = []
     for example in current_nlq_chain.get_retrieve_samples():
         examples.append(Example(
@@ -88,54 +89,98 @@ def ask(question: Question) -> Answer:
                             answer=example['_source']['sql'].strip()
                             )
         )
+    return examples
+
+
+def ask(question: Question) -> Answer:
+    logger.debug(question)
+    verify_parameters(question)
+
+    current_nlq_chain = __process_nlq_chain(question)
 
     if not current_nlq_chain.get_generated_sql_response():
         logger.info('try to get generated sql from LLM')
+
+        intent_response = get_query_intent(question.bedrock_model_id, question.keywords)
+        intent = intent_response.get("intent", "normal_search")
+        if intent == "reject_search":
+            raise BizException(ErrorEnum.NOT_SUPPORTED)
+        
         # Whether Retrieving Few Shots from Database
         logger.info('Sending request...')
-        database_profile = all_profiles[selected_profile]
+        database_profile = all_profiles[question.profile_name]
         # fix db url is Empty
         if database_profile['db_url'] == '':
             conn_name = database_profile['conn_name']
             db_url = ConnectionManagement.get_db_url_by_name(conn_name)
             database_profile['db_url'] = db_url
 
-        intent_response = get_query_intent(question.bedrock_model_id, question.keywords)
-
-        intent = intent_response.get("intent", "normal_search")
-        if intent == "reject_search":
-            search_intent_flag = False
-
-        if search_intent_flag:
-            response = claude3_to_sql(database_profile['tables_info'],
-                                        database_profile['hints'],
-                                        question.keywords,
-                                        model_id=question.bedrock_model_id,
-                                        examples=retrieve_result,
-                                        dialect=get_db_url_dialect(database_profile['db_url']),
-                                        model_provider=None)
-            logger.info(f'got llm response: {response}')
-            current_nlq_chain.set_generated_sql_response(response)
+        response = claude3_to_sql(database_profile['tables_info'],
+                                    database_profile['hints'],
+                                    question.keywords,
+                                    model_id=question.bedrock_model_id,
+                                    examples=current_nlq_chain.get_retrieve_samples(),
+                                    dialect=get_db_url_dialect(database_profile['db_url']),
+                                    model_provider=None)
+        logger.info(f'got llm response: {response}')
+        current_nlq_chain.set_generated_sql_response(response)
     else:
         logger.info('get generated sql from memory')
 
-    if not search_intent_flag:
-        raise BizException(ErrorEnum.NOT_SUPPORTED)
-
     final_sql_query_result = None
-    if question.query_result and search_intent_flag:
+    if question.query_result:
         if current_nlq_chain.get_executed_result_df(all_profiles[question.profile_name],force_execute_query=False) is None:
             logger.info('try to execute the generated sql')
-            sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[question.profile_name],)
+            sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[question.profile_name])
         if sql_query_result is not None:
-            # Reset change flag to False
-            current_nlq_chain.set_visualization_config_change(False)
             # final_sql_query_result = json.dumps(sql_query_result.to_dict())
             final_sql_query_result = sql_query_result.to_json(orient='records')
+    
     answer = Answer(
-        examples=examples,
+        examples=get_example(current_nlq_chain),
         sql=current_nlq_chain.get_generated_sql(),
         sql_explain=current_nlq_chain.get_generated_sql_explain(),
         sql_query_result=final_sql_query_result,
     )
     return answer
+
+
+def get_nlq_chain(question: Question) -> NLQChain:
+    logger.debug(question)
+    verify_parameters(question)
+    current_nlq_chain = __process_nlq_chain(question)
+    return current_nlq_chain
+
+
+def ask_with_response_stream(question: Question, current_nlq_chain: NLQChain) -> dict:
+    logger.info('try to get generated sql from LLM')
+
+    intent_response = get_query_intent(question.bedrock_model_id, question.keywords)
+    intent = intent_response.get("intent", "normal_search")
+    if intent == "reject_search":
+        raise BizException(ErrorEnum.NOT_SUPPORTED)
+    
+    # Whether Retrieving Few Shots from Database
+    logger.info('Sending request...')
+    database_profile = all_profiles[question.profile_name]
+    # fix db url is Empty
+    if database_profile['db_url'] == '':
+        conn_name = database_profile['conn_name']
+        db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+        database_profile['db_url'] = db_url
+
+    response = claude3_to_sql_with_response_stream(database_profile['tables_info'],
+                                database_profile['hints'],
+                                question.keywords,
+                                model_id=question.bedrock_model_id,
+                                examples=current_nlq_chain.get_retrieve_samples(),
+                                dialect=get_db_url_dialect(database_profile['db_url']),
+                                model_provider=None)
+    logger.info("got llm response")
+    return response
+
+
+def get_executed_result(current_nlq_chain: NLQChain) -> str:
+    sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[current_nlq_chain.profile])
+    final_sql_query_result = sql_query_result.to_markdown()
+    return final_sql_query_result
