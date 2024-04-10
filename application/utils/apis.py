@@ -60,6 +60,10 @@ def query_from_sql_pd(p_db_url: str, query, schema=None):
 
     with engine.connect() as connection:
         logger.info(f'{query=}')
-        # if schema and 'postgres' in p_db_url:
-        #     query = f'SET search_path TO {RDS_PQ_SCHEMA}; {query}'
-        return pd.read_sql_query(text(query), connection)
+        res = pd.DataFrame()
+        try:
+            res = pd.read_sql_query(text(query), connection)
+        except Exception as e:
+            logger.error("query_from_sql_pd is error")
+            logger.error(e)
+        return res

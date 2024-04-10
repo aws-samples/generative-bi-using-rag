@@ -26,10 +26,32 @@ class VectorStore:
         return sample_list
 
     @classmethod
+    def get_all_entity_samples(cls, profile_name):
+        logger.info(f'get all samples for {profile_name}...')
+        samples = cls.opensearch_dao.retrieve_samples('uba_ner', profile_name)
+
+        sample_list = []
+        for sample in samples:
+            sample_list.append({
+                'id': sample['_id'],
+                'entity': sample['_source']['entity'],
+                'comment': sample['_source']['comment']
+            })
+
+        return sample_list
+
+    @classmethod
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(question)
         if cls.opensearch_dao.add_sample('uba', profile_name, question, answer, embedding):
+            logger.info('Sample added')
+
+    @classmethod
+    def add_entity_sample(cls, profile_name, entity, comment):
+        logger.info(f'add sample entity: {entity} to profile {profile_name}')
+        embedding = cls.create_vector_embedding_with_bedrock(entity)
+        if cls.opensearch_dao.add_entity_sample('uba_ner', profile_name, entity, comment, embedding):
             logger.info('Sample added')
 
     @classmethod
@@ -53,4 +75,10 @@ class VectorStore:
     def delete_sample(cls, profile_name, doc_id):
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
         ret = cls.opensearch_dao.delete_sample('uba', profile_name, doc_id)
+        print(ret)
+
+    @classmethod
+    def delete_entity_sample(cls, profile_name, doc_id):
+        logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
+        ret = cls.opensearch_dao.delete_sample('uba_ner', profile_name, doc_id)
         print(ret)
