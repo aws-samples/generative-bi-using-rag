@@ -154,12 +154,8 @@ def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, 
     logger.info(f'{messages=}')
     response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
     final_response = response.get("content")[0].get("text")
-    try:
-        answer = final_response.split("<query>")[1].split("</query>")[0]
-    except:
-        answer = final_response
 
-    return answer
+    return final_response
 
 
 def get_query_intent(model_id, search_box):
