@@ -145,4 +145,4 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
 
     user_prompt = search_box
 
-    return system_prompt, user_prompt
+    return user_prompt, system_prompt
