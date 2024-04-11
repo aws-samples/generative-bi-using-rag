@@ -24,8 +24,8 @@
             "hints": "For timestamp column, please use function FROM_UNIXTIME(int) to convert it to date datatype",
             "search_samples": [
                 "销量前十的商品是什么?",
-                "销售额最高的区域是哪里？",
-                "不同品牌的平均销售额是多少？",
+                "用户的平均年龄是什么？",
+                "商品的平均价格是多少？",
                 "30岁以下女性用户购买商品的平均价格是多少?",
                 "40岁以上男性用户浏览次数最多的前3个商品类别是什么?",
                 "18-25岁用户购买打折商品的数量有多少?",

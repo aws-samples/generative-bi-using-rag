@@ -146,7 +146,7 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
 
     name = support_model_ids_map[model_id]
     system_prompt = system_prompt_mapper.get_variable(name)
-    if long_string != '':
+    if long_string == '':
         table_prompt = table_prompt_mapper.get_variable(name)
     else:
         table_prompt = long_string
