@@ -28,7 +28,7 @@ class VectorStore:
     @classmethod
     def get_all_entity_samples(cls, profile_name):
         logger.info(f'get all samples for {profile_name}...')
-        samples = cls.opensearch_dao.retrieve_samples('uba', profile_name)
+        samples = cls.opensearch_dao.retrieve_samples('uba_ner', profile_name)
 
         sample_list = []
         for sample in samples:
