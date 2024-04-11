@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GenBI-RESTful</title>
+    <link href="components/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <script src="components/bootstrap/bootstrap.min.js"></script>
+    <link href="components/JsonViewer/json-viewer.css" rel="stylesheet">
+    <script src="components/JsonViewer/json-viewer.js"></script>
+    <script src="components/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-3 bg-primary-subtle">
+                <h2>Setting</h2>
+                <select class="form-select" aria-label="Data profile" id="selectDataProfile">
+                </select>
+                <select class="form-select" aria-label="Bedrock Model Id" id="selectBedrockModelId">
+                </select>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="chkUseRag" checked>
+                    <label class="form-check-label" for="chkUseRag">
+                        Using RAG from Q/A Embedding
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="chkQueryResult" checked>
+                    <label class="form-check-label" for="chkQueryResult">
+                        Visualize Results
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="chkIntentNerRecognition">
+                    <label class="form-check-label" for="chkIntentNerRecognition">
+                        Intent Ner Recognition
+                    </label>
+                </div>
+            </div>
+            <div class="col-9">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Input your question" id="textKeywords"
+                        value="销量前十的商品是什么?" onkeydown="searchKeydown(event);">
+                    <button class="btn btn-outline-secondary" type="button" id="buttonAsk" onclick="ask();">Ask</button>
+                    <button class="btn btn-outline-secondary" type="button" id="buttonDoc" onclick="goDoc();">Go
+                        Doc</button>
+                    <button class="btn btn-outline-secondary" type="button" id="buttonWebSocket"
+                        onclick="goWebSocket();">Go
+                        WebSocket</button>
+                </div>
+                <div class="spinner-border" role="status" style="display: none;" id="divLoading">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div id="divResult"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function searchKeydown(e) {
+            if (e.keyCode == 13) {
+                ask();
+            }
+        }
+
+        function loading() {
+            $("#buttonAsk").prop("disabled", true);
+            $("#divLoading").show();
+            $("#divResult").empty();
+        }
+
+        function loaded() {
+            $("#buttonAsk").prop("disabled", false);
+            $("#divLoading").hide();
+        }
+
+        function ask() {
+            loading();
+            var payload = {
+                "keywords": $("#textKeywords").val(),
+                "use_rag": $("#chkUseRag").prop("checked"),
+                "query_result": $("#chkQueryResult").prop("checked"),
+                "intent_ner_recognition": $("#chkIntentNerRecognition").prop("checked"),
+                "profile_name": $("#selectDataProfile").val(),
+                "bedrock_model_id": $("#selectBedrockModelId").val(),
+            };
+            $.ajax({
+                contentType: 'application/json',
+                type: 'POST',
+                url: "/qa/ask",
+                dataType: "json",
+                data: JSON.stringify(payload),
+                success: function (message) {
+                    loaded();
+                    console.log(message)
+                    var jsonViewer = new JSONViewer();
+                    document.getElementById("divResult").appendChild(jsonViewer.getContainer());
+                    jsonViewer.showJSON(message, -1, 2);
+                },
+                error: function (message) {
+                    loaded();
+                    console.log(message);
+                    alert(message.responseJSON.message);
+                }
+            });
+        }
+
+        function goDoc() {
+            window.location = "/docs";
+        }
+
+        function goWebSocket() {
+            window.location = "WebSocket.html";
+        }
+
+        $(document).ready(function () {
+            $.get("/qa/option", function (data) {
+                data.data_profiles.forEach(function (item) {
+                    $("#selectDataProfile").append(`<option value="${item}">${item}</option>`);
+                });
+                $("#selectDataProfile").val($("#selectDataProfile option:last").val());
+                data.model_ids.forEach(function (item) {
+                    $("#selectBedrockModelId").append(`<option value="${item}">${item}</option>`);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

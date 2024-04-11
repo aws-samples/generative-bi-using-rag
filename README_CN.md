@@ -14,7 +14,7 @@
     - OS镜像(AMI): Amazon Linux 2023, Amazon Linux 2(AL2将在2025-06-30结束支持)
     - 实例类型: t3.large或更高配置
     - VPC: 使用默认的VPC并部署在公有子网
-    - 安全组: 允许任何位置访问22, 80端口 (勾选允许来自以下对象的SSH流量和允许来自互联网的HTTP流量）
+    - 安全组: 允许任何位置访问22, 80, 8000端口 (勾选允许来自以下对象的SSH流量和允许来自互联网的HTTP流量）
     - 存储(卷): 1个GP3卷 - 30 GiB
 
 ### 2. 配置权限
@@ -138,6 +138,12 @@ docker exec nlq-webserver python opensearch_deploy.py custom false
 ### 7. 访问Streamlit Web UI
 
 在浏览器中打开网址: `http://<your-ec2-public-ip>` 
+
+注意:使用 HTTP 而不是 HTTPS。
+
+### 8. 访问API
+
+在浏览器中打开网址: `http://<your-ec2-public-ip>:8000` 
 
 注意:使用 HTTP 而不是 HTTPS。
 
