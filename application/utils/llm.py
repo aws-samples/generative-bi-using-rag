@@ -140,8 +140,6 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
 @logger.catch
 def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                    model_provider=None):
-    user_prompt, system_prompt = generate_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
-                                                 dialect=dialect)
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
                                                  dialect=dialect)
 

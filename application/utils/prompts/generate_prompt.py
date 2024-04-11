@@ -110,8 +110,15 @@ table_prompt_mapper = table_prompt.TablePromptMapper()
 guidance_prompt_mapper = guidance_prompt.GuidancePromptMapper()
 
 def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
-    name = support_model_ids_map[model_id]
+    long_string = ""
+    for table_name, table_data in ddl.items():
+        ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
+        long_string += "{}：{}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
+            "description"])
+        long_string += ddl_string
+        long_string += "\n"
 
+    ddl = long_string
 
     logger.info(f'{dialect=}')
     if dialect == 'postgresql':
@@ -137,8 +144,12 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
             example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
             example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
 
+    name = support_model_ids_map[model_id]
     system_prompt = system_prompt_mapper.get_variable(name)
-    table_prompt = table_prompt_mapper.get_variable(name)
+    if long_string != '':
+        table_prompt = table_prompt_mapper.get_variable(name)
+    else:
+        table_prompt = long_string
     guidance_prompt = guidance_prompt_mapper.get_variable(name)
     
     system_prompt = system_prompt.format(dialect_prompt=dialect_prompt, sql_schema=table_prompt, sql_guidance=guidance_prompt, examples=example_sql_prompt, ner_info=example_ner_prompt)
