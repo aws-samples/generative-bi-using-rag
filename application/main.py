@@ -13,4 +13,4 @@ app.include_router(router)
 
 @app.get("/", status_code=status.HTTP_302_FOUND)
 def index():
-    return RedirectResponse("static/RESTful.html")
+    return RedirectResponse("static/WebSocket.html")

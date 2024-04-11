@@ -1,10 +1,15 @@
 import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
-from .schemas import Question, Answer
+from .schemas import Question, Answer, Option
 from . import service
 
 router = APIRouter(prefix="/qa", tags=["qa"])
+
+
+@router.get("/option", response_model=Option)
+def option():
+    return service.get_option()
 
 
 @router.post("/ask", response_model=Answer)
@@ -29,8 +34,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text("\n```\n")
             response = service.ask_with_response_stream(question, current_nlq_chain)
             result_pieces = []
-            event_stream = response['body']
-            for event in event_stream:
+            for event in response['body']:
                 final_answer = event["chunk"]["bytes"].decode('utf8')
                 # logger.info(final_answer)
                 current_content = json.loads(final_answer)
@@ -40,8 +44,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_text(current_text)
                 elif current_content.get("type") == "content_block_stop":
                     break
+            current_nlq_chain.set_generated_sql_response(''.join(result_pieces))
             if question.query_result:
-                current_nlq_chain.set_generated_sql_response(''.join(result_pieces))
                 final_sql_query_result = service.get_executed_result(current_nlq_chain)
                 await websocket.send_text("\n\nQuery result:  \n")
                 await websocket.send_text(final_sql_query_result)
