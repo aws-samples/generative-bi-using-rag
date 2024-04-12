@@ -64,7 +64,7 @@ sudo su - ec2-user
 
 ```bash
 # 安装组件
-sudo yum install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
+sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
 # 对于 Amazon Linux 2，可以使用yum 替换 dnf
 
