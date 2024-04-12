@@ -10,6 +10,7 @@ from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_C
 import os
 from loguru import logger
 from langchain_core.output_parsers import JsonOutputParser
+from utils.prompts.generate_prompt import generate_llm_prompt
 
 BEDROCK_AWS_REGION = os.environ.get('BEDROCK_REGION', 'us-west-2')
 
@@ -36,7 +37,7 @@ def get_bedrock_client():
     return bedrock
 
 
-def invoke_model_claude3(model_id, system_prompt, messages, max_tokens):
+def invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
     body = json.dumps(
         {
             "anthropic_version": "bedrock-2023-05-31",
@@ -47,10 +48,13 @@ def invoke_model_claude3(model_id, system_prompt, messages, max_tokens):
         }
     )
 
-    response = get_bedrock_client().invoke_model(body=body, modelId=model_id)
-    response_body = json.loads(response.get('body').read())
-
-    return response_body
+    if with_response_stream:
+        response = get_bedrock_client().invoke_model_with_response_stream(body=body, modelId=model_id)
+        return response
+    else:
+        response = get_bedrock_client().invoke_model(body=body, modelId=model_id)
+        response_body = json.loads(response.get('body').read())
+        return response_body
 
 
 def claude_select_table():
@@ -138,8 +142,8 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
 
 @logger.catch
 def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
-                   model_provider=None):
-    user_prompt, system_prompt = generate_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
+                   model_provider=None, with_response_stream=False):
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
                                                  dialect=dialect)
 
     max_tokens = 2048
@@ -149,10 +153,12 @@ def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, 
     messages = [user_message]
     logger.info(f'{system_prompt=}')
     logger.info(f'{messages=}')
-    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-    final_response = response.get("content")[0].get("text")
-
-    return final_response
+    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
+    if with_response_stream:
+        return response
+    else:
+        final_response = response.get("content")[0].get("text")
+        return final_response
 
 
 def get_query_intent(model_id, search_box):

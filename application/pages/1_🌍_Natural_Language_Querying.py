@@ -32,12 +32,12 @@ def upvote_clicked(question, sql, env_vars):
 
 def do_visualize_results(nlq_chain):
     with st.chat_message("assistant"):
-        if nlq_chain.get_executed_result_df(force_execute_query=False) is None:
+        if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
             logger.info('try to execute the generated sql')
             with st.spinner('Querying database...'):
-                sql_query_result = nlq_chain.get_executed_result_df()
+                sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         else:
-            sql_query_result = nlq_chain.get_executed_result_df()
+            sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         st.markdown('Visualizing the results:')
         if sql_query_result is not None:
             # Reset change flag to False
@@ -163,8 +163,7 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
-    bedrock_model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0',
-                         'anthropic.claude-v2:1']
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0']
 
     with st.sidebar:
         st.title('Setting')
@@ -179,7 +178,7 @@ def main():
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
         st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
-        model_type = st.selectbox("Choose your model", bedrock_model_ids)
+        model_type = st.selectbox("Choose your model", model_ids)
         model_provider = None
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
@@ -334,6 +333,7 @@ def main():
                                         entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", selected_profile, 1, 0.7 )
                                         if len(entity_retrieve) > 0:
                                             entity_slot_retrieve.extend(entity_retrieve)
+                        # get llm model for sql generation
 
                         response = claude3_to_sql(database_profile['tables_info'],
                                                       database_profile['hints'],

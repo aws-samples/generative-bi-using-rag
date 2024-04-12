@@ -15,7 +15,7 @@ Create an EC2 with following configuration:
     - OS Image (AMI): Amazon Linux 2023, Amazon Linux 2(AL2 End of Life is 2025-06-30)
     - Instance type: t3.large or higher
     - VPC: use default one and choose a public subnet
-    - Security group: Allow access to 22, 80 port from anywhere (Select "Allow SSH traffic from Anywhere" and "Allow HTTP traffic from the internet")
+    - Security group: Allow access to 22, 80, 8000 port from anywhere (Select "Allow SSH traffic from Anywhere" and "Allow HTTP traffic from the internet")
     - Storage (volumes): 1 GP3 volume(s) - 30 GiB
 
 ### 2. Config Permission
@@ -146,6 +146,12 @@ docker exec nlq-webserver python opensearch_deploy.py custom false
 ### 7. Access the Streamlit Web UI
 
 Open in your browser: `http://<your-ec2-public-ip>`
+
+Note: Use HTTP instead of HTTPS. 
+
+### 8. Access the API
+
+Open in your browser: `http://<your-ec2-public-ip>:8000`
 
 Note: Use HTTP instead of HTTPS. 
 
