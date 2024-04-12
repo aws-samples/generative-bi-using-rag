@@ -10,6 +10,7 @@ from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_C
 import os
 from loguru import logger
 from langchain_core.output_parsers import JsonOutputParser
+from utils.prompts.generate_prompt import generate_llm_prompt
 
 BEDROCK_AWS_REGION = os.environ.get('BEDROCK_REGION', 'us-west-2')
 
@@ -142,7 +143,7 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
 @logger.catch
 def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                    model_provider=None, with_response_stream=False):
-    user_prompt, system_prompt = generate_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
                                                  dialect=dialect)
 
     max_tokens = 2048

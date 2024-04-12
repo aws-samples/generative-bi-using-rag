@@ -40,7 +40,7 @@ class NLQChain:
 
     def get_generated_sql(self):
         try:
-            return self.generated_sql_response.split('```sql')[1].split('```')[0].replace('\n', ' ', 1).strip()
+            return self.generated_sql_response.split("<query>")[1].split("</query>")[0]
         except IndexError:
             raise Exception("No SQL found in the LLM's response")
 
