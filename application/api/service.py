@@ -33,7 +33,7 @@ all_profiles.update(datasource_profile)
 def get_option() -> Option:
     option = Option(
         data_profiles=all_profiles.keys(),
-        model_ids=const.BEDROCK_MODEL_IDS,
+        bedrock_model_ids=const.BEDROCK_MODEL_IDS,
     )
     return option
 

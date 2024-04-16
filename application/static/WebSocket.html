@@ -81,6 +81,7 @@
         </div>
     </div>
     <script>
+        const session_id = `session${Date.now()}`;
         const currentHostname = window.location.hostname;
         const currentPort = window.location.port;
         const ws = new WebSocket(`ws://${currentHostname}:${currentPort}/qa/ws`);
@@ -88,17 +89,35 @@
         const buttonAsk = document.getElementById('buttonAsk');
         const divResult = document.getElementById('divResult');
 
-        ws.onopen = function (event) {
+        function enableAsk() {
             buttonAsk.disabled = false;
         }
 
-        ws.onclose = function (event) {
+        function disableAsk() {
             buttonAsk.disabled = true;
+        }
+
+        ws.onopen = function (event) {
+            enableAsk();
+        }
+
+        ws.onclose = function (event) {
+            disableAsk();
         }
 
         var resultPieces = [];
         ws.onmessage = function (event) {
-            resultPieces.push(event.data);
+            let data = JSON.parse(event.data);
+            if (data.content_type == "end") {
+                enableAsk();
+                return;
+            }
+            if (data.content_type == "exception") {
+                enableAsk();
+                alert(data.content);
+                return;
+            }
+            resultPieces.push(data.content);
             let result = resultPieces.join("");
             divResult.innerHTML = marked.parse(result);
         };
@@ -110,7 +129,9 @@
 
         function ask(event) {
             init();
+            disableAsk();
             var payload = {
+                "session_id": session_id,
                 "keywords": $("#textKeywords").val(),
                 "use_rag": $("#chkUseRag").prop("checked"),
                 "query_result": $("#chkQueryResult").prop("checked"),
@@ -138,7 +159,7 @@
                     $("#selectDataProfile").append(`<option value="${item}">${item}</option>`);
                 });
                 $("#selectDataProfile").val($("#selectDataProfile option:last").val());
-                data.model_ids.forEach(function (item) {
+                data.bedrock_model_ids.forEach(function (item) {
                     $("#selectBedrockModelId").append(`<option value="${item}">${item}</option>`);
                 });
             });

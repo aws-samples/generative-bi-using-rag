@@ -11,6 +11,10 @@ class Question(BaseModel):
     profile_name: str = "shopping_guide"
 
 
+class QuestionSocket(Question):
+    session_id: str
+
+
 class Example(BaseModel):
     score: float
     question: str
@@ -26,4 +30,4 @@ class Answer(BaseModel):
 
 class Option(BaseModel):
     data_profiles: list[str]
-    model_ids: list[str]
+    bedrock_model_ids: list[str]
