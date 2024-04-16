@@ -7,6 +7,7 @@ class ErrorEnum(Enum):
     SUCCEEDED = {1: "Operation succeeded"}
     NOT_SUPPORTED = {1001: "Your query statement is currently not supported by the system"}
     INVAILD_BEDROCK_MODEL_ID = {1002: f"Invalid bedrock model id.Vaild ids:{const.BEDROCK_MODEL_IDS}"}
+    INVAILD_SESSION_ID = {1003: f"Invalid session id."}
     UNKNOWN_ERROR = {9999: "Unknown error."}
 
     def get_code(self):
@@ -14,3 +15,10 @@ class ErrorEnum(Enum):
 
     def get_message(self):
         return list(self.value.values())[0]
+
+
+@unique
+class ContentEnum(Enum):
+    EXCEPTION = "exception"
+    COMMON = "common"
+    END = "end"
