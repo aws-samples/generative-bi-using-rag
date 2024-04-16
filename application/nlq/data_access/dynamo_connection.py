@@ -1,12 +1,12 @@
+import os
 import boto3
 from loguru import logger
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
-
 # DynamoDB table name
 CONNECT_CONFIG_TABLE_NAME = 'NlqConnectConfig'
-
+DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION', 'us-west-2')
 
 class ConnectConfigEntity:
     """Connect config entity mapped to DynamoDB item"""
@@ -40,7 +40,7 @@ class ConnectConfigEntity:
 class ConnectConfigDao:
 
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb')
+        self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + CONNECT_CONFIG_TABLE_NAME
         if not self.exists():
             self.create_table()
