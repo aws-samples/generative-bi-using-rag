@@ -101,7 +101,7 @@ def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, top_
 
     filter_retrieve_result = []
     for item in retrieve_result:
-        if item["Score"] > score_threshold:
+        if item["_score"] > score_threshold:
             filter_retrieve_result.append(item)
     return filter_retrieve_result
 
