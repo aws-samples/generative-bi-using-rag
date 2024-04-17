@@ -1,8 +1,8 @@
 import boto3
 from loguru import logger
+from typing import List
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-
 
 # DynamoDB table name
 PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'
@@ -10,7 +10,7 @@ PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'
 
 class ProfileConfigEntity:
 
-    def __init__(self, profile_name: str, conn_name: str, schemas: list[str], tables: list[str], comments: str, tables_info: dict=None):
+    def __init__(self, profile_name: str, conn_name: str, schemas: List[str], tables: List[str], comments: str, tables_info: dict=None):
         self.profile_name = profile_name
         self.conn_name = conn_name
         self.schemas = schemas
