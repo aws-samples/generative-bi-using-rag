@@ -161,6 +161,14 @@ Note: Use HTTP instead of HTTPS.
 
 Please follow the instructions in the [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) to install the CDK toolkit.
 
+### 2. Prepare SageMaker Model Assets(For China Region)
+Before deploying the CDK stack, you need to prepare the SageMaker model assets in the S3 bucket.
+
+```bash
+cd generative-bi-using-rag/source/model
+bash prepare_model.sh -s <s3_bucket_name>
+```
+
 ### 2. Deploy the CDK Stack
 
 ```bash
