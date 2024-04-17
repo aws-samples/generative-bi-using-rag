@@ -90,6 +90,14 @@ Given the database schema, here is the SQL query that answers [QUESTION]{questio
     return prompt
 
 
+def stream_items(sql_query):
+    chunks = sql_query.split("\n")
+    for chunk in chunks:
+        stream_buffer = chunk + "\n"
+        logging.info(f"Stream buffer: {stream_buffer}")
+        yield stream_buffer
+
+
 def handle(inputs: Input):
     global tokenizer, model
     if not model:
@@ -100,7 +108,7 @@ def handle(inputs: Input):
     data = inputs.get_as_json()
 
     prompt = data["prompt"]
-    outputs = Output()
+    stream = data.get("stream", False)
 
     # updated_prompt = generate_prompt(prompt)
     updated_prompt = prompt
@@ -116,10 +124,14 @@ def handle(inputs: Input):
         num_beams=1,
     )
     decoded_outputs = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+    sql_query = sqlparse.format(decoded_outputs[0].split("[SQL]")[-1], reindent=True)
+    logging.info(f"SQL Query: {sql_query}")
 
-    result = {
-        "outputs": sqlparse.format(decoded_outputs[0].split("[SQL]")[-1], reindent=True)
-    }
-    outputs.add_as_json(result)
+    outputs = Output()
+    # split SQL query every into chunks containing 10 characters
+    if stream:
+        outputs.add_stream_content(stream_items(sql_query), output_formatter=None)
+    else:
+        outputs.add_as_json({"outputs": sql_query})
 
     return outputs
