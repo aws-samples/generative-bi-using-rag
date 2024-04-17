@@ -1,4 +1,3 @@
-import streamlit as st
 import pandas as pd
 from nlq.business.connection import ConnectionManagement
 from utils.apis import query_from_sql_pd
@@ -41,7 +40,7 @@ class NLQChain:
 
     def get_generated_sql(self):
         try:
-            return self.generated_sql_response.split('```sql')[1].split('```')[0].replace('\n', ' ', 1).strip()
+            return self.generated_sql_response.split("<query>")[1].split("</query>")[0]
         except IndexError:
             raise Exception("No SQL found in the LLM's response")
 
@@ -51,11 +50,11 @@ class NLQChain:
     def set_executed_result_df(self, df):
         self.executed_result_df = df
 
-    def get_executed_result_df(self, force_execute_query=True):
+    def get_executed_result_df(self, profile, force_execute_query=True):
         if self.executed_result_df is None and force_execute_query:
-            db_url = st.session_state['profiles'][self.profile]['db_url']
+            db_url = profile['db_url']
             if not db_url:
-                conn_name = st.session_state['profiles'][self.profile]['conn_name']
+                conn_name = profile['conn_name']
                 db_url = ConnectionManagement.get_db_url_by_name(conn_name)
             self.executed_result_df = query_from_sql_pd(
                 p_db_url=db_url,

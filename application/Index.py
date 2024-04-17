@@ -5,7 +5,7 @@ st.set_page_config(
     page_icon="👋",
 )
 
-st.write("## Welcome to Intelligent BI Playground! 👋")
+st.write("## Welcome to Intelligent BI Playground! Aoyu👋")
 
 st.sidebar.success("Select a demo above.")
 
