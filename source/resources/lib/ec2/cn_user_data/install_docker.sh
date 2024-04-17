@@ -23,7 +23,7 @@ sudo pip3 install docker==6.1.3
 sudo systemctl enable docker 
 sudo systemctl start docker 
 echo "finishing starting docker"
-sudo usermod -aG docker $USER
+sudo usermod -aG docker ec2-user
 echo "finishing adding user to docker group"
 
 # Exit the terminal

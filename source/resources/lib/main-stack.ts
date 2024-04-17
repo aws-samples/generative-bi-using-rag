@@ -11,6 +11,7 @@ export class MainStack extends Stack {
     const s3ModelAssetsBucket = new CfnParameter(this, "S3ModelAssetsBucket", {
       type: "String",
       description: "S3 Bucket for model & code assets",
+      default: "not-set"
     });
 
     let _LlmStack;

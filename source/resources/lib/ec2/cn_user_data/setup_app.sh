@@ -4,10 +4,12 @@
 sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
 
 # Clone the code
-git clone https://github.com/aws-samples/generative-bi-using-rag.git
+# git clone https://github.com/aws-samples/generative-bi-using-rag.git
+wget https://aws-genbi-guidance-asset.s3.us-west-2.amazonaws.com/asset/code/genbi-guidance-asset.zip
+unzip genbi-guidance-asset.zip
 
 # Config the Environment Variable in .env file, modify AWS_DEFAULT_REGION to the region same as the EC2 instance.
-cd generative-bi-using-rag/application && cp .env.template .env 
+cd genbi-guidance-asset/application && cp .env.cntemplate .env 
 
 file_path=".env"
 ec2_region=`curl -s http://169.254.169.254/latest/meta-data/placement/region`
