@@ -10,6 +10,7 @@ from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_C
 import os
 from loguru import logger
 from langchain_core.output_parsers import JsonOutputParser
+from utils.prompts.generate_prompt import generate_llm_prompt
 
 BEDROCK_AWS_REGION = os.environ.get('BEDROCK_REGION', 'us-west-2')
 
@@ -36,7 +37,7 @@ def get_bedrock_client():
     return bedrock
 
 
-def invoke_model_claude3(model_id, system_prompt, messages, max_tokens):
+def invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
     body = json.dumps(
         {
             "anthropic_version": "bedrock-2023-05-31",
@@ -47,17 +48,20 @@ def invoke_model_claude3(model_id, system_prompt, messages, max_tokens):
         }
     )
 
-    response = get_bedrock_client().invoke_model(body=body, modelId=model_id)
-    response_body = json.loads(response.get('body').read())
-
-    return response_body
+    if with_response_stream:
+        response = get_bedrock_client().invoke_model_with_response_stream(body=body, modelId=model_id)
+        return response
+    else:
+        response = get_bedrock_client().invoke_model(body=body, modelId=model_id)
+        response_body = json.loads(response.get('body').read())
+        return response_body
 
 
 def claude_select_table():
     pass
 
 
-def generate_prompt(ddl, hints, search_box, examples=None, model_id=None, dialect='mysql'):
+def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
     long_string = ""
     for table_name, table_data in ddl.items():
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
@@ -80,8 +84,19 @@ def generate_prompt(ddl, hints, search_box, examples=None, model_id=None, dialec
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
-    example_prompt = ""
-    if not examples:
+    example_sql_prompt = ""
+    example_ner_prompt = ""
+    if sql_examples:
+        for item in sql_examples:
+            example_sql_prompt += "Q: " + item['_source']['text'] + "\n"
+            example_sql_prompt += "A: ```sql\n" + item['_source']['sql'] + "```\n"
+
+    if ner_example:
+        for item in sql_examples:
+            example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
+            example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
+
+    if example_sql_prompt == "" and example_ner_prompt == "":
         claude_prompt = '''Here is DDL of the database you are working on: 
         ```
         {ddl} 
@@ -89,12 +104,7 @@ def generate_prompt(ddl, hints, search_box, examples=None, model_id=None, dialec
         Here are some hints: {hints}
         You need to answer the question: "{question}" in SQL. 
         '''.format(ddl=ddl, hints=hints, question=search_box)
-    else:
-        # assemble examples into a string
-        for item in examples:
-            example_prompt += "Q: " + item['_source']['text'] + "\n"
-            example_prompt += "A: ```sql\n" + item['_source']['sql'] + "```\n"
-
+    elif example_sql_prompt != "" and example_ner_prompt == "":
         claude_prompt = '''Here is DDL of the database you are working on:
         ```
         {ddl}
@@ -103,14 +113,38 @@ def generate_prompt(ddl, hints, search_box, examples=None, model_id=None, dialec
         Also, here are some examples of generating SQL using natural language: 
         {examples}
         Now, you need to answer the question: "{question}" in SQL. 
-        '''.format(ddl=ddl, hints=hints, examples=example_prompt, question=search_box)
+        '''.format(ddl=ddl, hints=hints, examples=example_sql_prompt, question=search_box)
+    elif example_sql_prompt == "" and example_ner_prompt != "":
+        claude_prompt = '''Here is DDL of the database you are working on:
+        ```
+        {ddl}
+        ```
+        Here are some hints: {hints}
+        Also, here are some ner info: 
+        {examples}
+        Now, you need to answer the question: "{question}" in SQL. 
+        '''.format(ddl=ddl, hints=hints, examples=example_ner_prompt, question=search_box)
+    else:
+        claude_prompt = '''Here is DDL of the database you are working on:
+        ```
+        {ddl}
+        ```
+        Here are some hints: {hints}
+        Here here are some ner info: {examples_ner}
+        Also, here are some examples of generating SQL using natural language: 
+        {examples_sql}
+        Now, you need to answer the question: "{question}" in SQL. 
+        '''.format(ddl=ddl, hints=hints, examples_sql=example_sql_prompt, examples_ner=example_ner_prompt,
+                   question=search_box)
 
     return claude_prompt, dialect_prompt
 
 
 @logger.catch
-def claude3_to_sql(ddl, hints, search_box, examples=None, model_id=None, dialect='mysql', model_provider=None):
-    user_prompt, system_prompt = generate_prompt(ddl, hints, search_box, examples, model_id, dialect=dialect)
+def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
+                   model_provider=None, with_response_stream=False):
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
+                                                 dialect=dialect)
 
     max_tokens = 2048
 
@@ -119,10 +153,12 @@ def claude3_to_sql(ddl, hints, search_box, examples=None, model_id=None, dialect
     messages = [user_message]
     logger.info(f'{system_prompt=}')
     logger.info(f'{messages=}')
-    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-    final_response = response.get("content")[0].get("text")
-
-    return final_response
+    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
+    if with_response_stream:
+        return response
+    else:
+        final_response = response.get("content")[0].get("text")
+        return final_response
 
 
 def get_query_intent(model_id, search_box):
@@ -236,3 +272,19 @@ def upload_results_to_opensearch(region_name, domain, opensearch_user, opensearc
     else:
         logger.error("Failed to create records using Amazon Bedrock Titan text embedding")
         return False
+
+
+def generate_suggested_question(search_box, system_prompt, model_id=None):
+    max_tokens = 2048
+    user_prompt = """
+    Here is the input query: {question}. 
+    Please generate queries based on the input query.
+    """.format(question=search_box)
+    user_message = {"role": "user", "content": user_prompt}
+    messages = [user_message]
+    logger.info(f'{system_prompt=}')
+    logger.info(f'{messages=}')
+    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+    final_response = response.get("content")[0].get("text")
+
+    return final_response

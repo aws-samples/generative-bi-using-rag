@@ -9,6 +9,7 @@ from nlq.data_access.database import RelationDatabase
 db_type_mapping = {
     'mysql': 'MySQL',
     'postgresql': 'PostgreSQL',
+    'redshift': 'Redshift',
 }
 
 
