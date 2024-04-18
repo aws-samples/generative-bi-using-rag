@@ -101,7 +101,7 @@ def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, top_
 
     filter_retrieve_result = []
     for item in retrieve_result:
-        if item["Score"] > score_threshold:
+        if item["_score"] > score_threshold:
             filter_retrieve_result.append(item)
     return filter_retrieve_result
 
@@ -163,7 +163,8 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0']
+
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0']
 
     with st.sidebar:
         st.title('Setting')

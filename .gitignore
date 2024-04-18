@@ -169,3 +169,8 @@ cdk.context.json
 **/cdk.out
 package-lock.json
 !source/resources/lib/
+
+# Model Artifact
+internlm2-chat-7b/
+sqlcoder-7b-2/
+bge-m3/

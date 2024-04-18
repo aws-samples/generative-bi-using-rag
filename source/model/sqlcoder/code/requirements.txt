@@ -1,0 +1,2 @@
+accelerate==0.29.2
+sqlparse==0.5.0
