@@ -45,7 +45,7 @@ class NLQChain:
             raise Exception("No SQL found in the LLM's response")
 
     def get_generated_sql_explain(self):
-        return self.generated_sql_response.split('```')[-1]
+        return self.generated_sql_response.split('</query>')[1]
 
     def set_executed_result_df(self, df):
         self.executed_result_df = df

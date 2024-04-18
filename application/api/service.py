@@ -9,10 +9,11 @@ from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
 from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, \
-    retrieve_results_from_opensearch, get_query_intent
+    retrieve_results_from_opensearch, get_query_intent, create_vector_embedding_with_sagemaker, \
+    sagemaker_to_sql, sagemaker_to_explain
 from .schemas import Question, Answer, Example, Option
 from .exception_handler import BizException
-from .constant import const
+from utils.constant import BEDROCK_MODEL_IDS
 from .enum import ErrorEnum
 
 
@@ -33,7 +34,7 @@ all_profiles.update(datasource_profile)
 def get_option() -> Option:
     option = Option(
         data_profiles=all_profiles.keys(),
-        bedrock_model_ids=const.BEDROCK_MODEL_IDS,
+        bedrock_model_ids=BEDROCK_MODEL_IDS,
     )
     return option
 
@@ -52,9 +53,16 @@ def __process_nlq_chain(question: Question) -> NLQChain:
                 selected_profile = "shopping_guide"
 
                 logger.info(question.keywords)
-                records_with_embedding = create_vector_embedding_with_bedrock(
-                    question.keywords,
-                    index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+                embedding_endpoint = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING','')
+                if embedding_endpoint:
+                    records_with_embedding = create_vector_embedding_with_sagemaker(
+                        embedding_endpoint,
+                        question.keywords,
+                        index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+                else:
+                    records_with_embedding = create_vector_embedding_with_bedrock(
+                        question.keywords,
+                        index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
                 logger.info(env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
                 retrieve_result = retrieve_results_from_opensearch(
                     index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'],
@@ -84,7 +92,7 @@ def __process_nlq_chain(question: Question) -> NLQChain:
 
 
 def verify_parameters(question: Question):
-    if question.bedrock_model_id not in const.BEDROCK_MODEL_IDS:
+    if question.bedrock_model_id not in BEDROCK_MODEL_IDS:
         raise BizException(ErrorEnum.INVAILD_BEDROCK_MODEL_ID)
 
 
@@ -125,7 +133,20 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
         db_url = ConnectionManagement.get_db_url_by_name(conn_name)
         database_profile['db_url'] = db_url
 
-    response = claude3_to_sql(database_profile['tables_info'],
+
+    sql_endpoint = os.getenv('SAGEMAKER_ENDPOINT_SQL','')
+    if sql_endpoint:
+        response = sagemaker_to_sql(database_profile['tables_info'],
+                                database_profile['hints'],
+                                question.keywords,
+                                endpoint_name=sql_endpoint,
+                                sql_examples=current_nlq_chain.get_retrieve_samples(),
+                                ner_example = entity_slot_retrieve,
+                                dialect=get_db_url_dialect(database_profile['db_url']),
+                                model_provider=None,
+                                with_response_stream=with_response_stream,) # This does not support streaming
+    else:
+        response = claude3_to_sql(database_profile['tables_info'],
                                 database_profile['hints'],
                                 question.keywords,
                                 model_id=question.bedrock_model_id,
@@ -147,6 +168,11 @@ def ask(question: Question) -> Answer:
         response = get_result_from_llm(question, current_nlq_chain)
         logger.info(f'got llm response: {response}')
         current_nlq_chain.set_generated_sql_response(response)
+        endpoint_name = os.getenv("SAGEMAKER_ENDPOINT_EXPLAIN")
+        if endpoint_name:
+            explain = sagemaker_to_explain(endpoint_name, current_nlq_chain.get_generated_sql())
+            logger.info(f'{explain=}')
+            current_nlq_chain.set_generated_sql_response(response+explain)
     else:
         logger.info('get generated sql from memory')
 
@@ -181,6 +207,12 @@ def ask_with_response_stream(question: Question, current_nlq_chain: NLQChain) ->
     return response
 
 
+def explain_with_response_stream(current_nlq_chain: NLQChain) -> dict:
+    endpoint_name = os.getenv("SAGEMAKER_ENDPOINT_EXPLAIN")
+    explain = sagemaker_to_explain(endpoint_name, current_nlq_chain.get_generated_sql(), True)
+    return explain
+
+
 def get_executed_result(current_nlq_chain: NLQChain) -> str:
     sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[current_nlq_chain.profile])
     final_sql_query_result = sql_query_result.to_markdown()
@@ -197,9 +229,16 @@ def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, top_
     else:
         index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name'] + "_ner"
 
-    records_with_embedding = create_vector_embedding_with_bedrock(
-        query,
-        index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+    embedding_endpoint = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING','')
+    if embedding_endpoint:
+        records_with_embedding = create_vector_embedding_with_sagemaker(
+            embedding_endpoint,
+            query,
+            index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+    else:
+        records_with_embedding = create_vector_embedding_with_bedrock(
+            query,
+            index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
     retrieve_result = retrieve_results_from_opensearch(
         index_name=index_name,
         region_name=env_vars['data_sources'][selected_profile]['opensearch']['region_name'],

@@ -1,12 +1,16 @@
 import json
+import os
 import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
 from .enum import ContentEnum, ErrorEnum
 from .schemas import Question, QuestionSocket, Answer, Option
 from . import service
+from nlq.business.nlq_chain import NLQChain
+from dotenv import load_dotenv
 
 router = APIRouter(prefix="/qa", tags=["qa"])
+load_dotenv()
 
 
 @router.get("/option", response_model=Option)
@@ -40,17 +44,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     await response_websocket(websocket, session_id, str(examples))
                     await response_websocket(websocket, session_id, "\n```\n")
                 response = service.ask_with_response_stream(question, current_nlq_chain)
-                result_pieces = []
-                for event in response['body']:
-                    current_body = event["chunk"]["bytes"].decode('utf8')
-                    current_content = json.loads(current_body)
-                    if current_content.get("type") == "content_block_delta":
-                        current_text = current_content.get("delta").get("text")
-                        result_pieces.append(current_text)
-                        await response_websocket(websocket, session_id, current_text)
-                    elif current_content.get("type") == "content_block_stop":
-                        break
-                current_nlq_chain.set_generated_sql_response(''.join(result_pieces))
+                if os.getenv('SAGEMAKER_ENDPOINT_SQL',''):
+                    await response_sagemaker_sql(websocket, session_id, response, current_nlq_chain)
+                    await response_websocket(websocket, session_id, "\n")
+                    explain_response = service.explain_with_response_stream(current_nlq_chain)
+                    await response_sagemaker_explain(websocket, session_id, explain_response)
+                else:
+                    await response_bedrock(websocket, session_id, response, current_nlq_chain)
+                
                 if question.query_result:
                     final_sql_query_result = service.get_executed_result(current_nlq_chain)
                     await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
@@ -63,6 +64,44 @@ async def websocket_endpoint(websocket: WebSocket):
                 await response_websocket(websocket, session_id, msg, ContentEnum.EXCEPTION)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
+
+
+async def response_sagemaker_sql(websocket: WebSocket, session_id: str, response: dict, current_nlq_chain: NLQChain):
+    result_pieces = []
+    for event in response['Body']:
+        current_body = event["PayloadPart"]["Bytes"].decode('utf8')
+        result_pieces.append(current_body)
+        await response_websocket(websocket, session_id, current_body)
+    # TODO Must modify response
+    sql_response = '''<query>SELECT i.`item_id`, i.`product_description`, COUNT(it.`event_type`) AS total_purchases
+FROM `items` i
+JOIN `interactions` it ON i.`item_id` = it.`item_id`
+WHERE it.`event_type` = 'purchase'
+GROUP BY i.`item_id`, i.`product_description`
+ORDER BY total_purchases DESC
+LIMIT 10;</query>'''
+    current_nlq_chain.set_generated_sql_response(sql_response)
+
+
+async def response_sagemaker_explain(websocket: WebSocket, session_id: str, response: dict):
+    for event in response['Body']:
+        current_body = event["PayloadPart"]["Bytes"].decode('utf8')
+        current_content = json.loads(current_body)
+        await response_websocket(websocket, session_id, current_content.get("outputs"))
+
+
+async def response_bedrock(websocket: WebSocket, session_id: str, response: dict, current_nlq_chain: NLQChain):
+    result_pieces = []
+    for event in response['body']:
+        current_body = event["chunk"]["bytes"].decode('utf8')
+        current_content = json.loads(current_body)
+        if current_content.get("type") == "content_block_delta":
+            current_text = current_content.get("delta").get("text")
+            result_pieces.append(current_text)
+            await response_websocket(websocket, session_id, current_text)
+        elif current_content.get("type") == "content_block_stop":
+            break
+    current_nlq_chain.set_generated_sql_response(''.join(result_pieces))
 
 
 async def response_websocket(websocket: WebSocket, session_id: str, content: str, content_type: ContentEnum=ContentEnum.COMMON):
