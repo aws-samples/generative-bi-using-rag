@@ -1,12 +1,12 @@
 from enum import Enum, unique
-from .constant import const
+from utils.constant import BEDROCK_MODEL_IDS
 
 
 @unique
 class ErrorEnum(Enum):
     SUCCEEDED = {1: "Operation succeeded"}
     NOT_SUPPORTED = {1001: "Your query statement is currently not supported by the system"}
-    INVAILD_BEDROCK_MODEL_ID = {1002: f"Invalid bedrock model id.Vaild ids:{const.BEDROCK_MODEL_IDS}"}
+    INVAILD_BEDROCK_MODEL_ID = {1002: f"Invalid bedrock model id.Vaild ids:{BEDROCK_MODEL_IDS}"}
     INVAILD_SESSION_ID = {1003: f"Invalid session id."}
     UNKNOWN_ERROR = {9999: "Unknown error."}
 

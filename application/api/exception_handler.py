@@ -3,20 +3,12 @@ from fastapi.responses import JSONResponse
 from fastapi import status, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from .enum import ErrorEnum
-from .constant import const
 import traceback
 from loguru import logger
 
 
 def response_error(code: int, message: str, status_code: int = status.HTTP_400_BAD_REQUEST) -> Response:
     headers = {}
-    if os.getenv(const.MODE) == const.MODE_DEV:
-        headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Methods': '*',
-            'Access-Control-Allow-Credentials': 'true'
-        }
     return JSONResponse(
         content={
             'code': code,

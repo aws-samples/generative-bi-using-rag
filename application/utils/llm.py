@@ -10,7 +10,8 @@ from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_C
 import os
 from loguru import logger
 from langchain_core.output_parsers import JsonOutputParser
-from utils.prompts.generate_prompt import generate_llm_prompt
+from utils.prompts.generate_prompt import generate_llm_prompt,generate_sagemaker_intent_prompt, \
+    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt
 
 BEDROCK_AWS_REGION = os.environ.get('BEDROCK_REGION', 'us-west-2')
 
@@ -27,6 +28,7 @@ config = Config(
 
 bedrock = None
 json_parse = JsonOutputParser()
+sagemaker_client = None
 
 
 @logger.catch
@@ -54,6 +56,32 @@ def invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_res
     else:
         response = get_bedrock_client().invoke_model(body=body, modelId=model_id)
         response_body = json.loads(response.get('body').read())
+        return response_body
+
+
+@logger.catch
+def get_sagemaker_client():
+    global sagemaker_client
+    if not sagemaker_client:
+        sagemaker_client = boto3.client(service_name='sagemaker-runtime')
+    return sagemaker_client
+
+
+def invoke_model_sagemaker_endpoint(endpoint_name, body, with_response_stream=False):
+    if with_response_stream:
+        response = get_sagemaker_client().invoke_endpoint_with_response_stream(
+            EndpointName=endpoint_name,
+            Body=body,
+            ContentType="application/json",
+        )
+        return response
+    else:
+        response = get_sagemaker_client().invoke_endpoint(
+            EndpointName=endpoint_name,
+            Body=body,
+            ContentType="application/json",
+        )
+        response_body = json.loads(response.get('Body').read())
         return response_body
 
 
@@ -161,18 +189,62 @@ def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, 
         return final_response
 
 
+@logger.catch
+def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=False):
+    body = json.dumps({"query": generate_sagemaker_explain_prompt(sql),
+                        "stream": with_response_stream,})
+    response = invoke_model_sagemaker_endpoint(endpoint_name,body,with_response_stream)
+    logger.info(response)
+    if with_response_stream:
+        return response
+    else:
+        # TODO may need to modify response
+        return response
+
+
+@logger.catch
+def sagemaker_to_sql(ddl, hints, search_box, endpoint_name, sql_examples=None, ner_example=None, dialect='mysql',
+                   model_provider=None, with_response_stream=False):
+    body = json.dumps({"prompt": generate_sagemaker_sql_prompt(ddl, hints, search_box, sql_examples, ner_example,
+                                                 dialect=dialect),
+                        "stream": with_response_stream,})
+    response = invoke_model_sagemaker_endpoint(endpoint_name,body,with_response_stream)
+    logger.info(response)
+    if with_response_stream:
+        return response
+    else:
+        # TODO Must modify response
+        final_response = '''<query>SELECT i.`item_id`, i.`product_description`, COUNT(it.`event_type`) AS total_purchases
+FROM `items` i
+JOIN `interactions` it ON i.`item_id` = it.`item_id`
+WHERE it.`event_type` = 'purchase'
+GROUP BY i.`item_id`, i.`product_description`
+ORDER BY total_purchases DESC
+LIMIT 10;</query>'''
+        return final_response
+
+
 def get_query_intent(model_id, search_box):
     default_intent = {"intent": "normal_search"}
     try:
-        system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
-        max_tokens = 2048
-        user_message = {"role": "user", "content": search_box}
-        messages = [user_message]
-        response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-        final_response = response.get("content")[0].get("text")
-        logger.info(f'{final_response=}')
-        intent_result_dict = json_parse.parse(final_response)
-        return intent_result_dict
+        intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
+        if intent_endpoint:
+            # TODO may need to modify the prompt
+            body = json.dumps({"query": generate_sagemaker_intent_prompt(search_box,meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
+            response = invoke_model_sagemaker_endpoint(intent_endpoint,body)
+            logger.info(f'{response=}')
+            intent_result_dict = json_parse.parse(response)
+            return intent_result_dict
+        else:
+            system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
+            max_tokens = 2048
+            user_message = {"role": "user", "content": search_box}
+            messages = [user_message]
+            response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+            final_response = response.get("content")[0].get("text")
+            logger.info(f'{final_response=}')
+            intent_result_dict = json_parse.parse(final_response)
+            return intent_result_dict
     except Exception as e:
         return default_intent
 
@@ -191,6 +263,17 @@ def create_vector_embedding_with_bedrock(text, index_name):
 
     embedding = response_body.get("embedding")
     return {"_index": index_name, "text": text, "vector_field": embedding}
+
+
+def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
+    model_kwargs = {}
+    model_kwargs["batch_size"] = 12
+    model_kwargs["max_length"] = 512
+    model_kwargs["return_type"] = "dense"
+    body = json.dumps({"inputs": [text], **model_kwargs})
+    response = invoke_model_sagemaker_endpoint(endpoint_name, body)
+    embeddings = response["sentence_embeddings"]
+    return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
 
 
 def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch_user, opensearch_password,
