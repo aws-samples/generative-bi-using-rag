@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from nlq.business.connection import ConnectionManagement
 from utils.apis import query_from_sql_pd
 
@@ -40,12 +41,14 @@ class NLQChain:
 
     def get_generated_sql(self):
         try:
-            return self.generated_sql_response.split("<query>")[1].split("</query>")[0]
+            return self.generated_sql_response.split("<sql>")[1].split("</sql>")[0]
         except IndexError:
             raise Exception("No SQL found in the LLM's response")
 
     def get_generated_sql_explain(self):
-        return self.generated_sql_response.split('```')[-1]
+        pattern = r"<sql>.*?</sql>"
+        generated_sql_explain = re.sub(pattern, "", self.generated_sql_response)
+        return generated_sql_explain
 
     def set_executed_result_df(self, df):
         self.executed_result_df = df
