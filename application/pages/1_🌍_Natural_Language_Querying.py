@@ -184,7 +184,7 @@ def main():
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
-        intent_ner_recognition = st.checkbox("Intent Ner Recognition", False)
+        intent_ner_recognition = st.checkbox("Intent Ner Recognition", True)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", True)
 
     # Part II: Search Section
