@@ -52,7 +52,7 @@ You ALWAYS follow these guidelines when writing your response:
 
 Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
 
-Think about your answer first before you respond. Put your response in <query></query> tags.
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
 
 """
 
