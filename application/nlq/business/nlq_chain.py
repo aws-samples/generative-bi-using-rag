@@ -46,9 +46,11 @@ class NLQChain:
             raise Exception("No SQL found in the LLM's response")
 
     def get_generated_sql_explain(self):
-        pattern = r"<sql>.*?</sql>"
-        generated_sql_explain = re.sub(pattern, "", self.generated_sql_response)
-        return generated_sql_explain
+        index = self.generated_sql_response.find("</sql>")
+        if index != -1:
+            return self.generated_sql_response[index + len("</sql>"):]
+        else:
+            return ""
 
     def set_executed_result_df(self, df):
         self.executed_result_df = df
