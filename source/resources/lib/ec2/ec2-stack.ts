@@ -66,13 +66,20 @@ export class Ec2Stack extends NestedStack {
       }],
     });
 
-    const installDockerAsset = new Asset(this, 'InstallDockerAsset', { path: path.join(__dirname, 'user_data/install_docker.sh') });
+    let installDockerAsset;
+    let setupAppAsset;
+    if (props.env?.region === "cn-north-1" || props.env?.region === "cn-northwest-1") {
+      installDockerAsset = new Asset(this, 'InstallDockerAsset', { path: path.join(__dirname, 'cn_user_data/install_docker.sh') });
+      setupAppAsset = new Asset(this, 'SetupAppAsset', { path: path.join(__dirname, 'cn_user_data/setup_app.sh') });
+    } else {
+      installDockerAsset = new Asset(this, 'InstallDockerAsset', { path: path.join(__dirname, 'user_data/install_docker.sh') });
+      setupAppAsset = new Asset(this, 'SetupAppAsset', { path: path.join(__dirname, 'user_data/setup_app.sh') });
+    }
     const installDockerLocalPath = ec2Instance.userData.addS3DownloadCommand({
       bucket: installDockerAsset.bucket,
       bucketKey: installDockerAsset.s3ObjectKey,
     });
 
-    const setupAppAsset = new Asset(this, 'SetupAppAsset', { path: path.join(__dirname, 'user_data/setup_app.sh') });
     const setupAppLocalPath = ec2Instance.userData.addS3DownloadCommand({
       bucket: setupAppAsset.bucket,
       bucketKey: setupAppAsset.s3ObjectKey,

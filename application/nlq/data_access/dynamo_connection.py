@@ -3,6 +3,9 @@ import boto3
 from loguru import logger
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # DynamoDB table name
 CONNECT_CONFIG_TABLE_NAME = 'NlqConnectConfig'

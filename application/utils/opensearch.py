@@ -47,14 +47,14 @@ def create_index(opensearch_client, index_name):
     return bool(response['acknowledged'])
     
     
-def create_index_mapping(opensearch_client, index_name):
+def create_index_mapping(opensearch_client, index_name, dimension):
     response = opensearch_client.indices.put_mapping(
         index=index_name,
         body={
             "properties": {
                 "vector_field": {
                     "type": "knn_vector",
-                    "dimension": 1536
+                    "dimension": dimension
                 },
                 "text": {
                     "type": "keyword"

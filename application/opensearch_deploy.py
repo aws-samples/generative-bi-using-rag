@@ -5,8 +5,11 @@ from dotenv import load_dotenv
 import os
 import boto3
 import sys
+from loguru import logger
 
 load_dotenv()
+
+SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING','')
 
 AOS_HOST = os.getenv('AOS_HOST', '')
 AOS_PORT = os.getenv('AOS_PORT', 9200)
@@ -32,16 +35,16 @@ def index_to_opensearch():
     create_index = True
     if len(sys.argv) == 1:
         from deployment.default_index_data import bulk_questions
-        print(f'found {len(bulk_questions)} questions in default collection')
+        logger.info(f'found {len(bulk_questions)} questions in default collection')
     elif 2 <= len(sys.argv) < 4:
         from deployment.custom_index_data_sample import custom_bulk_questions
         bulk_questions = custom_bulk_questions[sys.argv[1]]
-        print(f'found {len(bulk_questions)} questions in {sys.argv[1]} collection')
+        logger.info(f'found {len(bulk_questions)} questions in {sys.argv[1]} collection')
         if len(sys.argv) == 3 and sys.argv[2] == 'false':
             create_index = False
     else:
-        print('Usage: python3 opensearch_deploy.py <collection_name> <create_index:bool>')
-        print('       create_index: true (default) or false')
+        logger.info('Usage: python3 opensearch_deploy.py <collection_name> <create_index:bool>')
+        logger.info('       create_index: true (default) or false')
         return
 
     if AOS_HOST == '':
@@ -112,39 +115,72 @@ def index_to_opensearch():
     def get_bedrock_client(region):
         bedrock_client = boto3.client("bedrock-runtime", region_name=region)
         return bedrock_client
+    
+
+    def create_vector_embedding_with_sagemaker(text, index_name, sagemaker_client):
+        model_kwargs = {}
+        model_kwargs["batch_size"] = 12
+        model_kwargs["max_length"] = 512
+        model_kwargs["return_type"] = "dense"
+
+        response_model = sagemaker_client.invoke_endpoint(
+            EndpointName=SAGEMAKER_ENDPOINT_EMBEDDING,
+            Body=json.dumps({"inputs": [text], **model_kwargs}),
+            ContentType="application/json",
+        )
+        # 中文instruction => 为这个句子生成表示以用于检索相关文章：
+        json_str = response_model["Body"].read().decode("utf8")
+        json_obj = json.loads(json_str)
+        embeddings = json_obj["sentence_embeddings"]
+        return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
+    
+
+    def get_sagemaker_client():
+        sagemaker_client = boto3.client("sagemaker-runtime")
+        return sagemaker_client
 
 
     # Check if to delete OpenSearch index with the argument passed to the script --recreate 1
     # response = opensearch.delete_opensearch_index(opensearch_client, name)
 
+    # Initialize
+    if SAGEMAKER_ENDPOINT_EMBEDDING:
+        dimension = 1024
+        sagemaker_client = get_sagemaker_client()
+    else:
+        dimension = 1536
+        bedrock_client = get_bedrock_client(BEDROCK_REGION)
+
     exists = opensearch.check_opensearch_index(opensearch_client, index_name)
     if not exists:
-        print("Creating OpenSearch index")
+        logger.info("Creating OpenSearch index")
         success = opensearch.create_index(opensearch_client, index_name)
         if success:
-            print("Creating OpenSearch index mapping")
-            success = opensearch.create_index_mapping(opensearch_client, index_name)
-            print(f"OpenSearch Index mapping created")
+            logger.info("Creating OpenSearch index mapping")
+            success = opensearch.create_index_mapping(opensearch_client, index_name, dimension)
+            logger.info(f"OpenSearch Index mapping created")
     else:
         if create_index:
-            print("Index already exists. Exit with 0 now.")
+            logger.info("Index already exists. Exit with 0 now.")
             exit(0)
 
     all_records = bulk_questions
 
-    # Initialize bedrock client
-    bedrock_client = get_bedrock_client(BEDROCK_REGION)
+
 
     # Vector embedding using Amazon Bedrock Titan text embedding
     all_json_records = []
-    print(f"Creating embeddings for records")
+    logger.info(f"Creating embeddings for records")
 
     # using the arg --early-stop
     i = 0
     for record in all_records:
         i += 1
-        records_with_embedding = create_vector_embedding_with_bedrock(record['question'], index_name, bedrock_client)
-        print(f"Embedding for record {i} created")
+        if SAGEMAKER_ENDPOINT_EMBEDDING:
+            records_with_embedding = create_vector_embedding_with_sagemaker(record['question'], index_name, sagemaker_client)
+        else:
+            records_with_embedding = create_vector_embedding_with_bedrock(record['question'], index_name, bedrock_client)
+        logger.info(f"Embedding for record {i} created")
         records_with_embedding['sql'] = record['sql']
         records_with_embedding['profile'] = record.get('profile', 'default')
         all_json_records.append(records_with_embedding)
@@ -152,9 +188,10 @@ def index_to_opensearch():
             # Bulk put all records to OpenSearch
             success, failed = opensearch.put_bulk_in_opensearch(all_json_records, opensearch_client)
             all_json_records = []
-            print(f"Documents saved {success}, documents failed to save {failed}")
+            logger.info(f"Documents saved {success}, documents failed to save {failed}")
 
-    print("Finished creating records using Amazon Bedrock Titan text embedding")
+    logger.info("Finished creating records using Amazon Bedrock Titan text embedding")
+
 
     # init index_name_ner
     if AOS_HOST == '':
@@ -164,12 +201,12 @@ def index_to_opensearch():
 
     exists_ner = opensearch.check_opensearch_index(opensearch_client, index_name_ner)
     if not exists_ner:
-        print("Creating OpenSearch Ner index")
+        logger.info("Creating OpenSearch Ner index")
         success = opensearch.create_index(opensearch_client, index_name_ner)
         if success:
-            print("Creating OpenSearch index mapping")
-            success = opensearch.create_index_mapping(opensearch_client, index_name_ner)
-            print(f"OpenSearch Index mapping created")
+            logger.info("Creating OpenSearch index mapping")
+            success = opensearch.create_index_mapping(opensearch_client, index_name_ner, dimension)
+            logger.info(f"OpenSearch Index mapping created")
 
 
 if __name__ == "__main__":

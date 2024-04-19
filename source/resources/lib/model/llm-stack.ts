@@ -13,6 +13,7 @@ interface LLMStackProps extends cdk.StackProps {
   sqlModelVersion: string;
   llmModelPrefix: string;
   llmModelVersion: string;
+  env: cdk.Environment;
 }
 
 export class LLMStack extends cdk.NestedStack {
@@ -24,12 +25,12 @@ export class LLMStack extends cdk.NestedStack {
     super(scope, id, props);
 
     const llmImageUrlDomain =
-      this.region === "cn-north-1" || this.region === "cn-northwest-1"
+      props.env.region === "cn-north-1" || props.env.region === "cn-northwest-1"
         ? ".amazonaws.com.cn/"
         : ".amazonaws.com/";
 
     const llmImageUrlAccount =
-      this.region === "cn-north-1" || this.region === "cn-northwest-1"
+      props.env.region === "cn-north-1" || props.env.region === "cn-northwest-1"
         ? "727897471807.dkr.ecr."
         : "763104351884.dkr.ecr.";
 
@@ -54,7 +55,7 @@ export class LLMStack extends cdk.NestedStack {
       "embedding-" + embeddingModelPrefix + "-" + embeddingVersionId.slice(0, 5);
     const embeddingImageUrl =
       llmImageUrlAccount +
-      this.region +
+      props.env.region +
       llmImageUrlDomain +
       "djl-inference:0.26.0-deepspeed0.12.6-cu121";
     const embeddingModel = new sagemaker.CfnModel(this, embeddingModelName, {
@@ -116,7 +117,7 @@ export class LLMStack extends cdk.NestedStack {
 
     const sqlImageUrl =
       llmImageUrlAccount +
-      this.region +
+      props.env.region +
       llmImageUrlDomain +
       "djl-inference:0.26.0-deepspeed0.12.6-cu121";
     const sqlModel = new sagemaker.CfnModel(this, sqlModelName, {
@@ -166,7 +167,7 @@ export class LLMStack extends cdk.NestedStack {
 
 
     // INSTRUCT MODEL
-    // Create model, BucketDeployment construct automatically handles dependencies to ensure model assets uploaded before creating the model in this.region
+    // Create model, BucketDeployment construct automatically handles dependencies to ensure model assets uploaded before creating the model in props.env.region
     // Instruct MODEL
     const llmModelPrefix = props.llmModelPrefix;
     const llmCodePrefix = llmModelPrefix + "_deploy_code";
@@ -179,7 +180,7 @@ export class LLMStack extends cdk.NestedStack {
 
     const llmImageUrl =
       llmImageUrlAccount +
-      this.region +
+      props.env.region +
       llmImageUrlDomain +
       "djl-inference:0.26.0-deepspeed0.12.6-cu121";
     const llmModel = new sagemaker.CfnModel(this, llmModelName, {
