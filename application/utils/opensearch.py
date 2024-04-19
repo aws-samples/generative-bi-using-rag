@@ -1,7 +1,9 @@
 import boto3
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_opensearch_cluster_client(domain, user, password, region, index_name):
     opensearch_endpoint = get_opensearch_endpoint(domain, region)

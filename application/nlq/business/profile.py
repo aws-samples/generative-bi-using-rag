@@ -1,6 +1,7 @@
-from loguru import logger
+import logging
 from nlq.data_access.dynamo_profile import ProfileConfigDao, ProfileConfigEntity
 
+logger = logging.getLogger(__name__)
 
 class ProfileManagement:
     profile_config_dao = ProfileConfigDao()
