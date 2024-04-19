@@ -8,10 +8,13 @@ from utils import opensearch
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3
 import os
-from loguru import logger
+import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt,generate_sagemaker_intent_prompt, \
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 BEDROCK_AWS_REGION = os.environ.get('BEDROCK_REGION', 'us-west-2')
 
@@ -31,7 +34,6 @@ json_parse = JsonOutputParser()
 sagemaker_client = None
 
 
-@logger.catch
 def get_bedrock_client():
     global bedrock
     if not bedrock:
@@ -164,11 +166,11 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
         Now, you need to answer the question: "{question}" in SQL. 
         '''.format(ddl=ddl, hints=hints, examples_sql=example_sql_prompt, examples_ner=example_ner_prompt,
                    question=search_box)
+    print('claude_prompt')
 
     return claude_prompt, dialect_prompt
 
 
-@logger.catch
 def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                    model_provider=None, with_response_stream=False):
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,

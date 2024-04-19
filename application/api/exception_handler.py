@@ -4,8 +4,8 @@ from fastapi import status, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from .enum import ErrorEnum
 import traceback
-from loguru import logger
-
+import logging
+logger = logging.getLogger(__name__)
 
 def response_error(code: int, message: str, status_code: int = status.HTTP_400_BAD_REQUEST) -> Response:
     headers = {}
