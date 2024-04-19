@@ -234,7 +234,8 @@ def main():
         for message in st.session_state.messages[selected_profile]:
             with st.chat_message(message["role"]):
                 if "SQL:" in message["content"]:
-                    st.code(message["content"].replace("SQL:", ""), language="sql")
+                    with st.expander("The generated SQL"):
+                        st.code(message["content"].replace("SQL:", ""), language="sql")
                 elif isinstance(message["content"], pd.DataFrame):
                     st.table(message["content"])
                 else:
