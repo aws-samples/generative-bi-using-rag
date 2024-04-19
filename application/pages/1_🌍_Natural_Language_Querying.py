@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
-from loguru import logger
+import logging
 
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
@@ -16,6 +16,7 @@ from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retr
     upload_results_to_opensearch, get_query_intent, generate_suggested_question
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
+logger = logging.getLogger(__name__)
 
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""

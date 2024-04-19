@@ -1,10 +1,11 @@
-from loguru import logger
+import logging 
 import os
 import boto3
 import json
 from nlq.data_access.opensearch import OpenSearchDao
 from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD
 
+logger = logging.getLogger(__name__)
 
 class VectorStore:
     opensearch_dao = OpenSearchDao(AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD)

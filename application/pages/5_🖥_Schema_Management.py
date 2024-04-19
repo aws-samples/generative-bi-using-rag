@@ -1,8 +1,9 @@
 import streamlit as st
 from dotenv import load_dotenv
-from loguru import logger
+import logging
 from nlq.business.profile import ProfileManagement
 
+logger = logging.getLogger(__name__)
 
 def main():
     load_dotenv()

@@ -2,13 +2,14 @@ import json
 import os
 import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from loguru import logger
+import logging
 from .enum import ContentEnum, ErrorEnum
 from .schemas import Question, QuestionSocket, Answer, Option
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/qa", tags=["qa"])
 load_dotenv()
 

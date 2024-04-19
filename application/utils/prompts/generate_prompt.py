@@ -2,7 +2,9 @@ from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_C
     DEFAULT_DIALECT_PROMPT
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 support_model_ids_map = {
     "anthropic.claude-3-haiku-20240307-v1:0":"haiku-20240307v1-0",

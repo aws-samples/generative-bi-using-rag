@@ -2,11 +2,12 @@ import time
 
 import streamlit as st
 from dotenv import load_dotenv
-from loguru import logger
+import logging
 from nlq.business.connection import ConnectionManagement
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 
+logger = logging.getLogger(__name__)
 
 def delete_sample(profile_name, id):
     VectorStore.delete_sample(profile_name, id)

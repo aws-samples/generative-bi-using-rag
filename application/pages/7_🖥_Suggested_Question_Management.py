@@ -1,9 +1,10 @@
 import streamlit as st
 from dotenv import load_dotenv
-from loguru import logger
+import logging
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.constant import ACTIVE_PROMPT_NAME
 
+logger = logging.getLogger(__name__)
 
 def main():
     load_dotenv()

@@ -2,7 +2,7 @@ import json
 import os
 from typing import Union
 from dotenv import load_dotenv
-from loguru import logger
+import logging
 
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
@@ -16,6 +16,7 @@ from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS
 from .enum import ErrorEnum
 
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 # load config.json as dictionary
