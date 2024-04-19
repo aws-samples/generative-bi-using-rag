@@ -61,7 +61,7 @@ def invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_res
         return response_body
 
 
-@logger.catch
+
 def get_sagemaker_client():
     global sagemaker_client
     if not sagemaker_client:
@@ -191,7 +191,7 @@ def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, 
         return final_response
 
 
-@logger.catch
+
 def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=False):
     body = json.dumps({"query": generate_sagemaker_explain_prompt(sql),
                         "stream": with_response_stream,})
@@ -204,7 +204,7 @@ def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=Fals
         return response
 
 
-@logger.catch
+
 def sagemaker_to_sql(ddl, hints, search_box, endpoint_name, sql_examples=None, ner_example=None, dialect='mysql',
                    model_provider=None, with_response_stream=False):
     body = json.dumps({"prompt": generate_sagemaker_sql_prompt(ddl, hints, search_box, sql_examples, ner_example,

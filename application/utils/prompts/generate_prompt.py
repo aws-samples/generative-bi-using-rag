@@ -142,7 +142,7 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
             example_sql_prompt += "A: ```sql\n" + item['_source']['sql'] + "```\n"
 
     if ner_example:
-        for item in sql_examples:
+        for item in ner_example:
             example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
             example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
 

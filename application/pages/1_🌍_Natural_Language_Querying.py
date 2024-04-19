@@ -361,8 +361,8 @@ def main():
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
 
-                    st.markdown('The generated SQL statement is:')
-                    st.code(current_nlq_chain.get_generated_sql(), language="sql")
+                    with st.expander("The generated SQL"):
+                        st.code(current_nlq_chain.get_generated_sql(), language="sql")
 
                     st.markdown('Generation process explanations:')
                     st.markdown(current_nlq_chain.get_generated_sql_explain())
