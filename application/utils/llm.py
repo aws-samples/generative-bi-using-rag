@@ -204,7 +204,7 @@ def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=Fals
         return response
 
 
-@logger.catch
+
 def sagemaker_to_sql(ddl, hints, search_box, endpoint_name, sql_examples=None, ner_example=None, dialect='mysql',
                    model_provider=None, with_response_stream=False):
     body = json.dumps({"prompt": generate_sagemaker_sql_prompt(ddl, hints, search_box, sql_examples, ner_example,
