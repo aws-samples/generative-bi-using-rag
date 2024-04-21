@@ -52,21 +52,21 @@ def main():
 
     with st.sidebar:
         st.title("Data Connection Management")
-        st.selectbox("我的数据库连接", ConnectionManagement.get_all_connections(),
+        st.selectbox("My database connection", ConnectionManagement.get_all_connections(),
                      index=None,
-                     placeholder="请选择数据库连接...", key='current_conn_name')
+                     placeholder="Please database connection...", key='current_conn_name')
         if st.session_state.current_conn_name:
             st.session_state.current_connection = ConnectionManagement.get_conn_config_by_name(
                 st.session_state.current_conn_name)
             st.session_state.update_connection_mode = True
             st.session_state.new_connection_mode = False
 
-        st.button('新建...', on_click=new_connection_clicked)
+        st.button('Create new...', on_click=new_connection_clicked)
 
     if st.session_state.new_connection_mode:
-        st.subheader("新建数据库连接")
-        connection_name = st.text_input("数据库连接名称")
-        db_type = st.selectbox("数据库类型", db_type_mapping.values(), index=0)  # Add more options as needed
+        st.subheader("New Database Connection")
+        connection_name = st.text_input("Database Connection Name")
+        db_type = st.selectbox("Database type", db_type_mapping.values(), index=0)  # Add more options as needed
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
         host = st.text_input("Enter host")
         port = st.text_input("Enter port")
@@ -85,8 +85,8 @@ def main():
     elif st.session_state.update_connection_mode:
         st.subheader("Update Database Connection")
         current_conn = st.session_state.current_connection
-        connection_name = st.text_input("数据库连接名称", current_conn.conn_name, disabled=True)
-        db_type = st.selectbox("数据库类型", db_type_mapping.values(), index=index_of_db_type(current_conn.db_type),
+        connection_name = st.text_input("Database Connection Name", current_conn.conn_name, disabled=True)
+        db_type = st.selectbox("Database type", db_type_mapping.values(), index=index_of_db_type(current_conn.db_type),
                                disabled=True)  # Add more options as needed
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
         host = st.text_input("Enter host", current_conn.db_host)

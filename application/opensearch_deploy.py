@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 import os
 import boto3
 import sys
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
