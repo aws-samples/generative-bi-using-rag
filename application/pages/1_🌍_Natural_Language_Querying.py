@@ -12,7 +12,7 @@ from nlq.business.profile import ProfileManagement
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
-from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
+from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
     upload_results_to_opensearch, get_query_intent, generate_suggested_question
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
@@ -165,7 +165,7 @@ def main():
         st.session_state.messages = {}
 
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0']
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1']
 
     with st.sidebar:
         st.title('Setting')
@@ -186,7 +186,7 @@ def main():
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
-        intent_ner_recognition = st.checkbox("Intent Ner Recognition", True)
+        intent_ner_recognition = st.checkbox("Intent Ner Recognition", False)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
 
     # Part II: Search Section
@@ -339,7 +339,7 @@ def main():
                                             entity_slot_retrieve.extend(entity_retrieve)
                                             
                         # get llm model for sql generation
-                        response = claude3_to_sql(database_profile['tables_info'],
+                        response = text_to_sql(database_profile['tables_info'],
                                                       database_profile['hints'],
                                                       search_box,
                                                       model_id=model_type,

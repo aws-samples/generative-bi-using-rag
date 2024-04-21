@@ -60,7 +60,39 @@ def invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_res
         response_body = json.loads(response.get('body').read())
         return response_body
 
+def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
+    """
+    Invokes the Mixtral 8c7B model to run an inference using the input
+    provided in the request body.
 
+    :param prompt: The prompt that you want Mixtral to complete.
+    :return: List of inference responses from the model.
+    """
+
+    try:
+        instruction = f"<s>[INST] {system_prompt} \n The question you need to answer is: <question> {messages[0]['content']} </question>[/INST]"
+        body = {
+            "prompt": instruction,
+            # "system": system_prompt,
+            # "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": 0.01,
+        }
+
+        if with_response_stream:
+            response = get_bedrock_client().invoke_model_with_response_stream(body=json.dumps(body), modelId=model_id)
+            return response
+        else:
+            response = get_bedrock_client().invoke_model(
+                modelId=model_id, body=json.dumps(body)
+            )
+            response_body = json.loads(response["body"].read())
+            response_body['content'] = response_body['outputs']
+            return response_body
+    except Exception as e:
+        logger.error("Couldn't invoke Mixtral 8x7B")
+        logger.error(e)
+        raise
 
 def get_sagemaker_client():
     global sagemaker_client
@@ -171,7 +203,7 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
     return claude_prompt, dialect_prompt
 
 
-def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
+def text_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                    model_provider=None, with_response_stream=False):
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
                                                  dialect=dialect)
@@ -183,7 +215,10 @@ def claude3_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, 
     messages = [user_message]
     logger.info(f'{system_prompt=}')
     logger.info(f'{messages=}')
-    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
+    if model_id.startswith('anthropic.claude-3-'):
+        response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
+    elif model_id.startswith('mistral.mixtral-8x7b'):
+        response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
     if with_response_stream:
         return response
     else:

@@ -8,10 +8,54 @@ logger = logging.getLogger(__name__)
 
 support_model_ids_map = {
     "anthropic.claude-3-haiku-20240307-v1:0":"haiku-20240307v1-0",
-    "anthropic.claude-3-sonnet-20240229-v1:0":"sonnet-20240229v1-0"
+    "anthropic.claude-3-sonnet-20240229-v1:0":"sonnet-20240229v1-0",
+    "mistral.mixtral-8x7b-instruct-v0:1":"mixtral-8x7b-instruct-0"
 }
 
 system_prompt_dict = {}
+
+system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+{dialect_prompt}
+
+Assume a database with the following tables and columns exists:
+
+Given the following database schema, transform the following natural language requests into valid SQL queries.
+
+<table_schema>
+
+{sql_schema}
+
+</table_schema>
+
+Here are some examples of generated SQL using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate SQL.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
+
+"""
 
 system_prompt_dict['haiku-20240307v1-0'] = """
 {dialect_prompt}
@@ -106,6 +150,34 @@ class SystemPromptMapper:
     def get_variable(self, name):
         return self.variable_map.get(name)
 
+def generate_create_table_ddl(table_description):
+    lines = table_description.strip().split('\n')
+    table_name = lines[0].split(':')[0].strip()
+    table_comment = lines[0].split(':')[1].strip()
+
+    create_table_stmt = f"CREATE TABLE {table_name} (\n"
+
+    i = 1
+    while i < len(lines):
+        line = lines[i].strip()
+        if line.startswith('- name:'):
+            column_name = line.split(':')[1].strip()
+            datatype = lines[i + 1].split(':')[1].strip()
+            column_comment = lines[i + 2].split(':')[1].strip() if (i + 2) < len(lines) and ':' in lines[i + 2] else ''
+            annotation = ':'.join(lines[i + 3].split(':')[1:]).strip() if (i + 3) < len(lines) and ':' in lines[i + 3] else ''
+
+            create_table_stmt += f"  {column_name} {datatype} COMMENT '{column_comment}',\n"
+            if annotation:
+                create_table_stmt += f"  -- annotation: {annotation}\n"
+
+            i += 4
+        else:
+            i += 1
+
+    create_table_stmt = create_table_stmt.rstrip(',\n') + "\n);"
+    create_table_stmt = f"-- {table_comment}\n{create_table_stmt}"
+
+    return create_table_stmt
 
 system_prompt_mapper = SystemPromptMapper()
 table_prompt_mapper = table_prompt.TablePromptMapper()
@@ -115,11 +187,13 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
     long_string = ""
     for table_name, table_data in ddl.items():
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
-        long_string += "{}：{}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
+        long_string += "{}: {}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
             "description"])
         long_string += ddl_string
         long_string += "\n"
 
+    # trying CREATE TABLE ddl
+    long_string = generate_create_table_ddl(long_string)
     ddl = long_string
 
     logger.info(f'{dialect=}')
