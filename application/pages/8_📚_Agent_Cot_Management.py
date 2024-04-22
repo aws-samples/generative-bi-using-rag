@@ -31,7 +31,7 @@ def main():
 
     with tab_view:
         if current_profile is not None:
-            for sample in VectorStore.get_all_entity_samples(current_profile):
+            for sample in VectorStore.get_all_agent_cot_samples(current_profile):
                 # st.write(f"Sample: {sample}")
                 with st.expander(sample['entity']):
                     st.code(sample['comment'])
@@ -39,12 +39,12 @@ def main():
 
     with tab_add:
         if current_profile is not None:
-            entity = st.text_input('Entity', key='index_question')
+            query = st.text_input('Query', key='index_question')
             comment = st.text_area('Comment', key='index_answer', height=300)
 
             if st.button('Submit', type='primary'):
-                if len(entity) > 0 and len(comment) > 0:
-                    VectorStore.add_entity_sample(current_profile, entity, comment)
+                if len(query) > 0 and len(comment) > 0:
+                    VectorStore.add_agent_cot_sample(current_profile, query, comment)
                     st.success('Sample added')
                     time.sleep(2)
                     # del st.session_state['index_question']
