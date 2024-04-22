@@ -68,7 +68,7 @@ def do_visualize_results(nlq_chain, sql_result):
                                                                  reversed(available_columns.to_list()),
                                                                  on_change=nlq_chain.set_visualization_config_change)
             if chart_type == 'Table':
-                st.table(sql_query_result)
+                st.dataframe(sql_query_result, hide_index=True)
             elif chart_type == 'Bar':
                 st.plotly_chart(px.bar(sql_query_result, x=x_column, y=y_column))
             elif chart_type == 'Line':
@@ -250,7 +250,7 @@ def main():
                     with st.expander("The generated SQL"):
                         st.code(message["content"].replace("SQL:", ""), language="sql")
                 elif isinstance(message["content"], pd.DataFrame):
-                    st.table(message["content"])
+                    st.dataframe(message["content"], hide_index=True)
                 else:
                     st.markdown(message["content"])
 
@@ -373,6 +373,8 @@ def main():
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
 
                     st.session_state.current_sql_result[selected_profile] = get_sql_result()
+                    st.session_state.messages[selected_profile].append(
+                        {"role": "assistant", "content":  st.session_state.current_sql_result[selected_profile]})
 
                     with st.expander("The generated SQL"):
                         st.code(current_nlq_chain.get_generated_sql(), language="sql")
