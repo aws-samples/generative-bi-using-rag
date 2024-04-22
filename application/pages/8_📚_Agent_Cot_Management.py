@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import logging
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
+from utils.navigation import make_sidebar
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ def main():
     load_dotenv()
     logger.info('start agent cot management')
     st.set_page_config(page_title="Agent Cot Management", )
+    make_sidebar()
 
     if 'profile_page_mode' not in st.session_state:
         st.session_state['index_mgt_mode'] = 'default'

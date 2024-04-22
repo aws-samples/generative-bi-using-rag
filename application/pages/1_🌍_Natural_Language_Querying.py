@@ -15,6 +15,7 @@ from nlq.business.vector_store import VectorStore
 from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
     upload_results_to_opensearch, get_query_intent, generate_suggested_question
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
+from utils.navigation import make_sidebar
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,8 @@ def main():
             opensearch_config[key] = os.getenv(opensearch_config[key].replace('$', ''))
         # logger.info(f'{opensearch_config=}')
 
-    st.set_page_config(layout="wide")
+    st.set_page_config(page_title="Natural Language Querying", layout="wide")
+    make_sidebar()
 
     # Title and Description
     st.title('Natural Language Querying Playground')
