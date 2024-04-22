@@ -9,7 +9,7 @@ from nlq.business.vector_store import VectorStore
 logger = logging.getLogger(__name__)
 
 def delete_entity_sample(profile_name, id):
-    VectorStore.delete_entity_sample(profile_name, id)
+    VectorStore.delete_agent_cot_sample(profile_name, id)
     st.success(f'Sample {id} deleted.')
 
 

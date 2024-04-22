@@ -111,3 +111,9 @@ class VectorStore:
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
         ret = cls.opensearch_dao.delete_sample('uba_ner', profile_name, doc_id)
         print(ret)
+
+    @classmethod
+    def delete_agent_cot_sample(cls, profile_name, doc_id):
+        logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
+        ret = cls.opensearch_dao.delete_sample('uba_agent', profile_name, doc_id)
+        print(ret)
