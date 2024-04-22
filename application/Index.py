@@ -1,16 +1,17 @@
 import streamlit as st
+from utils.navigation import get_authenticator
 
 st.set_page_config(
     page_title="Intelligent BI",
     page_icon="👋",
 )
 
-st.write("## Welcome to Intelligent BI Playground!👋")
+authenticator = get_authenticator()
+name, authentication_status, username = authenticator.login('main')
 
-st.sidebar.success("Select a demo above.")
-
-st.markdown(
-    """
-    Welcome to the Natural Language Querying Playground! This interactive application is designed to bridge the gap between natural language and databases. Enter your query in plain English, and watch as it's transformed into a SQL or Pandas command. The result can then be visualized, giving you insights without needing to write any code. Experiment, learn, and see the power of NLQ in action!
-"""
-)
+if authentication_status:
+    st.switch_page("pages/mainpage.py")
+elif authentication_status == False:
+    st.error('Username/password is incorrect')
+elif authentication_status == None:
+    st.warning('Please enter your username and password')

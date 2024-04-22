@@ -3,6 +3,8 @@ import sqlalchemy as db
 from dotenv import load_dotenv
 from nlq.business.connection import ConnectionManagement
 from nlq.data_access.database import RelationDatabase
+from utils.navigation import make_sidebar
+
 
 # global variables
 
@@ -40,6 +42,9 @@ def test_connection_view(db_type, user, password, host, port, db_name):
 # Main logic
 def main():
     load_dotenv()
+
+    st.set_page_config(page_title="Data Connection Management")
+    make_sidebar()
 
     if 'new_connection_mode' not in st.session_state:
         st.session_state['new_connection_mode'] = False

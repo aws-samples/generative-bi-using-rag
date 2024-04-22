@@ -1,0 +1,15 @@
+credentials:
+  usernames:
+    admin:
+      email: amazon@amazon.com
+      failed_login_attempts: 0 # Will be managed automatically
+      logged_in: False # Will be managed automatically
+      name: AWS
+      password: $2b$12$7F/Uto8cv9Fly.CFrdHvduOsOPvwjPGBloLTfTTM9r502xu4Kbw/6
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be string
+  name: some_cookie_name
+pre-authorized:
+  emails:
+    - amazon@amazon.com
