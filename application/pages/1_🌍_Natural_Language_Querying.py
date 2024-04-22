@@ -18,6 +18,7 @@ from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFA
 
 logger = logging.getLogger(__name__)
 
+
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""
     st.session_state['selected_sample'] = sample
@@ -31,14 +32,25 @@ def upvote_clicked(question, sql, env_vars):
     logger.info(f'up voted "{question}" with sql "{sql}"')
 
 
-def do_visualize_results(nlq_chain):
+def get_sql_result(nlq_chain):
+    try:
+        return nlq_chain.get_executed_result_df()
+    except Exception as e:
+        logger.error("get_sql_result is error")
+        logger.error(e)
+        return pd.DataFrame()
+
+
+def do_visualize_results(nlq_chain, sql_result):
     with st.chat_message("assistant"):
-        if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
-            logger.info('try to execute the generated sql')
-            with st.spinner('Querying database...'):
-                sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
-        else:
-            sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        # if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],
+        #                                     force_execute_query=False) is None:
+        #     logger.info('try to execute the generated sql')
+        #     with st.spinner('Querying database...'):
+        #         sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        # else:
+        #     sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        sql_query_result = sql_result
         st.markdown('Visualizing the results:')
         if sql_query_result is not None:
             # Reset change flag to False
@@ -164,8 +176,11 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
+    if "current_sql_result" not in st.session_state:
+        st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0']
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+                 'anthropic.claude-3-haiku-20240307-v1:0']
 
     with st.sidebar:
         st.title('Setting')
@@ -333,19 +348,20 @@ def main():
                             if search_intent_flag:
                                 if len(entity_slot) > 0:
                                     for each_entity in entity_slot:
-                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", selected_profile, 1, 0.7 )
+                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
+                                                                                  selected_profile, 1, 0.7)
                                         if len(entity_retrieve) > 0:
                                             entity_slot_retrieve.extend(entity_retrieve)
                         # get llm model for sql generation
 
                         response = claude3_to_sql(database_profile['tables_info'],
-                                                      database_profile['hints'],
-                                                      search_box,
-                                                      model_id=model_type,
-                                                      sql_examples=retrieve_result,
-                                                      ner_example = entity_slot_retrieve,
-                                                      dialect=get_db_url_dialect(database_profile['db_url']),
-                                                      model_provider=model_provider)
+                                                  database_profile['hints'],
+                                                  search_box,
+                                                  model_id=model_type,
+                                                  sql_examples=retrieve_result,
+                                                  ner_example=entity_slot_retrieve,
+                                                  dialect=get_db_url_dialect(database_profile['db_url']),
+                                                  model_provider=model_provider)
 
                         logger.info(f'got llm response: {response}')
                         current_nlq_chain.set_generated_sql_response(response)
@@ -362,6 +378,8 @@ def main():
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
 
+                    st.session_state.current_sql_result["selected_profile"] = get_sql_result(current_nlq_chain)
+                    st.session_state.messages[selected_profile].append({"role": "assistant", "content": st.session_state.current_sql_result["selected_profile"]})
                     with st.expander("The generated SQL"):
                         st.code(current_nlq_chain.get_generated_sql(), language="sql")
 

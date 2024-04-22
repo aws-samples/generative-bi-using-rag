@@ -1,6 +1,7 @@
 from opensearchpy import OpenSearch
 from utils import opensearch
 
+
 class OpenSearchDao:
 
     def __init__(self, host, port, opensearch_user, opensearch_password):
@@ -16,37 +17,38 @@ class OpenSearchDao:
             ssl_assert_hostname=False,
             ssl_show_warn=False
         )
+
     def retrieve_samples(self, index_name, profile_name):
         # search all docs in the index filtered by profile_name
         search_query = {
-          "sort": [
-            {
-              "_score": {
-                "order": "desc"
-              }
-            }
-          ],
-          "_source": {
-              "includes": ["text", "sql"]
-          },
-          "size": 20,
-          "query": {
-            "bool": {
-              "must": [],
-              "filter": [
+            "sort": [
                 {
-                  "match_all": {}
-                },
-                {
-                  "match_phrase": {
-                    "profile": profile_name
-                  }
+                    "_score": {
+                        "order": "desc"
+                    }
                 }
-              ],
-              "should": [],
-              "must_not": []
+            ],
+            "_source": {
+                "includes": ["text", "sql"]
+            },
+            "size": 20,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "filter": [
+                        {
+                            "match_all": {}
+                        },
+                        {
+                            "match_phrase": {
+                                "profile": profile_name
+                            }
+                        }
+                    ],
+                    "should": [],
+                    "must_not": []
+                }
             }
-          }
         }
 
         # Execute the search query
@@ -60,40 +62,73 @@ class OpenSearchDao:
     def retrieve_entity_samples(self, index_name, profile_name):
         # search all docs in the index filtered by profile_name
         search_query = {
-          "sort": [
-            {
-              "_score": {
-                "order": "desc"
-              }
-            }
-          ],
-          "_source": {
-              "includes": ["entity", "comment"]
-          },
-          "size": 20,
-          "query": {
-            "bool": {
-              "must": [],
-              "filter": [
+            "sort": [
                 {
-                  "match_all": {}
-                },
-                {
-                  "match_phrase": {
-                    "profile": profile_name
-                  }
+                    "_score": {
+                        "order": "desc"
+                    }
                 }
-              ],
-              "should": [],
-              "must_not": []
+            ],
+            "_source": {
+                "includes": ["entity", "comment"]
+            },
+            "size": 20,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "filter": [
+                        {
+                            "match_all": {}
+                        },
+                        {
+                            "match_phrase": {
+                                "profile": profile_name
+                            }
+                        }
+                    ],
+                    "should": [],
+                    "must_not": []
+                }
             }
-          }
+        }
+
+    def retrieve_agent_cot_samples(self, index_name, profile_name):
+        # search all docs in the index filtered by profile_name
+        search_query = {
+            "sort": [
+                {
+                    "_score": {
+                        "order": "desc"
+                    }
+                }
+            ],
+            "_source": {
+                "includes": ["query", "comment"]
+            },
+            "size": 20,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "filter": [
+                        {
+                            "match_all": {}
+                        },
+                        {
+                            "match_phrase": {
+                                "profile": profile_name
+                            }
+                        }
+                    ],
+                    "should": [],
+                    "must_not": []
+                }
+            }
         }
 
         # Execute the search query
         response = self.opensearch_client.search(
-            body=search_query,
-            index=index_name
+        body=search_query,
+        index=index_name
         )
 
         return response['hits']['hits']
@@ -122,6 +157,17 @@ class OpenSearchDao:
         success, failed = opensearch.put_bulk_in_opensearch([record], self.opensearch_client)
         return success == 1
 
+    def add_agent_cot_sample(self, index_name, profile_name, query, comment, embedding):
+        record = {
+            '_index': index_name,
+            'query': query,
+            'comment': comment,
+            'profile': profile_name,
+            'vector_field': embedding
+        }
+
+        success, failed = opensearch.put_bulk_in_opensearch([record], self.opensearch_client)
+        return success == 1
+
     def delete_sample(self, index_name, profile_name, doc_id):
         return self.opensearch_client.delete(index=index_name, id=doc_id)
-
