@@ -372,7 +372,7 @@ def main():
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
 
-                    st.session_state.current_sql_result[selected_profile] = get_sql_result()
+                    st.session_state.current_sql_result[selected_profile] = get_sql_result(current_nlq_chain)
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content":  st.session_state.current_sql_result[selected_profile]})
 
