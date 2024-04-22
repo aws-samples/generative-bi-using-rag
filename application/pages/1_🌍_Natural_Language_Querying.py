@@ -12,12 +12,11 @@ from nlq.business.profile import ProfileManagement
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
-from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
+from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
     upload_results_to_opensearch, get_query_intent, generate_suggested_question
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
 logger = logging.getLogger(__name__)
-
 
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""
@@ -43,14 +42,12 @@ def get_sql_result(nlq_chain):
 
 def do_visualize_results(nlq_chain, sql_result):
     with st.chat_message("assistant"):
-        # if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],
-        #                                     force_execute_query=False) is None:
-        #     logger.info('try to execute the generated sql')
-        #     with st.spinner('Querying database...'):
-        #         sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
-        # else:
-        #     sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
-        sql_query_result = sql_result
+        if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
+            logger.info('try to execute the generated sql')
+            with st.spinner('Querying database...'):
+                sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        else:
+            sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         st.markdown('Visualizing the results:')
         if sql_query_result is not None:
             # Reset change flag to False
@@ -155,8 +152,8 @@ def main():
         st.session_state['profiles'] = all_profiles
         # logger.info(f'{all_profiles=}')
 
-    if 'option' not in st.session_state:
-        st.session_state['option'] = 'Text2SQL'
+    # if 'option' not in st.session_state:
+    #     st.session_state['option'] = 'Text2SQL'
 
     if 'selected_sample' not in st.session_state:
         st.session_state['selected_sample'] = ''
@@ -179,8 +176,7 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
-                 'anthropic.claude-3-haiku-20240307-v1:0']
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1']
 
     with st.sidebar:
         st.title('Setting')
@@ -194,14 +190,15 @@ def main():
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
-        st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
+        # st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
         model_type = st.selectbox("Choose your model", model_ids)
         model_provider = None
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
-        intent_ner_recognition = st.checkbox("Intent Ner Recognition", True)
-        gen_suggested_question = st.checkbox("Generate Suggested Questions", True)
+        explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
+        intent_ner_recognition = st.checkbox("Intent Ner Recognition", False)
+        gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
 
     # Part II: Search Section
     st.subheader("Start Searching")
@@ -348,20 +345,18 @@ def main():
                             if search_intent_flag:
                                 if len(entity_slot) > 0:
                                     for each_entity in entity_slot:
-                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
-                                                                                  selected_profile, 1, 0.7)
+                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", selected_profile, 1, 0.7 )
                                         if len(entity_retrieve) > 0:
                                             entity_slot_retrieve.extend(entity_retrieve)
                         # get llm model for sql generation
-
-                        response = claude3_to_sql(database_profile['tables_info'],
-                                                  database_profile['hints'],
-                                                  search_box,
-                                                  model_id=model_type,
-                                                  sql_examples=retrieve_result,
-                                                  ner_example=entity_slot_retrieve,
-                                                  dialect=get_db_url_dialect(database_profile['db_url']),
-                                                  model_provider=model_provider)
+                        response = text_to_sql(database_profile['tables_info'],
+                                                      database_profile['hints'],
+                                                      search_box,
+                                                      model_id=model_type,
+                                                      sql_examples=retrieve_result,
+                                                      ner_example = entity_slot_retrieve,
+                                                      dialect=get_db_url_dialect(database_profile['db_url']),
+                                                      model_provider=model_provider)
 
                         logger.info(f'got llm response: {response}')
                         current_nlq_chain.set_generated_sql_response(response)
@@ -375,16 +370,16 @@ def main():
                     # Add assistant response to chat history
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
-                    st.session_state.messages[selected_profile].append(
-                        {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
 
-                    st.session_state.current_sql_result[selected_profile] = get_sql_result(current_nlq_chain)
-                    st.session_state.messages[selected_profile].append({"role": "assistant", "content": st.session_state.current_sql_result[selected_profile]})
                     with st.expander("The generated SQL"):
                         st.code(current_nlq_chain.get_generated_sql(), language="sql")
 
-                    st.markdown('Generation process explanations:')
-                    st.markdown(current_nlq_chain.get_generated_sql_explain())
+                    if explain_gen_process_flag:
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
+
+                        st.markdown('Generation process explanations:')
+                        st.markdown(current_nlq_chain.get_generated_sql_explain())
 
                     st.markdown('You can provide feedback:')
 
@@ -407,6 +402,7 @@ def main():
                 do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
 
             if gen_suggested_question:
+                st.text('You might want to further ask:')
                 active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
                 generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
                 split_strings = generated_sq.split("[generate]")
