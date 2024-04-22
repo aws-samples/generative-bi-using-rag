@@ -404,7 +404,7 @@ def main():
                     st.markdown('Your query statement is currently not supported by the system')
 
             if visualize_results and search_intent_flag:
-                do_visualize_results(current_nlq_chain)
+                do_visualize_results(current_nlq_chain, st.session_state.current_sql_result["selected_profile"])
 
             if gen_suggested_question:
                 active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
@@ -428,7 +428,7 @@ def main():
             # st.error("Please enter a valid query.")
             if current_nlq_chain.is_visualization_config_changed():
                 if visualize_results:
-                    do_visualize_results(current_nlq_chain)
+                    do_visualize_results(current_nlq_chain, st.session_state.current_sql_result["selected_profile"])
 
 
 if __name__ == '__main__':
