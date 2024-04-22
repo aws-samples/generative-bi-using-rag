@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING','')
+SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING', '')
 
 AOS_HOST = os.getenv('AOS_HOST', '')
 AOS_PORT = os.getenv('AOS_PORT', 9200)
@@ -21,6 +21,7 @@ AOS_DOMAIN = os.getenv('AOS_DOMAIN', 'llm-data-analytics')
 AOS_REGION = os.getenv('AOS_REGION')
 AOS_INDEX = os.getenv('AOS_INDEX', 'uba')
 AOS_INDEX_NER = os.getenv('AOS_INDEX_NER', 'uba_ner')
+AOS_INDEX_AGENT = os.getenv('AOS_INDEX_AGENT', 'uba_agent')
 AOS_TYPE = os.getenv('AOS_TYPE', 'uba')
 BEDROCK_REGION = os.getenv('BEDROCK_REGION')
 
@@ -28,10 +29,12 @@ REGION_NAME = AOS_REGION
 early_stop_record_count = 100
 index_name = AOS_INDEX
 index_name_ner = AOS_INDEX_NER
+index_name_agent = AOS_INDEX_AGENT
 opensearch_user = AOS_USER
 opensearch_password = AOS_PASSWORD
 # create opensearch domain
 domain = AOS_DOMAIN
+
 
 def index_to_opensearch():
     create_index = True
@@ -82,7 +85,7 @@ def index_to_opensearch():
         # initiate AWS OpenSearch client and insert new data into the index
         opensearch_client = opensearch.get_opensearch_cluster_client(domain, opensearch_user, opensearch_password,
                                                                      REGION_NAME,
-                                                                 index_name)
+                                                                     index_name)
     else:
         auth = (opensearch_user, opensearch_password)
         host = AOS_HOST
@@ -113,11 +116,9 @@ def index_to_opensearch():
         embedding = response_body.get("embedding")
         return {"_index": index_name, "text": text, "vector_field": embedding}
 
-
     def get_bedrock_client(region):
         bedrock_client = boto3.client("bedrock-runtime", region_name=region)
         return bedrock_client
-    
 
     def create_vector_embedding_with_sagemaker(text, index_name, sagemaker_client):
         model_kwargs = {}
@@ -135,7 +136,6 @@ def index_to_opensearch():
         json_obj = json.loads(json_str)
         embeddings = json_obj["sentence_embeddings"]
         return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
-    
 
     def get_sagemaker_client():
         sagemaker_client = boto3.client("sagemaker-runtime")
@@ -164,11 +164,8 @@ def index_to_opensearch():
     else:
         if create_index:
             logger.info("Index already exists. Exit with 0 now.")
-            exit(0)
 
     all_records = bulk_questions
-
-
 
     # Vector embedding using Amazon Bedrock Titan text embedding
     all_json_records = []
@@ -179,9 +176,11 @@ def index_to_opensearch():
     for record in all_records:
         i += 1
         if SAGEMAKER_ENDPOINT_EMBEDDING:
-            records_with_embedding = create_vector_embedding_with_sagemaker(record['question'], index_name, sagemaker_client)
+            records_with_embedding = create_vector_embedding_with_sagemaker(record['question'], index_name,
+                                                                            sagemaker_client)
         else:
-            records_with_embedding = create_vector_embedding_with_bedrock(record['question'], index_name, bedrock_client)
+            records_with_embedding = create_vector_embedding_with_bedrock(record['question'], index_name,
+                                                                          bedrock_client)
         logger.info(f"Embedding for record {i} created")
         records_with_embedding['sql'] = record['sql']
         records_with_embedding['profile'] = record.get('profile', 'default')
@@ -194,7 +193,6 @@ def index_to_opensearch():
 
     logger.info("Finished creating records using Amazon Bedrock Titan text embedding")
 
-
     # init index_name_ner
     if AOS_HOST == '':
         opensearch_client = opensearch.get_opensearch_cluster_client(domain, opensearch_user, opensearch_password,
@@ -206,9 +204,24 @@ def index_to_opensearch():
         logger.info("Creating OpenSearch Ner index")
         success = opensearch.create_index(opensearch_client, index_name_ner)
         if success:
-            logger.info("Creating OpenSearch index mapping")
+            logger.info("Creating OpenSearch Ner Index mapping")
             success = opensearch.create_index_mapping(opensearch_client, index_name_ner, dimension)
-            logger.info(f"OpenSearch Index mapping created")
+            logger.info(f"OpenSearch Ner Index mapping created")
+
+    # init index_name_agent
+    if AOS_HOST == '':
+        opensearch_client = opensearch.get_opensearch_cluster_client(domain, opensearch_user, opensearch_password,
+                                                                     REGION_NAME,
+                                                                     index_name_agent)
+
+    exists_agent = opensearch.check_opensearch_index(opensearch_client, index_name_agent)
+    if not exists_agent:
+        logger.info("Create OpenSearch Agent index")
+        success = opensearch.create_index(opensearch_client, index_name_agent)
+        if success:
+            logger.info("Creating OpenSearch Agent Index mapping")
+            success = opensearch.create_index_mapping(opensearch_client, index_name_agent, dimension)
+            logger.info(f"OpenSearch Agent Index mapping created")
 
 
 if __name__ == "__main__":

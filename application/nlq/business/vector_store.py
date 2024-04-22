@@ -32,10 +32,31 @@ class VectorStore:
         samples = cls.opensearch_dao.retrieve_entity_samples('uba_ner', profile_name)
 
         sample_list = []
+        if samples is None:
+            return sample_list
+
         for sample in samples:
             sample_list.append({
                 'id': sample['_id'],
                 'entity': sample['_source']['entity'],
+                'comment': sample['_source']['comment']
+            })
+
+        return sample_list
+
+    @classmethod
+    def get_all_agent_cot_samples(cls, profile_name):
+        logger.info(f'get all agent cot samples for {profile_name}...')
+        samples = cls.opensearch_dao.retrieve_agent_cot_samples('uba_agent', profile_name)
+
+        sample_list = []
+        if samples is None:
+            return sample_list
+
+        for sample in samples:
+            sample_list.append({
+                'id': sample['_id'],
+                'query': sample['_source']['query'],
                 'comment': sample['_source']['comment']
             })
 
@@ -53,6 +74,13 @@ class VectorStore:
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
         if cls.opensearch_dao.add_entity_sample('uba_ner', profile_name, entity, comment, embedding):
+            logger.info('Sample added')
+
+    @classmethod
+    def add_agent_cot_sample(cls, profile_name, entity, comment):
+        logger.info(f'add sample entity: {entity} to profile {profile_name}')
+        embedding = cls.create_vector_embedding_with_bedrock(entity)
+        if cls.opensearch_dao.add_agent_cot_sample('uba_agent', profile_name, entity, comment, embedding):
             logger.info('Sample added')
 
     @classmethod
@@ -82,4 +110,10 @@ class VectorStore:
     def delete_entity_sample(cls, profile_name, doc_id):
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
         ret = cls.opensearch_dao.delete_sample('uba_ner', profile_name, doc_id)
+        print(ret)
+
+    @classmethod
+    def delete_agent_cot_sample(cls, profile_name, doc_id):
+        logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
+        ret = cls.opensearch_dao.delete_sample('uba_agent', profile_name, doc_id)
         print(ret)

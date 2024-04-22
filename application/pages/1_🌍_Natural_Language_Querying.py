@@ -31,14 +31,24 @@ def upvote_clicked(question, sql, env_vars):
     logger.info(f'up voted "{question}" with sql "{sql}"')
 
 
-def do_visualize_results(nlq_chain):
+def get_sql_result(nlq_chain):
+    try:
+        return nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+    except Exception as e:
+        logger.error("get_sql_result is error")
+        logger.error(e)
+        return pd.DataFrame()
+
+
+def do_visualize_results(nlq_chain, sql_result):
     with st.chat_message("assistant"):
-        if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
-            logger.info('try to execute the generated sql')
-            with st.spinner('Querying database...'):
-                sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
-        else:
-            sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        # if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
+        #     logger.info('try to execute the generated sql')
+        #     with st.spinner('Querying database...'):
+        #         sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        # else:
+        #     sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
+        sql_query_result = sql_result
         st.markdown('Visualizing the results:')
         if sql_query_result is not None:
             # Reset change flag to False
@@ -164,6 +174,8 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
+    if "current_sql_result" not in st.session_state:
+        st.session_state.current_sql_result = {}
 
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1']
 
@@ -238,7 +250,7 @@ def main():
                     with st.expander("The generated SQL"):
                         st.code(message["content"].replace("SQL:", ""), language="sql")
                 elif isinstance(message["content"], pd.DataFrame):
-                    st.table(message["content"])
+                    st.dataframe(message["content"], hide_index=True)
                 else:
                     st.markdown(message["content"])
 
@@ -337,7 +349,6 @@ def main():
                                         entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", selected_profile, 1, 0.7 )
                                         if len(entity_retrieve) > 0:
                                             entity_slot_retrieve.extend(entity_retrieve)
-                                            
                         # get llm model for sql generation
                         response = text_to_sql(database_profile['tables_info'],
                                                       database_profile['hints'],
@@ -360,10 +371,16 @@ def main():
                     # Add assistant response to chat history
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
-                    
+
+                    current_sql_result = get_sql_result(current_nlq_chain)
+                    st.session_state.current_sql_result[selected_profile] = current_sql_result
+                    if current_sql_result is not None and len(current_sql_result) > 0:
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant", "content": current_sql_result})
+
                     with st.expander("The generated SQL"):
                         st.code(current_nlq_chain.get_generated_sql(), language="sql")
-                        
+
                     if explain_gen_process_flag:
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
@@ -389,7 +406,7 @@ def main():
                     st.markdown('Your query statement is currently not supported by the system')
 
             if visualize_results and search_intent_flag:
-                do_visualize_results(current_nlq_chain)
+                do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
 
             if gen_suggested_question:
                 st.text('You might want to further ask:')
@@ -414,7 +431,7 @@ def main():
             # st.error("Please enter a valid query.")
             if current_nlq_chain.is_visualization_config_changed():
                 if visualize_results:
-                    do_visualize_results(current_nlq_chain)
+                    do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
 
 
 if __name__ == '__main__':
