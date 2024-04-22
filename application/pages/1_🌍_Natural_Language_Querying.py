@@ -34,7 +34,7 @@ def upvote_clicked(question, sql, env_vars):
 
 def get_sql_result(nlq_chain):
     try:
-        return nlq_chain.get_executed_result_df()
+        return nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile], force_execute_query=False)
     except Exception as e:
         logger.error("get_sql_result is error")
         logger.error(e)
