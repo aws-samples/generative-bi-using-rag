@@ -47,7 +47,7 @@ class VectorStore:
     @classmethod
     def get_all_agent_cot_samples(cls, profile_name):
         logger.info(f'get all agent cot samples for {profile_name}...')
-        samples = cls.opensearch_dao.retrieve_entity_samples('uba_agent', profile_name)
+        samples = cls.opensearch_dao.retrieve_agent_cot_samples('uba_agent', profile_name)
 
         sample_list = []
         if samples is None:

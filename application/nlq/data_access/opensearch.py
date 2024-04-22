@@ -92,6 +92,13 @@ class OpenSearchDao:
             }
         }
 
+        response = self.opensearch_client.search(
+        body=search_query,
+        index=index_name
+        )
+
+        return response['hits']['hits']
+
     def retrieve_agent_cot_samples(self, index_name, profile_name):
         # search all docs in the index filtered by profile_name
         search_query = {
