@@ -147,6 +147,48 @@ docker exec nlq-webserver python opensearch_deploy.py custom false
 
 注意:使用 HTTP 而不是 HTTPS。
 
+默认的账户名和密码是
+
+```
+username: admin
+password: awsadmin
+```
+
+如果你想修改密码或者增加用户，可以修改如下文件
+
+
+application/config_files/stauth_config.yaml
+
+这里是一个例子
+
+```yaml
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: abc # To be replaced with hashed password
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: def # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: random_signature_key # Must be string
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com
+```
+
+密码需要从明文转换成哈希过之后的密码，可以通过如下方式，获取
+
+```python
+import streamlit_authenticator as stauth
+hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+```
+
+
 ## Demo应用使用自定义数据源的方法
 1. 先在Data Connection Management和Data Profile Management页面创建对应的Data Profile
 
