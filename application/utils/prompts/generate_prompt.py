@@ -198,7 +198,7 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
         long_string += "\n"
 
     # trying CREATE TABLE ddl
-    long_string = generate_create_table_ddl(long_string)
+    # long_string = generate_create_table_ddl(long_string)
     ddl = long_string
 
     logger.info(f'{dialect=}')
@@ -345,7 +345,7 @@ def generate_agent_cot_system_prompt(ddl, agent_cot_example=None):
         long_string += "\n"
 
     # trying CREATE TABLE ddl
-    long_string = generate_create_table_ddl(long_string)
+    # long_string = generate_create_table_ddl(long_string)
     ddl = long_string
 
     agent_cot_example_str = ""
