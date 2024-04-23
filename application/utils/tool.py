@@ -16,7 +16,7 @@ def get_response_sql(generated_sql_response):
         return ""
 
 
-def get_sql_result(profile, sql):
+def get_sql_result_tool(profile, sql):
     try:
         db_url = profile['db_url']
         if not db_url:

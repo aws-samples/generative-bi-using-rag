@@ -16,7 +16,7 @@ from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, retriev
     upload_results_to_opensearch, get_query_intent, generate_suggested_question, get_agent_cot_task, agent_data_analyse
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
-from utils.tool import get_response_sql, get_sql_result
+from utils.tool import get_response_sql, get_sql_result_tool
 
 logger = logging.getLogger(__name__)
 
@@ -387,7 +387,7 @@ def main():
                                     logger.info(deep_dive_sql_result)
 
                                     for i in range(len(deep_dive_sql_result)):
-                                        each_task_sql_res = get_sql_result(
+                                        each_task_sql_res = get_sql_result_tool(
                                             st.session_state['profiles'][current_nlq_chain.profile],
                                             deep_dive_sql_result[i]["sql"])
                                         if len(each_task_sql_res) > 0:
