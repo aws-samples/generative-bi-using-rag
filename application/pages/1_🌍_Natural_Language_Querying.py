@@ -43,6 +43,10 @@ def get_sql_result(nlq_chain):
         return pd.DataFrame()
 
 
+def clean_st_histoty(selected_profile):
+    st.session_state.messages[selected_profile] = []
+
+
 def do_visualize_results(nlq_chain, sql_result):
     with st.chat_message("assistant"):
         # if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
@@ -207,6 +211,8 @@ def main():
         intent_ner_recognition = st.checkbox("Intent NER/Agent COT", False)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
+
+        clean_history = st.button("clean history", on_click=clean_st_histoty, args=[selected_profile])
 
     # Part II: Search Section
     st.subheader("Start Searching")
@@ -392,28 +398,28 @@ def main():
                                         deep_dive_sql_result[i]["sql"])
                                     if len(each_task_sql_res) > 0:
                                         deep_dive_sql_result[i]["data_result"] = each_task_sql_res.to_json(
-                                                orient='records')
+                                            orient='records')
                                         filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
 
                                 agent_data_analyse_result = agent_data_analyse(model_type, search_box,
-                                                                                   json.dumps(
-                                                                                       filter_deep_dive_sql_result))
+                                                                               json.dumps(
+                                                                                   filter_deep_dive_sql_result))
                                 logger.info("agent_data_analyse_result")
                                 logger.info(agent_data_analyse_result)
                                 st.session_state.messages[selected_profile].append(
-                                        {"role": "user", "content": search_box})
+                                    {"role": "user", "content": search_box})
                                 for i in range(len(filter_deep_dive_sql_result)):
                                     st.write(filter_deep_dive_sql_result[i]["query"])
                                     st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
-                                                                  orient='records'), hide_index=True)
+                                                              orient='records'), hide_index=True)
 
                                 st.session_state.messages[selected_profile].append(
-                                            {"role": "assistant", "content": filter_deep_dive_sql_result})
+                                    {"role": "assistant", "content": filter_deep_dive_sql_result})
 
                                 st.markdown(agent_data_analyse_result)
                                 current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
                                 st.session_state.messages[selected_profile].append(
-                                        {"role": "assistant", "content": agent_data_analyse_result})
+                                    {"role": "assistant", "content": agent_data_analyse_result})
 
                             if search_intent_flag:
                                 if len(entity_slot) > 0:
