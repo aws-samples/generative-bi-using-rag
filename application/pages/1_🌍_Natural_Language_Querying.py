@@ -371,7 +371,7 @@ def main():
                                     each_res_dict["query"] = each_task_query
                                     each_task_sql_query = text_to_sql(database_profile['tables_info'],
                                                                       database_profile['hints'],
-                                                                      search_box,
+                                                                      each_task_query,
                                                                       model_id=model_type,
                                                                       sql_examples=retrieve_result,
                                                                       ner_example=entity_slot_retrieve,
