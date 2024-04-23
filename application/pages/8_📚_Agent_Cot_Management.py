@@ -35,7 +35,7 @@ def main():
         if current_profile is not None:
             for sample in VectorStore.get_all_agent_cot_samples(current_profile):
                 # st.write(f"Sample: {sample}")
-                with st.expander(sample['entity']):
+                with st.expander(sample['query']):
                     st.code(sample['comment'])
                     st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
 
