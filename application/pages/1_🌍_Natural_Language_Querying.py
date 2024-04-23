@@ -407,7 +407,7 @@ def main():
                                     st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
                                                                   orient='records'), hide_index=True)
 
-                                    st.session_state.messages[selected_profile].append(
+                                st.session_state.messages[selected_profile].append(
                                             {"role": "assistant", "content": filter_deep_dive_sql_result})
 
                                 st.markdown(agent_data_analyse_result)
@@ -481,7 +481,7 @@ def main():
                 else:
                     st.markdown('Your query statement is currently not supported by the system')
 
-            if visualize_results and search_intent_flag:
+            if visualize_results and search_intent_flag and not agent_intent_flag:
                 do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
 
             if gen_suggested_question:
