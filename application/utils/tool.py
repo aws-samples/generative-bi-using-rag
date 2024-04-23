@@ -12,7 +12,7 @@ def get_response_sql(generated_sql_response):
         return generated_sql_response.split("<sql>")[1].split("</sql>")[0]
     except IndexError:
         logger.error("get_response_sql is error")
-        logger.info(generated_sql_response)
+        logger.error(generated_sql_response)
         return ""
 
 

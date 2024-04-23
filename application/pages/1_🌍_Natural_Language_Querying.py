@@ -383,35 +383,36 @@ def main():
                                     if sql_str != "":
                                         deep_dive_sql_result.append(each_res_dict)
 
-                                    logger.info("the deep dive sql result")
-                                    logger.info(deep_dive_sql_result)
+                                logger.info("the deep dive sql result")
+                                logger.info(deep_dive_sql_result)
 
-                                    for i in range(len(deep_dive_sql_result)):
-                                        each_task_sql_res = get_sql_result_tool(
-                                            st.session_state['profiles'][current_nlq_chain.profile],
-                                            deep_dive_sql_result[i]["sql"])
-                                        if len(each_task_sql_res) > 0:
-                                            deep_dive_sql_result[i]["data_result"] = each_task_sql_res.to_json(
+                                for i in range(len(deep_dive_sql_result)):
+                                    each_task_sql_res = get_sql_result_tool(
+                                        st.session_state['profiles'][current_nlq_chain.profile],
+                                        deep_dive_sql_result[i]["sql"])
+                                    if len(each_task_sql_res) > 0:
+                                        deep_dive_sql_result[i]["data_result"] = each_task_sql_res.to_json(
                                                 orient='records')
-                                            filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
+                                        filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
 
-                                    agent_data_analyse_result = agent_data_analyse(model_type, search_box,
+                                agent_data_analyse_result = agent_data_analyse(model_type, search_box,
                                                                                    json.dumps(
                                                                                        filter_deep_dive_sql_result))
-
-                                    st.session_state.messages[selected_profile].append(
+                                logger.info("agent_data_analyse_result")
+                                logger.info(agent_data_analyse_result)
+                                st.session_state.messages[selected_profile].append(
                                         {"role": "user", "content": search_box})
-                                    for i in range(len(filter_deep_dive_sql_result)):
-                                        st.write(filter_deep_dive_sql_result[i]["query"])
-                                        st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
+                                for i in range(len(filter_deep_dive_sql_result)):
+                                    st.write(filter_deep_dive_sql_result[i]["query"])
+                                    st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
                                                                   orient='records'), hide_index=True)
 
-                                        st.session_state.messages[selected_profile].append(
+                                    st.session_state.messages[selected_profile].append(
                                             {"role": "assistant", "content": filter_deep_dive_sql_result})
 
-                                    st.markdown(agent_data_analyse_result)
-                                    current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
-                                    st.session_state.messages[selected_profile].append(
+                                st.markdown(agent_data_analyse_result)
+                                current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
+                                st.session_state.messages[selected_profile].append(
                                         {"role": "assistant", "content": agent_data_analyse_result})
 
                             if search_intent_flag:
@@ -437,7 +438,7 @@ def main():
                 else:
                     logger.info('get generated sql from memory')
 
-                if search_intent_flag:
+                if search_intent_flag and not agent_intent_flag:
                     # Add user message to chat history
                     st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
