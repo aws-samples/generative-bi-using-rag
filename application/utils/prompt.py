@@ -80,6 +80,7 @@ Your current task is to conduct an in-depth analysis of the data.
 1. Fully understand the problem raised by the user
 2. Thoroughly understand the data table below
 3. Based on the information in the data table, break it down into multiple sub-problems that can be queried through SQL, and limit the number of sub-tasks to no more than 3
+4. only output the JSON structure
 <instructions>
 
 Here is DDL of the database you are working on:
@@ -103,7 +104,7 @@ here is a example:
 
 </example>
 
-Please conduct a thorough analysis of the user's question according to the above instructions, and finally output the JSON structure without outputting any other content.
+Please conduct a thorough analysis of the user's question according to the above instructions, and finally only output the JSON structure without outputting any other content.
 
 """
 
@@ -124,13 +125,13 @@ The analysis approach is as follows:
 The corresponding query structure is as follows:
 
 answer：
-
+```json
 {{
     "task_1":"Analyze the total sales volume and sales revenue of the top 10 products.",
     "task_2":"Analyze the purchase situation of the top 10 products by different genders",
     "task_3":"Analyze the most popular product category with the highest purchase rate."
 }}
-
+```
 """
 CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT = """
 You are a data analysis expert in the retail industry

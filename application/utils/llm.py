@@ -276,7 +276,6 @@ def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-
             system_prompt = agent_system_prompt
             max_tokens = 2048
             user_message = {"role": "user", "content": search_box}

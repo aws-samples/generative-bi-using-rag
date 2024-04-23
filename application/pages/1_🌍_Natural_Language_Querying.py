@@ -422,17 +422,18 @@ def main():
                                         if len(entity_retrieve) > 0:
                                             entity_slot_retrieve.extend(entity_retrieve)
                         # get llm model for sql generation
-                        response = text_to_sql(database_profile['tables_info'],
-                                               database_profile['hints'],
-                                               search_box,
-                                               model_id=model_type,
-                                               sql_examples=retrieve_result,
-                                               ner_example=entity_slot_retrieve,
-                                               dialect=get_db_url_dialect(database_profile['db_url']),
-                                               model_provider=model_provider)
+                        if not agent_intent_flag and search_intent_flag:
+                            response = text_to_sql(database_profile['tables_info'],
+                                                   database_profile['hints'],
+                                                   search_box,
+                                                   model_id=model_type,
+                                                   sql_examples=retrieve_result,
+                                                   ner_example=entity_slot_retrieve,
+                                                   dialect=get_db_url_dialect(database_profile['db_url']),
+                                                   model_provider=model_provider)
 
-                        logger.info(f'got llm response: {response}')
-                        current_nlq_chain.set_generated_sql_response(response)
+                            logger.info(f'got llm response: {response}')
+                            current_nlq_chain.set_generated_sql_response(response)
                 else:
                     logger.info('get generated sql from memory')
 
