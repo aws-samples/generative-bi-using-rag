@@ -155,6 +155,47 @@ Open in your browser: `http://<your-ec2-public-ip>:8000`
 
 Note: Use HTTP instead of HTTPS. 
 
+the default account is
+
+```
+username: admin
+password: awsadmin
+```
+
+if you want change the password or add username, you can change the 
+
+application/config_files/stauth_config.yaml
+
+for example 
+
+```yaml
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: abc # To be replaced with hashed password
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: def # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: random_signature_key # Must be string
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com
+```
+
+change the password to hashed password
+
+```python
+import streamlit_authenticator as stauth
+hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+```
+
+
 ## CDK Deployment Guide
 
 ### 1. Prepare CDK Pre-requisites
