@@ -208,7 +208,8 @@ def main():
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
-        intent_ner_recognition = st.checkbox("Intent NER/Agent COT", False)
+        intent_ner_recognition = st.checkbox("Intent NER", False)
+        agent_cot = st.checkbox("Agent COT", False)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
 
@@ -365,62 +366,64 @@ def main():
 
                             elif intent == "agent_search":
                                 agent_intent_flag = True
-                                agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
-                                                                             selected_profile, 2, 0.5)
-                                agent_cot_task_result = get_agent_cot_task(model_type, search_box,
-                                                                           database_profile['tables_info'],
-                                                                           agent_cot_retrieve)
-                                st.markdown("This is a complex business problem, and the problem is being broken down.")
-                                for each_task in agent_cot_task_result:
-                                    each_res_dict = {}
-                                    each_task_query = agent_cot_task_result[each_task]
-                                    each_res_dict["query"] = each_task_query
-                                    each_task_sql_query = text_to_sql(database_profile['tables_info'],
-                                                                      database_profile['hints'],
-                                                                      each_task_query,
-                                                                      model_id=model_type,
-                                                                      sql_examples=retrieve_result,
-                                                                      ner_example=entity_slot_retrieve,
-                                                                      dialect=get_db_url_dialect(
-                                                                          database_profile['db_url']),
-                                                                      model_provider=model_provider)
-                                    sql_str = get_response_sql(each_task_sql_query)
-                                    each_res_dict["sql"] = sql_str
-                                    if sql_str != "":
-                                        deep_dive_sql_result.append(each_res_dict)
+                                if agent_cot:
+                                    agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
+                                                                                 selected_profile, 2, 0.5)
+                                    agent_cot_task_result = get_agent_cot_task(model_type, search_box,
+                                                                               database_profile['tables_info'],
+                                                                               agent_cot_retrieve)
+                                    st.markdown("This is a complex business problem, and the problem is being broken down.")
+                                    for each_task in agent_cot_task_result:
+                                        each_res_dict = {}
+                                        each_task_query = agent_cot_task_result[each_task]
+                                        each_res_dict["query"] = each_task_query
+                                        each_task_sql_query = text_to_sql(database_profile['tables_info'],
+                                                                          database_profile['hints'],
+                                                                          each_task_query,
+                                                                          model_id=model_type,
+                                                                          sql_examples=retrieve_result,
+                                                                          ner_example=entity_slot_retrieve,
+                                                                          dialect=get_db_url_dialect(
+                                                                              database_profile['db_url']),
+                                                                          model_provider=model_provider)
+                                        sql_str = get_response_sql(each_task_sql_query)
+                                        each_res_dict["sql"] = sql_str
+                                        if sql_str != "":
+                                            deep_dive_sql_result.append(each_res_dict)
 
-                                logger.info("the deep dive sql result")
-                                logger.info(deep_dive_sql_result)
+                                    logger.info("the deep dive sql result")
+                                    logger.info(deep_dive_sql_result)
 
-                                for i in range(len(deep_dive_sql_result)):
-                                    each_task_sql_res = get_sql_result_tool(
-                                        st.session_state['profiles'][current_nlq_chain.profile],
-                                        deep_dive_sql_result[i]["sql"])
-                                    if len(each_task_sql_res) > 0:
-                                        deep_dive_sql_result[i]["data_result"] = each_task_sql_res.to_json(
-                                            orient='records')
-                                        filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
+                                    for i in range(len(deep_dive_sql_result)):
+                                        each_task_sql_res = get_sql_result_tool(
+                                            st.session_state['profiles'][current_nlq_chain.profile],
+                                            deep_dive_sql_result[i]["sql"])
+                                        if len(each_task_sql_res) > 0:
+                                            deep_dive_sql_result[i]["data_result"] = each_task_sql_res.to_json(
+                                                orient='records')
+                                            filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
 
-                                agent_data_analyse_result = agent_data_analyse(model_type, search_box,
-                                                                               json.dumps(
-                                                                                   filter_deep_dive_sql_result))
-                                logger.info("agent_data_analyse_result")
-                                logger.info(agent_data_analyse_result)
-                                st.session_state.messages[selected_profile].append(
-                                    {"role": "user", "content": search_box})
-                                for i in range(len(filter_deep_dive_sql_result)):
-                                    st.write(filter_deep_dive_sql_result[i]["query"])
-                                    st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
-                                                              orient='records'), hide_index=True)
+                                    agent_data_analyse_result = agent_data_analyse(model_type, search_box,
+                                                                                   json.dumps(
+                                                                                       filter_deep_dive_sql_result))
+                                    logger.info("agent_data_analyse_result")
+                                    logger.info(agent_data_analyse_result)
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "user", "content": search_box})
+                                    for i in range(len(filter_deep_dive_sql_result)):
+                                        st.write(filter_deep_dive_sql_result[i]["query"])
+                                        st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
+                                                                  orient='records'), hide_index=True)
 
-                                st.session_state.messages[selected_profile].append(
-                                    {"role": "assistant", "content": filter_deep_dive_sql_result})
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "assistant", "content": filter_deep_dive_sql_result})
 
-                                st.markdown(agent_data_analyse_result)
-                                current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
-                                st.session_state.messages[selected_profile].append(
-                                    {"role": "assistant", "content": agent_data_analyse_result})
-
+                                    st.markdown(agent_data_analyse_result)
+                                    current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "assistant", "content": agent_data_analyse_result})
+                                else:
+                                    agent_intent_flag = False
                             if search_intent_flag:
                                 if len(entity_slot) > 0:
                                     for each_entity in entity_slot:
