@@ -97,7 +97,9 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
             response_body['content'] = response_body['outputs']
             return response_body
     except Exception as e:
-        pass
+        logger.error("Couldn't invoke LLama 70B")
+        logger.error(e)
+
 
 
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
