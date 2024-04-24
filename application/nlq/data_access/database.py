@@ -1,6 +1,6 @@
 import logging
 import sqlalchemy as db
-from sqlalchemy import text, Column
+from sqlalchemy import text, Column, inspect
 
 from nlq.data_access.dynamo_connection import ConnectConfigEntity
 
@@ -49,7 +49,12 @@ class RelationDatabase():
                 result = conn.execute(query)
                 schemas = [row['schema_name'] for row in result.mappings()]
                 print(schemas)
-
+        elif connection.db_type == 'redshift':
+            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
+                                    connection.db_port, connection.db_name)
+            engine = db.create_engine(db_url)
+            inspector = inspect(engine)
+            schemas = inspector.get_schema_names()
         return schemas
 
     @classmethod
