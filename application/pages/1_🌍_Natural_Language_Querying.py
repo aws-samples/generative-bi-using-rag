@@ -188,7 +188,8 @@ def main():
         st.session_state.current_sql_result = {}
 
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
-                 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1']
+                 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
+                 'meta.llama3-70b-instruct-v1:0']
 
     with st.sidebar:
         st.title('Setting')
