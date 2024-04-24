@@ -9,12 +9,58 @@ logger = logging.getLogger(__name__)
 support_model_ids_map = {
     "anthropic.claude-3-haiku-20240307-v1:0": "haiku-20240307v1-0",
     "anthropic.claude-3-sonnet-20240229-v1:0": "sonnet-20240229v1-0",
-    "mistral.mixtral-8x7b-instruct-v0:1": "mixtral-8x7b-instruct-0"
+    "mistral.mixtral-8x7b-instruct-v0:1": "mixtral-8x7b-instruct-0",
+    "meta.llama3-70b-instruct-v1:0" : "llama3-70b-instruct-0"
 }
 
 user_prompt_dict = {}
 
 user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+{dialect_prompt}
+
+Assume a database with the following tables and columns exists:
+
+Given the following database schema, transform the following natural language requests into valid SQL queries.
+
+<table_schema>
+
+{sql_schema}
+
+</table_schema>
+
+Here are some examples of generated SQL using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate SQL.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
+
+The question is : {question}
+
+"""
+
+user_prompt_dict['llama3-70b-instruct-0'] = """
 {dialect_prompt}
 
 Assume a database with the following tables and columns exists:
@@ -163,6 +209,9 @@ system_prompt_dict['sonnet-20240229v1-0'] = """
 You are a data analysis expert and proficient in {dialect}.
 """
 
+system_prompt_dict['llama3-70b-instruct-0'] = """
+You are a data analysis expert and proficient in {dialect}.
+"""
 
 class SystemPromptMapper:
     def __init__(self):
