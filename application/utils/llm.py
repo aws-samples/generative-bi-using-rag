@@ -94,7 +94,6 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
                 modelId=model_id, body=json.dumps(body)
             )
             response_body = json.loads(response["body"].read())
-            response_body['content'] = response_body['outputs']
             return response_body
     except Exception as e:
         logger.error("Couldn't invoke LLama 70B")
