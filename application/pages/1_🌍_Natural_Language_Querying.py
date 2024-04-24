@@ -452,8 +452,13 @@ def main():
                     # Add user message to chat history
                     st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
+                    generate_sql = current_nlq_chain.get_generated_sql()
+
+                    if generate_sql == "":
+                        st.write("Unable to generate SQL at the moment, please provide more information")
+                    else:
                     # Add assistant response to chat history
-                    st.session_state.messages[selected_profile].append(
+                        st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
 
                     current_sql_result = get_sql_result(current_nlq_chain)
@@ -462,8 +467,9 @@ def main():
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": current_sql_result})
 
-                    with st.expander("The generated SQL"):
-                        st.code(current_nlq_chain.get_generated_sql(), language="sql")
+                    if generate_sql != "":
+                        with st.expander("The generated SQL"):
+                            st.code(current_nlq_chain.get_generated_sql(), language="sql")
 
                     if explain_gen_process_flag:
                         st.session_state.messages[selected_profile].append(
