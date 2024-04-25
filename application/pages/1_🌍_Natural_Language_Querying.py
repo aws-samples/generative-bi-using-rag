@@ -498,9 +498,13 @@ def main():
                     st.markdown('Your query statement is currently not supported by the system')
 
             if visualize_results and search_intent_flag and not agent_intent_flag:
-                do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
+                current_search_sql_result = st.session_state.current_sql_result[selected_profile]
+                if current_search_sql_result is not None and len(current_search_sql_result) > 0:
+                    do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
+                else:
+                    st.markdown("No relevant data found")
 
-            if gen_suggested_question:
+            if gen_suggested_question and current_nlq_chain.get_generated_sql() != "" and search_intent_flag:
                 st.text('You might want to further ask:')
                 active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
                 generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
