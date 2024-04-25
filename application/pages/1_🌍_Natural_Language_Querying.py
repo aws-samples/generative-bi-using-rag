@@ -211,7 +211,7 @@ def main():
         visualize_results = st.checkbox("Visualize Results", True)
         intent_ner_recognition = st.checkbox("Intent NER", False)
         agent_cot = st.checkbox("Agent COT", False)
-        explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
+        explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
 
         clean_history = st.button("clean history", on_click=clean_st_histoty, args=[selected_profile])
