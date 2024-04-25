@@ -209,7 +209,7 @@ def main():
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
-        intent_ner_recognition = st.checkbox("Intent NER", False)
+        intent_ner_recognition = st.checkbox("Intent NER", True)
         agent_cot = st.checkbox("Agent COT", False)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
