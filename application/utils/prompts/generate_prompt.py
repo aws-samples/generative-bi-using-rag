@@ -1,5 +1,5 @@
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT
+    DEFAULT_DIALECT_PROMPT, AGENT_COT_SYSTEM_PROMPT, AGENT_COT_EXAMPLE
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
 import logging
@@ -7,140 +7,210 @@ import logging
 logger = logging.getLogger(__name__)
 
 support_model_ids_map = {
-    "anthropic.claude-3-haiku-20240307-v1:0":"haiku-20240307v1-0",
-    "anthropic.claude-3-sonnet-20240229-v1:0":"sonnet-20240229v1-0",
-    "mistral.mixtral-8x7b-instruct-v0:1":"mixtral-8x7b-instruct-0"
+    "anthropic.claude-3-haiku-20240307-v1:0": "haiku-20240307v1-0",
+    "anthropic.claude-3-sonnet-20240229-v1:0": "sonnet-20240229v1-0",
+    "mistral.mixtral-8x7b-instruct-v0:1": "mixtral-8x7b-instruct-0",
+    "meta.llama3-70b-instruct-v1:0" : "llama3-70b-instruct-0"
 }
+
+user_prompt_dict = {}
+
+user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+{dialect_prompt}
+
+Assume a database with the following tables and columns exists:
+
+Given the following database schema, transform the following natural language requests into valid SQL queries.
+
+<table_schema>
+
+{sql_schema}
+
+</table_schema>
+
+Here are some examples of generated SQL using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate SQL.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
+
+The question is : {question}
+
+"""
+
+user_prompt_dict['llama3-70b-instruct-0'] = """
+{dialect_prompt}
+
+Assume a database with the following tables and columns exists:
+
+Given the following database schema, transform the following natural language requests into valid SQL queries.
+
+<table_schema>
+
+{sql_schema}
+
+</table_schema>
+
+Here are some examples of generated SQL using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate SQL.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
+
+The question is : {question}
+
+"""
+
+user_prompt_dict['haiku-20240307v1-0'] = """
+{dialect_prompt}
+
+Assume a database with the following tables and columns exists:
+
+Given the following database schema, transform the following natural language requests into valid SQL queries.
+
+<table_schema>
+
+{sql_schema}
+
+</table_schema>
+
+Here are some examples of generated SQL using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate SQL.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
+
+The question is : {question}
+
+"""
+
+user_prompt_dict['sonnet-20240229v1-0'] = """
+{dialect_prompt}
+
+Assume a database with the following tables and columns exists:
+
+Given the following database schema, transform the following natural language requests into valid SQL queries.
+
+<table_schema>
+
+{sql_schema}
+
+</table_schema>
+
+Here are some examples of generated SQL using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate SQL.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your sql in <sql></sql> tags.
+
+The question is : {question}
+
+"""
 
 system_prompt_dict = {}
 
 system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-{dialect_prompt}
-
-Assume a database with the following tables and columns exists:
-
-Given the following database schema, transform the following natural language requests into valid SQL queries.
-
-<table_schema>
-
-{sql_schema}
-
-</table_schema>
-
-Here are some examples of generated SQL using natural language.
-
-<examples>
-
-{examples}
-
-</examples> 
-
-Here are some ner info to help generate SQL.
-
-<ner_info>
-
-{ner_info}
-
-</ner_info> 
-
-You ALWAYS follow these guidelines when writing your response:
-
-<guidelines>
-
-{sql_guidance}
-
-</guidelines> 
-
-Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
-
-Think about your answer first before you respond. Put your sql in <sql></sql> tags.
-
+You are a data analysis expert and proficient in {dialect}.
 """
 
 system_prompt_dict['haiku-20240307v1-0'] = """
-{dialect_prompt}
-
-Assume a database with the following tables and columns exists:
-
-Given the following database schema, transform the following natural language requests into valid SQL queries.
-
-<table_schema>
-
-{sql_schema}
-
-</table_schema>
-
-Here are some examples of generated SQL using natural language.
-
-<examples>
-
-{examples}
-
-</examples> 
-
-Here are some ner info to help generate SQL.
-
-<ner_info>
-
-{ner_info}
-
-</ner_info> 
-
-You ALWAYS follow these guidelines when writing your response:
-
-<guidelines>
-
-{sql_guidance}
-
-</guidelines> 
-
-Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
-
-Think about your answer first before you respond. Put your sql in <sql></sql> tags.
-
+You are a data analysis expert and proficient in {dialect}.
 """
 
 system_prompt_dict['sonnet-20240229v1-0'] = """
-{dialect_prompt}
+You are a data analysis expert and proficient in {dialect}.
+"""
 
-Assume a database with the following tables and columns exists:
-
-Given the following database schema, transform the following natural language requests into valid SQL queries.
-
-<table_schema>
-
-{sql_schema}
-
-</table_schema>
-
-Here are some examples of generated SQL using natural language.
-
-<examples>
-
-{examples}
-
-</examples> 
-
-Here are some ner info to help generate SQL.
-
-<ner_info>
-
-{ner_info}
-
-</ner_info> 
-
-You ALWAYS follow these guidelines when writing your response:
-
-<guidelines>
-
-{sql_guidance}
-
-</guidelines> 
-
-Think about the sql question before continuing. If it's not about writing SQL statements, say 'Sorry, please ask something relating to querying tables'.
-
-Think about your answer first before you respond. Put your sql in <sql></sql> tags.
-
+system_prompt_dict['llama3-70b-instruct-0'] = """
+You are a data analysis expert and proficient in {dialect}.
 """
 
 class SystemPromptMapper:
@@ -149,6 +219,15 @@ class SystemPromptMapper:
 
     def get_variable(self, name):
         return self.variable_map.get(name)
+
+
+class UserPromptMapper:
+    def __init__(self):
+        self.variable_map = user_prompt_dict
+
+    def get_variable(self, name):
+        return self.variable_map.get(name)
+
 
 def generate_create_table_ddl(table_description):
     lines = table_description.strip().split('\n')
@@ -164,7 +243,8 @@ def generate_create_table_ddl(table_description):
             column_name = line.split(':')[1].strip()
             datatype = lines[i + 1].split(':')[1].strip()
             column_comment = lines[i + 2].split(':')[1].strip() if (i + 2) < len(lines) and ':' in lines[i + 2] else ''
-            annotation = ':'.join(lines[i + 3].split(':')[1:]).strip() if (i + 3) < len(lines) and ':' in lines[i + 3] else ''
+            annotation = ':'.join(lines[i + 3].split(':')[1:]).strip() if (i + 3) < len(lines) and ':' in lines[
+                i + 3] else ''
 
             create_table_stmt += f"  {column_name} {datatype} COMMENT '{column_comment}',\n"
             if annotation:
@@ -179,9 +259,12 @@ def generate_create_table_ddl(table_description):
 
     return create_table_stmt
 
+
 system_prompt_mapper = SystemPromptMapper()
+user_prompt_mapper = UserPromptMapper()
 table_prompt_mapper = table_prompt.TablePromptMapper()
 guidance_prompt_mapper = guidance_prompt.GuidancePromptMapper()
+
 
 def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
     long_string = ""
@@ -193,7 +276,7 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
         long_string += "\n"
 
     # trying CREATE TABLE ddl
-    long_string = generate_create_table_ddl(long_string)
+    # long_string = generate_create_table_ddl(long_string)
     ddl = long_string
 
     logger.info(f'{dialect=}')
@@ -204,7 +287,7 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
     elif dialect == 'redshift':
         dialect_prompt = '''You are a Amazon Redshift expert. Given an input question, first create a syntactically 
         correct Redshift query to run, then look at the results of the query and return the answer to the input 
-        question.'''
+        question. query for at most 100 results using the LIMIT. '''
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
@@ -222,26 +305,32 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
 
     name = support_model_ids_map[model_id]
     system_prompt = system_prompt_mapper.get_variable(name)
+    user_prompt = user_prompt_mapper.get_variable(name)
     if long_string == '':
         table_prompt = table_prompt_mapper.get_variable(name)
     else:
         table_prompt = long_string
     guidance_prompt = guidance_prompt_mapper.get_variable(name)
-    
-    system_prompt = system_prompt.format(dialect_prompt=dialect_prompt, sql_schema=table_prompt, sql_guidance=guidance_prompt, examples=example_sql_prompt, ner_info=example_ner_prompt)
 
-    user_prompt = search_box
+    if dialect == "redshift":
+        system_prompt = system_prompt.format(dialect="Amazon Redshift")
+    else:
+        system_prompt = system_prompt.format(dialect=dialect)
+
+    user_prompt = user_prompt.format(dialect_prompt=dialect_prompt, sql_schema=table_prompt,
+                                     sql_guidance=guidance_prompt, examples=example_sql_prompt,
+                                     ner_info=example_ner_prompt, question=search_box)
 
     return user_prompt, system_prompt
 
 
 # TODO Must modify prompt
 def generate_sagemaker_intent_prompt(
-    query: str,
-    history=[],
-    meta_instruction="You are an AI assistant whose name is InternLM (书生·浦语).\n"
-    "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI Laboratory (上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
-    "- InternLM (书生·浦语) can understand and communicate fluently in the language chosen by the user such as English and 中文.",
+        query: str,
+        history=[],
+        meta_instruction="You are an AI assistant whose name is InternLM (书生·浦语).\n"
+                         "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI Laboratory (上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
+                         "- InternLM (书生·浦语) can understand and communicate fluently in the language chosen by the user such as English and 中文.",
 ):
     prompt = ""
     if meta_instruction:
@@ -313,11 +402,11 @@ Given the database schema, here is the SQL query that answers [QUESTION]{questio
 
 # TODO need to modify prompt
 def generate_sagemaker_explain_prompt(
-    query: str,
-    history=[],
-    meta_instruction="You are an AI assistant whose name is InternLM (书生·浦语).\n"
-    "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI Laboratory (上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
-    "- InternLM (书生·浦语) can understand and communicate fluently in the language chosen by the user such as English and 中文.",
+        query: str,
+        history=[],
+        meta_instruction="You are an AI assistant whose name is InternLM (书生·浦语).\n"
+                         "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI Laboratory (上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
+                         "- InternLM (书生·浦语) can understand and communicate fluently in the language chosen by the user such as English and 中文.",
 ):
     prompt = ""
     if meta_instruction:
@@ -326,3 +415,26 @@ def generate_sagemaker_explain_prompt(
         prompt += f"""<|im_start|>user\n{record[0]}<|im_end|>\n<|im_start|>assistant\n{record[1]}<|im_end|>\n"""
     prompt += f"""<|im_start|>user\n{query}<|im_end|>\n<|im_start|>assistant\n"""
     return prompt
+
+
+def generate_agent_cot_system_prompt(ddl, agent_cot_example=None):
+    long_string = ""
+    for table_name, table_data in ddl.items():
+        ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
+        long_string += "{}: {}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
+            "description"])
+        long_string += ddl_string
+        long_string += "\n"
+
+    # trying CREATE TABLE ddl
+    # long_string = generate_create_table_ddl(long_string)
+    ddl = long_string
+
+    agent_cot_example_str = ""
+    if agent_cot_example:
+        for item in agent_cot_example:
+            agent_cot_example_str += "query: " + item['_source']['query'] + "\n"
+            agent_cot_example_str += "train of thought:" + item['_source']['comment'] + "\n"
+
+    return AGENT_COT_SYSTEM_PROMPT.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
+                                          example_data=AGENT_COT_EXAMPLE)

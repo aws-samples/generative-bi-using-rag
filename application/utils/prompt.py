@@ -19,10 +19,11 @@ in the same language as the question.""".format(top_k=TOP_K)
 SEARCH_INTENT_PROMPT_CLAUDE3 = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 2 main intents:
+There are 3 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
+- agent_search: Attribution-based problems are not about directly querying the data. Instead, they involve questions like "why" or "how" to understand the underlying reasons and dynamics behind the data.
 </intent>
 
 When the intent is normal_search, you need to extract the keywords from the query statement.
@@ -49,6 +50,12 @@ answer :
 {
     "intent" : "reject_search"
 }
+
+question : 6月份酒店的订单为什么下降了
+answer :
+{
+    "intent" : "agent_search"
+}
 </example>
 
 Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
@@ -63,4 +70,87 @@ You are a query generator, and you need to generate queries based on the input q
 4. Each generated query should be less than 30 words.
 5. The generated query should not contain SQL statements.
 </rules>
+"""
+
+AGENT_COT_SYSTEM_PROMPT = """
+you are a data analysis expert as well as a retail expert. 
+Your current task is to conduct an in-depth analysis of the data.
+
+<instructions>
+1. Fully understand the problem raised by the user
+2. Thoroughly understand the data table below
+3. Based on the information in the data table, break it down into multiple sub-problems that can be queried through SQL, and limit the number of sub-tasks to no more than 3
+4. only output the JSON structure
+<instructions>
+
+Here is DDL of the database you are working on:
+
+<table_schema>
+{table_schema_data}
+</table_schema>
+
+Here are some guidelines you should follow:
+
+<guidelines>
+
+{sql_guidance}
+
+</guidelines> 
+
+here is a example:
+<example>
+
+{example_data}
+
+</example>
+
+Please conduct a thorough analysis of the user's question according to the above instructions, and finally only output the JSON structure without outputting any other content.
+
+"""
+
+AGENT_COT_EXAMPLE = """
+question ：Why did the order sales volume of commodities decline in June?
+tables : 
+
+interactions，The data on users' interactions with products, including users' browsing, purchasing, and other behaviors towards the products, are recorded.
+items，The product information table records the price, category, description, and other information for each product
+users，The user information table records the age and gender of each user.
+
+The analysis approach is as follows:
+
+1. Analyze the total sales volume and sales revenue of the top 10 products.
+2. Analyze the purchase situation of the top 10 products by different genders.
+3. Analyze the most popular product category with the highest purchase rate.
+
+The corresponding query structure is as follows:
+
+answer：
+```json
+{{
+    "task_1":"Analyze the total sales volume and sales revenue of the top 10 products.",
+    "task_2":"Analyze the purchase situation of the top 10 products by different genders",
+    "task_3":"Analyze the most popular product category with the highest purchase rate."
+}}
+```
+"""
+CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT = """
+You are a data analysis expert in the retail industry
+"""
+
+CLAUDE3_DATA_ANALYSE_USER_PROMPT = """
+As a professional data analyst, you are now asked a question by a user, and you need to analyze the data provided.
+
+<instructions>
+- Analyze the data based on the provided data, without creating non-existent data. It is crucial to only analyze the provided data.
+- Perform relevant correlation analysis on the relationships between the data.
+- There is no need to expose the specific SQL fields.
+- The data related to the user's question is in a JSON result, which has been broken down into multiple sub-questions, including the sub-questions, queries, SQL, and data_result.
+</instructions>
+
+
+The user question is：{question}
+
+The data related to the question is：{data}
+
+Think step by step。
 """

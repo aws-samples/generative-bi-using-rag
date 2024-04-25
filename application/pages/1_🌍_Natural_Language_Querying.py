@@ -13,11 +13,13 @@ from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
 from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
-    upload_results_to_opensearch, get_query_intent, generate_suggested_question
+    upload_results_to_opensearch, get_query_intent, generate_suggested_question, get_agent_cot_task, agent_data_analyse
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
+from utils.tool import get_response_sql, get_sql_result_tool
 
 logger = logging.getLogger(__name__)
+
 
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""
@@ -39,6 +41,10 @@ def get_sql_result(nlq_chain):
         logger.error("get_sql_result is error")
         logger.error(e)
         return pd.DataFrame()
+
+
+def clean_st_histoty(selected_profile):
+    st.session_state.messages[selected_profile] = []
 
 
 def do_visualize_results(nlq_chain, sql_result):
@@ -86,8 +92,10 @@ def get_retrieve_opensearch(env_vars, query, search_type, selected_profile, top_
 
     if search_type == "query":
         index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name']
-    else:
+    elif search_type == "ner":
         index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name'] + "_ner"
+    else:
+        index_name = env_vars['data_sources'][selected_profile]['opensearch']['index_name'] + "_agent"
 
     records_with_embedding = create_vector_embedding_with_bedrock(
         query,
@@ -178,7 +186,9 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0', 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1']
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+                 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
+                 'meta.llama3-70b-instruct-v1:0']
 
     with st.sidebar:
         st.title('Setting')
@@ -198,9 +208,12 @@ def main():
 
         use_rag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results = st.checkbox("Visualize Results", True)
-        intent_ner_recognition = st.checkbox("Intent Ner Recognition", False)
+        intent_ner_recognition = st.checkbox("Intent NER", False)
+        agent_cot = st.checkbox("Agent COT", False)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
+
+        clean_history = st.button("clean history", on_click=clean_st_histoty, args=[selected_profile])
 
     # Part II: Search Section
     st.subheader("Start Searching")
@@ -252,6 +265,10 @@ def main():
                         st.code(message["content"].replace("SQL:", ""), language="sql")
                 elif isinstance(message["content"], pd.DataFrame):
                     st.dataframe(message["content"], hide_index=True)
+                elif isinstance(message["content"], list):
+                    for each_content in message["content"]:
+                        st.write(each_content["query"])
+                        st.dataframe(pd.read_json(each_content["data_result"], orient='records'), hide_index=True)
                 else:
                     st.markdown(message["content"])
 
@@ -265,6 +282,7 @@ def main():
     current_nlq_chain = st.session_state.nlq_chain
 
     search_intent_flag = True
+    agent_intent_flag = False
 
     # add select box for which model to use
     if search_box != "Type your query here..." or \
@@ -276,6 +294,8 @@ def main():
             with st.chat_message("assistant"):
                 retrieve_result = []
                 entity_slot_retrieve = []
+                deep_dive_sql_result = []
+                filter_deep_dive_sql_result = []
                 if not current_nlq_chain.get_retrieve_samples():
                     logger.info(f'try to get retrieve samples from open search')
                     with st.spinner('Retrieving Q/A (Take up to 5s)'):
@@ -344,28 +364,90 @@ def main():
                             if intent == "reject_search":
                                 search_intent_flag = False
 
+                            elif intent == "agent_search":
+                                agent_intent_flag = True
+                                if agent_cot:
+                                    agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
+                                                                                 selected_profile, 2, 0.5)
+                                    agent_cot_task_result = get_agent_cot_task(model_type, search_box,
+                                                                               database_profile['tables_info'],
+                                                                               agent_cot_retrieve)
+                                    st.markdown("This is a complex business problem, and the problem is being broken down.")
+                                    for each_task in agent_cot_task_result:
+                                        each_res_dict = {}
+                                        each_task_query = agent_cot_task_result[each_task]
+                                        each_res_dict["query"] = each_task_query
+                                        each_task_sql_query = text_to_sql(database_profile['tables_info'],
+                                                                          database_profile['hints'],
+                                                                          each_task_query,
+                                                                          model_id=model_type,
+                                                                          sql_examples=retrieve_result,
+                                                                          ner_example=entity_slot_retrieve,
+                                                                          dialect=get_db_url_dialect(
+                                                                              database_profile['db_url']),
+                                                                          model_provider=model_provider)
+                                        sql_str = get_response_sql(each_task_sql_query)
+                                        each_res_dict["sql"] = sql_str
+                                        if sql_str != "":
+                                            deep_dive_sql_result.append(each_res_dict)
+
+                                    logger.info("the deep dive sql result")
+                                    logger.info(deep_dive_sql_result)
+
+                                    for i in range(len(deep_dive_sql_result)):
+                                        each_task_sql_res = get_sql_result_tool(
+                                            st.session_state['profiles'][current_nlq_chain.profile],
+                                            deep_dive_sql_result[i]["sql"])
+                                        if len(each_task_sql_res) > 0:
+                                            deep_dive_sql_result[i]["data_result"] = each_task_sql_res.to_json(
+                                                orient='records')
+                                            filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
+
+                                    agent_data_analyse_result = agent_data_analyse(model_type, search_box,
+                                                                                   json.dumps(
+                                                                                       filter_deep_dive_sql_result))
+                                    logger.info("agent_data_analyse_result")
+                                    logger.info(agent_data_analyse_result)
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "user", "content": search_box})
+                                    for i in range(len(filter_deep_dive_sql_result)):
+                                        st.write(filter_deep_dive_sql_result[i]["query"])
+                                        st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
+                                                                  orient='records'), hide_index=True)
+
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "assistant", "content": filter_deep_dive_sql_result})
+
+                                    st.markdown(agent_data_analyse_result)
+                                    current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "assistant", "content": agent_data_analyse_result})
+                                else:
+                                    agent_intent_flag = False
                             if search_intent_flag:
                                 if len(entity_slot) > 0:
                                     for each_entity in entity_slot:
-                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", selected_profile, 1, 0.7 )
+                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
+                                                                                  selected_profile, 1, 0.7)
                                         if len(entity_retrieve) > 0:
                                             entity_slot_retrieve.extend(entity_retrieve)
                         # get llm model for sql generation
-                        response = text_to_sql(database_profile['tables_info'],
-                                                      database_profile['hints'],
-                                                      search_box,
-                                                      model_id=model_type,
-                                                      sql_examples=retrieve_result,
-                                                      ner_example = entity_slot_retrieve,
-                                                      dialect=get_db_url_dialect(database_profile['db_url']),
-                                                      model_provider=model_provider)
+                        if not agent_intent_flag and search_intent_flag:
+                            response = text_to_sql(database_profile['tables_info'],
+                                                   database_profile['hints'],
+                                                   search_box,
+                                                   model_id=model_type,
+                                                   sql_examples=retrieve_result,
+                                                   ner_example=entity_slot_retrieve,
+                                                   dialect=get_db_url_dialect(database_profile['db_url']),
+                                                   model_provider=model_provider)
 
-                        logger.info(f'got llm response: {response}')
-                        current_nlq_chain.set_generated_sql_response(response)
+                            logger.info(f'got llm response: {response}')
+                            current_nlq_chain.set_generated_sql_response(response)
                 else:
                     logger.info('get generated sql from memory')
 
-                if search_intent_flag:
+                if search_intent_flag and not agent_intent_flag:
                     # Add user message to chat history
                     st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
@@ -401,10 +483,26 @@ def main():
                         st.markdown('Generation process explanations:')
                         st.markdown(current_nlq_chain.get_generated_sql_explain())
 
+                    st.markdown('You can provide feedback:')
+
+                    # add a upvote(green)/downvote button with logo
+                    feedback = st.columns(2)
+                    feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                       use_container_width=True,
+                                       on_click=upvote_clicked,
+                                       args=[current_nlq_chain.get_question(),
+                                             current_nlq_chain.get_generated_sql(),
+                                             env_vars])
+
+                    if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                        # do something here
+                        pass
+                elif agent_intent_flag:
+                    pass
                 else:
                     st.markdown('Your query statement is currently not supported by the system')
 
-            if visualize_results and search_intent_flag:
+            if visualize_results and search_intent_flag and not agent_intent_flag:
                 do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
 
             if gen_suggested_question:

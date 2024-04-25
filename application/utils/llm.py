@@ -6,12 +6,13 @@ from botocore.config import Config
 from opensearchpy import OpenSearch
 from utils import opensearch
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3
+    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT, \
+    CLAUDE3_DATA_ANALYSE_USER_PROMPT
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
-from utils.prompts.generate_prompt import generate_llm_prompt,generate_sagemaker_intent_prompt, \
-    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt
+from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
+    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -60,6 +61,46 @@ def invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_res
         response_body = json.loads(response.get('body').read())
         return response_body
 
+
+def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream=False):
+    """
+    Invoke LLama-70B model
+    :param model_id:
+    :param system_prompt:
+    :param messages:
+    :param max_tokens:
+    :param with_response_stream:
+    :return:
+    """
+    try:
+        llama3_prompt = """
+        <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+        {system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+        {user_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+        """
+        body = {
+            "prompt": llama3_prompt.format(system_prompt=system_prompt, user_prompt=user_prompt),
+            "max_gen_len": 2048,
+            "temperature": 0.01,
+            "top_p": 0.9
+        }
+        if with_response_stream:
+            response = get_bedrock_client().invoke_model_with_response_stream(body=json.dumps(body), modelId=model_id)
+            return response
+        else:
+            response = get_bedrock_client().invoke_model(
+                modelId=model_id, body=json.dumps(body)
+            )
+            response_body = json.loads(response["body"].read())
+            return response_body
+    except Exception as e:
+        logger.error("Couldn't invoke LLama 70B")
+        logger.error(e)
+
+
+
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
     """
     Invokes the Mixtral 8c7B model to run an inference using the input
@@ -93,6 +134,7 @@ def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_resp
         logger.error("Couldn't invoke Mixtral 8x7B")
         logger.error(e)
         raise
+
 
 def get_sagemaker_client():
     global sagemaker_client
@@ -203,34 +245,46 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
     return claude_prompt, dialect_prompt
 
 
-def text_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
-                   model_provider=None, with_response_stream=False):
-    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
-                                                 dialect=dialect)
-
-    max_tokens = 2048
-
+def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2018, with_response_stream=False):
     # Prompt with user turn only.
     user_message = {"role": "user", "content": user_prompt}
     messages = [user_message]
     logger.info(f'{system_prompt=}')
     logger.info(f'{messages=}')
-    if model_id.startswith('anthropic.claude-3-'):
-        response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
-    elif model_id.startswith('mistral.mixtral-8x7b'):
-        response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
-    if with_response_stream:
-        return response
-    else:
-        final_response = response.get("content")[0].get("text")
-        return final_response
+    response = ""
+    try:
+        if model_id.startswith('anthropic.claude-3-'):
+            response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
+        elif model_id.startswith('mistral.mixtral-8x7b'):
+            response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
+        elif model_id.startswith('meta.llama3-70b'):
+            response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
+        if with_response_stream:
+            return response
+        else:
+            if model_id.startswith('meta.llama3-70b'):
+                return response["generation"]
+            else:
+                final_response = response.get("content")[0].get("text")
+                return final_response
+    except Exception as e:
+        logger.error("invoke_llm_model error {}".format(e))
+    return response
 
+
+def text_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
+                model_provider=None, with_response_stream=False):
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
+                                                     dialect=dialect)
+    max_tokens = 2048
+    response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
+    return response
 
 
 def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=False):
     body = json.dumps({"query": generate_sagemaker_explain_prompt(sql),
-                        "stream": with_response_stream,})
-    response = invoke_model_sagemaker_endpoint(endpoint_name,body,with_response_stream)
+                       "stream": with_response_stream, })
+    response = invoke_model_sagemaker_endpoint(endpoint_name, body, with_response_stream)
     logger.info(response)
     if with_response_stream:
         return response
@@ -239,13 +293,12 @@ def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=Fals
         return response
 
 
-
 def sagemaker_to_sql(ddl, hints, search_box, endpoint_name, sql_examples=None, ner_example=None, dialect='mysql',
-                   model_provider=None, with_response_stream=False):
+                     model_provider=None, with_response_stream=False):
     body = json.dumps({"prompt": generate_sagemaker_sql_prompt(ddl, hints, search_box, sql_examples, ner_example,
-                                                 dialect=dialect),
-                        "stream": with_response_stream,})
-    response = invoke_model_sagemaker_endpoint(endpoint_name,body,with_response_stream)
+                                                               dialect=dialect),
+                       "stream": with_response_stream, })
+    response = invoke_model_sagemaker_endpoint(endpoint_name, body, with_response_stream)
     logger.info(response)
     if with_response_stream:
         return response
@@ -261,14 +314,59 @@ LIMIT 10;</query>'''
         return final_response
 
 
+def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
+    default_agent_cot_task = {"task_1": search_box}
+    agent_system_prompt = generate_agent_cot_system_prompt(ddl, agent_cot_example)
+    try:
+        intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
+        if intent_endpoint:
+            # TODO may need to modify the prompt
+            body = json.dumps(
+                {"query": generate_sagemaker_intent_prompt(search_box, meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
+            response = invoke_model_sagemaker_endpoint(intent_endpoint, body)
+            logger.info(f'{response=}')
+            intent_result_dict = json_parse.parse(response)
+            return intent_result_dict
+        else:
+            system_prompt = agent_system_prompt
+            max_tokens = 2048
+            user_message = {"role": "user", "content": search_box}
+            messages = [user_message]
+            response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+            final_response = response.get("content")[0].get("text")
+            logger.info(f'{final_response=}')
+            intent_result_dict = json_parse.parse(final_response)
+            return intent_result_dict
+    except Exception as e:
+        logger.error("get_agent_cot_task is error:{}".format(e))
+        return default_agent_cot_task
+
+
+def agent_data_analyse(model_id, search_box, sql_data):
+    try:
+        system_prompt = CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT
+        max_tokens = 2048
+        user_prompt = CLAUDE3_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+        user_message = {"role": "user", "content": user_prompt}
+        messages = [user_message]
+        response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
+        final_response = response.get("content")[0].get("text")
+        logger.info(f'{final_response=}')
+        return final_response
+    except Exception as e:
+        logger.error("agent_data_analyse is error")
+    return ""
+
+
 def get_query_intent(model_id, search_box):
     default_intent = {"intent": "normal_search"}
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
         if intent_endpoint:
             # TODO may need to modify the prompt
-            body = json.dumps({"query": generate_sagemaker_intent_prompt(search_box,meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
-            response = invoke_model_sagemaker_endpoint(intent_endpoint,body)
+            body = json.dumps(
+                {"query": generate_sagemaker_intent_prompt(search_box, meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
+            response = invoke_model_sagemaker_endpoint(intent_endpoint, body)
             logger.info(f'{response=}')
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
@@ -283,6 +381,7 @@ def get_query_intent(model_id, search_box):
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict
     except Exception as e:
+        logger.error("get_query_intent is error:{}".format(e))
         return default_intent
 
 
