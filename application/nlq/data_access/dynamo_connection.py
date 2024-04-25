@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # DynamoDB table name
 CONNECT_CONFIG_TABLE_NAME = 'NlqConnectConfig'
-DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION', 'us-west-2')
+DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION')
 
 class ConnectConfigEntity:
     """Connect config entity mapped to DynamoDB item"""

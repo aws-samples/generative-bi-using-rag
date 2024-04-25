@@ -440,7 +440,7 @@ def main():
                                                    model_id=model_type,
                                                    sql_examples=retrieve_result,
                                                    ner_example=entity_slot_retrieve,
-                                                   dialect=get_db_url_dialect(database_profile['db_url']),
+                                                   dialect=database_profile['db_type'],
                                                    model_provider=model_provider)
 
                             logger.info(f'got llm response: {response}')
