@@ -4,6 +4,7 @@ from nlq.data_access.database import RelationDatabase
 
 logger = logging.getLogger(__name__)
 
+
 class ConnectionManagement:
     connection_config_dao = ConnectConfigDao()
 
@@ -23,7 +24,8 @@ class ConnectionManagement:
 
     @classmethod
     def update_connection(cls, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment):
-        cls.connection_config_dao.update_db_info(conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment)
+        cls.connection_config_dao.update_db_info(conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name,
+                                                 comment)
         logger.info(f"Connection {conn_name} updated")
 
     @classmethod
@@ -49,3 +51,8 @@ class ConnectionManagement:
     def get_db_url_by_name(cls, conn_name):
         conn_config = cls.get_conn_config_by_name(conn_name)
         return RelationDatabase.get_db_url_by_connection(conn_config)
+
+    @classmethod
+    def get_db_type_by_name(cls, conn_name):
+        conn_config = cls.get_conn_config_by_name(conn_name)
+        return conn_config.db_type

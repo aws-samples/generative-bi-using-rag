@@ -1,5 +1,5 @@
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, AGENT_COT_SYSTEM_PROMPT, AGENT_COT_EXAMPLE
+    DEFAULT_DIALECT_PROMPT, AGENT_COT_SYSTEM_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
 import logging
@@ -285,9 +285,7 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
     elif dialect == 'mysql':
         dialect_prompt = MYSQL_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'redshift':
-        dialect_prompt = '''You are a Amazon Redshift expert. Given an input question, first create a syntactically 
-        correct Redshift query to run, then look at the results of the query and return the answer to the input 
-        question. query for at most 100 results using the LIMIT. '''
+        dialect_prompt = AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
