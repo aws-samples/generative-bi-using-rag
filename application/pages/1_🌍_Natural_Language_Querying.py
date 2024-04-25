@@ -211,7 +211,7 @@ def main():
         visualize_results = st.checkbox("Visualize Results", True)
         intent_ner_recognition = st.checkbox("Intent NER", False)
         agent_cot = st.checkbox("Agent COT", False)
-        explain_gen_process_flag = st.checkbox("Explain Generation Process", False)
+        explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
 
         clean_history = st.button("clean history", on_click=clean_st_histoty, args=[selected_profile])
@@ -452,8 +452,13 @@ def main():
                     # Add user message to chat history
                     st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
+                    generate_sql = current_nlq_chain.get_generated_sql()
+
+                    if generate_sql == "":
+                        st.write("Unable to generate SQL at the moment, please provide more information")
+                    else:
                     # Add assistant response to chat history
-                    st.session_state.messages[selected_profile].append(
+                        st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
 
                     current_sql_result = get_sql_result(current_nlq_chain)
@@ -462,8 +467,9 @@ def main():
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": current_sql_result})
 
-                    with st.expander("The generated SQL"):
-                        st.code(current_nlq_chain.get_generated_sql(), language="sql")
+                    if generate_sql != "":
+                        with st.expander("The generated SQL"):
+                            st.code(current_nlq_chain.get_generated_sql(), language="sql")
 
                     if explain_gen_process_flag:
                         st.session_state.messages[selected_profile].append(
@@ -492,9 +498,13 @@ def main():
                     st.markdown('Your query statement is currently not supported by the system')
 
             if visualize_results and search_intent_flag and not agent_intent_flag:
-                do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
+                current_search_sql_result = st.session_state.current_sql_result[selected_profile]
+                if current_search_sql_result is not None and len(current_search_sql_result) > 0:
+                    do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
+                else:
+                    st.markdown("No relevant data found")
 
-            if gen_suggested_question:
+            if gen_suggested_question and current_nlq_chain.get_generated_sql() != "" and search_intent_flag:
                 st.text('You might want to further ask:')
                 active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
                 generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)

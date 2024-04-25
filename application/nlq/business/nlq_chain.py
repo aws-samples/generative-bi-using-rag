@@ -1,8 +1,9 @@
 import pandas as pd
 import re
+import logging
 from nlq.business.connection import ConnectionManagement
 from utils.apis import query_from_sql_pd
-
+logger = logging.getLogger(__name__)
 
 class NLQChain:
 
@@ -40,17 +41,19 @@ class NLQChain:
         return self.generated_sql_response
 
     def get_generated_sql(self):
+        sql = ""
         try:
             return self.generated_sql_response.split("<sql>")[1].split("</sql>")[0]
         except IndexError:
-            raise Exception("No SQL found in the LLM's response")
+            logger.error("No SQL found in the LLM's response")
+        return sql
 
     def get_generated_sql_explain(self):
         index = self.generated_sql_response.find("</sql>")
         if index != -1:
             return self.generated_sql_response[index + len("</sql>"):]
         else:
-            return ""
+            return self.generated_sql_response
 
     def set_executed_result_df(self, df):
         self.executed_result_df = df
@@ -61,6 +64,9 @@ class NLQChain:
             if not db_url:
                 conn_name = profile['conn_name']
                 db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+            sql = self.get_generated_sql()
+            if sql == "":
+                return pd.DataFrame()
             self.executed_result_df = query_from_sql_pd(
                 p_db_url=db_url,
                 query=self.get_generated_sql())
