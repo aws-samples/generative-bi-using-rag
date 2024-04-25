@@ -7,7 +7,7 @@ from opensearchpy import OpenSearch
 from utils import opensearch
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT, \
-    CLAUDE3_DATA_ANALYSE_USER_PROMPT
+    CLAUDE3_DATA_ANALYSE_USER_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
@@ -182,9 +182,7 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
     elif dialect == 'mysql':
         dialect_prompt = MYSQL_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'redshift':
-        dialect_prompt = '''You are a Amazon Redshift expert. Given an input question, first create a syntactically 
-        correct Redshift query to run, then look at the results of the query and return the answer to the input 
-        question.'''
+        dialect_prompt = AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
