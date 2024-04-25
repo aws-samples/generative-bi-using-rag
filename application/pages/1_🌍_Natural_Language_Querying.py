@@ -50,7 +50,6 @@ def do_visualize_results(nlq_chain, sql_result):
         # else:
         #     sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         sql_query_result = sql_result
-        st.markdown('Visualizing the results:')
         if sql_query_result is not None:
             # Reset change flag to False
             nlq_chain.set_visualization_config_change(False)
@@ -382,6 +381,18 @@ def main():
 
                     with st.expander("The generated SQL"):
                         st.code(current_nlq_chain.get_generated_sql(), language="sql")
+                        # add a upvote(green)/downvote button with logo
+                        feedback = st.columns(2)
+                        feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                        use_container_width=True,
+                                        on_click=upvote_clicked,
+                                        args=[current_nlq_chain.get_question(),
+                                                current_nlq_chain.get_generated_sql(),
+                                                env_vars])
+
+                        if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                            # do something here
+                            pass
 
                     if explain_gen_process_flag:
                         st.session_state.messages[selected_profile].append(
@@ -390,20 +401,6 @@ def main():
                         st.markdown('Generation process explanations:')
                         st.markdown(current_nlq_chain.get_generated_sql_explain())
 
-                    st.markdown('You can provide feedback:')
-
-                    # add a upvote(green)/downvote button with logo
-                    feedback = st.columns(2)
-                    feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                       use_container_width=True,
-                                       on_click=upvote_clicked,
-                                       args=[current_nlq_chain.get_question(),
-                                             current_nlq_chain.get_generated_sql(),
-                                             env_vars])
-
-                    if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                        # do something here
-                        pass
                 else:
                     st.markdown('Your query statement is currently not supported by the system')
 
