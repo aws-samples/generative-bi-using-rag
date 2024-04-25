@@ -356,6 +356,7 @@ def main():
                             conn_name = database_profile['conn_name']
                             db_url = ConnectionManagement.get_db_url_by_name(conn_name)
                             database_profile['db_url'] = db_url
+                            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
 
                         if intent_ner_recognition:
                             intent_response = get_query_intent(model_type, search_box)
@@ -384,8 +385,7 @@ def main():
                                                                           model_id=model_type,
                                                                           sql_examples=retrieve_result,
                                                                           ner_example=entity_slot_retrieve,
-                                                                          dialect=get_db_url_dialect(
-                                                                              database_profile['db_url']),
+                                                                          dialect=database_profile['db_type'],
                                                                           model_provider=model_provider)
                                         sql_str = get_response_sql(each_task_sql_query)
                                         each_res_dict["sql"] = sql_str
