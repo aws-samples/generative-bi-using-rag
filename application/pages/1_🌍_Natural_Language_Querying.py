@@ -444,22 +444,13 @@ def main():
 
                             logger.info(f'got llm response: {response}')
                             current_nlq_chain.set_generated_sql_response(response)
-                else:
-                    logger.info('get generated sql from memory')
-
-                if search_intent_flag and not agent_intent_flag:
+                            
                     # Add user message to chat history
                     st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
 
                     # Add assistant response to chat history
                     st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
-
-                    current_sql_result = get_sql_result(current_nlq_chain)
-                    st.session_state.current_sql_result[selected_profile] = current_sql_result
-                    if current_sql_result is not None and len(current_sql_result) > 0:
-                        st.session_state.messages[selected_profile].append(
-                            {"role": "assistant", "content": current_sql_result})
 
                     with st.expander("The generated SQL"):
                         st.code(current_nlq_chain.get_generated_sql(), language="sql")
@@ -475,28 +466,24 @@ def main():
                         if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
                             # do something here
                             pass
+                else:
+                    logger.info('get generated sql from memory')
 
-                    if explain_gen_process_flag:
-                        st.session_state.messages[selected_profile].append(
-                            {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
+                if search_intent_flag and not agent_intent_flag:
+                    with st.spinner('Retrieving SQL execution results'):
+                        current_sql_result = get_sql_result(current_nlq_chain)
+                        st.session_state.current_sql_result[selected_profile] = current_sql_result
+                        if current_sql_result is not None and len(current_sql_result) > 0:
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": current_sql_result})
 
-                        st.markdown('Generation process explanations:')
-                        st.markdown(current_nlq_chain.get_generated_sql_explain())
+                        if explain_gen_process_flag:
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
 
-                    st.markdown('You can provide feedback:')
+                            st.markdown('Generation process explanations:')
+                            st.markdown(current_nlq_chain.get_generated_sql_explain())
 
-                    # add a upvote(green)/downvote button with logo
-                    feedback = st.columns(2)
-                    feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                       use_container_width=True,
-                                       on_click=upvote_clicked,
-                                       args=[current_nlq_chain.get_question(),
-                                             current_nlq_chain.get_generated_sql(),
-                                             env_vars])
-
-                    if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                        # do something here
-                        pass
                 elif agent_intent_flag:
                     pass
                 else:
