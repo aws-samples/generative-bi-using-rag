@@ -48,42 +48,42 @@ def clean_st_histoty(selected_profile):
 
 
 def do_visualize_results(nlq_chain, sql_result):
-    with st.chat_message("assistant"):
+    # with st.chat_message("assistant"):
         # if nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile],force_execute_query=False) is None:
         #     logger.info('try to execute the generated sql')
         #     with st.spinner('Querying database...'):
         #         sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
         # else:
         #     sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
-        sql_query_result = sql_result
-        st.markdown('Visualizing the results:')
-        if sql_query_result is not None:
-            # Reset change flag to False
-            nlq_chain.set_visualization_config_change(False)
-            # Auto-detect columns
-            visualize_config_columns = st.columns(3)
+    sql_query_result = sql_result
+    st.markdown('Visualizing the results:')
+    if sql_query_result is not None:
+        # Reset change flag to False
+        nlq_chain.set_visualization_config_change(False)
+        # Auto-detect columns
+        visualize_config_columns = st.columns(3)
 
-            available_columns = sql_query_result.columns
+        available_columns = sql_query_result.columns
 
-            chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
+        chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
                                                                ['Table', 'Bar', 'Line', 'Pie'],
                                                                on_change=nlq_chain.set_visualization_config_change)
-            if chart_type != 'Table':
-                x_column = visualize_config_columns[1].selectbox('Choose x-axis column', available_columns,
+        if chart_type != 'Table':
+            x_column = visualize_config_columns[1].selectbox('Choose x-axis column', available_columns,
                                                                  on_change=nlq_chain.set_visualization_config_change)
-                y_column = visualize_config_columns[2].selectbox('Choose y-axis column',
+            y_column = visualize_config_columns[2].selectbox('Choose y-axis column',
                                                                  reversed(available_columns.to_list()),
                                                                  on_change=nlq_chain.set_visualization_config_change)
-            if chart_type == 'Table':
-                st.dataframe(sql_query_result, hide_index=True)
-            elif chart_type == 'Bar':
-                st.plotly_chart(px.bar(sql_query_result, x=x_column, y=y_column))
-            elif chart_type == 'Line':
-                st.plotly_chart(px.line(sql_query_result, x=x_column, y=y_column))
-            elif chart_type == 'Pie':
-                st.plotly_chart(px.pie(sql_query_result, names=x_column, values=y_column))
-        else:
-            st.markdown('No visualization generated.')
+        if chart_type == 'Table':
+            st.dataframe(sql_query_result, hide_index=True)
+        elif chart_type == 'Bar':
+            st.plotly_chart(px.bar(sql_query_result, x=x_column, y=y_column))
+        elif chart_type == 'Line':
+            st.plotly_chart(px.line(sql_query_result, x=x_column, y=y_column))
+        elif chart_type == 'Pie':
+            st.plotly_chart(px.pie(sql_query_result, names=x_column, values=y_column))
+    else:
+        st.markdown('No visualization generated.')
 
 
 def normal_text_search(search_box, model_type, database_profile, entity_slot, env_vars, selected_profile, use_rag,
@@ -515,6 +515,8 @@ def main():
                 if visualize_results and search_intent_flag:
                     current_search_sql_result = st.session_state.current_sql_result[selected_profile]
                     if current_search_sql_result is not None and len(current_search_sql_result) > 0:
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant", "content": current_search_sql_result})
                         do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
                     else:
                         st.markdown("No relevant data found")
