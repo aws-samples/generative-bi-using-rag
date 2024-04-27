@@ -8,7 +8,7 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
-from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker, \
+from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain
 from utils.opensearch import get_retrieve_opensearch
 from .schemas import Question, Answer, Example, Option
@@ -61,25 +61,13 @@ def __process_nlq_chain(question: Question) -> NLQChain:
                         question.keywords,
                         index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
                 else:
-                    records_with_embedding = create_vector_embedding_with_bedrock(
-                        question.keywords,
-                        index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+                    # records_with_embedding = create_vector_embedding_with_bedrock(
+                    #     question.keywords,
+                    #     index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
+                    pass
                 logger.info(env_vars['data_sources'][selected_profile]['opensearch']['index_name'])
-                retrieve_result = retrieve_results_from_opensearch(
-                    index_name=env_vars['data_sources'][selected_profile]['opensearch']['index_name'],
-                    region_name=env_vars['data_sources'][selected_profile]['opensearch']['region_name'],
-                    domain=env_vars['data_sources'][selected_profile]['opensearch']['domain'],
-                    opensearch_user=env_vars['data_sources'][selected_profile]['opensearch'][
-                        'opensearch_user'],
-                    opensearch_password=env_vars['data_sources'][selected_profile]['opensearch'][
-                        'opensearch_password'],
-                    host=env_vars['data_sources'][selected_profile]['opensearch'][
-                        'opensearch_host'],
-                    port=env_vars['data_sources'][selected_profile]['opensearch'][
-                        'opensearch_port'],
-                    query_embedding=records_with_embedding['vector_field'],
-                    top_k=3,
-                    profile_name=selected_profile)
+
+                retrieve_result = get_retrieve_opensearch(env_vars, current_nlq_chain.get_question(), "query", selected_profile, 3, 0.5)
                 current_nlq_chain.set_retrieve_samples(retrieve_result)
             except Exception as e:
                 logger.exception(e)
