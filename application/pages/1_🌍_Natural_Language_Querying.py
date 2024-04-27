@@ -43,15 +43,6 @@ def upvote_agent_clicked(question, comment, env_vars):
     logger.info(f'up voted "{question}" with sql "{comment}"')
 
 
-def get_sql_result(nlq_chain):
-    try:
-        return nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
-    except Exception as e:
-        logger.error("get_sql_result is error")
-        logger.error(e)
-        return pd.DataFrame()
-
-
 def clean_st_histoty(selected_profile):
     st.session_state.messages[selected_profile] = []
 
@@ -468,8 +459,13 @@ def main():
                         # do something here
                         pass
 
-                    current_sql_result = get_sql_result(current_nlq_chain)
-                    st.session_state.current_sql_result[selected_profile] = current_sql_result
+                    search_intent_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
+                                                                current_nlq_chain.get_generated_sql)
+                    if search_intent_result["status_code"] == 500:
+                        with st.expander("The SQL Error Info"):
+                            st.markdown(search_intent_result["error_info"])
+
+                    st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
                 elif agent_intent_flag:
                     for i in range(len(agent_search_result)):
                         each_task_res = get_sql_result_tool(
@@ -517,12 +513,7 @@ def main():
 
                 # 数据可视化展示
                 if visualize_results and search_intent_flag:
-                    current_search_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
-                                                                current_nlq_chain.get_generated_sql)
-                    current_search_sql_result = current_search_result["data"]
-                    if current_search_result["status_code"] == 500:
-                        with st.expander("The SQL Error Info"):
-                            st.markdown(current_search_result["error_info"])
+                    current_search_sql_result = st.session_state.current_sql_result[selected_profile]
                     if current_search_sql_result is not None and len(current_search_sql_result) > 0:
                         do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
                     else:
