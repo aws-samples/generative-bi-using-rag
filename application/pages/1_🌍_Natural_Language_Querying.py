@@ -460,7 +460,7 @@ def main():
                         pass
 
                     search_intent_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
-                                                                current_nlq_chain.get_generated_sql)
+                                                                current_nlq_chain.get_generated_sql())
                     if search_intent_result["status_code"] == 500:
                         with st.expander("The SQL Error Info"):
                             st.markdown(search_intent_result["error_info"])
