@@ -414,11 +414,6 @@ def main():
                             examples["ner_retrieve"].append({'Score': example['_score'],
                                                              'Question': example['_source']['entity'],
                                                              'Answer': example['_source']['comment'].strip()})
-                        for example in normal_search_result.entity_slot_retrieve:
-                            examples["agent_retrieve"] = []
-                            examples["agent_retrieve"].append({'Score': example['_score'],
-                                                               'Question': example['_source']['query'],
-                                                               'Answer': example['_source']['comment'].strip()})
                         st.write(examples)
                 elif agent_intent_flag:
                     with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
