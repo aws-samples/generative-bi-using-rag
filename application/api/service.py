@@ -8,9 +8,9 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
-from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, \
-    retrieve_results_from_opensearch, get_query_intent, create_vector_embedding_with_sagemaker, \
+from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain
+from utils.opensearch import get_retrieve_opensearch
 from .schemas import Question, Answer, Example, Option
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS
