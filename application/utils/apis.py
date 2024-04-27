@@ -75,8 +75,8 @@ def query_from_sql_pd(p_db_url: str, query, schema=None):
 def get_sql_result_tool(profile, sql):
     result_dict = {"data": pd.DataFrame(), "sql": sql, "status_code": 200, "error_info": ""}
     try:
-        db_url = profile['db_url']
-        if not db_url:
+        p_db_url = profile['db_url']
+        if not p_db_url:
             conn_name = profile['conn_name']
             p_db_url = ConnectionManagement.get_db_url_by_name(conn_name)
 
