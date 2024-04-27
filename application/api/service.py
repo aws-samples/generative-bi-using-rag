@@ -8,7 +8,7 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from utils.database import get_db_url_dialect
-from utils.llm import claude3_to_sql, create_vector_embedding_with_bedrock, \
+from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, \
     retrieve_results_from_opensearch, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain
 from .schemas import Question, Answer, Example, Option
@@ -147,7 +147,7 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
                                 model_provider=None,
                                 with_response_stream=with_response_stream,) # This does not support streaming
     else:
-        response = claude3_to_sql(database_profile['tables_info'],
+        response = text_to_sql(database_profile['tables_info'],
                                 database_profile['hints'],
                                 question.keywords,
                                 model_id=question.bedrock_model_id,
