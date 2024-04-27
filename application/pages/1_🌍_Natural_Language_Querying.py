@@ -411,7 +411,7 @@ def main():
                 # 前端结果显示部分，显示召回的数据或者agent cot任务拆分信息
                 if search_intent_flag:
                     with st.expander(
-                            f'Query Retrieve : {len(normal_search_result.retrieve_result)}, NER Retrieve : {normal_search_result.entity_slot_retrieve}, Agent Retrieve : {normal_search_result.agent_retrieve_result}'):
+                            f'Query Retrieve : {len(normal_search_result.retrieve_result)}, NER Retrieve : {len(normal_search_result.entity_slot_retrieve)}'):
                         examples = {}
                         for example in normal_search_result.retrieve_result:
                             examples["query_retrieve"] = []
@@ -474,11 +474,11 @@ def main():
                     for i in range(len(agent_search_result)):
                         each_task_res = get_sql_result_tool(
                             st.session_state['profiles'][current_nlq_chain.profile],
-                            deep_dive_sql_result[i]["sql"])
+                            agent_search_result[i]["sql"])
                         if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
-                            deep_dive_sql_result[i]["data_result"] = each_task_res["data"].to_json(
+                            agent_search_result[i]["data_result"] = each_task_res["data"].to_json(
                                 orient='records')
-                            filter_deep_dive_sql_result.append(deep_dive_sql_result[i])
+                            filter_deep_dive_sql_result.append(agent_search_result[i])
 
                     agent_data_analyse_result = agent_data_analyse(model_type, search_box,
                                                                    json.dumps(
@@ -517,7 +517,8 @@ def main():
 
                 # 数据可视化展示
                 if visualize_results and search_intent_flag:
-                    current_search_result = get_sql_result_tool()
+                    current_search_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
+                                                                current_nlq_chain.get_generated_sql)
                     current_search_sql_result = current_search_result["data"]
                     if current_search_result["status_code"] == 500:
                         with st.expander("The SQL Error Info"):
