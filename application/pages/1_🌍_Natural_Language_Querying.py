@@ -271,7 +271,7 @@ def main():
     st.write(comments_text)
 
     st.info("Quick Start: Click on the following buttons to start searching.")
-    # logger.info(f'{st.session_state.profiles=}')
+
     # Pre-written search samples
     search_samples = st.session_state.profiles[selected_profile]['search_samples']
     search_samples = search_samples + comments_questions
@@ -336,9 +336,9 @@ def main():
                 current_nlq_chain.set_question(search_box)
                 st.markdown(current_nlq_chain.get_question())
             with st.chat_message("assistant"):
-                retrieve_result = []
-                entity_slot_retrieve = []
-                deep_dive_sql_result = []
+                # retrieve_result = []
+                # entity_slot_retrieve = []
+                # deep_dive_sql_result = []
                 filter_deep_dive_sql_result = []
                 entity_slot = []
                 normal_search_result = None
@@ -346,35 +346,39 @@ def main():
                 agent_cot_task_result = {}
 
                 database_profile = st.session_state.profiles[selected_profile]
-                # fix db url is Empty
-                if database_profile['db_url'] == '':
-                    conn_name = database_profile['conn_name']
-                    db_url = ConnectionManagement.get_db_url_by_name(conn_name)
-                    database_profile['db_url'] = db_url
-                    database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+                
+                with st.spinner('Connecting to database...'):
+                    # fix db url is Empty
+                    if database_profile['db_url'] == '':
+                        conn_name = database_profile['conn_name']
+                        db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+                        database_profile['db_url'] = db_url
+                        database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
 
                 # 通过标志位控制后续的逻辑
                 # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
                 if intent_ner_recognition:
-                    intent_response = get_query_intent(model_type, search_box)
-                    intent = intent_response.get("intent", "normal_search")
-                    entity_slot = intent_response.get("slot", [])
-                    if intent == "reject_search":
-                        reject_intent_flag = True
-                        search_intent_flag = False
-                    elif intent == "agent_search":
-                        agent_intent_flag = True
-                        if agent_cot:
+                    with st.spinner('Performing intent recognition...'):
+                        intent_response = get_query_intent(model_type, search_box)
+                        intent = intent_response.get("intent", "normal_search")
+                        entity_slot = intent_response.get("slot", [])
+                        st.markdown(f'This is a {intent} question.')
+                        if intent == "reject_search":
+                            reject_intent_flag = True
                             search_intent_flag = False
+                        elif intent == "agent_search":
+                            agent_intent_flag = True
+                            if agent_cot:
+                                search_intent_flag = False
+                            else:
+                                search_intent_flag = True
+                                agent_intent_flag = False
+                        elif intent == "knowledge_search":
+                            knowledge_search_flag = True
+                            search_intent_flag = False
+                            agent_intent_flag = False
                         else:
                             search_intent_flag = True
-                            agent_intent_flag = False
-                    elif intent == "knowledge_search":
-                        knowledge_search_flag = True
-                        search_intent_flag = False
-                        agent_intent_flag = False
-                    else:
-                        search_intent_flag = True
                 else:
                     search_intent_flag = True
 
@@ -389,9 +393,10 @@ def main():
                                                                   entity_slot, env_vars,
                                                                   selected_profile, use_rag)
                 elif knowledge_search_flag:
-                    response = knowledge_search(search_box=search_box, model_id=model_type)
-                    logger.info(f'got llm response for knowledge_search: {response}')
-                    st.markdown(f'This is a knowledge search question.\n{response}')
+                    with st.spinner('Performing knowledge search...'):
+                        response = knowledge_search(search_box=search_box, model_id=model_type)
+                        logger.info(f'got llm response for knowledge_search: {response}')
+                        st.markdown(f'This is a knowledge search question.\n{response}')
 
                 else:
                     st.markdown("This is a complex business problem, and the problem is being broken down.")
@@ -431,13 +436,25 @@ def main():
                         st.write(agent_search_result)
 
                 # 连接数据库，执行SQL, 记录历史记录并展示
-
                 if search_intent_flag:
                     st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
                     if normal_search_result.sql != "":
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
                         with st.expander("The generated SQL"):
                             st.code(normal_search_result.sql, language="sql")
+                            # add a upvote(green)/downvote button with logo
+                            feedback = st.columns(2)
+                            feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                                use_container_width=True,
+                                                on_click=upvote_clicked,
+                                                args=[current_nlq_chain.get_question(),
+                                                        current_nlq_chain.get_generated_sql(),
+                                                        env_vars])
+
+                            if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                                # do something here
+                                pass
+
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": "SQL:" + normal_search_result.sql})
                     else:
@@ -445,25 +462,11 @@ def main():
 
                     current_nlq_chain.set_generated_sql_response(normal_search_result.response)
                     if explain_gen_process_flag:
-                        st.session_state.messages[selected_profile].append(
-                            {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
-                        st.markdown('Generation process explanations:')
-                        st.markdown(current_nlq_chain.get_generated_sql_explain())
-
-                    st.markdown('You can provide feedback:')
-
-                    # add a upvote(green)/downvote button with logo
-                    feedback = st.columns(2)
-                    feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                       use_container_width=True,
-                                       on_click=upvote_clicked,
-                                       args=[current_nlq_chain.get_question(),
-                                             current_nlq_chain.get_generated_sql(),
-                                             env_vars])
-
-                    if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                        # do something here
-                        pass
+                        with st.spinner('Generating explanations...'):
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
+                            st.markdown('Generation process explanations:')
+                            st.markdown(current_nlq_chain.get_generated_sql_explain())
 
                     search_intent_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
                                                                 current_nlq_chain.get_generated_sql())
@@ -472,6 +475,7 @@ def main():
                             st.markdown(search_intent_result["error_info"])
 
                     st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
+                    
                 elif agent_intent_flag:
                     for i in range(len(agent_search_result)):
                         each_task_res = get_sql_result_tool(
@@ -527,25 +531,27 @@ def main():
                     else:
                         st.markdown("No relevant data found")
 
+                # 生成推荐问题
                 if gen_suggested_question and (search_intent_flag or agent_intent_flag):
-                    st.text('You might want to further ask:')
+                    st.markdown('You might want to further ask:')
                     active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
-                    generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
-                    split_strings = generated_sq.split("[generate]")
-                    gen_sq_list = [s.strip() for s in split_strings if s.strip()]
-                    sq_result = st.columns(3)
-                    sq_result[0].button(gen_sq_list[0], type='secondary',
-                                        use_container_width=True,
-                                        on_click=sample_question_clicked,
-                                        args=[gen_sq_list[0]])
-                    sq_result[1].button(gen_sq_list[1], type='secondary',
-                                        use_container_width=True,
-                                        on_click=sample_question_clicked,
-                                        args=[gen_sq_list[1]])
-                    sq_result[2].button(gen_sq_list[2], type='secondary',
-                                        use_container_width=True,
-                                        on_click=sample_question_clicked,
-                                        args=[gen_sq_list[2]])
+                    with st.spinner('Generating suggested questions...'):
+                        generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+                        split_strings = generated_sq.split("[generate]")
+                        gen_sq_list = [s.strip() for s in split_strings if s.strip()]
+                        sq_result = st.columns(3)
+                        sq_result[0].button(gen_sq_list[0], type='secondary',
+                                            use_container_width=True,
+                                            on_click=sample_question_clicked,
+                                            args=[gen_sq_list[0]])
+                        sq_result[1].button(gen_sq_list[1], type='secondary',
+                                            use_container_width=True,
+                                            on_click=sample_question_clicked,
+                                            args=[gen_sq_list[1]])
+                        sq_result[2].button(gen_sq_list[2], type='secondary',
+                                            use_container_width=True,
+                                            on_click=sample_question_clicked,
+                                            args=[gen_sq_list[2]])
         else:
             # st.error("Please enter a valid query.")
             if current_nlq_chain.is_visualization_config_changed():
