@@ -477,7 +477,7 @@ def main():
                         if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                             search_intent_analyse_result = agent_data_analyse(model_type, search_box,
                                                                        json.dumps(
-                                                                           search_intent_result["data"]))
+                                                                           search_intent_result["data"].to_json(orient='records')))
                             st.markdown(search_intent_analyse_result)
                     st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
                     
