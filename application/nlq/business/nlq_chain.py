@@ -14,6 +14,7 @@ class NLQChain:
         self.generated_sql_response = ''
         self.executed_result_df: pd.DataFrame | None = None
         self.visualization_config_change: bool = False
+        self.sql = ''
 
     def set_question(self, question):
         if self.question != question:
@@ -40,7 +41,12 @@ class NLQChain:
     def get_generated_sql_response(self):
         return self.generated_sql_response
 
+    def set_generated_sql(self, sql):
+        self.sql = sql
+
     def get_generated_sql(self):
+        if self.sql != "":
+            return self.sql
         sql = ""
         try:
             return self.generated_sql_response.split("<sql>")[1].split("</sql>")[0]

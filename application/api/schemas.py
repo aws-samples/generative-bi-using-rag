@@ -8,7 +8,10 @@ class Question(BaseModel):
     use_rag: bool = True
     query_result: bool = True
     intent_ner_recognition: bool = False
+    agent_cot: bool = False
     profile_name: str = "shopping_guide"
+    explain_gen_process_flag: bool = False
+    gen_suggested_question: bool = False
 
 
 class QuestionSocket(Question):

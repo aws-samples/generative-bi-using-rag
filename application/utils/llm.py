@@ -1,6 +1,5 @@
-import requests
+
 import json
-import boto3
 import boto3
 from botocore.config import Config
 from opensearchpy import OpenSearch
@@ -243,7 +242,7 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
     return claude_prompt, dialect_prompt
 
 
-def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2018, with_response_stream=False):
+def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with_response_stream=False):
     # Prompt with user turn only.
     user_message = {"role": "user", "content": user_prompt}
     messages = [user_message]
@@ -251,7 +250,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2018, with
     logger.info(f'{messages=}')
     response = ""
     try:
-        if model_id.startswith('anthropic.claude-3-'):
+        if model_id.startswith('anthropic.claude-3'):
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('mistral.mixtral-8x7b'):
             response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
