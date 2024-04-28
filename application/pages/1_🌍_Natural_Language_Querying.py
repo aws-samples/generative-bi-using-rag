@@ -473,7 +473,12 @@ def main():
                     if search_intent_result["status_code"] == 500:
                         with st.expander("The SQL Error Info"):
                             st.markdown(search_intent_result["error_info"])
-
+                    else:
+                        if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
+                            search_intent_analyse_result = agent_data_analyse(model_type, search_box,
+                                                                       json.dumps(
+                                                                           search_intent_result["data"]))
+                            st.markdown(search_intent_analyse_result)
                     st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
                     
                 elif agent_intent_flag:
