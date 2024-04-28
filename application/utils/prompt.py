@@ -29,6 +29,7 @@ There are 3 main intents:
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
 - agent_search: Attribution-based problems are not about directly querying the data. Instead, they involve questions like "why" or "how" to understand the underlying reasons and dynamics behind the data.
+- knowledge_search: Questions unrelated to data, such as general knowledge, such as meaning for abbviations, terminology explanation, etc.
 </intent>
 
 When the intent is normal_search, you need to extract the keywords from the query statement.
@@ -60,6 +61,13 @@ question : 6月份酒店的订单为什么下降了
 answer :
 {
     "intent" : "agent_search"
+}
+</example>
+
+question : 希尔顿的英文名是什么
+answer :
+{
+    "intent" : "knowledge_search"
 }
 </example>
 

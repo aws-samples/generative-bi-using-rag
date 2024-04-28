@@ -13,7 +13,8 @@ from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.database import get_db_url_dialect
 from nlq.business.vector_store import VectorStore
 from utils.llm import text_to_sql, create_vector_embedding_with_bedrock, retrieve_results_from_opensearch, \
-    upload_results_to_opensearch, get_query_intent, generate_suggested_question, get_agent_cot_task, agent_data_analyse
+    upload_results_to_opensearch, get_query_intent, generate_suggested_question, get_agent_cot_task, agent_data_analyse, \
+    knowledge_search
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
 from utils.tool import get_response_sql, get_sql_result_tool
@@ -43,7 +44,7 @@ def get_sql_result(nlq_chain):
         return pd.DataFrame()
 
 
-def clean_st_histoty(selected_profile):
+def clean_st_history(selected_profile):
     st.session_state.messages[selected_profile] = []
 
 
@@ -213,7 +214,7 @@ def main():
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         gen_suggested_question = st.checkbox("Generate Suggested Questions", False)
 
-        clean_history = st.button("clean history", on_click=clean_st_histoty, args=[selected_profile])
+        clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
 
     # Part II: Search Section
     st.subheader("Start Searching")
@@ -283,6 +284,7 @@ def main():
 
     search_intent_flag = True
     agent_intent_flag = False
+    knowledge_search_flag = False
 
     # add select box for which model to use
     if search_box != "Type your query here..." or \
@@ -345,8 +347,12 @@ def main():
                     st.write(examples)
 
                 if not current_nlq_chain.get_generated_sql_response():
+                    # Add user message to chat history
+                    st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
+
                     logger.info('try to get generated sql from LLM')
-                    with st.spinner('Generating SQL... (Take up to 20s)'):
+                    # ========= Step 0: connect to database =========
+                    with st.spinner('Connecting to database...'):
                         # Whether Retrieving Few Shots from Database
                         logger.info('Sending request...')
                         database_profile = st.session_state.profiles[selected_profile]
@@ -356,15 +362,20 @@ def main():
                             db_url = ConnectionManagement.get_db_url_by_name(conn_name)
                             database_profile['db_url'] = db_url
                             database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
-
+                            
+                    # ========= Step 1: intent recognition and entity extraction =========
+                    with st.spinner('Perform intent recognition and entity extraction...'):
                         if intent_ner_recognition:
+                            # ========= Step 1.1 perform intent regonition =========
                             intent_response = get_query_intent(model_type, search_box)
 
                             intent = intent_response.get("intent", "normal_search")
+                            logger.info(f'got intent: {intent}')
                             entity_slot = intent_response.get("slot", [])
+                            st.text(f'Intent: {intent}')
+                            # ========= Step 1.2 based on different intention, route to actions. =========
                             if intent == "reject_search":
                                 search_intent_flag = False
-
                             elif intent == "agent_search":
                                 agent_intent_flag = True
                                 if agent_cot:
@@ -424,15 +435,35 @@ def main():
                                         {"role": "assistant", "content": agent_data_analyse_result})
                                 else:
                                     agent_intent_flag = False
-                            if search_intent_flag:
-                                if len(entity_slot) > 0:
-                                    for each_entity in entity_slot:
-                                        entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
-                                                                                  selected_profile, 1, 0.7)
-                                        if len(entity_retrieve) > 0:
-                                            entity_slot_retrieve.extend(entity_retrieve)
-                        # get llm model for sql generation
-                        if not agent_intent_flag and search_intent_flag:
+                            elif intent == "knowledge_search":
+                                knowledge_search_flag = True
+                                search_intent_flag = False
+                                response = knowledge_search(search_box=search_box, model_id=model_type)
+                                logger.info(f'got llm response for knowledge_search: {response}')
+                                st.markdown(f'This is a knowledge search question.\n{response}')
+                                # st.session_state.messages[selected_profile].append(
+                                #     {"role": "assistant", "content": "This is a knowledge search question."})
+                                # st.session_state.messages[selected_profile].append(
+                                #     {"role": "assistant", "content": response})
+                            elif intent == "normal_search":
+                                # do something in the future? perhaps put step 2 - 7 here?
+                                pass
+                            else:
+                                logger.error('The intent recognition module did not returned expected intent')
+                    
+                    # ========= Step 2: perform NER retrieval, if intent is to search sql directly (not agent) =========
+                    with st.spinner('Perform intent recognition and entity extraction...'):
+                        if search_intent_flag and intent_ner_recognition:
+                            if len(entity_slot) > 0:
+                                for each_entity in entity_slot:
+                                    entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
+                                                                                selected_profile, 1, 0.7)
+                                    if len(entity_retrieve) > 0:
+                                        entity_slot_retrieve.extend(entity_retrieve)
+
+                    # ========= Step 3: generate SQL, if intent is to search sql directly (not agent)=========                        
+                    with st.spinner('Performing entity retrieval from Opensearch...'):
+                        if not agent_intent_flag and search_intent_flag and not knowledge_search_flag:
                             response = text_to_sql(database_profile['tables_info'],
                                                    database_profile['hints'],
                                                    search_box,
@@ -444,36 +475,35 @@ def main():
 
                             logger.info(f'got llm response: {response}')
                             current_nlq_chain.set_generated_sql_response(response)
-                            
-                    # Add user message to chat history
-                    st.session_state.messages[selected_profile].append({"role": "user", "content": search_box})
-
+                    
+                    # ========= Step 4: Show generated SQL results =========
                     generate_sql = current_nlq_chain.get_generated_sql()
-
-                    if generate_sql == "":
+                    if agent_intent_flag or knowledge_search_flag:
+                        pass
+                    elif generate_sql == "" and search_intent_flag:
                         st.write("Unable to generate SQL at the moment, please provide more information")
                     else:
-                    # Add assistant response to chat history
+                        # Add assistant response to chat history
                         st.session_state.messages[selected_profile].append(
                         {"role": "assistant", "content": "SQL:" + current_nlq_chain.get_generated_sql()})
-
-                    with st.expander("The generated SQL"):
-                        st.code(current_nlq_chain.get_generated_sql(), language="sql")
-                        # add a upvote(green)/downvote button with logo
-                        feedback = st.columns(2)
-                        feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                        use_container_width=True,
-                                        on_click=upvote_clicked,
-                                        args=[current_nlq_chain.get_question(),
-                                                current_nlq_chain.get_generated_sql(),
-                                                env_vars])
-                        if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                            # do something here
-                            pass
+                        with st.expander("The generated SQL"):
+                            st.code(current_nlq_chain.get_generated_sql(), language="sql")
+                            # add a upvote(green)/downvote button with logo
+                            feedback = st.columns(2)
+                            feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                            use_container_width=True,
+                                            on_click=upvote_clicked,
+                                            args=[current_nlq_chain.get_question(),
+                                                    current_nlq_chain.get_generated_sql(),
+                                                    env_vars])
+                            if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                                # do something here
+                                pass
                 else:
                     logger.info('get generated sql from memory')
 
-                if search_intent_flag and not agent_intent_flag:
+                # ========= Step 5: retrieving SQL execution results from database, if intent is to search sql directly (not agent) =========
+                if search_intent_flag and not agent_intent_flag and not knowledge_search_flag:
                     with st.spinner('Retrieving SQL execution results'):
                         current_sql_result = get_sql_result(current_nlq_chain)
                         st.session_state.current_sql_result[selected_profile] = current_sql_result
@@ -484,23 +514,26 @@ def main():
                         if explain_gen_process_flag:
                             st.session_state.messages[selected_profile].append(
                                 {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
-
-                            st.markdown('Generation process explanations:')
                             st.markdown(current_nlq_chain.get_generated_sql_explain())
-
                 elif agent_intent_flag:
+                    pass
+                elif knowledge_search_flag:
                     pass
                 else:
                     st.markdown('Your query statement is currently not supported by the system')
 
+            # ========= Step 6: visualize results, if intent is to search sql directly (not agent) =========
             if visualize_results and search_intent_flag and not agent_intent_flag:
                 current_search_sql_result = st.session_state.current_sql_result[selected_profile]
                 if current_search_sql_result is not None and len(current_search_sql_result) > 0:
                     do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
                 else:
                     st.markdown("No relevant data found")
+                    # st.session_state.messages[selected_profile].append({"role": "user",
+                    #                                                     "content": "No relevant data found"})
 
-            if gen_suggested_question and current_nlq_chain.get_generated_sql() != "" and search_intent_flag:
+            # ========= Step 7: generate suggested questions, if intent is to search sql directly (not agent) =========
+            if gen_suggested_question and current_nlq_chain.get_generated_sql() != "" and search_intent_flag and not agent_intent_flag:
                 st.text('You might want to further ask:')
                 active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
                 generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
