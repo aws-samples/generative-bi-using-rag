@@ -18,7 +18,7 @@ load_dotenv()
 def option():
     return service.get_option()
 
-@router.get("/get_custom_question",responses= CustomQuestion)
+@router.get("/get_custom_question", response_model= CustomQuestion)
 def get_custom_question():
     question_list = ["销量前十的商品是什么" , "用户的平均年龄是多少", "商品的平均价格是多少"]
     custom_question = CustomQuestion(custom_question = question_list)
