@@ -420,19 +420,26 @@ def main():
                     with st.expander(
                             f'Query Retrieve : {len(normal_search_result.retrieve_result)}, NER Retrieve : {len(normal_search_result.entity_slot_retrieve)}'):
                         examples = {}
+                        examples["query_retrieve"] = []
                         for example in normal_search_result.retrieve_result:
-                            examples["query_retrieve"] = []
                             examples["query_retrieve"].append({'Score': example['_score'],
                                                                'Question': example['_source']['text'],
                                                                'Answer': example['_source']['sql'].strip()})
+                        examples["ner_retrieve"] = []
                         for example in normal_search_result.entity_slot_retrieve:
-                            examples["ner_retrieve"] = []
                             examples["ner_retrieve"].append({'Score': example['_score'],
                                                              'Question': example['_source']['entity'],
                                                              'Answer': example['_source']['comment'].strip()})
                         st.write(examples)
                 elif agent_intent_flag:
                     with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
+                        examples = {}
+                        examples["agent_retrieve"] = []
+                        for example in agent_search_result:
+                            examples["agent_retrieve"].append({
+                                'Score': example['_score'],
+                                'Question': example['_source']['query'],
+                                'Task': example['_score']['comment']})
                         st.write(agent_search_result)
 
                 # 连接数据库，执行SQL, 记录历史记录并展示
@@ -491,7 +498,7 @@ def main():
                             filter_deep_dive_sql_result.append(agent_search_result[i])
 
                     agent_data_analyse_result = data_analyse_tool(model_type, search_box,
-                                                                       filter_deep_dive_sql_result.to_json(orient='records', force_ascii=False), "agent")
+                                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False), "agent")
                     logger.info("agent_data_analyse_result")
                     logger.info(agent_data_analyse_result)
                     st.session_state.messages[selected_profile].append(
