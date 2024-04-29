@@ -345,7 +345,7 @@ def data_analyse_tool(model_id, search_box, sql_data, search_type):
             user_prompt = CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
         else:
             user_prompt = CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
-        final_response = invoke_llm_model(model_id, system_prompt, search_box, max_tokens, False)
+        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         logger.info(f'{final_response=}')
         return final_response
     except Exception as e:
