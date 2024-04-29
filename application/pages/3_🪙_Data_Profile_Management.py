@@ -30,7 +30,7 @@ def main():
         if st.session_state.current_profile_name:
             st.session_state.profile_page_mode = 'update'
 
-        st.button('新建...', on_click=new_profile_clicked)
+        st.button('Create new profile...', on_click=new_profile_clicked)
 
     if st.session_state.profile_page_mode == 'new':
         st.subheader('Create New Data Profile')
