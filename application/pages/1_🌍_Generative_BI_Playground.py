@@ -11,7 +11,7 @@ from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from nlq.business.vector_store import VectorStore
-from utils.llm import text_to_sql, get_query_intent, generate_suggested_question, get_agent_cot_task, agent_data_analyse, \
+from utils.llm import text_to_sql, get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
     knowledge_search
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
@@ -420,13 +420,13 @@ def main():
                     with st.expander(
                             f'Query Retrieve : {len(normal_search_result.retrieve_result)}, NER Retrieve : {len(normal_search_result.entity_slot_retrieve)}'):
                         examples = {}
+                        examples["query_retrieve"] = []
                         for example in normal_search_result.retrieve_result:
-                            examples["query_retrieve"] = []
                             examples["query_retrieve"].append({'Score': example['_score'],
                                                                'Question': example['_source']['text'],
                                                                'Answer': example['_source']['sql'].strip()})
+                        examples["ner_retrieve"] = []
                         for example in normal_search_result.entity_slot_retrieve:
-                            examples["ner_retrieve"] = []
                             examples["ner_retrieve"].append({'Score': example['_score'],
                                                              'Question': example['_source']['entity'],
                                                              'Answer': example['_source']['comment'].strip()})
@@ -475,7 +475,11 @@ def main():
                     if search_intent_result["status_code"] == 500:
                         with st.expander("The SQL Error Info"):
                             st.markdown(search_intent_result["error_info"])
-
+                    else:
+                        if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
+                            search_intent_analyse_result = data_analyse_tool(model_type, search_box,
+                                                                           search_intent_result["data"].to_json(orient='records', force_ascii=False), "query")
+                            st.markdown(search_intent_analyse_result)
                     st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
                     
                 elif agent_intent_flag:
@@ -488,9 +492,8 @@ def main():
                                 orient='records')
                             filter_deep_dive_sql_result.append(agent_search_result[i])
 
-                    agent_data_analyse_result = agent_data_analyse(model_type, search_box,
-                                                                   json.dumps(
-                                                                       filter_deep_dive_sql_result))
+                    agent_data_analyse_result = data_analyse_tool(model_type, search_box,
+                                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False), "agent")
                     logger.info("agent_data_analyse_result")
                     logger.info(agent_data_analyse_result)
                     st.session_state.messages[selected_profile].append(

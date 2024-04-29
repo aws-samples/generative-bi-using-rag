@@ -150,7 +150,7 @@ CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT = """
 You are a data analysis expert in the retail industry
 """
 
-CLAUDE3_DATA_ANALYSE_USER_PROMPT = """
+CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT = """
 As a professional data analyst, you are now asked a question by a user, and you need to analyze the data provided.
 
 <instructions>
@@ -166,4 +166,19 @@ The user question is：{question}
 The data related to the question is：{data}
 
 Think step by step。
+"""
+
+CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT = """
+
+Your task is to analyze the given data and describe it in natural language. 
+
+<instructions>
+- Transforming data into natural language, including all key data as much as possible
+- Just need the final result of the data, no need to output the previous analysis process
+</instructions>
+
+The user question is：{question}
+
+The data is：{data}
+
 """
