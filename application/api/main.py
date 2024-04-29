@@ -4,7 +4,7 @@ import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
 from .enum import ContentEnum, ErrorEnum
-from .schemas import Question, QuestionSocket, Answer, Option
+from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -17,6 +17,12 @@ load_dotenv()
 @router.get("/option", response_model=Option)
 def option():
     return service.get_option()
+
+@router.get("/get_custom_question",responses= CustomQuestion)
+def get_custom_question():
+    question_list = ["销量前十的商品是什么" , "用户的平均年龄是多少", "商品的平均价格是多少"]
+    custom_question = CustomQuestion(custom_question = question_list)
+    return custom_question
 
 
 @router.post("/ask", response_model=Answer)
