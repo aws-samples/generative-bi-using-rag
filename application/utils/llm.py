@@ -6,7 +6,7 @@ from opensearchpy import OpenSearch
 from utils import opensearch
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT, \
-    CLAUDE3_DATA_ANALYSE_USER_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
+    CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
@@ -339,11 +339,14 @@ def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
         return default_agent_cot_task
 
 
-def agent_data_analyse(model_id, search_box, sql_data):
+def data_analyse_tool(model_id, search_box, sql_data, search_type):
     try:
         system_prompt = CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT
         max_tokens = 2048
-        user_prompt = CLAUDE3_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+        if search_type == "agent":
+            user_prompt = CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+        else:
+            user_prompt = CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
         user_message = {"role": "user", "content": user_prompt}
         messages = [user_message]
         response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
