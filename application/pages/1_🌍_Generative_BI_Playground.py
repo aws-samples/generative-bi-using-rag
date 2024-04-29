@@ -178,15 +178,15 @@ def main():
             opensearch_config[key] = os.getenv(opensearch_config[key].replace('$', ''))
         # logger.info(f'{opensearch_config=}')
 
-    st.set_page_config(page_title="Natural Language Querying", layout="wide")
+    st.set_page_config(page_title="Demo", layout="wide")
     make_sidebar()
 
     # Title and Description
-    st.title('Natural Language Querying Playground')
+    st.title('Generative BI Playground')
     st.write("""
-    Welcome to the Natural Language Querying Playground! This interactive application is designed to bridge the gap between natural language and databases. 
-    Enter your query in plain English, and watch as it's transformed into a SQL or Pandas command. The result can then be visualized, giving you insights without needing to write any code. 
-    Experiment, learn, and see the power of NLQ in action!
+    Welcome to the Generative BI Playground! This interactive application is designed to bridge the gap between natural language and databases. 
+    Enter your query in plain English, and watch as it's transformed into a SQL. The result can then be visualized, giving you insights without needing to write any code. 
+    Experiment, learn, and see the power of Generative BI in action!
     """)
     st.divider()
 
@@ -449,6 +449,16 @@ def main():
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
                         with st.expander("The generated SQL"):
                             st.code(normal_search_result.sql, language="sql")
+                            
+                            current_nlq_chain.set_generated_sql_response(normal_search_result.response)
+                            
+                            if explain_gen_process_flag:
+                                with st.spinner('Generating explanations...'):
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
+                                    st.markdown(current_nlq_chain.get_generated_sql_explain())
+                                    print(current_nlq_chain.get_generated_sql_explain())
+
                             # add a upvote(green)/downvote button with logo
                             feedback = st.columns(2)
                             feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
@@ -466,14 +476,6 @@ def main():
                             {"role": "assistant", "content": "SQL:" + normal_search_result.sql})
                     else:
                         st.write("Unable to generate SQL at the moment, please provide more information")
-
-                    current_nlq_chain.set_generated_sql_response(normal_search_result.response)
-                    if explain_gen_process_flag:
-                        with st.spinner('Generating explanations...'):
-                            st.session_state.messages[selected_profile].append(
-                                {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain()})
-                            st.markdown('Generation process explanations:')
-                            st.markdown(current_nlq_chain.get_generated_sql_explain())
 
                     search_intent_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
                                                                 current_nlq_chain.get_generated_sql())
