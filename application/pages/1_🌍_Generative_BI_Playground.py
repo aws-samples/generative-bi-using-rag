@@ -439,7 +439,7 @@ def main():
                             examples["agent_retrieve"].append({
                                 'Score': example['_score'],
                                 'Question': example['_source']['query'],
-                                'Task': example['_score']['comment']})
+                                'Task': example['_source']['comment']})
                         st.write(agent_search_result)
 
                 # 连接数据库，执行SQL, 记录历史记录并展示
