@@ -433,13 +433,6 @@ def main():
                         st.write(examples)
                 elif agent_intent_flag:
                     with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
-                        examples = {}
-                        examples["agent_retrieve"] = []
-                        for example in agent_search_result:
-                            examples["agent_retrieve"].append({
-                                'Score': example['_score'],
-                                'Question': example['_source']['query'],
-                                'Task': example['_source']['comment']})
                         st.write(agent_search_result)
 
                 # 连接数据库，执行SQL, 记录历史记录并展示
