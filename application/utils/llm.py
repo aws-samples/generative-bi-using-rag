@@ -371,10 +371,7 @@ def get_query_intent(model_id, search_box):
         else:
             system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
             max_tokens = 2048
-            user_message = {"role": "user", "content": search_box}
-            messages = [user_message]
-            response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-            final_response = response.get("content")[0].get("text")
+            final_response = invoke_llm_model(model_id, system_prompt, search_box, max_tokens, False)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict

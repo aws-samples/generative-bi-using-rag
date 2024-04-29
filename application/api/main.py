@@ -19,6 +19,8 @@ def option():
     return service.get_option()
 
 
+
+
 @router.post("/ask", response_model=Answer)
 def ask(question: Question):
     return service.ask(question)

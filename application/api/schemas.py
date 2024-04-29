@@ -34,3 +34,4 @@ class Answer(BaseModel):
 class Option(BaseModel):
     data_profiles: list[str]
     bedrock_model_ids: list[str]
+
