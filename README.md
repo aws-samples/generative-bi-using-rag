@@ -1,4 +1,11 @@
-# Generative BI Demo Application
+# Generative BI using RAG on AWS
+
+This is a comprehensive framework designed to enable Generative BI capabilities on customized data sources (RDS/Redshift) hosted on AWS. It offers the following key features:
+- Text-to-SQL functionality for querying customized data sources using natural language.
+- User-friendly interface for adding, editing, and managing data sources, tables, and column descriptions.
+- Performance enhancement through the integration of historical question-answer ranking and entity recognition.
+- Intuitive question-answering UI that provides insights into the underlying Text-to-SQL mechanism.
+- Simple agent design interface for handling complex queries through a conversational approach.
 
 [中文文档](README_CN.md)
 ## Introduction
