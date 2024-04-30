@@ -1,5 +1,5 @@
 openpyxl
-sqlalchemy
+sqlalchemy==1.4.46
 pandas
 pymysql
 sqlalchemy-utils
