@@ -57,7 +57,6 @@ def do_visualize_results(nlq_chain, sql_result):
         # else:
         #     sql_query_result = nlq_chain.get_executed_result_df(st.session_state['profiles'][nlq_chain.profile])
     sql_query_result = sql_result
-    st.markdown('Visualizing the results:')
     if sql_query_result is not None:
         # Reset change flag to False
         nlq_chain.set_visualization_config_change(False)
