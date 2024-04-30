@@ -66,3 +66,8 @@ class ProfileManagement:
 
         cls.profile_config_dao.update_table_def(profile_name, tables_info)
         logger.info(f"Table definition updated")
+
+    @classmethod
+    def update_table_prompt(cls, profile_name, system_prompt, user_prompt):
+        cls.profile_config_dao.update_table_prompt(profile_name, system_prompt, user_prompt)
+        logger.info(f"System and user prompt updated")
