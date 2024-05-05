@@ -454,17 +454,13 @@ Here is a list of acronyms and their full names plus some comments, which may he
   'Comment': 'Net Revenue  = Demand amt - Cancel amt – Return amt\nNet quantity = Demand qty - Cancel qty – Return qty '}]
  </context>
 """
-        max_tokens = 2048
         user_prompt = """
         Here is the input query: {question}. 
         Please generate queries based on the input query.
         """.format(question=search_box)
-        user_message = {"role": "user", "content": user_prompt}
-        messages = [user_message]
-        logger.info(f'{system_prompt=}')
-        logger.info(f'{messages=}')
-        response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-        final_response = response.get("content")[0].get("text")
+        system_prompt = system_prompt
+        max_tokens = 2048
+        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         return final_response
     except Exception as e:
         logger.error("knowledge_search is error")
