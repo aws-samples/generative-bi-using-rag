@@ -464,12 +464,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
         logger.info(f'{system_prompt=}')
         logger.info(f'{messages=}')
         
-        if model_id.startswith('anthropic.claude-3'):
-            response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream=False)
-        elif model_id.startswith('mistral.mixtral-8x7b'):
-            response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False)
-        elif model_id.startswith('meta.llama3-70b'):
-            response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream=False)
+        response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream=False)
         final_response = response.get("content")[0].get("text")
         return final_response
     except Exception as e:

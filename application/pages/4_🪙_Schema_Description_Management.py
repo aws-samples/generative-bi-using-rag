@@ -70,7 +70,8 @@ def main():
                     origin_table_info['col_a'] = col_annotation
                     ProfileManagement.update_table_def(current_profile, origin_tables_info)
                     st.success('saved.')
-
+    else:
+        st.info('Please select data profile in the left sidebar.')
 
 if __name__ == '__main__':
     main()
