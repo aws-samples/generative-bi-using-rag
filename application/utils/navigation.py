@@ -39,12 +39,13 @@ def make_sidebar():
             st.page_link("pages/2_🪙_Data_Connection_Management.py", label="Data Connection Management", icon="🪙")
             st.page_link("pages/3_🪙_Data_Profile_Management.py", label="Data Profile Management", icon="🪙")
             st.page_link("pages/4_🪙_Schema_Description_Management.py", label="Schema Description Management", icon="🪙")
+            st.page_link("pages/5_🪙_Prompt_Management.py", label="Prompt Management", icon="🪙")
             st.markdown(":gray[Performance Enhancement]")
-            st.page_link("pages/5_📚_Index_Management.py", label="Index Management", icon="📚")
-            st.page_link("pages/6_📚_Entity_Management.py", label="Entity Management", icon="📚")
-            st.page_link("pages/7_📚_Agent_Cot_Management.py", label="Agent Cot Management", icon="📚")
+            st.page_link("pages/6_📚_Index_Management.py", label="Index Management", icon="📚")
+            st.page_link("pages/7_📚_Entity_Management.py", label="Entity Management", icon="📚")
+            st.page_link("pages/8_📚_Agent_Cot_Management.py", label="Agent Cot Management", icon="📚")
             st.markdown(":gray[Dashboard Customization Management]")
-            st.page_link("pages/8_🖥_Suggested_Question_Management.py", label="Suggested Question Management",
+            st.page_link("pages/9_🖥_Suggested_Question_Management.py", label="Suggested Question Management",
                          icon="🖥")
 
             if st.button("Log out"):
