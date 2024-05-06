@@ -304,7 +304,7 @@ def main():
                     normal_search_result = normal_text_search(search_box, model_type,
                                                               database_profile,
                                                               entity_slot, env_vars,
-                                                              selected_profile, current_nlq_chain,
+                                                              selected_profile,
                                                               explain_gen_process_flag, use_rag_flag)
                 elif knowledge_search_flag:
                     with st.spinner('Performing knowledge search...'):
