@@ -184,6 +184,8 @@ def ask(question: Question) -> Answer:
 
     agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
 
+    knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
+
     agent_sql_search_result = []
 
     if database_profile['db_url'] == '':
@@ -218,7 +220,7 @@ def ask(question: Question) -> Answer:
         search_intent_flag = True
 
     if reject_intent_flag:
-        answer = Answer(query=search_box, intent="reject_search", knowledge_search_result=None,
+        answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=None,
                         sql_search_result=None, agent_search_result=None)
         return answer
     elif search_intent_flag:
@@ -229,8 +231,8 @@ def ask(question: Question) -> Answer:
     elif knowledge_search_flag:
         response = knowledge_search(search_box=search_box, model_id=model_type)
 
-        knowledge_search_result = KnowledgeSearchResult(knowledge_search_result=response)
-        answer = Answer(query=search_box, intent="knowledge_search", knowledge_search_result=knowledge_search_result,
+        knowledge_search_result.knowledge_response = response
+        answer = Answer(query=search_box, query_intent="knowledge_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=None, agent_search_result=None)
         return answer
 
@@ -269,8 +271,8 @@ def ask(question: Question) -> Answer:
                 sql_search_result.data_analyse = search_intent_analyse_result
                 sql_search_result.sql_data = [list(search_intent_result["data"].columns)] +search_intent_result["data"].values.tolist()
 
-        answer = Answer(query=search_box, intent="normal_search", knowledge_search_result=None,
-                        sql_search_result=sql_search_result, agent_search_result=None)
+        answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response)
         return answer
     else:
         for i in range(len(agent_search_result)):
@@ -294,7 +296,7 @@ def ask(question: Question) -> Answer:
         agent_search_response.agent_summary = agent_data_analyse_result
         agent_search_response.agent_sql_search_result = agent_sql_search_result
 
-        answer = Answer(query=search_box, intent="agent_search", knowledge_search_result=None,
+        answer = Answer(query=search_box, query_intent="agent_search", knowledge_search_result=None,
                         sql_search_result=None, agent_search_result=None)
         return answer
 
