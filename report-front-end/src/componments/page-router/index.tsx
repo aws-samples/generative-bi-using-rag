@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import PageLayout from "../page-layout";
 import TableList from "../table-list";
-import DefaultPage from "../default-page";
 import ChartPage from "../chart-page";
+import Chat from "../../components/chatbot/chat";
 
 const PageRouter = () => {
   return (
@@ -10,7 +10,7 @@ const PageRouter = () => {
       <Routes>
         <Route
           path="/"
-          element={<PageLayout content={<DefaultPage></DefaultPage>} />}
+          element={<PageLayout content={<Chat></Chat>} />}
         />
         <Route
           path="/page1"
