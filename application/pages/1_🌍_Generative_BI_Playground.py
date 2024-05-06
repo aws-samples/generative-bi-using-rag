@@ -62,8 +62,7 @@ def do_visualize_results(nlq_chain, sql_result):
         # hacky way to get around the issue of selectbox not updating when the options change
         chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
                                                            ['Table', 'Bar', 'Line', 'Pie'],
-                                                           on_change=nlq_chain.set_visualization_config_change,
-                                                           key=random.randint(0, 10000)
+                                                           on_change=nlq_chain.set_visualization_config_change
                                                            )
         if chart_type != 'Table':
             x_column = visualize_config_columns[1].selectbox(f'Choose x-axis column', available_columns,
@@ -93,7 +92,7 @@ def recurrent_display(messages, i, current_nlq_chain):
     message = messages[i]
     if message["type"] == "pandas":
         if isinstance(message["content"], pd.DataFrame):
-            do_visualize_results(current_nlq_chain, message["content"])
+            st.dataframe(message["content"], hide_index=True)
         elif isinstance(message["content"], list):
             for each_content in message["content"]:
                 st.write(each_content["query"])
@@ -102,13 +101,10 @@ def recurrent_display(messages, i, current_nlq_chain):
         st.markdown(message["content"])
     elif message["type"] == "error":
         st.error(message["content"])
-    if i + 1 < len(messages):
-        if current_role != messages[i + 1]["role"]:
-            return i
-        else:
-            return recurrent_display(messages, i + 1, current_nlq_chain)
-    else:
-        return i
+    elif message["type"] == "sql":
+        with st.expander("The Generate SQL"):
+            st.code(message["content"],  language="sql")
+    return i
 
 
 def main():
@@ -221,8 +217,8 @@ def main():
         for i in range(len(st.session_state.messages[selected_profile])):
             print('!!!!!')
             print(i, new_index)
-            if i - 1 < new_index:
-                continue
+            # if i - 1 < new_index:
+            #     continue
             with st.chat_message(st.session_state.messages[selected_profile][i]["role"]):
                 new_index = recurrent_display(st.session_state.messages[selected_profile], i, current_nlq_chain)
 
