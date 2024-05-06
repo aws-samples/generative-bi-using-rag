@@ -1,6 +1,15 @@
-from opensearchpy import OpenSearch
-from utils import opensearch
+import logging
 
+from opensearchpy import OpenSearch
+from opensearchpy.helpers import bulk
+
+
+logger = logging.getLogger(__name__)
+
+def put_bulk_in_opensearch(list, client):
+    logger.info(f"Putting {len(list)} documents in OpenSearch")
+    success, failed = bulk(client, list)
+    return success, failed
 
 class OpenSearchDao:
 
@@ -149,7 +158,7 @@ class OpenSearchDao:
             'vector_field': embedding
         }
 
-        success, failed = opensearch.put_bulk_in_opensearch([record], self.opensearch_client)
+        success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
         return success == 1
 
     def add_entity_sample(self, index_name, profile_name, entity, comment, embedding):
@@ -161,7 +170,7 @@ class OpenSearchDao:
             'vector_field': embedding
         }
 
-        success, failed = opensearch.put_bulk_in_opensearch([record], self.opensearch_client)
+        success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
         return success == 1
 
     def add_agent_cot_sample(self, index_name, profile_name, query, comment, embedding):
@@ -173,7 +182,7 @@ class OpenSearchDao:
             'vector_field': embedding
         }
 
-        success, failed = opensearch.put_bulk_in_opensearch([record], self.opensearch_client)
+        success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
         return success == 1
 
     def delete_sample(self, index_name, profile_name, doc_id):
