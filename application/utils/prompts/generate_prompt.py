@@ -10,7 +10,7 @@ support_model_ids_map = {
     "anthropic.claude-3-haiku-20240307-v1:0": "haiku-20240307v1-0",
     "anthropic.claude-3-sonnet-20240229-v1:0": "sonnet-20240229v1-0",
     "mistral.mixtral-8x7b-instruct-v0:1": "mixtral-8x7b-instruct-0",
-    "meta.llama3-70b-instruct-v1:0" : "llama3-70b-instruct-0"
+    "meta.llama3-70b-instruct-v1:0": "llama3-70b-instruct-0"
 }
 
 # text2SQL prompt
@@ -38,11 +38,13 @@ agent_analyse_user_prompt_dict = {}
 data_summary_system_prompt_dict = {}
 data_summary_user_prompt_dict = {}
 
-
 # data visualization selection
 data_visualization_system_prompt_dict = {}
 data_visualization_user_prompt_dict = {}
 
+# suggest question prompt
+suggest_question_system_prompt_dict = {}
+suggest_question_user_prompt_dict = {}
 
 intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
@@ -256,7 +258,6 @@ answer :
 Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
 """
 
-
 intent_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
 The question is : {question}
 """
@@ -270,6 +271,166 @@ intent_user_prompt_dict['sonnet-20240229v1-0'] = """
 The question is : {question}
 """
 
+# 知识库检索意图
+knowledge_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+
+"""
+
+knowledge_system_prompt_dict['llama3-70b-instruct-0'] = """
+
+"""
+
+knowledge_system_prompt_dict['haiku-20240307v1-0'] = """
+
+"""
+
+knowledge_system_prompt_dict['sonnet-20240229v1-0'] = """
+
+"""
+
+knowledge_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+
+"""
+
+knowledge_user_prompt_dict['llama3-70b-instruct-0'] = """
+
+"""
+
+knowledge_user_prompt_dict['haiku-20240307v1-0'] = """
+
+"""
+
+knowledge_user_prompt_dict['sonnet-20240229v1-0'] = """
+
+"""
+
+# agent任务拆分
+agent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+agent_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+agent_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+# agent data analyse prompt
+agent_analyse_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+agent_analyse_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_analyse_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_analyse_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_analyse_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+# data summary prompt
+
+data_summary_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+data_summary_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_summary_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_summary_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_summary_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+data_summary_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_summary_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_summary_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+# data visualization selection
+
+data_visualization_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_visualization_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+# suggest question prompt
+
+suggest_question_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+suggest_question_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+suggest_question_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+suggest_question_system_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+suggest_question_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+"""
+
+suggest_question_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+suggest_question_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
+
+suggest_question_user_prompt_dict['llama3-70b-instruct-0'] = """
+"""
 
 user_prompt_dict['mixtral-8x7b-instruct-0'] = """
 {dialect_prompt}
@@ -451,8 +612,6 @@ The question is : {question}
 
 """
 
-
-
 system_prompt_dict['mixtral-8x7b-instruct-0'] = """
 You are a data analysis expert and proficient in {dialect}.
 """
@@ -468,6 +627,7 @@ You are a data analysis expert and proficient in {dialect}.
 system_prompt_dict['llama3-70b-instruct-0'] = """
 You are a data analysis expert and proficient in {dialect}.
 """
+
 
 class SystemPromptMapper:
     def __init__(self):
