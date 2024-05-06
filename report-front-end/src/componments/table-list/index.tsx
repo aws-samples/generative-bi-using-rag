@@ -17,16 +17,16 @@ import PageModal from "../page-modal";
 
 const TableList = (props: any) => {
   // You can set data by props
-  const { data } = props;
+  // const { data } = props;
   const [selectedItems, setSelectedItems] = useState([
     { name: "Item 2", alt: "", type: "", description: "", size: "" },
   ]);
   const [modalShow, setModalShow] = useState(false);
 
-  useEffect(() => {
-    // when page loaded
-    console.log("data", data);
-  }, []);
+  // useEffect(() => {
+  //   // when page loaded
+  //   console.log("data", data);
+  // }, []);
 
   useEffect(() => {
     // when selectedItems changed
