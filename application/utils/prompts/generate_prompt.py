@@ -676,7 +676,7 @@ Please conduct a thorough analysis of the user's question according to the above
 
 """
 
-agent_system_prompt_dict['llama3-70b-instruct-0'] = """
+agent_system_prompt_dict['haiku-20240307v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
 Your current task is to conduct an in-depth analysis of the data.
 
@@ -712,7 +712,7 @@ Please conduct a thorough analysis of the user's question according to the above
 
 """
 
-agent_system_prompt_dict['llama3-70b-instruct-0'] = """
+agent_system_prompt_dict['sonnet-20240229v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
 Your current task is to conduct an in-depth analysis of the data.
 
@@ -756,11 +756,11 @@ agent_user_prompt_dict['llama3-70b-instruct-0'] = """
 The user question is : {question}
 """
 
-agent_user_prompt_dict['llama3-70b-instruct-0'] = """
+agent_user_prompt_dict['haiku-20240307v1-0'] = """
 The user question is : {question}
 """
 
-agent_user_prompt_dict['llama3-70b-instruct-0'] = """
+agent_user_prompt_dict['sonnet-20240229v1-0'] = """
 The user question is : {question}
 """
 
@@ -773,11 +773,11 @@ agent_analyse_system_prompt_dict['llama3-70b-instruct-0'] = """
 You are a data analysis expert in the retail industry
 """
 
-agent_analyse_system_prompt_dict['llama3-70b-instruct-0'] = """
+agent_analyse_system_prompt_dict['haiku-20240307v1-0'] = """
 You are a data analysis expert in the retail industry
 """
 
-agent_analyse_system_prompt_dict['llama3-70b-instruct-0'] = """
+agent_analyse_system_prompt_dict['sonnet-20240229v1-0'] = """
 You are a data analysis expert in the retail industry
 """
 
@@ -817,7 +817,7 @@ The data related to the question is：{data}
 Think step by step.
 """
 
-agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
+agent_analyse_user_prompt_dict['haiku-20240307v1-0'] = """
 As a professional data analyst, you are now asked a question by a user, and you need to analyze the data provided.
 
 <instructions>
@@ -835,7 +835,7 @@ The data related to the question is：{data}
 Think step by step.
 """
 
-agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
+agent_analyse_user_prompt_dict['sonnet-20240229v1-0'] = """
 As a professional data analyst, you are now asked a question by a user, and you need to analyze the data provided.
 
 <instructions>
@@ -863,11 +863,11 @@ data_summary_system_prompt_dict['llama3-70b-instruct-0'] = """
 You are a data analysis expert in the retail industry
 """
 
-data_summary_system_prompt_dict['llama3-70b-instruct-0'] = """
+data_summary_system_prompt_dict['haiku-20240307v1-0'] = """
 You are a data analysis expert in the retail industry
 """
 
-data_summary_system_prompt_dict['llama3-70b-instruct-0'] = """
+data_summary_system_prompt_dict['sonnet-20240229v1-0'] = """
 You are a data analysis expert in the retail industry
 """
 
@@ -897,7 +897,7 @@ The user question is：{question}
 The data is：{data}
 """
 
-data_summary_user_prompt_dict['llama3-70b-instruct-0'] = """
+data_summary_user_prompt_dict['haiku-20240307v1-0'] = """
 Your task is to analyze the given data and describe it in natural language. 
 
 <instructions>
@@ -910,7 +910,7 @@ The user question is：{question}
 The data is：{data}
 """
 
-data_summary_user_prompt_dict['llama3-70b-instruct-0'] = """
+data_summary_user_prompt_dict['sonnet-20240229v1-0'] = """
 Your task is to analyze the given data and describe it in natural language. 
 
 <instructions>
@@ -926,27 +926,117 @@ The data is：{data}
 # data visualization selection
 
 data_visualization_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-"""
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+</instructions>
+
+The example data is:
+<example>
+
+{{
+    "show_type" : "bar",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+
+<example>"""
 
 data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+</instructions>
+
+The example data is:
+<example>
+
+{{
+    "show_type" : "bar",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+
+<example>
 """
 
-data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
+data_visualization_system_prompt_dict['haiku-20240307v1-0'] = """
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+</instructions>
+
+The example data is:
+<example>
+
+{{
+    "show_type" : "bar",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+
+<example>
 """
 
-data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
-"""
+data_visualization_system_prompt_dict['sonnet-20240229v1-0'] = """
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+</instructions>
+
+The example data is:
+<example>
+
+{{
+    "show_type" : "bar",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+
+<example>"""
 
 data_visualization_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+The user question is :  {question}
+The data is : {data}
 """
 
 data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+The user question is :  {question}
+The data is : {data}
 """
 
-data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+data_visualization_user_prompt_dict['haiku-20240307v1-0'] = """
+The user question is :  {question}
+The data is : {data}
 """
 
-data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+data_visualization_user_prompt_dict['sonnet-20240229v1-0'] = """
+The user question is :  {question}
+The data is : {data}
 """
 
 # suggest question prompt
@@ -973,7 +1063,7 @@ You are a query generator, and you need to generate queries based on the input q
 </rules>
 """
 
-suggest_question_system_prompt_dict['llama3-70b-instruct-0'] = """
+suggest_question_system_prompt_dict['haiku-20240307v1-0'] = """
 You are a query generator, and you need to generate queries based on the input query by following below rules.
 <rules>
 1. The generated query should be related to the input query. For example, the input query is "What is the average price of the products", the 3 generated queries are "What is the highest price of the products", "What is the lowest price of the products", "What is the total price of the products"
@@ -984,7 +1074,7 @@ You are a query generator, and you need to generate queries based on the input q
 </rules>
 """
 
-suggest_question_system_prompt_dict['llama3-70b-instruct-0'] = """
+suggest_question_system_prompt_dict['sonnet-20240229v1-0'] = """
 You are a query generator, and you need to generate queries based on the input query by following below rules.
 <rules>
 1. The generated query should be related to the input query. For example, the input query is "What is the average price of the products", the 3 generated queries are "What is the highest price of the products", "What is the lowest price of the products", "What is the total price of the products"
@@ -1005,12 +1095,12 @@ Here is the input query: {question}.
 Please generate queries based on the input query.
 """
 
-suggest_question_user_prompt_dict['llama3-70b-instruct-0'] = """
+suggest_question_user_prompt_dict['haiku-20240307v1-0'] = """
 Here is the input query: {question}. 
 Please generate queries based on the input query.
 """
 
-suggest_question_user_prompt_dict['llama3-70b-instruct-0'] = """
+suggest_question_user_prompt_dict['sonnet-20240229v1-0'] = """
 Here is the input query: {question}. 
 Please generate queries based on the input query.
 """
