@@ -220,8 +220,8 @@ def ask(question: Question) -> Answer:
         search_intent_flag = True
 
     if reject_intent_flag:
-        answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=None,
-                        sql_search_result=None, agent_search_result=None, suggested_question=[])
+        answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
         return answer
     elif search_intent_flag:
         normal_search_result = normal_text_search(search_box, model_type,
@@ -233,7 +233,7 @@ def ask(question: Question) -> Answer:
 
         knowledge_search_result.knowledge_response = response
         answer = Answer(query=search_box, query_intent="knowledge_search", knowledge_search_result=knowledge_search_result,
-                        sql_search_result=None, agent_search_result=None, suggested_question=[])
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
         return answer
 
     else:
@@ -296,8 +296,8 @@ def ask(question: Question) -> Answer:
         agent_search_response.agent_summary = agent_data_analyse_result
         agent_search_response.agent_sql_search_result = agent_sql_search_result
 
-        answer = Answer(query=search_box, query_intent="agent_search", knowledge_search_result=None,
-                        sql_search_result=None, agent_search_result=None, suggested_question=[])
+        answer = Answer(query=search_box, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
         return answer
 
 
