@@ -26,6 +26,13 @@
   }
 }
 
+.sql {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  gap: 20px;
+}
+
 .welcome_text {
   color: awsui.$color-text-body-default;
   font-size: 3rem;
@@ -114,6 +121,18 @@
 .img_chabot_message {
   max-width: 30%;
   border-radius: 8px;
+}
+
+.questions_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-content: stretch;
+  grid-gap: 15px;
+}
+
+.button_border {
+  border: 2px dashed #ccc;
+  background-color: white;
 }
 
 @media (max-width: 689px) {

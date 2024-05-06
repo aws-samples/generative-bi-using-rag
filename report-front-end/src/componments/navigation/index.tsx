@@ -9,7 +9,7 @@ const Navigation = () => {
   return (
     <SideNavigation
       activeHref={activeHref}
-      header={{ href: "/", text: "Navigation" }}
+      header={{ href: "/", text: "GenBI" }}
       onFollow={(event) => {
         if (!event.detail.external) {
           event.preventDefault();
@@ -18,7 +18,7 @@ const Navigation = () => {
         }
       }}
       items={[
-        { type: "link", text: "Welcome", href: "/" },
+        { type: "link", text: "Playground", href: "/" },
         { type: "divider" },
         { type: "link", text: "Page 1 (table)", href: "/page1" },
         { type: "link", text: "Page 2 (chart)", href: "/page2" },

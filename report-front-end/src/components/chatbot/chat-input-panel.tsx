@@ -1,24 +1,15 @@
-import {
-    Button,
-    Container,
-    Icon,
-    SelectProps,
-    SpaceBetween,
-    Spinner,
-    StatusIndicator,
-} from "@cloudscape-design/components";
+import { Button, Container, Icon, SpaceBetween, Spinner, } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState, } from "react";
-// @ts-ignore
-import { useSpeechRecognition } from "react-speech-recognition";
 import TextareaAutosize from "react-textarea-autosize";
 import styles from "../../styles/chat.module.scss";
 import { ChatBotConfiguration, ChatInputState, } from "./types";
+import RecommendQuestions from "./recommend-questions";
 
 export interface ChatInputPanelProps {
     running: boolean;
     setRunning: Dispatch<SetStateAction<boolean>>;
     configuration: ChatBotConfiguration;
-    setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
+    setConfiguration: Dispatch<SetStateAction<ChatBotConfiguration>>;
 }
 
 export abstract class ChatScrollState {
@@ -27,31 +18,10 @@ export abstract class ChatScrollState {
     static skipNextHistoryUpdate = false;
 }
 
-const workspaceDefaultOptions: SelectProps.Option[] = [
-    {
-        label: "No workspace (RAG data source)",
-        value: "",
-        iconName: "close",
-    },
-    {
-        label: "Create new workspace",
-        value: "__create__",
-        iconName: "add-plus",
-    },
-];
-
 export default function ChatInputPanel(props: ChatInputPanelProps) {
-    const {transcript, listening, browserSupportsSpeechRecognition} =
-        useSpeechRecognition();
-    const [state, setState] = useState<ChatInputState>({
+    const [state, setTextValue] = useState<ChatInputState>({
         value: ""
     });
-
-    useEffect(() => {
-        if (transcript) {
-            setState((state) => ({...state, value: transcript}));
-        }
-    }, [transcript]);
 
     useEffect(() => {
         const onWindowScroll = () => {
@@ -67,11 +37,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                     document.documentElement.scrollHeight
                 ) <= 10;
 
-            if (!isScrollToTheEnd) {
-                ChatScrollState.userHasScrolled = true;
-            } else {
-                ChatScrollState.userHasScrolled = false;
-            }
+            ChatScrollState.userHasScrolled = !isScrollToTheEnd;
         };
 
         window.addEventListener("scroll", onWindowScroll);
@@ -87,87 +53,64 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
     const handleSendMessage = () => {
         // todo: handle send message
+        console.log('handleSendMessage');
     };
-
-    /*  const connectionStatus = {
-        [ReadyState.CONNECTING]: "Connecting",
-        [ReadyState.OPEN]: "Open",
-        [ReadyState.CLOSING]: "Closing",
-        [ReadyState.CLOSED]: "Closed",
-        [ReadyState.UNINSTANTIATED]: "Uninstantiated",
-      }[readyState];*/
 
     return (
         <SpaceBetween direction="vertical" size="l">
             <div className={styles.input_area_container}>
                 <Container>
-                    <div className={styles.input_textarea_container}>
-                        <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
-                            {browserSupportsSpeechRecognition ? (
-                                <Button
-                                    iconName={listening ? "microphone-off" : "microphone"}
-                                    variant="icon"
-                                    onClick={() => {
-                                    }}
-                                />
-                            ) : (
-                                <Icon name="microphone-off" variant="disabled"/>
-                            )}
-                        </SpaceBetween>
-                        <TextareaAutosize
-                            className={styles.input_textarea}
-                            maxRows={6}
-                            minRows={1}
-                            spellCheck={true}
-                            autoFocus
-                            onChange={(e) =>
-                                setState((state) => ({...state, value: e.target.value}))
-                            }
-                            onKeyDown={(e) => {
-                                if (e.key == "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendMessage();
+                    <SpaceBetween size={'s'}>
+                        <RecommendQuestions setTextValue={setTextValue}></RecommendQuestions>
+                        <div className={styles.input_textarea_container}>
+                            <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
+                                <Icon name="microphone" variant="disabled"/>
+                            </SpaceBetween>
+                            <TextareaAutosize
+                                className={styles.input_textarea}
+                                maxRows={6}
+                                minRows={1}
+                                spellCheck={true}
+                                autoFocus
+                                onChange={(e) =>
+                                    setTextValue((state) => ({...state, value: e.target.value}))
                                 }
-                            }}
-                            value={state.value}
-                            placeholder={listening ? "Listening..." : "Send a message"}
-                        />
-                        <div style={{marginLeft: "8px"}}>
-                            <Button
-                                onClick={handleSendMessage}
-                                iconAlign="right"
-                                iconName={!props.running ? "angle-right-double" : undefined}
-                                variant="primary"
-                            >
-                                {props.running ? (
-                                    <>
-                                        Loading&nbsp;&nbsp;
-                                        <Spinner/>
-                                    </>
-                                ) : (
-                                    "Send"
-                                )}
-                            </Button>
-                            <Button
-                                iconName="settings"
-                                variant="icon"
+                                onKeyDown={(e) => {
+                                    if (e.key == "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
+                                value={state.value}
+                                placeholder={"Send a message"}
                             />
-                        </div>
-                    </div>
-                </Container>
-                <StatusIndicator
-                    type={"success"}
-                >
-                    {"Connected"}
-                </StatusIndicator>
-            </div>
-            <div className={styles.input_controls}>
-                <div className={styles.input_controls_right}>
-                    <SpaceBetween direction="horizontal" size="xxs" alignItems="center">
-                        <div style={{paddingTop: "1px"}}>
+                            <div style={{marginLeft: "8px"}}>
+                                <Button
+                                    onClick={handleSendMessage}
+                                    iconAlign="right"
+                                    iconName={!props.running ? "angle-right-double" : undefined}
+                                    variant="primary"
+                                >
+                                    {props.running ? (
+                                        <>
+                                            Loading&nbsp;&nbsp;
+                                            <Spinner/>
+                                        </>
+                                    ) : (
+                                        "Send"
+                                    )}
+                                </Button>
+                                <Button
+                                    iconName="settings"
+                                    variant="icon"
+                                />
+                            </div>
                         </div>
                     </SpaceBetween>
-                </div>
+                </Container>
+                {/*<StatusIndicator type={"success"}>
+                    {"Connected"}
+                </StatusIndicator>*/}
             </div>
         </SpaceBetween>
     );
