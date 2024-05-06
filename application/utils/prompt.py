@@ -170,7 +170,7 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step。
+Think step by step.
 """
 
 CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT = """

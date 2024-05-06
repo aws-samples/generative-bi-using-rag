@@ -444,13 +444,13 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Formula': 'Cancel/Return Rate = Return Rate + Cancel Rate'},
  {'Formula': 'Demand Share =Demand for this product/Total Demand'},
  {'Formula': 'MTD = 2023/12/1~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
+  'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
  {'Formula': 'WTD = 2023/12/4~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
+  'Comment': "It's the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
  {'Formula': 'YTD = 2023/1/1~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
+  'Comment': "It's the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
  {'Formula': 'YOY = This year period / Last year period',
-  'Comment': 'Year-over-year\xa0(YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
+  'Comment': 'Year-over-year (YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
  {'Formula': 'AUR = Net Revenue/Net Quantity',
   'Comment': 'Net Revenue  = Demand amt - Cancel amt – Return amt\nNet quantity = Demand qty - Cancel qty – Return qty '}]
  </context>
