@@ -104,7 +104,7 @@ def recurrent_display(messages, i, current_nlq_chain):
         st.error(message["content"])
     elif message["type"] == "sql":
         with st.expander("The Generate SQL"):
-            st.code(message["content"], type="sql")
+            st.code(message["content"],  language="sql")
 
     if i + 1 < len(messages):
         if current_role != messages[i + 1]["role"]:
