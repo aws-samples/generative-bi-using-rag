@@ -39,6 +39,8 @@ def main():
                     # save new profile to DynamoDB
                     ProfileManagement.update_table_prompt(current_profile, system_prompt, user_prompt)
                     st.success('saved.')
+    else:
+        st.info('Please select data profile in the left sidebar.')
 
 
 if __name__ == '__main__':

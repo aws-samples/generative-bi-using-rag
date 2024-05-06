@@ -62,9 +62,14 @@ answer :
 {
     "intent" : "agent_search"
 }
-</example>
 
 question : 希尔顿的英文名是什么
+answer :
+{
+    "intent" : "knowledge_search"
+}
+
+question : What does MTD mean?
 answer :
 {
     "intent" : "knowledge_search"
