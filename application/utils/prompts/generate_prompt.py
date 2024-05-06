@@ -13,7 +13,263 @@ support_model_ids_map = {
     "meta.llama3-70b-instruct-v1:0" : "llama3-70b-instruct-0"
 }
 
+# text2SQL prompt
+system_prompt_dict = {}
 user_prompt_dict = {}
+
+# intent 意图分类 prompt
+intent_system_prompt_dict = {}
+intent_user_prompt_dict = {}
+
+# knowledge 知识库回答 prompt
+
+knowledge_system_prompt_dict = {}
+knowledge_user_prompt_dict = {}
+
+# agent task agent任务拆分 prompt
+agent_system_prompt_dict = {}
+agent_user_prompt_dict = {}
+
+# agent data analyse prompt
+agent_analyse_system_prompt_dict = {}
+agent_analyse_user_prompt_dict = {}
+
+# data summary prompt
+data_summary_system_prompt_dict = {}
+data_summary_user_prompt_dict = {}
+
+
+# data visualization selection
+data_visualization_system_prompt_dict = {}
+data_visualization_user_prompt_dict = {}
+
+
+intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
+Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
+
+There are 3 main intents:
+<intent>
+- normal_search: Query relevant data from the data table
+- reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
+- agent_search: Attribution-based problems are not about directly querying the data. Instead, they involve questions like "why" or "how" to understand the underlying reasons and dynamics behind the data.
+- knowledge_search: Questions unrelated to data, such as general knowledge, such as meaning for abbviations, terminology explanation, etc.
+</intent>
+
+When the intent is normal_search, you need to extract the keywords from the query statement.
+
+Here are some examples:
+
+<example>
+question : 希尔顿在欧洲上线了多少酒店数
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["希尔顿", "欧洲", "上线", "酒店数"]
+}
+
+question : 苹果手机3月份在京东有多少订单
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["苹果手机", "3月", "京东", "订单"]
+}
+
+question : 修改订单表中的第一行数据
+answer :
+{
+    "intent" : "reject_search"
+}
+
+question : 6月份酒店的订单为什么下降了
+answer :
+{
+    "intent" : "agent_search"
+}
+</example>
+
+question : 希尔顿的英文名是什么
+answer :
+{
+    "intent" : "knowledge_search"
+}
+</example>
+
+Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
+"""
+
+intent_system_prompt_dict['llama3-70b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
+Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
+
+There are 3 main intents:
+<intent>
+- normal_search: Query relevant data from the data table
+- reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
+- agent_search: Attribution-based problems are not about directly querying the data. Instead, they involve questions like "why" or "how" to understand the underlying reasons and dynamics behind the data.
+- knowledge_search: Questions unrelated to data, such as general knowledge, such as meaning for abbviations, terminology explanation, etc.
+</intent>
+
+When the intent is normal_search, you need to extract the keywords from the query statement.
+
+Here are some examples:
+
+<example>
+question : 希尔顿在欧洲上线了多少酒店数
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["希尔顿", "欧洲", "上线", "酒店数"]
+}
+
+question : 苹果手机3月份在京东有多少订单
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["苹果手机", "3月", "京东", "订单"]
+}
+
+question : 修改订单表中的第一行数据
+answer :
+{
+    "intent" : "reject_search"
+}
+
+question : 6月份酒店的订单为什么下降了
+answer :
+{
+    "intent" : "agent_search"
+}
+</example>
+
+question : 希尔顿的英文名是什么
+answer :
+{
+    "intent" : "knowledge_search"
+}
+</example>
+
+Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
+"""
+
+intent_system_prompt_dict['haiku-20240307v1-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
+Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
+
+There are 3 main intents:
+<intent>
+- normal_search: Query relevant data from the data table
+- reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
+- agent_search: Attribution-based problems are not about directly querying the data. Instead, they involve questions like "why" or "how" to understand the underlying reasons and dynamics behind the data.
+- knowledge_search: Questions unrelated to data, such as general knowledge, such as meaning for abbviations, terminology explanation, etc.
+</intent>
+
+When the intent is normal_search, you need to extract the keywords from the query statement.
+
+Here are some examples:
+
+<example>
+question : 希尔顿在欧洲上线了多少酒店数
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["希尔顿", "欧洲", "上线", "酒店数"]
+}
+
+question : 苹果手机3月份在京东有多少订单
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["苹果手机", "3月", "京东", "订单"]
+}
+
+question : 修改订单表中的第一行数据
+answer :
+{
+    "intent" : "reject_search"
+}
+
+question : 6月份酒店的订单为什么下降了
+answer :
+{
+    "intent" : "agent_search"
+}
+</example>
+
+question : 希尔顿的英文名是什么
+answer :
+{
+    "intent" : "knowledge_search"
+}
+</example>
+
+Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
+"""
+
+intent_system_prompt_dict['sonnet-20240229v1-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
+Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
+
+There are 3 main intents:
+<intent>
+- normal_search: Query relevant data from the data table
+- reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
+- agent_search: Attribution-based problems are not about directly querying the data. Instead, they involve questions like "why" or "how" to understand the underlying reasons and dynamics behind the data.
+- knowledge_search: Questions unrelated to data, such as general knowledge, such as meaning for abbviations, terminology explanation, etc.
+</intent>
+
+When the intent is normal_search, you need to extract the keywords from the query statement.
+
+Here are some examples:
+
+<example>
+question : 希尔顿在欧洲上线了多少酒店数
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["希尔顿", "欧洲", "上线", "酒店数"]
+}
+
+question : 苹果手机3月份在京东有多少订单
+answer :
+{
+    "intent" : "normal_search",
+    "slot" : ["苹果手机", "3月", "京东", "订单"]
+}
+
+question : 修改订单表中的第一行数据
+answer :
+{
+    "intent" : "reject_search"
+}
+
+question : 6月份酒店的订单为什么下降了
+answer :
+{
+    "intent" : "agent_search"
+}
+</example>
+
+question : 希尔顿的英文名是什么
+answer :
+{
+    "intent" : "knowledge_search"
+}
+</example>
+
+Please perform intent recognition and entity extraction. Return only the JSON structure, without any other annotations.
+"""
+
+
+intent_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+The question is : {question}
+"""
+intent_user_prompt_dict['llama3-70b-instruct-0'] = """
+The question is : {question}
+"""
+intent_user_prompt_dict['haiku-20240307v1-0'] = """
+The question is : {question}
+"""
+intent_user_prompt_dict['sonnet-20240229v1-0'] = """
+The question is : {question}
+"""
+
 
 user_prompt_dict['mixtral-8x7b-instruct-0'] = """
 {dialect_prompt}
@@ -195,7 +451,7 @@ The question is : {question}
 
 """
 
-system_prompt_dict = {}
+
 
 system_prompt_dict['mixtral-8x7b-instruct-0'] = """
 You are a data analysis expert and proficient in {dialect}.
