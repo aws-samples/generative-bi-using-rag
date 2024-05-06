@@ -361,7 +361,7 @@ def main():
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
                         st.code(normal_search_result.sql, language="sql")
 
-                        current_nlq_chain.set_generated_sql_response(response)
+                        current_nlq_chain.set_generated_sql_response(normal_search_result.response)
 
                         if explain_gen_process_flag:
                             with st.spinner('Generating explanations...'):
