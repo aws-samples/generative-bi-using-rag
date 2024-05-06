@@ -19,7 +19,7 @@ from utils.navigation import make_sidebar
 from utils.apis import get_sql_result_tool
 import pprint
 
-from utils.opensearch import get_retrieve_opensearch
+from utils.opensearch import get_agent_retrieve_opensearch
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +314,7 @@ def main():
                 elif agent_intent_flag:
                     st.markdown("This is a complex business problem, and the problem is being broken down.")
                     with st.spinner('Generating SQL... (Take up to 40s)'):
-                        agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
+                        agent_cot_retrieve = get_agent_retrieve_opensearch(env_vars, search_box, "agent",
                                                                      selected_profile, 2, 0.5)
                         agent_cot_task_result = get_agent_cot_task(model_type, search_box,
                                                                    database_profile['tables_info'],
