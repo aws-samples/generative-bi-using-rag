@@ -13,13 +13,14 @@ from nlq.business.profile import ProfileManagement
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from nlq.business.vector_store import VectorStore
 from utils.llm import get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
-    knowledge_search, agent_text_search, normal_text_search
+    knowledge_search
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
 from utils.apis import get_sql_result_tool
 import pprint
 
 from utils.opensearch import get_retrieve_opensearch
+from utils.text_search import normal_text_search, agent_text_search
 
 logger = logging.getLogger(__name__)
 
