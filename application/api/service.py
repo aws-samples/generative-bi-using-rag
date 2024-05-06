@@ -10,9 +10,9 @@ from nlq.business.profile import ProfileManagement
 from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
-    sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, normal_text_search, agent_text_search, \
-    data_analyse_tool
+    sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool
 from utils.opensearch import get_retrieve_opensearch
+from utils.text_search import normal_text_search, agent_text_search
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS
