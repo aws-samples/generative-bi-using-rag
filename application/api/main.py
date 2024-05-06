@@ -6,7 +6,7 @@ import logging
 
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum, ErrorEnum
-from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion
+from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion, Upvote
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -36,6 +36,13 @@ def get_custom_question(data_profile: str):
 @router.post("/ask", response_model=Answer)
 def ask(question: Question):
     return service.ask(question)
+
+
+@router.post("/upvote")
+def upvote(upvote_input: Upvote):
+    upvote_res = service.user_feedback_upvote(upvote_input.data_profiles,upvote_input.query,
+                                              upvote_input.query_intent, upvote_input.query_answer_list)
+    return upvote_res
 
 
 @router.websocket("/ws")

@@ -35,6 +35,18 @@ class Example(BaseModel):
 #     sql_query_result: list[Any]
 
 
+class QueryEntity(BaseModel):
+    query: str
+    sql: str
+
+
+class Upvote(BaseModel):
+    data_profiles: str
+    query: str
+    query_intent: str
+    query_answer_list: list[QueryEntity]
+
+
 class Option(BaseModel):
     data_profiles: list[str]
     bedrock_model_ids: list[str]
@@ -57,6 +69,7 @@ class KnowledgeSearchResult(BaseModel):
 
 
 class AgentSearchResult(BaseModel):
+    sub_search_task: list[str]
     agent_sql_search_result: list[SQLSearchResult]
     agent_summary: str
 

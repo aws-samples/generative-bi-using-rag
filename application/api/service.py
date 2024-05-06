@@ -7,6 +7,7 @@ import logging
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
+from nlq.business.vector_store import VectorStore
 from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
@@ -182,7 +183,7 @@ def ask(question: Question) -> Answer:
                                         sql_gen_process="",
                                         data_analyse="")
 
-    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
+    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
 
     knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
 
@@ -221,7 +222,8 @@ def ask(question: Question) -> Answer:
 
     if reject_intent_flag:
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
-                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[])
         return answer
     elif search_intent_flag:
         normal_search_result = normal_text_search(search_box, model_type,
@@ -232,8 +234,10 @@ def ask(question: Question) -> Answer:
         response = knowledge_search(search_box=search_box, model_id=model_type)
 
         knowledge_search_result.knowledge_response = response
-        answer = Answer(query=search_box, query_intent="knowledge_search", knowledge_search_result=knowledge_search_result,
-                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
+        answer = Answer(query=search_box, query_intent="knowledge_search",
+                        knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[])
         return answer
 
     else:
@@ -269,12 +273,15 @@ def ask(question: Question) -> Answer:
                                                                  search_intent_result["data"].to_json(
                                                                      orient='records', force_ascii=False), "query")
                 sql_search_result.data_analyse = search_intent_analyse_result
-                sql_search_result.sql_data = [list(search_intent_result["data"].columns)] +search_intent_result["data"].values.tolist()
+                sql_search_result.sql_data = [list(search_intent_result["data"].columns)] + search_intent_result[
+                    "data"].values.tolist()
 
         answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
-                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[])
         return answer
     else:
+        sub_search_task = []
         for i in range(len(agent_search_result)):
             each_task_res = get_sql_result_tool(database_profile, agent_search_result[i]["sql"])
             if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
@@ -282,12 +289,13 @@ def ask(question: Question) -> Answer:
                     orient='records')
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
-                each_task_sql_search_result = SQLSearchResult(query=agent_search_result[i]["query"], sql_data=each_task_sql_res,
+                each_task_sql_search_result = SQLSearchResult(query=agent_search_result[i]["query"],
+                                                              sql_data=each_task_sql_res,
                                                               sql=each_task_res["sql"], data_show_type="table",
                                                               sql_gen_process="",
                                                               data_analyse="")
                 agent_sql_search_result.append(each_task_sql_search_result)
-
+                sub_search_task.append(agent_search_result[i]["query"])
         agent_data_analyse_result = data_analyse_tool(model_type, search_box,
                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False),
                                                       "agent")
@@ -295,10 +303,28 @@ def ask(question: Question) -> Answer:
         logger.info(agent_data_analyse_result)
         agent_search_response.agent_summary = agent_data_analyse_result
         agent_search_response.agent_sql_search_result = agent_sql_search_result
+        agent_search_response.sub_search_task = sub_search_task
 
         answer = Answer(query=search_box, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
-                        sql_search_result=sql_search_result, agent_search_result=agent_search_response, suggested_question=[])
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[])
         return answer
+
+
+def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
+    try:
+        if query_intent == "normal_search":
+            if len(query_answer_list) > 0:
+                VectorStore.add_sample(data_profiles, query_answer_list[0].query, query_answer_list[0].sql)
+        elif query_intent == "agent_search":
+            query_list = []
+            for each in query_answer_list:
+                query_list.append(each.query)
+                VectorStore.add_sample(data_profiles, each.query, each.sql)
+            VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
+        return True
+    except Exception as e:
+        return False
 
 
 def get_nlq_chain(question: Question) -> NLQChain:
