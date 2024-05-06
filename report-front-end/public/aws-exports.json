@@ -1,0 +1,12 @@
+{
+  "aws_api_key": "",
+  "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS",
+  "aws_appsync_graphqlEndpoint": "",
+  "aws_appsync_region": "",
+  "aws_project_region": "",
+  "aws_user_pools_id": "",
+  "aws_user_pools_web_client_id": "",
+  "aws_cognito_region": "",
+  "aws_user_pools_web_client_secret": "",
+  "build_time": ""
+}
