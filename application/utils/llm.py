@@ -1,4 +1,3 @@
-
 import json
 import boto3
 from botocore.config import Config
@@ -100,7 +99,6 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
     except Exception as e:
         logger.error("Couldn't invoke LLama 70B")
         logger.error(e)
-
 
 
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
@@ -380,15 +378,16 @@ def get_query_intent(model_id, search_box):
     except Exception as e:
         logger.error("get_query_intent is error:{}".format(e))
         return default_intent
-    
+
+
 def knowledge_search(model_id, search_box):
-    try: 
+    try:
         # this serves a placeholder for an existing case
         system_prompt = "You are a knowledge QA bot. And please answer questions based on the knowledge context and existing knowledge\n" \
                         "<rules>\n" \
                         "1. answer should as concise as possible\n" \
                         "2. if you don't know the answer to the question, just answer you don't know.\n" \
-                        "</rules>\n"\
+                        "</rules>\n" \
                         """
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
@@ -471,6 +470,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
         logger.error("knowledge_search is error")
     return ""
 
+
 def create_vector_embedding_with_bedrock(text, index_name):
     payload = {"inputText": f"{text}"}
     body = json.dumps(payload)
@@ -496,7 +496,6 @@ def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
     response = invoke_model_sagemaker_endpoint(endpoint_name, body)
     embeddings = response["sentence_embeddings"]
     return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
-
 
 
 def generate_suggested_question(search_box, system_prompt, model_id=None):
