@@ -1,7 +1,7 @@
-
 import json
 import boto3
 from botocore.config import Config
+
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT, \
     CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT
@@ -10,6 +10,7 @@ import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt
+from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -95,7 +96,6 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
     except Exception as e:
         logger.error("Couldn't invoke LLama 70B")
         logger.error(e)
-
 
 
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
@@ -375,15 +375,16 @@ def get_query_intent(model_id, search_box):
     except Exception as e:
         logger.error("get_query_intent is error:{}".format(e))
         return default_intent
-    
+
+
 def knowledge_search(model_id, search_box):
-    try: 
+    try:
         # this serves a placeholder for an existing case
         system_prompt = "You are a knowledge QA bot. And please answer questions based on the knowledge context and existing knowledge\n" \
                         "<rules>\n" \
                         "1. answer should as concise as possible\n" \
                         "2. if you don't know the answer to the question, just answer you don't know.\n" \
-                        "</rules>\n"\
+                        "</rules>\n" \
                         """
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
@@ -443,33 +444,29 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Formula': 'Cancel/Return Rate = Return Rate + Cancel Rate'},
  {'Formula': 'Demand Share =Demand for this product/Total Demand'},
  {'Formula': 'MTD = 2023/12/1~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
+  'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
  {'Formula': 'WTD = 2023/12/4~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
+  'Comment': "It's the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
  {'Formula': 'YTD = 2023/1/1~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
+  'Comment': "It's the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
  {'Formula': 'YOY = This year period / Last year period',
-  'Comment': 'Year-over-year\xa0(YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
+  'Comment': 'Year-over-year (YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
  {'Formula': 'AUR = Net Revenue/Net Quantity',
   'Comment': 'Net Revenue  = Demand amt - Cancel amt – Return amt\nNet quantity = Demand qty - Cancel qty – Return qty '}]
  </context>
 """
-        max_tokens = 2048
         user_prompt = """
         Here is the input query: {question}. 
         Please generate queries based on the input query.
         """.format(question=search_box)
-        user_message = {"role": "user", "content": user_prompt}
-        messages = [user_message]
-        logger.info(f'{system_prompt=}')
-        logger.info(f'{messages=}')
-        
-        response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream=False)
-        final_response = response.get("content")[0].get("text")
+        system_prompt = system_prompt
+        max_tokens = 2048
+        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         return final_response
     except Exception as e:
         logger.error("knowledge_search is error")
     return ""
+
 
 def create_vector_embedding_with_bedrock(text, index_name):
     payload = {"inputText": f"{text}"}
@@ -496,7 +493,6 @@ def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
     response = invoke_model_sagemaker_endpoint(endpoint_name, body)
     embeddings = response["sentence_embeddings"]
     return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
-
 
 
 def generate_suggested_question(search_box, system_prompt, model_id=None):

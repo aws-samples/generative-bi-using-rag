@@ -3,6 +3,8 @@ import os
 import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
+
+from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum, ErrorEnum
 from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion
 from . import service
@@ -18,10 +20,16 @@ load_dotenv()
 def option():
     return service.get_option()
 
-@router.get("/get_custom_question",responses= CustomQuestion)
-def get_custom_question():
-    question_list = ["销量前十的商品是什么" , "用户的平均年龄是多少", "商品的平均价格是多少"]
-    custom_question = CustomQuestion(custom_question = question_list)
+
+@router.get("/get_custom_question", response_model=CustomQuestion)
+def get_custom_question(data_profile: str):
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
+    comments = all_profiles[data_profile]['comments']
+    comments_questions = []
+    if len(comments.split("Examples:")) > 1:
+        comments_questions_txt = comments.split("Examples:")[1]
+        comments_questions = [i for i in comments_questions_txt.split("\n") if i != '']
+    custom_question = CustomQuestion(custom_question=comments_questions)
     return custom_question
 
 
@@ -42,7 +50,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 logger.info(question)
                 session_id = question.session_id
                 if not session_id:
-                    await response_websocket(websocket, session_id, ErrorEnum.INVAILD_SESSION_ID.get_message(), ContentEnum.EXCEPTION)
+                    await response_websocket(websocket, session_id, ErrorEnum.INVAILD_SESSION_ID.get_message(),
+                                             ContentEnum.EXCEPTION)
                     continue
                 current_nlq_chain = service.get_nlq_chain(question)
                 if question.use_rag:
@@ -51,14 +60,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     await response_websocket(websocket, session_id, str(examples))
                     await response_websocket(websocket, session_id, "\n```\n")
                 response = service.ask_with_response_stream(question, current_nlq_chain)
-                if os.getenv('SAGEMAKER_ENDPOINT_SQL',''):
+                if os.getenv('SAGEMAKER_ENDPOINT_SQL', ''):
                     await response_sagemaker_sql(websocket, session_id, response, current_nlq_chain)
                     await response_websocket(websocket, session_id, "\n")
                     explain_response = service.explain_with_response_stream(current_nlq_chain)
                     await response_sagemaker_explain(websocket, session_id, explain_response)
                 else:
                     await response_bedrock(websocket, session_id, response, current_nlq_chain)
-                
+
                 if question.query_result:
                     final_sql_query_result = service.get_executed_result(current_nlq_chain)
                     await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
@@ -111,7 +120,8 @@ async def response_bedrock(websocket: WebSocket, session_id: str, response: dict
     current_nlq_chain.set_generated_sql_response(''.join(result_pieces))
 
 
-async def response_websocket(websocket: WebSocket, session_id: str, content: str, content_type: ContentEnum=ContentEnum.COMMON):
+async def response_websocket(websocket: WebSocket, session_id: str, content: str,
+                             content_type: ContentEnum = ContentEnum.COMMON):
     content_obj = {
         "session_id": session_id,
         "content_type": content_type.value,
