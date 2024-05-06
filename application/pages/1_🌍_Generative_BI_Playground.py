@@ -93,7 +93,7 @@ def recurrent_display(messages, i, current_nlq_chain):
     message = messages[i]
     if message["type"] == "pandas":
         if isinstance(message["content"], pd.DataFrame):
-            do_visualize_results(current_nlq_chain, message["content"])
+            st.dataframe(message["content"], hide_index=True)
         elif isinstance(message["content"], list):
             for each_content in message["content"]:
                 st.write(each_content["query"])
@@ -105,14 +105,7 @@ def recurrent_display(messages, i, current_nlq_chain):
     elif message["type"] == "sql":
         with st.expander("The Generate SQL"):
             st.code(message["content"],  language="sql")
-
-    if i + 1 < len(messages):
-        if current_role != messages[i + 1]["role"]:
-            return i
-        else:
-            return recurrent_display(messages, i + 1, current_nlq_chain)
-    else:
-        return i
+    return i
 
 
 def main():
