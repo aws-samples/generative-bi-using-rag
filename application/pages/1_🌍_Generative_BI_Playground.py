@@ -102,6 +102,10 @@ def recurrent_display(messages, i, current_nlq_chain):
         st.markdown(message["content"])
     elif message["type"] == "error":
         st.error(message["content"])
+    elif message["type"] == "sql":
+        with st.expander("The Generate SQL"):
+            st.code(message["content"], type="sql")
+
     if i + 1 < len(messages):
         if current_role != messages[i + 1]["role"]:
             return i
@@ -221,8 +225,8 @@ def main():
         for i in range(len(st.session_state.messages[selected_profile])):
             print('!!!!!')
             print(i, new_index)
-            if i - 1 < new_index:
-                continue
+            # if i - 1 < new_index:
+            #     continue
             with st.chat_message(st.session_state.messages[selected_profile][i]["role"]):
                 new_index = recurrent_display(st.session_state.messages[selected_profile], i, current_nlq_chain)
 
