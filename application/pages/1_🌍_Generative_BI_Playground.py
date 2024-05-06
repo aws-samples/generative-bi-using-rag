@@ -62,8 +62,7 @@ def do_visualize_results(nlq_chain, sql_result):
         # hacky way to get around the issue of selectbox not updating when the options change
         chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
                                                            ['Table', 'Bar', 'Line', 'Pie'],
-                                                           on_change=nlq_chain.set_visualization_config_change,
-                                                           key=random.randint(0, 10000)
+                                                           on_change=nlq_chain.set_visualization_config_change
                                                            )
         if chart_type != 'Table':
             x_column = visualize_config_columns[1].selectbox(f'Choose x-axis column', available_columns,
