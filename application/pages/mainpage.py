@@ -2,13 +2,13 @@ import streamlit as st
 from utils.navigation import make_sidebar
 
 st.set_page_config(
-    page_title="Intelligent BI",
+    page_title="Generative BI",
     page_icon="👋",
 )
 
 make_sidebar()
 
-st.write("## Welcome to Intelligent BI Playground!👋")
+st.write("## Welcome to Generative BI Playground!👋")
 
 st.sidebar.success("Select a demo above.")
 
