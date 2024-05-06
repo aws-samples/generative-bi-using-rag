@@ -9,7 +9,7 @@ class Question(BaseModel):
     query_result: bool = True
     intent_ner_recognition: bool = False
     agent_cot: bool = False
-    profile_name: str = "shopping_guide"
+    profile_name: str = ""
     explain_gen_process_flag: bool = False
     gen_suggested_question: bool = False
 
@@ -43,13 +43,13 @@ class CustomQuestion(BaseModel):
 class Question(BaseModel):
     query: str
     bedrock_model_id: str = "anthropic.claude-3-sonnet-20240229-v1:0"
-    use_rag: bool = True
-    visit_query_result: bool = True
-    intent_ner_recognition: bool = False
-    agent_cot: bool = False
+    use_rag_flag: bool = True
+    visualize_results_flag: bool = True
+    intent_ner_recognition_flag: bool = False
+    agent_cot_flag: bool = False
     profile_name: str = "shopping_guide"
     explain_gen_process_flag: bool = False
-    gen_suggested_question: bool = False
+    gen_suggested_question_flag: bool = False
     top_k: float = 250
     top_p: float = 0.9
     max_tokens: int = 2048

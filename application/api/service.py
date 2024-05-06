@@ -154,13 +154,13 @@ def ask(question: Question) -> Answer:
     logger.debug(question)
     verify_parameters(question)
 
-    intent_ner_recognition = question.intent_ner_recognition
-    agent_cot = question.agent_cot
+    intent_ner_recognition_flag = question.intent_ner_recognition_flag
+    agent_cot_flag = question.agent_cot_flag
 
     model_type = question.bedrock_model_id
     search_box = question.query
     selected_profile = question.profile_name
-    use_rag = question.use_rag
+    use_rag_flag = question.use_rag_flag
     explain_gen_process_flag = question.explain_gen_process_flag
 
     reject_intent_flag = False
@@ -194,7 +194,7 @@ def ask(question: Question) -> Answer:
 
     # 通过标志位控制后续的逻辑
     # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
-    if intent_ner_recognition:
+    if intent_ner_recognition_flag:
         intent_response = get_query_intent(model_type, search_box)
         intent = intent_response.get("intent", "normal_search")
         entity_slot = intent_response.get("slot", [])
@@ -203,7 +203,7 @@ def ask(question: Question) -> Answer:
             search_intent_flag = False
         elif intent == "agent_search":
             agent_intent_flag = True
-            if agent_cot:
+            if agent_cot_flag:
                 search_intent_flag = False
             else:
                 search_intent_flag = True
@@ -225,7 +225,7 @@ def ask(question: Question) -> Answer:
         normal_search_result = normal_text_search(search_box, model_type,
                                                   database_profile,
                                                   entity_slot, env_vars,
-                                                  selected_profile, use_rag)
+                                                  selected_profile, use_rag_flag)
     elif knowledge_search_flag:
         response = knowledge_search(search_box=search_box, model_id=model_type)
 
@@ -244,7 +244,7 @@ def ask(question: Question) -> Answer:
         agent_search_result = agent_text_search(search_box, model_type,
                                                 database_profile,
                                                 entity_slot, env_vars,
-                                                selected_profile, use_rag, agent_cot_task_result)
+                                                selected_profile, use_rag_flag, agent_cot_task_result)
 
     # 连接数据库，执行SQL, 记录历史记录并展示
     if search_intent_flag:
