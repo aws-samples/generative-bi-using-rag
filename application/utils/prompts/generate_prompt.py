@@ -46,6 +46,50 @@ data_visualization_user_prompt_dict = {}
 suggest_question_system_prompt_dict = {}
 suggest_question_user_prompt_dict = {}
 
+# general map used for prompt management and DynamoDB storage
+prompt_map_dict = {
+    'text2sql': {
+        'title': 'Text2SQL Prompt',
+        'system_prompt': system_prompt_dict,
+        'user_prompt': user_prompt_dict
+    },
+    'intent': {
+        'title': 'Intent Prompt',
+        'system_prompt': intent_system_prompt_dict,
+        'user_prompt': intent_user_prompt_dict
+    },
+    'knowledge': {
+        'title': 'Knowledge Prompt',
+        'system_prompt': knowledge_system_prompt_dict,
+        'user_prompt': knowledge_user_prompt_dict
+    },
+    'agent': {
+        'title': 'Agent Task Prompt',
+        'system_prompt': agent_system_prompt_dict,
+        'user_prompt': agent_user_prompt_dict
+    },
+    'agent_analyse': {
+        'title': 'Agent Data Analyse Prompt',
+        'system_prompt': agent_analyse_system_prompt_dict,
+        'user_prompt': agent_analyse_user_prompt_dict
+    },
+    'data_summary': {
+        'title': 'Data Summary Prompt',
+        'system_prompt': data_summary_system_prompt_dict,
+        'user_prompt': data_summary_user_prompt_dict
+    },
+    'data_visualization': {
+        'title': 'Data Visualization Prompt',
+        'system_prompt': data_visualization_system_prompt_dict,
+        'user_prompt': data_visualization_user_prompt_dict
+    },
+    'suggestion': {
+        'title': 'Suggest Question Prompt',
+        'system_prompt': suggest_question_system_prompt_dict,
+        'user_prompt': suggest_question_user_prompt_dict
+    }
+}
+
 intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 

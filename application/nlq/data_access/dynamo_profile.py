@@ -3,7 +3,7 @@ import logging
 from typing import List
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-from utils.prompts.generate_prompt import system_prompt_dict, user_prompt_dict
+from utils.prompts.generate_prompt import prompt_map_dict
 
 logger = logging.getLogger(__name__)
 
@@ -14,16 +14,14 @@ PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'
 class ProfileConfigEntity:
 
     def __init__(self, profile_name: str, conn_name: str, schemas: List[str], tables: List[str], comments: str,
-                 tables_info: dict = None, system_prompt: dict = system_prompt_dict,
-                 user_prompt: dict = user_prompt_dict):
+                 tables_info: dict = None, prompt_map: dict = prompt_map_dict):
         self.profile_name = profile_name
         self.conn_name = conn_name
         self.schemas = schemas
         self.tables = tables
         self.comments = comments
         self.tables_info = tables_info
-        self.system_prompt = system_prompt
-        self.user_prompt = user_prompt
+        self.prompt_map = prompt_map
 
     def to_dict(self):
         """Convert to DynamoDB item format"""
@@ -33,8 +31,7 @@ class ProfileConfigEntity:
             'schemas': self.schemas,
             'tables': self.tables,
             'comments': self.comments,
-            'system_prompt': self.system_prompt,
-            'user_prompt': self.user_prompt
+            'prompt_map': self.prompt_map
         }
         if self.tables_info:
             base_props['tables_info'] = self.tables_info
@@ -146,12 +143,12 @@ class ProfileConfigDao:
         else:
             return response["Attributes"]
 
-    def update_table_prompt(self, profile_name, system_prompt, user_prompt):
+    def update_table_prompt_map(self, profile_name, prompt_map):
         try:
             response = self.table.update_item(
                 Key={"profile_name": profile_name},
-                UpdateExpression="set system_prompt=:sp, user_prompt=:up",
-                ExpressionAttributeValues={":sp": system_prompt, ":up": user_prompt},
+                UpdateExpression="set prompt_map=:pm",
+                ExpressionAttributeValues={":pm": prompt_map},
                 ReturnValues="UPDATED_NEW",
             )
         except ClientError as err:
