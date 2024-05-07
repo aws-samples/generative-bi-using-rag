@@ -1,16 +1,17 @@
 import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/components";
-import { Dispatch, SetStateAction, useEffect, useState, } from "react";
+import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import styles from "../../styles/chat.module.scss";
 import { ChatBotConfiguration, ChatBotHistoryItem, ChatInputState, } from "./types";
 import RecommendQuestions from "./recommend-questions";
-import data from "../../mockdata/answers.json";
+import data from "../../mockdata/answers_line.json";
 
 export interface ChatInputPanelProps {
   running: boolean;
   setRunning: Dispatch<SetStateAction<boolean>>;
   configuration: ChatBotConfiguration;
   setConfiguration: Dispatch<SetStateAction<ChatBotConfiguration>>;
+  messageHistory: ChatBotHistoryItem[];
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>,
 }
 
@@ -49,9 +50,20 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     };
   }, []);
 
-  useEffect(() => {
-    // todo:
-  }, [props.configuration]);
+  useLayoutEffect(() => {
+    if (ChatScrollState.skipNextHistoryUpdate) {
+      ChatScrollState.skipNextHistoryUpdate = false;
+      return;
+    }
+
+    if (!ChatScrollState.userHasScrolled && props.messageHistory.length > 0) {
+      ChatScrollState.skipNextScrollEvent = true;
+      window.scrollTo({
+        top: document.documentElement.scrollHeight + 1000,
+        behavior: "smooth",
+      });
+    }
+  }, [props.messageHistory]);
 
   function query() {
     const url = "";
@@ -79,7 +91,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   const handleSendMessage = () => {
     setTextValue({value: ""});
     console.log('handleSendMessage');
-    // todo: handle send message
     // query();
 
     const answers = data;

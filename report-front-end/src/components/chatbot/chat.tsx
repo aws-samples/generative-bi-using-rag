@@ -22,7 +22,7 @@ export default function Chat() {
 
   return (
     <div className={styles.chat_container}>
-      <SpaceBetween size={'s'}>
+      <SpaceBetween size={'l'}>
         {messageHistory.map((message, idx) => (
           <ChatMessage
             message={message}
@@ -33,7 +33,7 @@ export default function Chat() {
         ))}
       </SpaceBetween>
       <div className={styles.welcome_text}>
-        {messageHistory.length == 0 && (
+        {messageHistory.length === 0 && (
           <center>{'GenBI Chatbot'}</center>
         )}
       </div>
@@ -43,6 +43,7 @@ export default function Chat() {
           setRunning={setRunning}
           configuration={configuration}
           setConfiguration={setConfiguration}
+          messageHistory={messageHistory}
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
         />
       </div>
