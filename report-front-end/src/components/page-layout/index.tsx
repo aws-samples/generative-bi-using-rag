@@ -5,7 +5,9 @@ import {
   JSXElementConstructor,
   ReactNode,
   ReactPortal,
+  useState,
 } from "react";
+import ConfigPanel from "../config-panel";
 
 const PageLayout = (props: {
   content:
@@ -18,7 +20,18 @@ const PageLayout = (props: {
     | null
     | undefined;
 }) => {
-  return <AppLayout navigation={<Navigation />} content={props.content} />;
+  const [openTools, setOpenTools] = useState(true);
+  return (
+    <AppLayout
+      navigation={<Navigation />}
+      content={props.content}
+      tools={<ConfigPanel />}
+      toolsOpen={openTools}
+      onToolsChange={({ detail }) => {
+        setOpenTools(detail.open);
+      }}
+    />
+  );
 };
 
 export default PageLayout;

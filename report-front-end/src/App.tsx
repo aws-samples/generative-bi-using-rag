@@ -1,91 +1,114 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
 import "@cloudscape-design/global-styles/index.css";
 import { TopNavigation } from "@cloudscape-design/components";
-import PageRouter from "./componments/page-router";
-import AlertMsg from "./componments/alert-msg";
+import PageRouter from "./components/page-router";
+import AlertMsg from "./components/alert-msg";
+import { ActionType, UserState } from "./types/StoreTypes";
+import { useSelector, useDispatch } from "react-redux";
+import LoginPage from "./components/login-page";
 
 function App() {
+  const userInfo = useSelector<UserState>((state) => state) as UserState;
+  const dispatch = useDispatch();
+  console.log("userInfo", userInfo);
+  useEffect(() => {
+    checkLoginStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const checkLoginStatus = () => {
+    if (userInfo.loginExpiration < +new Date()) {
+      dispatch({ type: ActionType.Delete });
+    }
+  };
   return (
     <div className="Rp-Demo-App">
       <AlertMsg />
-      <TopNavigation
-        identity={{
-          href: "#",
-          title: "Demo App",
-          logo: {
-            src: "/logo-small-top-navigation.svg",
-            alt: "Demo App",
-          },
-        }}
-        utilities={[
-          {
-            type: "button",
-            text: "Link",
-            href: "https://aws.amazon.com/cn/",
-            external: true,
-            externalIconAriaLabel: " (opens in a new tab)",
-          },
-          {
-            type: "button",
-            iconName: "notification",
-            title: "Notifications",
-            ariaLabel: "Notifications (unread)",
-            badge: true,
-            disableUtilityCollapse: false,
-          },
-          {
-            type: "menu-dropdown",
-            iconName: "settings",
-            ariaLabel: "Settings",
-            title: "Settings",
-            items: [
+      {(!userInfo || !userInfo.userId || userInfo.userId === "") && (
+        <LoginPage />
+      )}
+      {userInfo && userInfo.userId && userInfo.userId !== "" && (
+        <>
+          <TopNavigation
+            identity={{
+              href: "#",
+              title: "Demo App",
+              logo: {
+                src: "/Amazoncom-yellow-arrow.png",
+                alt: "Demo App",
+              },
+            }}
+            utilities={[
               {
-                id: "settings-org",
-                text: "Organizational settings",
+                type: "button",
+                text: "Link",
+                href: "https://aws.amazon.com/cn/",
+                external: true,
+                externalIconAriaLabel: " (opens in a new tab)",
               },
               {
-                id: "settings-project",
-                text: "Project settings",
+                type: "button",
+                iconName: "notification",
+                title: "Notifications",
+                ariaLabel: "Notifications (unread)",
+                badge: true,
+                disableUtilityCollapse: false,
               },
-            ],
-          },
-          {
-            type: "menu-dropdown",
-            text: "Customer Name",
-            description: "aws_example@amazon.com",
-            iconName: "user-profile",
-            items: [
-              { id: "profile", text: "Profile" },
-              { id: "preferences", text: "Preferences" },
-              { id: "security", text: "Security" },
               {
-                id: "support-group",
-                text: "Support",
+                type: "menu-dropdown",
+                iconName: "settings",
+                ariaLabel: "Settings",
+                title: "Settings",
                 items: [
                   {
-                    id: "documentation",
-                    text: "Documentation",
-                    href: "#",
-                    external: true,
-                    externalIconAriaLabel: " (opens in new tab)",
+                    id: "settings-org",
+                    text: "Organizational settings",
                   },
-                  { id: "support", text: "Support" },
                   {
-                    id: "feedback",
-                    text: "Feedback",
-                    href: "#",
-                    external: true,
-                    externalIconAriaLabel: " (opens in new tab)",
+                    id: "settings-project",
+                    text: "Project settings",
                   },
                 ],
               },
-              { id: "signout", text: "Sign out" },
-            ],
-          },
-        ]}
-      />
-      <PageRouter />
+              {
+                type: "menu-dropdown",
+                text: "Customer Name",
+                description: "aws_example@amazon.com",
+                iconName: "user-profile",
+                items: [
+                  { id: "profile", text: "Profile" },
+                  { id: "preferences", text: "Preferences" },
+                  { id: "security", text: "Security" },
+                  {
+                    id: "support-group",
+                    text: "Support",
+                    items: [
+                      {
+                        id: "documentation",
+                        text: "Documentation",
+                        href: "#",
+                        external: true,
+                        externalIconAriaLabel: " (opens in new tab)",
+                      },
+                      { id: "support", text: "Support" },
+                      {
+                        id: "feedback",
+                        text: "Feedback",
+                        href: "#",
+                        external: true,
+                        externalIconAriaLabel: " (opens in new tab)",
+                      },
+                    ],
+                  },
+                  { id: "signout", text: "Sign out" },
+                ],
+              },
+            ]}
+          />
+          <PageRouter />
+        </>
+      )}
     </div>
   );
 }
