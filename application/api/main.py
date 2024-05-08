@@ -7,7 +7,7 @@ import logging
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum, ErrorEnum
 from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion, Upvote, SQLSearchResult, \
-    AgentSearchResult, KnowledgeSearchResult
+    AgentSearchResult, KnowledgeSearchResult, TaskSQLSearchResult
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -224,8 +224,8 @@ def ask_mock_bar(question_type: str):
         'data_analyse': ''
     },
     'agent_search_result': {
-        'sub_search_task': ['分析不同时间段的商品总销售量和销售收入的变化趋势', '分析促销商品和非促销商品的销售量和销售收入对比'],
         'agent_sql_search_result': [{
+            'sub_task_query': '分析不同时间段的商品总销售量和销售收入的变化趋势',
             'sql': "\nSELECT\n    DATE_FORMAT(`timestamp`, '%Y-%m') AS month_year,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS total_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS total_revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    month_year\nORDER BY\n    month_year\nLIMIT 100;\n",
             'sql_data': [
                 ['month_year', 'total_purchases', 'total_revenue'],
@@ -235,6 +235,7 @@ def ask_mock_bar(question_type: str):
             'sql_gen_process': '',
             'data_analyse': ''
         }, {
+            'sub_task_query': '分析促销商品和非促销商品的销售量和销售收入对比',
             'sql': "\nSELECT\n    `promoted`,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS num_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    `promoted`\nLIMIT 100;\n",
             'sql_data': [
                 ['promoted', 'num_purchases', 'revenue'],
@@ -259,13 +260,13 @@ def ask_mock_bar(question_type: str):
         agent_search_response.agent_summary = mock_data["agent_search_result"]["agent_summary"]
         agent_search_response.sub_search_task = mock_data["agent_search_result"]["sub_search_task"]
 
-        sql_search_result_one = SQLSearchResult(sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql_data"],
+        sql_search_result_one = TaskSQLSearchResult(sub_task_query = mock_data["agent_search_result"]["agent_sql_search_result"][0]["sub_task_query"],sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql_data"],
                                             sql=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql"],
                                             data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][0]["data_show_type"],
                                             sql_gen_process="",
                                             data_analyse="")
 
-        sql_search_result_two = SQLSearchResult(sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql_data"],
+        sql_search_result_two = TaskSQLSearchResult(sub_task_query = mock_data["agent_search_result"]["agent_sql_search_result"][1]["sub_task_query"], sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql_data"],
                                             sql=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql"],
                                             data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][1]["data_show_type"],
                                             sql_gen_process="",
