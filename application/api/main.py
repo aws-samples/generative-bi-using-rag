@@ -17,9 +17,9 @@ router = APIRouter(prefix="/qa", tags=["qa"])
 load_dotenv()
 
 
-# @router.get("/option", response_model=Option)
-# def option():
-#     return service.get_option()
+@router.get("/option", response_model=Option)
+def option():
+    return service.get_option()
 
 
 @router.get("/get_custom_question", response_model=CustomQuestion)
