@@ -64,13 +64,21 @@ class SQLSearchResult(BaseModel):
     data_analyse: str
 
 
+class TaskSQLSearchResult(BaseModel):
+    sub_task_query: str
+    sql: str
+    sql_data: list[Any]
+    data_show_type: str
+    sql_gen_process: str
+    data_analyse: str
+
+
 class KnowledgeSearchResult(BaseModel):
     knowledge_response: str
 
 
 class AgentSearchResult(BaseModel):
-    sub_search_task: list[str]
-    agent_sql_search_result: list[SQLSearchResult]
+    agent_sql_search_result: list[TaskSQLSearchResult]
     agent_summary: str
 
 
