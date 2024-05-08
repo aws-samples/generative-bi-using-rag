@@ -61,7 +61,7 @@ const LoginPage = () => {
 
   return (
     <div className="login-page">
-      <span className="login-page-title">Data Mesh Login</span>
+      <span className="login-page-title">Gen BI Login</span>
       <div className="login-page-name">
         <span className="login-page-span">User Name:</span>
         <Input
