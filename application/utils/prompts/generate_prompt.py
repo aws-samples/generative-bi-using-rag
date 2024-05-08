@@ -1,5 +1,5 @@
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, AGENT_COT_SYSTEM_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
+    DEFAULT_DIALECT_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
 import logging
@@ -1548,7 +1548,7 @@ def generate_sagemaker_explain_prompt(
     return prompt
 
 
-def generate_agent_cot_system_prompt(ddl, agent_cot_example=None):
+def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agent_cot_example=None):
     long_string = ""
     for table_name, table_data in ddl.items():
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
@@ -1567,8 +1567,17 @@ def generate_agent_cot_system_prompt(ddl, agent_cot_example=None):
             agent_cot_example_str += "query: " + item['_source']['query'] + "\n"
             agent_cot_example_str += "train of thought:" + item['_source']['comment'] + "\n"
 
-    return AGENT_COT_SYSTEM_PROMPT.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
-                                          example_data=AGENT_COT_EXAMPLE)
+    # fetch system/user prompt from DynamoDB prompt map
+    name = support_model_ids_map[model_id]
+    system_prompt = prompt_map.get('agent', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('agent', {}).get('user_prompt', {}).get(name)
+
+    # reformat prompts
+    system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
+                                         example_data=AGENT_COT_EXAMPLE)
+    user_prompt = user_prompt.format(question=search_box)
+
+    return user_prompt, system_prompt
 
 
 def generate_intent_prompt(prompt_map, search_box, model_id):
@@ -1576,6 +1585,17 @@ def generate_intent_prompt(prompt_map, search_box, model_id):
 
     system_prompt = prompt_map.get('intent', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('intent', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box)
+
+    return user_prompt, system_prompt
+
+
+def generate_knowledge_prompt(prompt_map, search_box, model_id):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('knowledge', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('knowledge', {}).get('user_prompt', {}).get(name)
 
     user_prompt = user_prompt.format(question=search_box)
 

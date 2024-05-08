@@ -195,11 +195,12 @@ def ask(question: Question) -> Answer:
         db_url = ConnectionManagement.get_db_url_by_name(conn_name)
         database_profile['db_url'] = db_url
         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+    prompt_map = database_profile['prompt_map']
 
     # 通过标志位控制后续的逻辑
     # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
     if intent_ner_recognition_flag:
-        intent_response = get_query_intent(model_type, search_box, database_profile['prompt_map'])
+        intent_response = get_query_intent(model_type, search_box, prompt_map)
         intent = intent_response.get("intent", "normal_search")
         entity_slot = intent_response.get("slot", [])
         if intent == "reject_search":
@@ -232,7 +233,7 @@ def ask(question: Question) -> Answer:
                                                   entity_slot, env_vars,
                                                   selected_profile, use_rag_flag)
     elif knowledge_search_flag:
-        response = knowledge_search(search_box=search_box, model_id=model_type)
+        response = knowledge_search(search_box=search_box, model_id=model_type, prompt_map=prompt_map)
 
         knowledge_search_result.knowledge_response = response
         answer = Answer(query=search_box, query_intent="knowledge_search",
@@ -244,7 +245,7 @@ def ask(question: Question) -> Answer:
     else:
         agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
                                                      selected_profile, 2, 0.5)
-        agent_cot_task_result = get_agent_cot_task(model_type, search_box,
+        agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
                                                    database_profile['tables_info'],
                                                    agent_cot_retrieve)
 
