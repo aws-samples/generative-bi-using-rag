@@ -32,10 +32,10 @@ function App() {
           <TopNavigation
             identity={{
               href: "#",
-              title: "Demo App",
+              title: "GenBI App",
               logo: {
                 src: "/Amazoncom-yellow-arrow.png",
-                alt: "Demo App",
+                alt: "GenBI App",
               },
             }}
             utilities={[
