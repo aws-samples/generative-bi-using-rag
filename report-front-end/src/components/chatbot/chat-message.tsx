@@ -1,10 +1,11 @@
 import {
-  BarChart,
+  BarChart, Box,
   Container,
   ExpandableSection,
   LineChart,
   PieChart,
   SpaceBetween,
+  Spinner,
   Table,
   TextContent
 } from "@cloudscape-design/components";
@@ -12,6 +13,7 @@ import { ChatBotHistoryItem } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "../../styles/chat.module.scss";
+import { useState } from "react";
 
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
@@ -25,7 +27,6 @@ export interface ChartTypeProps {
 }
 
 function ChartPanel(props: ChartTypeProps) {
-  console.log('type: ', props.data_show_type);
   const sql_data = props.sql_data;
   switch (props.data_show_type) {
     case 'bar':
@@ -106,7 +107,6 @@ function ChartPanel(props: ChartTypeProps) {
 }
 
 function IntentSearchPanel(props: ChatMessageProps) {
-  console.log('intent: ', props.message.query_intent);
   switch (props.message.query_intent) {
     case 'normal_search':
       const sql_data = props.message.sql_search_result.sql_data;
@@ -133,18 +133,17 @@ function IntentSearchPanel(props: ChatMessageProps) {
       return (
         <Container>
           <SpaceBetween size={'s'}>
-            {props.message.sql_search_result.data_show_type === "table" ?
-              <ExpandableSection
-                variant="footer"
-                defaultExpanded
-                headerText="Table">
-                <Table
-                  columnDefinitions={headers}
-                  enableKeyboardNavigation
-                  items={content}
-                  resizableColumns
-                />
-              </ExpandableSection> : null}
+            <ExpandableSection
+              variant="footer"
+              defaultExpanded
+              headerText="Table">
+              <Table
+                columnDefinitions={headers}
+                enableKeyboardNavigation
+                items={content}
+                resizableColumns
+              />
+            </ExpandableSection>
             {props.message.sql_search_result.data_show_type !== "table" && props.message.sql_search_result.sql_data.length > 0 ?
               <ExpandableSection
                 variant="footer"

@@ -4,11 +4,11 @@ import TextareaAutosize from "react-textarea-autosize";
 import styles from "../../styles/chat.module.scss";
 import { ChatBotConfiguration, ChatBotHistoryItem, ChatInputState, } from "./types";
 import CustomQuestions from "./custom-questions";
-import data from "../../mockdata/answers_line.json";
+import { BACKEND_URL } from "../../tools/const";
 
 export interface ChatInputPanelProps {
   running: boolean;
-  setRunning: Dispatch<SetStateAction<boolean>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   configuration: ChatBotConfiguration;
   setConfiguration: Dispatch<SetStateAction<ChatBotConfiguration>>;
   messageHistory: ChatBotHistoryItem[];
@@ -65,39 +65,48 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     }
   }, [props.messageHistory]);
 
-  function query() {
-    const url = "";
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
+  const query = async () => {
+    props.setLoading(true);
+    const param = {
+      query: state.value,
+      bedrock_model_id: "anthropic.claude-3-sonnet-20240229-v1:0",
+      use_rag_flag: true,
+      visualize_results_flag: true,
+      intent_ner_recognition_flag: true,
+      agent_cot_flag: true,
+      profile_name: "shopping-demo",
+      explain_gen_process_flag: true,
+      gen_suggested_question_flag: false,
+      top_k: 250,
+      top_p: 0.9,
+      max_tokens: 2048,
+      temperature: 0.01
+    };
+    console.log(JSON.stringify(param));
+    const url = `${BACKEND_URL}qa/ask`;
+    const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify(param)
       }
-    })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return res;
-      })
-      .then(data => {
-        // todo: setQueryAnswers
-      })
-      .catch(err => {
-        console.error(err);
-        return err;
-      });
+    );
+    if (!response.ok) {
+      return;
+    }
+    const result = await response.json();
+    console.log(result);
+    props.setLoading(false);
+    props.setMessageHistory((history: ChatBotHistoryItem[]) => {
+      console.log([...history, result]);
+      return [...history, result];
+    });
   }
 
   const handleSendMessage = () => {
     setTextValue({value: ""});
-    // query();
-
-    const answers = data;
-    console.log(answers);
-    props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-      console.log([...history, data]);
-      return [...history, data];
-    });
+    query().then();
   };
 
   return (
@@ -120,7 +129,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   setTextValue((state) => ({...state, value: e.target.value}))
                 }
                 onKeyDown={(e) => {
-                  if (e.key == "Enter" && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage();
                   }
@@ -145,9 +154,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             </div>
           </SpaceBetween>
         </Container>
-        {/*<StatusIndicator type={"success"}>
-                    {"Connected"}
-                </StatusIndicator>*/}
       </div>
     </SpaceBetween>
   );
