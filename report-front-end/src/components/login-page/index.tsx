@@ -92,14 +92,6 @@ const LoginPage = () => {
         </Button>
         <Button onClick={closeWindow}>Close Page</Button>
       </div>
-      <div
-        className="login-page-support"
-        onClick={() => {
-          window.open("/register-guidence.html", "_blank");
-        }}
-      >
-        How to register a new domain?
-      </div>
     </div>
   );
 };
