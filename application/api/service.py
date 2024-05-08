@@ -10,13 +10,16 @@ from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
+from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
-    sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool
+    sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
+    generate_suggested_question
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
-from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult
+from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
+    TaskSQLSearchResult
 from .exception_handler import BizException
-from utils.constant import BEDROCK_MODEL_IDS
+from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum
 
 logger = logging.getLogger(__name__)
@@ -164,6 +167,8 @@ def ask(question: Question) -> Answer:
     selected_profile = question.profile_name
     use_rag_flag = question.use_rag_flag
     explain_gen_process_flag = question.explain_gen_process_flag
+    gen_suggested_question_flag = question.gen_suggested_question_flag
+
 
     reject_intent_flag = False
     search_intent_flag = False
@@ -189,6 +194,8 @@ def ask(question: Question) -> Answer:
     knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
 
     agent_sql_search_result = []
+
+    generate_suggested_question_list = []
 
     if database_profile['db_url'] == '':
         conn_name = database_profile['conn_name']
@@ -254,6 +261,13 @@ def ask(question: Question) -> Answer:
                                                 entity_slot, env_vars,
                                                 selected_profile, use_rag_flag, agent_cot_task_result)
 
+    if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
+        active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
+        generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+        split_strings = generated_sq.split("[generate]")
+        generate_suggested_question_list = [s.strip() for s in split_strings if s.strip()]
+
+
     # 连接数据库，执行SQL, 记录历史记录并展示
     if search_intent_flag:
         if normal_search_result.sql != "":
@@ -280,7 +294,7 @@ def ask(question: Question) -> Answer:
 
         answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[])
+                        suggested_question=generate_suggested_question_list)
         return answer
     else:
         sub_search_task = []
@@ -291,7 +305,7 @@ def ask(question: Question) -> Answer:
                     orient='records')
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
-                each_task_sql_search_result = SQLSearchResult(query=agent_search_result[i]["query"],
+                each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
                                                               sql_data=each_task_sql_res,
                                                               sql=each_task_res["sql"], data_show_type="table",
                                                               sql_gen_process="",
@@ -305,11 +319,10 @@ def ask(question: Question) -> Answer:
         logger.info(agent_data_analyse_result)
         agent_search_response.agent_summary = agent_data_analyse_result
         agent_search_response.agent_sql_search_result = agent_sql_search_result
-        agent_search_response.sub_search_task = sub_search_task
 
         answer = Answer(query=search_box, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[])
+                        suggested_question=generate_suggested_question_list)
         return answer
 
 
