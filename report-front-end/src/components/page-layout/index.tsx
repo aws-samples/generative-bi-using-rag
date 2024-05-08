@@ -30,6 +30,7 @@ const PageLayout = (props: {
       onToolsChange={({ detail }) => {
         setOpenTools(detail.open);
       }}
+      toolsWidth={450}
     />
   );
 };

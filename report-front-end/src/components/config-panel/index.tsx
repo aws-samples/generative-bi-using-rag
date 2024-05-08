@@ -27,8 +27,14 @@ const ConfigPanel = () => {
   const [loading, setLoading] = useState(false);
   const [llmOptions, setLLMOptions] = useState([] as any[]);
   const [dataProOptions, setDataProOptions] = useState([] as any[]);
-  const [selectedLLM, setSelectedLLM] = useState(null as any);
-  const [selectedDataPro, setSelectedDataPro] = useState(null as any);
+  const [selectedLLM, setSelectedLLM] = useState({
+    label: "",
+    value: "",
+  } as any);
+  const [selectedDataPro, setSelectedDataPro] = useState({
+    label: "",
+    value: "",
+  } as any);
 
   useEffect(() => {
     getSelectData();
@@ -36,30 +42,38 @@ const ConfigPanel = () => {
 
   const getSelectData = async () => {
     setLoading(true);
-    const reponse = await fetch(`${BACKEND_URL}qa/option`, {
-      method: "GET",
-      mode: "no-cors",
-    });
-    if (!reponse.ok) {
-      alertMsg("LLM Option Error", "error");
-      return;
-    }
-    const result = await reponse.json();
-    if (!result || !result.data_profiles || !result.bedrock_model_ids) {
-      alertMsg("LLM Option Error", "error");
-      return;
-    }
-    const tempDataPro: SetStateAction<null> | { label: any; value: any }[] = [];
-    result.data_profiles.forEach((item: any) => {
-      tempDataPro.push({ label: item, value: item });
-    });
-    setDataProOptions(tempDataPro);
+    try {
+      const reponse = await fetch(`${BACKEND_URL}qa/option`, {
+        method: "GET",
+      });
+      if (!reponse.ok) {
+        alertMsg("LLM Option Error", "error");
+        return;
+      }
+      const result = await reponse.json();
 
-    const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
-    result.bedrock_model_ids.forEach((item: any) => {
-      tempLLM.push({ label: item, value: item });
-    });
-    setLLMOptions(tempLLM);
+      if (!result || !result.data_profiles || !result.bedrock_model_ids) {
+        alertMsg("LLM Option Error", "error");
+        return;
+      }
+      const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
+        [];
+      result.data_profiles.forEach((item: any) => {
+        tempDataPro.push({ label: item, value: item });
+      });
+      setDataProOptions(tempDataPro);
+      setSelectedDataPro(tempDataPro[0]);
+
+      const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
+      result.bedrock_model_ids.forEach((item: any) => {
+        tempLLM.push({ label: item, value: item });
+      });
+
+      setLLMOptions(tempLLM);
+      setSelectedLLM(tempLLM[0]);
+    } catch (error) {
+      console.error("getSelectData Error", error);
+    }
     setLoading(false);
   };
 

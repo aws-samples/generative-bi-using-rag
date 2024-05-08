@@ -11,7 +11,6 @@ import LoginPage from "./components/login-page";
 function App() {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
   const dispatch = useDispatch();
-  console.log("userInfo", userInfo);
   useEffect(() => {
     checkLoginStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps

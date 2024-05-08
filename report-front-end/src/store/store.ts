@@ -13,7 +13,7 @@ const defaultUserState: UserState = {
 };
 
 const localStorageData = localStorage.getItem(LOCALSTORAGE_KEY)
-  ? JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || "")
+  ? JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || "{}")
   : null;
 
 const initialState = localStorageData || defaultUserState;
