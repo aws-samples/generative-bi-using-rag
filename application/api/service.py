@@ -106,8 +106,9 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
     logger.info('try to get generated sql from LLM')
 
     entity_slot_retrieve = []
+    database_profile = all_profiles[question.profile_name]
     if question.intent_ner_recognition:
-        intent_response = get_query_intent(question.bedrock_model_id, question.keywords)
+        intent_response = get_query_intent(question.bedrock_model_id, question.keywords, database_profile['prompt_map'])
         intent = intent_response.get("intent", "normal_search")
         if intent == "reject_search":
             raise BizException(ErrorEnum.NOT_SUPPORTED)
@@ -120,7 +121,6 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
 
     # Whether Retrieving Few Shots from Database
     logger.info('Sending request...')
-    database_profile = all_profiles[question.profile_name]
     # fix db url is Empty
     if database_profile['db_url'] == '':
         conn_name = database_profile['conn_name']
@@ -141,6 +141,7 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
     else:
         response = text_to_sql(database_profile['tables_info'],
                                database_profile['hints'],
+                               database_profile['prompt_map'],
                                question.keywords,
                                model_id=question.bedrock_model_id,
                                sql_examples=current_nlq_chain.get_retrieve_samples(),
@@ -198,7 +199,7 @@ def ask(question: Question) -> Answer:
     # 通过标志位控制后续的逻辑
     # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
     if intent_ner_recognition_flag:
-        intent_response = get_query_intent(model_type, search_box)
+        intent_response = get_query_intent(model_type, search_box, database_profile['prompt_map'])
         intent = intent_response.get("intent", "normal_search")
         entity_slot = intent_response.get("slot", [])
         if intent == "reject_search":

@@ -38,6 +38,7 @@ def normal_text_search(search_box, model_type, database_profile, entity_slot, en
 
         response = text_to_sql(database_profile['tables_info'],
                                database_profile['hints'],
+                               database_profile['prompt_map'],
                                search_box,
                                model_id=model_type,
                                sql_examples=retrieve_result,
@@ -74,6 +75,7 @@ def agent_text_search(search_box, model_type, database_profile, entity_slot, env
                                                           selected_profile, 3, 0.5)
             each_task_response = text_to_sql(database_profile['tables_info'],
                                              database_profile['hints'],
+                                             database_profile['prompt_map'],
                                              each_task_query,
                                              model_id=model_type,
                                              sql_examples=retrieve_result,

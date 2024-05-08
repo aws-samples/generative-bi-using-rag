@@ -24,6 +24,7 @@ class ProfileManagement:
                 'hints': '',
                 'search_samples': [],
                 'comments':  profile.comments,
+                'prompt_map': profile.prompt_map
             }
 
         return profile_map
