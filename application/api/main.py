@@ -68,7 +68,7 @@ def ask_mock_bar(question_type: str):
             'suggested_question': [
                 '40岁以上女性用户浏览次数最多的前3个商品类别是什么', '30岁以下男性用户浏览次数最多的前3个商品类别是什么', '30岁以上用户浏览次数最少的商品类别是什么']
         }
-        sql_search_result = SQLSearchResult(query=mock_data["query"],
+        sql_search_result = SQLSearchResult(
                                             sql_data=mock_data["sql_search_result"]["sql_data"],
                                             sql=mock_data["sql_search_result"]["sql"],
                                             data_show_type=mock_data["sql_search_result"]["data_show_type"],
@@ -108,7 +108,7 @@ def ask_mock_bar(question_type: str):
             },
             'suggested_question': []
         }
-        sql_search_result = SQLSearchResult(query=mock_data["query"], sql_data=mock_data["sql_search_result"]["sql_data"], sql=mock_data["sql_search_result"]["sql"], data_show_type=mock_data["sql_search_result"]["data_show_type"],
+        sql_search_result = SQLSearchResult(sql_data=mock_data["sql_search_result"]["sql_data"], sql=mock_data["sql_search_result"]["sql"], data_show_type=mock_data["sql_search_result"]["data_show_type"],
                                             sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
                                             data_analyse=mock_data["sql_search_result"]["data_analyse"])
 
@@ -152,7 +152,7 @@ def ask_mock_bar(question_type: str):
     },
     'suggested_question': []
 }
-        sql_search_result = SQLSearchResult(query=mock_data["query"],
+        sql_search_result = SQLSearchResult(
                                             sql_data=mock_data["sql_search_result"]["sql_data"],
                                             sql=mock_data["sql_search_result"]["sql"],
                                             data_show_type=mock_data["sql_search_result"]["data_show_type"],
@@ -193,7 +193,7 @@ def ask_mock_bar(question_type: str):
             },
             'suggested_question': []
         }
-        sql_search_result = SQLSearchResult(query=mock_data["query"],
+        sql_search_result = SQLSearchResult(
                                             sql_data=mock_data["sql_search_result"]["sql_data"],
                                             sql=mock_data["sql_search_result"]["sql"],
                                             data_show_type=mock_data["sql_search_result"]["data_show_type"],
@@ -211,40 +211,70 @@ def ask_mock_bar(question_type: str):
         return answer
     elif question_type == "agent":
         mock_data = {
-            'query': '男性和女性用户中有多少人完成了购买',
-            'query_intent': 'normal_search',
-            'knowledge_search_result': {
-                'knowledge_response': ''
-            },
-            'sql_search_result': {
-                'sql': "\nSELECT \n    `gender`,\n    COUNT(DISTINCT `user_id`) AS num_users\nFROM\n    `users`\nWHERE\n    `user_id` IN (\n        SELECT\n            `user_id`\n        FROM\n            `interactions`\n        WHERE\n            `event_type` = 'Purchase'\n    )\nGROUP BY\n    `gender`\nLIMIT 100;\n",
-                'sql_data': [
-                    ['gender', 'num_users'],
-                    ['F', 1906],
-                    ['M', 1788]
-                ],
-                'data_show_type': 'bar',
-                'sql_gen_process': "\n\n这个查询首先从 `interactions` 表中找出所有进行过 'Purchase' 事件的 `user_id`。然后在 `users` 表中根据这些 `user_id` 统计男性和女性用户的数量。通过 GROUP BY `gender` 将结果按性别分组,并使用 COUNT(DISTINCT `user_id`) 来计算每个性别中不重复的用户数量。",
-                'data_analyse': '根据给定的数据,我们可以总结如下:\n\n在所有用户中,有1906名女性用户和1788名男性用户。因此,在完成购买的用户中,女性用户人数略多于男性用户。具体来说,女性用户占总用户数的51.6%,而男性用户占48.4%。'
-            },
-            'agent_search_result': {
-                'sub_search_task': [],
-                'agent_sql_search_result': [],
-                'agent_summary': ''
-            },
-            'suggested_question': []
-        }
-        sql_search_result = SQLSearchResult(query=mock_data["query"],
-                                            sql_data=mock_data["sql_search_result"]["sql_data"],
-                                            sql=mock_data["sql_search_result"]["sql"],
-                                            data_show_type=mock_data["sql_search_result"]["data_show_type"],
-                                            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
-                                            data_analyse=mock_data["sql_search_result"]["data_analyse"])
+    'query': '为什么销量下降了，分析一下商品的销售下降的原因',
+    'query_intent': 'agent_search',
+    'knowledge_search_result': {
+        'knowledge_response': ''
+    },
+    'sql_search_result': {
+        'sql': '',
+        'sql_data': [],
+        'data_show_type': 'table',
+        'sql_gen_process': '',
+        'data_analyse': ''
+    },
+    'agent_search_result': {
+        'sub_search_task': ['分析不同时间段的商品总销售量和销售收入的变化趋势', '分析促销商品和非促销商品的销售量和销售收入对比'],
+        'agent_sql_search_result': [{
+            'sql': "\nSELECT\n    DATE_FORMAT(`timestamp`, '%Y-%m') AS month_year,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS total_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS total_revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    month_year\nORDER BY\n    month_year\nLIMIT 100;\n",
+            'sql_data': [
+                ['month_year', 'total_purchases', 'total_revenue'],
+                ['2023-12', 2162, 617303.8590472937]
+            ],
+            'data_show_type': 'table',
+            'sql_gen_process': '',
+            'data_analyse': ''
+        }, {
+            'sql': "\nSELECT\n    `promoted`,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS num_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    `promoted`\nLIMIT 100;\n",
+            'sql_data': [
+                ['promoted', 'num_purchases', 'revenue'],
+                ['F', 9, 707.0],
+                ['N', 1594, 466924.7089368105],
+                ['Y', 531, 147015.8301193714]
+            ],
+            'data_show_type': 'table',
+            'sql_gen_process': '',
+            'data_analyse': ''
+        }],
+        'agent_summary': '根据提供的数据和问题"为什么销量下降了，分析一下商品的销售下降的原因"，我们可以进行以下分析:\n\n1. 分析不同时间段的商品总销售量和销售收入的变化趋势。\n\n根据第一个查询的结果，我们可以看到每个月的总购买量和总销售收入。通过对比不同月份的数据变化,可以发现销售量和收入是否出现了下降的趋势。如果出现了下降,我们可以进一步分析下降的时间段。\n\n2. 分析促销商品和非促销商品的销售量和销售收入对比。\n\n根据第二个查询的结果,我们可以比较促销商品和非促销商品的购买量和销售收入。如果促销商品的销售表现较差,可能意味着促销活动效果不佳,导致整体销量下降。相反,如果非促销商品的销售表现较差,则可能需要分析其他原因。\n\n3. 进一步分析可能影响销量的其他因素。\n\n除了时间趋势和促销活动外,还可以分析其他可能影响销量的因素,例如商品类别、价格区间、地理位置等。通过对这些因素进行分组统计和对比,或许能发现销量下降的潜在原因。\n\n总的来说,通过分析不同时间段的销售趋势、促销活动效果,以及其他可能的影响因素,我们可以对商品销售下降的原因有一个初步的了解。当然,实际情况可能更加复杂,需要结合更多的数据和上下文信息进行综合分析。'
+    },
+    'suggested_question': []
+}
+
+        sql_search_result = SQLSearchResult(query=mock_data["query"], sql_data=[], sql="", data_show_type="table",
+                                            sql_gen_process="",
+                                            data_analyse="")
 
         agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
+        agent_search_response.agent_summary = mock_data["agent_search_result"]["agent_summary"]
+        agent_search_response.sub_search_task = mock_data["agent_search_result"]["sub_search_task"]
 
+        sql_search_result_one = SQLSearchResult(sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql_data"],
+                                            sql=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql"],
+                                            data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][0]["data_show_type"],
+                                            sql_gen_process="",
+                                            data_analyse="")
+
+        sql_search_result_two = SQLSearchResult(sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql_data"],
+                                            sql=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql"],
+                                            data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][1]["data_show_type"],
+                                            sql_gen_process="",
+                                            data_analyse="")
+
+        agent_search_response.agent_sql_search_result = [sql_search_result_one, sql_search_result_two]
         knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
-        answer = Answer(query=mock_data["query"], query_intent="normal_search",
+
+        answer = Answer(query=mock_data["query"], query_intent="agent_search",
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=["男性最喜欢的购买类别是什么", "女性最喜欢的购买类别是什么",
@@ -273,7 +303,7 @@ def ask_mock_bar(question_type: str):
             },
             'suggested_question': []
         }
-        sql_search_result = SQLSearchResult(query=mock_data["query"], sql_data=[], sql="", data_show_type="table",
+        sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                             sql_gen_process="",
                                             data_analyse="")
 
@@ -292,7 +322,7 @@ def ask_mock_bar(question_type: str):
                                             "女性最喜欢的购买类别是什么"])
         return answer
     else:
-        sql_search_result = SQLSearchResult(query="今天天气怎么呀", sql_data=[], sql="", data_show_type="table",
+        sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                             sql_gen_process="",
                                             data_analyse="")
 
