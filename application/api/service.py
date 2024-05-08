@@ -179,7 +179,7 @@ def ask(question: Question) -> Answer:
 
     current_nlq_chain = NLQChain(selected_profile)
 
-    sql_search_result = SQLSearchResult(query=search_box, sql_data=[], sql="", data_show_type="table",
+    sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                         sql_gen_process="",
                                         data_analyse="")
 
