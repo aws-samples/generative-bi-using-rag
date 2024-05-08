@@ -8,10 +8,10 @@ class Question(BaseModel):
     use_rag_flag: bool = True
     visualize_results_flag: bool = True
     intent_ner_recognition_flag: bool = True
-    agent_cot_flag: bool = False
+    agent_cot_flag: bool = True
     profile_name: str = "shopping_demo"
-    explain_gen_process_flag: bool = False
-    gen_suggested_question_flag: bool = False
+    explain_gen_process_flag: bool = True
+    gen_suggested_question_flag: bool = True
     top_k: float = 250
     top_p: float = 0.9
     max_tokens: int = 2048
