@@ -1399,7 +1399,7 @@ table_prompt_mapper = table_prompt.TablePromptMapper()
 guidance_prompt_mapper = guidance_prompt.GuidancePromptMapper()
 
 
-def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
+def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
     long_string = ""
     for table_name, table_data in ddl.items():
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
@@ -1435,8 +1435,8 @@ def generate_llm_prompt(ddl, hints, search_box, sql_examples=None, ner_example=N
             example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
 
     name = support_model_ids_map[model_id]
-    system_prompt = system_prompt_mapper.get_variable(name)
-    user_prompt = user_prompt_mapper.get_variable(name)
+    system_prompt = prompt_map.get('text2sql', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('text2sql', {}).get('user_prompt', {}).get(name)
     if long_string == '':
         table_prompt = table_prompt_mapper.get_variable(name)
     else:
@@ -1569,3 +1569,14 @@ def generate_agent_cot_system_prompt(ddl, agent_cot_example=None):
 
     return AGENT_COT_SYSTEM_PROMPT.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
                                           example_data=AGENT_COT_EXAMPLE)
+
+
+def generate_intent_prompt(prompt_map, search_box, model_id):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('intent', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('intent', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box)
+
+    return user_prompt, system_prompt

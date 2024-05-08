@@ -9,7 +9,8 @@ import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
-    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt
+    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
+    generate_intent_prompt
 from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
@@ -267,10 +268,10 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
     return response
 
 
-def text_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
+def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                 model_provider=None, with_response_stream=False):
-    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
-                                                     dialect=dialect)
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
+                                                     model_id, dialect=dialect)
     max_tokens = 2048
     response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
     return response
@@ -353,7 +354,7 @@ def data_analyse_tool(model_id, search_box, sql_data, search_type):
     return ""
 
 
-def get_query_intent(model_id, search_box):
+def get_query_intent(model_id, search_box, prompt_map):
     default_intent = {"intent": "normal_search"}
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
@@ -366,9 +367,9 @@ def get_query_intent(model_id, search_box):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-            system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
+            user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
             max_tokens = 2048
-            final_response = invoke_llm_model(model_id, system_prompt, search_box, max_tokens, False)
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict

@@ -267,7 +267,7 @@ def main():
                 # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
                 if intent_ner_recognition_flag:
                     with st.status("Performing intent recognition...") as status_text:
-                        intent_response = get_query_intent(model_type, search_box)
+                        intent_response = get_query_intent(model_type, search_box, database_profile['prompt_map'])
                         intent = intent_response.get("intent", "normal_search")
                         entity_slot = intent_response.get("slot", [])
                         status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
