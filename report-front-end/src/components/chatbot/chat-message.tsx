@@ -180,7 +180,7 @@ function IntentSearchPanel(props: ChatMessageProps) {
     case 'reject_search':
       return (
         <Container>
-          <div style={{whiteSpace: "pre-line"}}>该指令系统暂不支持</div>
+          <div style={{whiteSpace: "pre-line"}}>该搜索系统暂不支持</div>
         </Container>
       );
     case 'agent_search':
@@ -192,7 +192,7 @@ function IntentSearchPanel(props: ChatMessageProps) {
     case 'knowledge_search':
       return (
         <Container>
-          Todo: knowledge_search
+          <div style={{whiteSpace: "pre-line"}}>{props.message.knowledge_search_result.knowledge_response}</div>
         </Container>
       );
     default:
