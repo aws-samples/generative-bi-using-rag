@@ -4,8 +4,8 @@ from fastapi.responses import RedirectResponse
 from api.exception_handler import biz_exception
 from api.main import router
 from fastapi.middleware.cors import CORSMiddleware
-app = FastAPI(title='GenBI')
-
+from api import service
+from api.schemas import Option
 
 app = FastAPI(title='GenBI')
 
@@ -26,3 +26,7 @@ app.include_router(router)
 @app.get("/", status_code=status.HTTP_302_FOUND)
 def index():
     return RedirectResponse("static/WebSocket.html")
+
+@app.get("/option", response_model=Option)
+def option():
+    return service.get_option()
