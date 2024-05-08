@@ -9,7 +9,8 @@ import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
-    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt
+    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
+    generate_intent_prompt, generate_knowledge_prompt
 from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
@@ -267,10 +268,10 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
     return response
 
 
-def text_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
+def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                 model_provider=None, with_response_stream=False):
-    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
-                                                     dialect=dialect)
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
+                                                     model_id, dialect=dialect)
     max_tokens = 2048
     response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
     return response
@@ -309,9 +310,10 @@ LIMIT 10;</query>'''
         return final_response
 
 
-def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
+def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=None):
     default_agent_cot_task = {"task_1": search_box}
-    agent_system_prompt = generate_agent_cot_system_prompt(ddl, agent_cot_example)
+    user_prompt, system_prompt = generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id,
+                                                                  agent_cot_example)
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
         if intent_endpoint:
@@ -323,9 +325,8 @@ def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-            system_prompt = agent_system_prompt
             max_tokens = 2048
-            user_message = {"role": "user", "content": search_box}
+            user_message = {"role": "user", "content": user_prompt}
             messages = [user_message]
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
             final_response = response.get("content")[0].get("text")
@@ -353,7 +354,7 @@ def data_analyse_tool(model_id, search_box, sql_data, search_type):
     return ""
 
 
-def get_query_intent(model_id, search_box):
+def get_query_intent(model_id, search_box, prompt_map):
     default_intent = {"intent": "normal_search"}
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
@@ -366,9 +367,9 @@ def get_query_intent(model_id, search_box):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-            system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
+            user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
             max_tokens = 2048
-            final_response = invoke_llm_model(model_id, system_prompt, search_box, max_tokens, False)
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict
@@ -377,89 +378,9 @@ def get_query_intent(model_id, search_box):
         return default_intent
 
 
-def knowledge_search(model_id, search_box):
+def knowledge_search(model_id, search_box, prompt_map):
     try:
-        # this serves a placeholder for an existing case
-        system_prompt = "You are a knowledge QA bot. And please answer questions based on the knowledge context and existing knowledge\n" \
-                        "<rules>\n" \
-                        "1. answer should as concise as possible\n" \
-                        "2. if you don't know the answer to the question, just answer you don't know.\n" \
-                        "</rules>\n" \
-                        """
-<context>
-Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
- {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
- {'Acronym': 'SKU',
-  'Full name': 'Stock Keeping Unit',
-  'Comment': 'Product code; Material number; Style color'},
- {'Acronym': 'order_dt', 'Full name': 'order_date'},
- {'Acronym': 'Owned Eco', 'Full name': 'Owned E-commerce'},
- {'Acronym': 'desc', 'Full name': 'description'},
- {'Acronym': 'etc', 'Full name': 'et cetera', 'Comment': '意为“等等”'},
- {'Acronym': 'amt', 'Full name': 'amount'},
- {'Acronym': 'qty', 'Full name': 'quantity'},
- {'Acronym': 'PE', 'Full name': 'product engine'},
- {'Acronym': 'YA', 'Full name': 'YOUNG ATHLETES'},
- {'Acronym': 'FTW', 'Full name': 'FOOTWEAR'},
- {'Acronym': 'FW', 'Full name': 'FOOTWEAR'},
- {'Acronym': 'APP', 'Full name': 'APPAREL'},
- {'Acronym': 'AP', 'Full name': 'APPAREL'},
- {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
- {'Acronym': 'MTD',
-  'Full name': 'Month to Date',
-  'Comment': "It's\xa0the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
- {'Acronym': 'WTD',
-  'Full name': 'Week to Date',
-  'Comment': "It's\xa0the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
- {'Acronym': 'YTD',
-  'Full name': 'Year to Date',
-  'Comment': "It's\xa0the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
- {'Acronym': 'YOY',
-  'Full name': 'Year-Over-Year',
-  'Comment': 'Year-over-year\xa0(YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
- {'Acronym': 'cxl', 'Full name': 'Cancel'},
- {'Acronym': 'rtn', 'Full name': 'Return'},
- {'Acronym': 'cxl%', 'Full name': 'Cancel Rate'},
- {'Acronym': 'rtn%', 'Full name': 'Return Rate'},
- {'Acronym': 'LY', 'Full name': 'Last year'},
- {'Acronym': 'CY', 'Full name': 'Current year'},
- {'Acronym': 'TY', 'Full name': 'This year'},
- {'Acronym': 'MKD', 'Full name': 'Markdown'},
- {'Acronym': 'MD', 'Full name': 'Markdown'},
- {'Acronym': 'AUR', 'Full name': 'Average unit retail'},
- {'Acronym': 'diff', 'Full name': 'different'},
- {'Acronym': 'FY', 'Full name': 'fiscal year'}]
- Here's a list of formulas that may help you answer the question.
- [{'Formula': 'Net Demand = Demand - Cancel'},
- {'Formula': 'Net Revenue = Demand - Cancel - Return'},
- {'Formula': 'Return Rate = Return/Demand'},
- {'Formula': 'Cancel Rate = Cancel/Demand'},
- {'Formula': 'rtn% = Return/Demand'},
- {'Formula': 'cxl% = Cancel/Demand'},
- {'Formula': 'Total Rate = Return Rate + Cancel Rate'},
- {'Formula': 'D2N Rate = Return Rate + Cancel Rate'},
- {'Formula': 'Cancel/Return Rate = Return Rate + Cancel Rate'},
- {'Formula': 'Demand Share =Demand for this product/Total Demand'},
- {'Formula': 'MTD = 2023/12/1~202312/7',
-  'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
- {'Formula': 'WTD = 2023/12/4~202312/7',
-  'Comment': "It's the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
- {'Formula': 'YTD = 2023/1/1~202312/7',
-  'Comment': "It's the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
- {'Formula': 'YOY = This year period / Last year period',
-  'Comment': 'Year-over-year (YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
- {'Formula': 'AUR = Net Revenue/Net Quantity',
-  'Comment': 'Net Revenue  = Demand amt - Cancel amt – Return amt\nNet quantity = Demand qty - Cancel qty – Return qty '}]
- </context>
-"""
-        user_prompt = """
-        Here is the input query: {question}. 
-        Please generate queries based on the input query.
-        """.format(question=search_box)
-        system_prompt = system_prompt
+        user_prompt, system_prompt = generate_knowledge_prompt(prompt_map, search_box, model_id)
         max_tokens = 2048
         final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         return final_response
