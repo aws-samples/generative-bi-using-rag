@@ -1,11 +1,10 @@
 import {
-  BarChart, Box,
+  BarChart,
   Container,
   ExpandableSection,
   LineChart,
   PieChart,
   SpaceBetween,
-  Spinner,
   Table,
   TextContent
 } from "@cloudscape-design/components";
@@ -13,7 +12,6 @@ import { ChatBotHistoryItem } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "../../styles/chat.module.scss";
-import { useState } from "react";
 
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
@@ -133,17 +131,19 @@ function IntentSearchPanel(props: ChatMessageProps) {
       return (
         <Container>
           <SpaceBetween size={'s'}>
-            <ExpandableSection
-              variant="footer"
-              defaultExpanded
-              headerText="Table">
-              <Table
-                columnDefinitions={headers}
-                enableKeyboardNavigation
-                items={content}
-                resizableColumns
-              />
-            </ExpandableSection>
+            {sql_data.length > 0 ?
+              <ExpandableSection
+                variant="footer"
+                defaultExpanded
+                headerText="Table">
+                <Table
+                  columnDefinitions={headers}
+                  enableKeyboardNavigation
+                  items={content}
+                  resizableColumns
+                />
+              </ExpandableSection> : null
+            }
             {props.message.sql_search_result.data_show_type !== "table" && props.message.sql_search_result.sql_data.length > 0 ?
               <ExpandableSection
                 variant="footer"
@@ -180,7 +180,7 @@ function IntentSearchPanel(props: ChatMessageProps) {
     case 'reject_search':
       return (
         <Container>
-          Todo: reject_search
+          <div style={{whiteSpace: "pre-line"}}>该指令系统暂不支持</div>
         </Container>
       );
     case 'agent_search':

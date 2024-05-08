@@ -82,7 +82,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       max_tokens: 2048,
       temperature: 0.01
     };
-    console.log(JSON.stringify(param));
     const url = `${BACKEND_URL}qa/ask`;
     const response = await fetch(url, {
         headers: {
@@ -99,7 +98,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     console.log(result);
     props.setLoading(false);
     props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-      console.log([...history, result]);
       return [...history, result];
     });
   }
