@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from 
 import TextareaAutosize from "react-textarea-autosize";
 import styles from "../../styles/chat.module.scss";
 import { ChatBotConfiguration, ChatBotHistoryItem, ChatInputState, } from "./types";
-import RecommendQuestions from "./recommend-questions";
+import CustomQuestions from "./custom-questions";
 import data from "../../mockdata/answers_line.json";
 
 export interface ChatInputPanelProps {
@@ -83,14 +83,13 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         // todo: setQueryAnswers
       })
       .catch(err => {
-        console.log(err);
+        console.error(err);
         return err;
       });
   }
 
   const handleSendMessage = () => {
     setTextValue({value: ""});
-    console.log('handleSendMessage');
     // query();
 
     const answers = data;
@@ -106,7 +105,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       <div className={styles.input_area_container}>
         <Container>
           <SpaceBetween size={'s'}>
-            <RecommendQuestions setTextValue={setTextValue}></RecommendQuestions>
+            <CustomQuestions setTextValue={setTextValue}></CustomQuestions>
             <div className={styles.input_textarea_container}>
               <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
                 <Icon name="microphone" variant="disabled"/>
