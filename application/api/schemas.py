@@ -41,6 +41,7 @@ class QueryEntity(BaseModel):
 
 
 class FeedBackInput(BaseModel):
+    feedback_type: str
     data_profiles: str
     query: str
     query_intent: str
