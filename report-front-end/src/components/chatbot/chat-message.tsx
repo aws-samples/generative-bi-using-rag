@@ -120,22 +120,20 @@ function IntentSearchPanel(props: ChatMessageProps) {
       let headers: any = [];
       let content: any = [];
       if (sql_data.length > 0) {
-        if (props.message.sql_search_result.data_show_type === "table") {
-          // convert data from server to generate table
-          headers = sql_data[0].map((header: string) => {
-            return {
-              header: header,
-              cell: (item: { [x: string]: any; }) => item[header],
-            };
-          });
-          const items = sql_data.slice(1, sql_data.length);
-          content = items.map((item) => {
-            const map: any = new Map(item.map((value, index) => {
-              return [sql_data[0][index], value];
-            }));
-            return Object.fromEntries(map);
-          });
-        }
+        // convert data from server to generate table
+        headers = sql_data[0].map((header: string) => {
+          return {
+            header: header,
+            cell: (item: { [x: string]: any; }) => item[header],
+          };
+        });
+        const items = sql_data.slice(1, sql_data.length);
+        content = items.map((item) => {
+          const map: any = new Map(item.map((value, index) => {
+            return [sql_data[0][index], value];
+          }));
+          return Object.fromEntries(map);
+        });
       }
       return (
         <Container>
@@ -223,7 +221,7 @@ function IntentSearchPanel(props: ChatMessageProps) {
     default:
       return (
         <Container>
-          <div style={{whiteSpace: "pre-line"}}>结果返回错误，请检查您的网络设置，稍等请重试</div>
+          <div style={{whiteSpace: "pre-line"}}>结果返回错误，请检查您的网络设置，稍后请重试</div>
         </Container>
       );
   }

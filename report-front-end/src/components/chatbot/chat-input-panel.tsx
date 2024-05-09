@@ -68,6 +68,46 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     }
   }, [props.messageHistory]);
 
+  const query_test = async () => {
+    props.setLoading(true);
+    try {
+      // const url = `${BACKEND_URL}qa/ask/test?question_type=reject`;
+      // const url = `${BACKEND_URL}qa/ask/test?question_type=knowledge`;
+      // const url = `${BACKEND_URL}qa/ask/test?question_type=normal_table`;
+      // const url = `${BACKEND_URL}qa/ask/test?question_type=normal_line`;
+      const url = `${BACKEND_URL}qa/ask/test?question_type=normal_pie`;
+      // const url = `${BACKEND_URL}qa/ask/test?question_type=agent`;
+      const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          method: "POST",
+          body: JSON.stringify({}),
+        }
+      );
+      if (!response.ok) {
+        return;
+      }
+      const result = await response.json();
+      console.log(result);
+      props.setLoading(false);
+      props.setMessageHistory((history: ChatBotHistoryItem[]) => {
+        return [...history, result];
+      });
+    } catch (err) {
+      props.setLoading(false);
+      const result = {
+        query: state.value,
+        query_intent: "Error",
+      };
+      props.setLoading(false);
+      props.setMessageHistory((history: any) => {
+        return [...history, result];
+      });
+      console.error('Query error, ', err);
+    }
+  }
+
   const query = async () => {
     props.setLoading(true);
     try {
