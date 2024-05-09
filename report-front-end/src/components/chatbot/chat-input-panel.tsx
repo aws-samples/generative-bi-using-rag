@@ -9,7 +9,6 @@ import { useSelector } from "react-redux";
 import { UserState } from "@/types/StoreTypes";
 
 export interface ChatInputPanelProps {
-  running: boolean;
   setLoading: Dispatch<SetStateAction<boolean>>;
   configuration: ChatBotConfiguration;
   setConfiguration: Dispatch<SetStateAction<ChatBotConfiguration>>;
@@ -136,7 +135,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         agent_cot_flag: true,
         profile_name: "shopping-demo",
         explain_gen_process_flag: true,
-        gen_suggested_question_flag: false,
+        gen_suggested_question_flag: true,
         top_k: 250,
         top_p: 0.9,
         max_tokens: 2048,
@@ -213,7 +212,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   disabled={state.value.length === 0}
                   onClick={handleSendMessage}
                   iconAlign="right"
-                  iconName={!props.running ? "angle-right-double" : undefined}
+                  iconName={"angle-right-double"}
                   variant="primary">
                   Send
                 </Button>

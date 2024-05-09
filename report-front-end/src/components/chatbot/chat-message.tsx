@@ -14,6 +14,7 @@ import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "../../styles/chat.module.scss";
 import SuggestedQuestions from "./suggested-questions";
+import { useState } from "react";
 
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
@@ -24,6 +25,10 @@ export interface ChatMessageProps {
 export interface ChartTypeProps {
   data_show_type: string;
   sql_data: any[][];
+}
+
+export interface IntentProps {
+  message: ChatBotHistoryItem;
 }
 
 function ChartPanel(props: ChartTypeProps) {
@@ -106,15 +111,7 @@ function ChartPanel(props: ChartTypeProps) {
 
 }
 
-function IntentSearchPanel(props: ChatMessageProps) {
-
-  const handleUpvote = () => {
-    // todo
-  };
-
-  const handleDownvote = () => {
-    // todo
-  };
+function IntentSearchPanel(props: IntentProps) {
 
   switch (props.message.query_intent) {
     case 'normal_search':
@@ -138,7 +135,7 @@ function IntentSearchPanel(props: ChatMessageProps) {
         });
       }
       return (
-        <Container>
+        <div>
           <SpaceBetween size={'s'}>
             {sql_data.length > 0 ?
               <ExpandableSection
@@ -175,32 +172,16 @@ function IntentSearchPanel(props: ChatMessageProps) {
             <ExpandableSection
               variant="footer"
               headerText="SQL">
-              <SpaceBetween size={'s'}>
-                <div className={styles.sql}>
-                  <SyntaxHighlighter language="javascript">
-                    {props.message.sql_search_result.sql}
-                  </SyntaxHighlighter>
-                  <div
-                    style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
-                </div>
-                <ColumnLayout columns={2}>
-                  <Button
-                    fullWidth
-                    iconName="thumbs-up"
-                    onClick={handleUpvote}>
-                    Upvote
-                  </Button>
-                  <Button
-                    fullWidth
-                    iconName="thumbs-down"
-                    onClick={handleDownvote}>
-                    Downvote
-                  </Button>
-                </ColumnLayout>
-              </SpaceBetween>
+              <div className={styles.sql}>
+                <SyntaxHighlighter language="javascript">
+                  {props.message.sql_search_result.sql}
+                </SyntaxHighlighter>
+                <div
+                  style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
+              </div>
             </ExpandableSection>
           </SpaceBetween>
-        </Container>
+        </div>
       );
     case 'reject_search':
       return (
@@ -231,28 +212,49 @@ function IntentSearchPanel(props: ChatMessageProps) {
 
 export default function ChatMessage(props: ChatMessageProps) {
 
+  const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
+
   return (
     <SpaceBetween size={'m'}>
       <TextContent>
-        <strong>{props.message.query}</strong>
+        <h3>{props.message.query}</h3>
       </TextContent>
-      <IntentSearchPanel
-        message={props.message}
-        onThumbsUp={
-          () => {
-          }
-        }
-        onThumbsDown={
-          () => {
-          }
-        }/>
-      {props.message.suggested_question.length > 0 ?
-        <ExpandableSection
-          variant="footer"
-          defaultExpanded
-          headerText="Suggested questions">
-          <SuggestedQuestions questions={props.message.suggested_question}></SuggestedQuestions>
-        </ExpandableSection> : null}
+      <Container>
+        <SpaceBetween size={'s'}>
+          <IntentSearchPanel
+            message={props.message}
+          />
+          {props.message.suggested_question.length > 0 ?
+            <ExpandableSection
+              variant="footer"
+              defaultExpanded
+              headerText="Suggested questions">
+              <SuggestedQuestions questions={props.message.suggested_question}></SuggestedQuestions>
+            </ExpandableSection> : null}
+          <ColumnLayout columns={2}>
+            <Button
+              fullWidth
+              iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
+              onClick={() => {
+                props.onThumbsUp();
+                setSelectedIcon(1);
+              }}
+            >
+              Upvote
+            </Button>
+            <Button
+              fullWidth
+              iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
+              onClick={() => {
+                props.onThumbsDown();
+                setSelectedIcon(0);
+              }}
+            >
+              Downvote
+            </Button>
+          </ColumnLayout>
+        </SpaceBetween>
+      </Container>
     </SpaceBetween>
   );
 }

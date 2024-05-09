@@ -4,9 +4,9 @@ import ChatInputPanel from "./chat-input-panel";
 import styles from "../../styles/chat.module.scss";
 import { Box, SpaceBetween, Spinner } from "@cloudscape-design/components";
 import ChatMessage from "./chat-message";
+import { BACKEND_URL } from "../../tools/const";
 
 export default function Chat() {
-  const [running, setRunning] = useState<boolean>(false);
   const [configuration, setConfiguration] = useState<ChatBotConfiguration>(
     () => ({
       streaming: true,
@@ -21,6 +21,62 @@ export default function Chat() {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const handleFeedback = (feedbackType: "upvote" | "downvote", message: ChatBotHistoryItem) => {
+    let feedbackData = {};
+    if (message.query_intent === "normal_search") {
+      feedbackData = {
+        feedback_type: feedbackType,
+        data_profiles: "shopping-demo",
+        query: message.query,
+        query_intent: message.query_intent,
+        query_answer_list: [
+          {
+            query: message.query,
+            sql: message.sql_search_result.sql
+          }
+        ]
+      };
+    } else if (message.query_intent === "agent_search") {
+      const query_answer_list: any[] = message.agent_search_result.agent_sql_search_result.map((item: any) => {
+        return {
+          query: item.sub_search_task,
+          sql: item.sql
+        };
+      });
+      feedbackData = {
+        feedback_type: feedbackType,
+        data_profiles: "shopping-demo",
+        query: message.query,
+        query_intent: message.query_intent,
+        query_answer_list: query_answer_list
+      };
+    }
+    addUserFeedback(feedbackData).then();
+  };
+
+  const addUserFeedback = async (feedbackData: {}) => {
+    // call api
+    try {
+      const url = `${BACKEND_URL}qa/user_feedback`;
+      const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          method: "POST",
+          body: JSON.stringify(feedbackData)
+        }
+      );
+      if (!response.ok) {
+        console.error('AddUserFeedback error, ', response);
+        return;
+      }
+      const result = await response.json();
+      console.log(result);
+    } catch (err) {
+      console.error('Query error, ', err);
+    }
+  };
+
   return (
     <div className={styles.chat_container}>
       <SpaceBetween size={'l'}>
@@ -28,10 +84,9 @@ export default function Chat() {
           <ChatMessage
             key={idx}
             message={message}
-            onThumbsUp={() => {
-            }}
-            onThumbsDown={() => {
-            }}/>
+            onThumbsUp={() => handleFeedback("upvote", message)}
+            onThumbsDown={() => handleFeedback("downvote", message)}
+          />
         ))}
         {loading && (
           <Box float="left">
@@ -46,7 +101,6 @@ export default function Chat() {
       </div>
       <div className={styles.input_container}>
         <ChatInputPanel
-          running={running}
           setLoading={setLoading}
           configuration={configuration}
           setConfiguration={setConfiguration}
