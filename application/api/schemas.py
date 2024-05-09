@@ -40,7 +40,7 @@ class QueryEntity(BaseModel):
     sql: str
 
 
-class Upvote(BaseModel):
+class FeedBackInput(BaseModel):
     data_profiles: str
     query: str
     query_intent: str
