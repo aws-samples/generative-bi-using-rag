@@ -16,15 +16,20 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
 
   const getRecommendQuestions = async () => {
     const url = `${BACKEND_URL}qa/get_custom_question?data_profile=shopping-demo`;
-    const response = await fetch(url, {
-      method: "GET",
-    });
-    if (!response.ok) {
-      return;
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        console.error("getCustomQuestions Error", response);
+        return;
+      }
+      const result = await response.json();
+      const custom_question = result['custom_question'];
+      setQuestions(custom_question);
+    } catch (error) {
+      console.error("getCustomQuestions Error", error);
     }
-    const result = await response.json();
-    const custom_question = result['custom_question'];
-    setQuestions(custom_question);
   }
 
   useEffect(() => {
