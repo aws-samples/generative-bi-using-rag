@@ -10,7 +10,7 @@ import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
-    generate_intent_prompt, generate_knowledge_prompt
+    generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt
 from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
@@ -387,6 +387,45 @@ def knowledge_search(model_id, search_box, prompt_map):
     except Exception as e:
         logger.error("knowledge_search is error")
     return ""
+
+
+def select_data_visualization_type(model_id, search_box, search_data, prompt_map):
+    default_data_visualization = {
+        "show_type": "table",
+        "format_data": []
+    }
+    try:
+        user_prompt, system_prompt = generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id)
+        max_tokens = 2048
+        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        data_visualization_dict = json_parse.parse(final_response)
+        return data_visualization_dict
+    except Exception as e:
+        logger.error("select_data_visualization_type is error {}", e)
+        return default_data_visualization
+
+
+def data_visualization(model_id, search_box, search_data, prompt_map):
+    columns = list(search_data.columns)
+    data_list = search_data.values.tolist()
+    all_columns_data = [columns] + data_list
+    try:
+        if len(columns) != 2:
+            return "table", all_columns_data
+        else:
+            if len(all_columns_data) == 0:
+                return "table", all_columns_data
+            else:
+                if len(all_columns_data) > 10:
+                    all_columns_data = all_columns_data[0:5]
+                model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data, prompt_map)
+                model_select_type = model_select_type_dict["show_type"]
+                model_select_type_columns = model_select_type_dict["format_data"][0]
+                data_list = search_data[model_select_type_columns].values.tolist()
+                return model_select_type, [model_select_type_columns] + data_list
+    except Exception as e:
+        logger.error("data_visualization is error {}", e)
+        return "table", all_columns_data
 
 
 def create_vector_embedding_with_bedrock(text, index_name):
