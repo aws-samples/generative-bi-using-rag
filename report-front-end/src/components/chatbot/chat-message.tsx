@@ -196,7 +196,11 @@ function IntentSearchPanel(props: ChatMessageProps) {
         </Container>
       );
     default:
-      return <></>;
+      return (
+        <Container>
+          <div style={{whiteSpace: "pre-line"}}>结果返回错误，请检查您的网络设置，稍等请重试</div>
+        </Container>
+      );
   }
 }
 

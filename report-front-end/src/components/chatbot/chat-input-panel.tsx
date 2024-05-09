@@ -123,6 +123,14 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       });
     } catch (err) {
       props.setLoading(false);
+      const result = {
+        query: state.value,
+        query_intent: "Error",
+      };
+      props.setLoading(false);
+      props.setMessageHistory((history: any) => {
+        return [...history, result];
+      });
       console.error('Query error, ', err);
     }
   }
