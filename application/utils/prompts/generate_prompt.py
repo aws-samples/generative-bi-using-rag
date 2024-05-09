@@ -970,115 +970,166 @@ The data is：{data}
 # data visualization selection
 
 data_visualization_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
-There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
-The fields are as follows:
-show_type: The type of display
-data: The specific data
+You are a data analysis and visualization expert proficient in Python
 
-<instructions>
-- The format of format_data is a nested structure of a list, with the first element being the column name.
-- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
-- If show_type is table, The number of columns format_data can exceed 2
-</instructions>
-
-The example data is:
-<example>
-
-{{
-    "show_type" : "bar",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
-}}
-
-<example>"""
+"""
 
 data_visualization_system_prompt_dict['llama3-70b-instruct-0'] = """
-You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
-There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
-The fields are as follows:
-show_type: The type of display
-data: The specific data
-
-<instructions>
-- The format of format_data is a nested structure of a list, with the first element being the column name.
-- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
-- If show_type is table, The number of columns format_data can exceed 2
-</instructions>
-
-The example data is:
-<example>
-
-{{
-    "show_type" : "bar",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
-}}
-
-<example>
+You are a data analysis and visualization expert proficient in Python
 """
 
 data_visualization_system_prompt_dict['haiku-20240307v1-0'] = """
-You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
-There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
-The fields are as follows:
-show_type: The type of display
-data: The specific data
-
-<instructions>
-- The format of format_data is a nested structure of a list, with the first element being the column name.
-- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
-- If show_type is table, The number of columns format_data can exceed 2
-</instructions>
-
-The example data is:
-<example>
-
-{{
-    "show_type" : "bar",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
-}}
-
-<example>
+You are a data analysis and visualization expert proficient in Python
 """
 
 data_visualization_system_prompt_dict['sonnet-20240229v1-0'] = """
+You are a data analysis and visualization expert proficient in Python
+"""
+
+data_visualization_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
 You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
-There are three display types in total: table, bar, pie, and line. The output format is in JSON format.
+There are four display types in total: table, bar, pie, and line. The output format is in JSON format.
 The fields are as follows:
 show_type: The type of display
 data: The specific data
 
 <instructions>
 - The format of format_data is a nested structure of a list, with the first element being the column name.
-- If show_type is bar, pie, or line, then format_data needs to select 2 columns from the input data, where the first column is the x-axis and the second column is the y-axis.
+- If there are more than 3 column queries, show_type is table
+- If there are two columns, show_type needs to be selected from the appropriate types of table, bar, pie, and line based on the data situation
+- If show_type is bar, pie, or line, where the first column is the x-axis and the second column is the y-axis.
 - If show_type is table, The number of columns format_data can exceed 2
+- only output json format， no other comments
 </instructions>
 
-The example data is:
 <example>
 
+question is : How many male and female users have completed the purchase
+
+The example data is: [['num_users', 'gender'], [ 1906, 'F'], [1788, 'M']]
+
+the answer is :
+
+```json
+
 {{
-    "show_type" : "bar",
+    "show_type" : "pie",
     "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
 }}
+```
+<example>
 
-<example>"""
-
-data_visualization_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
 The user question is :  {question}
 The data is : {data}
 """
 
 data_visualization_user_prompt_dict['llama3-70b-instruct-0'] = """
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are four display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If there are more than 3 column queries, show_type is table
+- If there are two columns, show_type needs to be selected from the appropriate types of table, bar, pie, and line based on the data situation
+- If show_type is bar, pie, or line, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+- only output json format， no other comments
+</instructions>
+
+<example>
+
+question is : How many male and female users have completed the purchase
+
+The example data is: [['num_users', 'gender'], [ 1906, 'F'], [1788, 'M']]
+
+the answer is :
+
+```json
+
+{{
+    "show_type" : "pie",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+```
+<example>
+
 The user question is :  {question}
 The data is : {data}
 """
 
 data_visualization_user_prompt_dict['haiku-20240307v1-0'] = """
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are four display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If there are more than 3 column queries, show_type is table
+- If there are two columns, show_type needs to be selected from the appropriate types of table, bar, pie, and line based on the data situation
+- If show_type is bar, pie, or line, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+- only output json format， no other comments
+</instructions>
+
+<example>
+
+question is : How many male and female users have completed the purchase
+
+The example data is: [['num_users', 'gender'], [ 1906, 'F'], [1788, 'M']]
+
+the answer is :
+
+```json
+
+{{
+    "show_type" : "pie",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+```
+<example>
+
 The user question is :  {question}
 The data is : {data}
 """
 
 data_visualization_user_prompt_dict['sonnet-20240229v1-0'] = """
+You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+There are four display types in total: table, bar, pie, and line. The output format is in JSON format.
+The fields are as follows:
+show_type: The type of display
+data: The specific data
+
+<instructions>
+- The format of format_data is a nested structure of a list, with the first element being the column name.
+- If there are more than 3 column queries, show_type is table
+- If there are two columns, show_type needs to be selected from the appropriate types of table, bar, pie, and line based on the data situation
+- If show_type is bar, pie, or line, where the first column is the x-axis and the second column is the y-axis.
+- If show_type is table, The number of columns format_data can exceed 2
+- only output json format， no other comments
+</instructions>
+
+<example>
+
+question is : How many male and female users have completed the purchase
+
+The example data is: [['num_users', 'gender'], [ 1906, 'F'], [1788, 'M']]
+
+the answer is :
+
+```json
+
+{{
+    "show_type" : "pie",
+    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+}}
+```
+<example>
+
 The user question is :  {question}
 The data is : {data}
 """
@@ -1598,5 +1649,15 @@ def generate_knowledge_prompt(prompt_map, search_box, model_id):
     user_prompt = prompt_map.get('knowledge', {}).get('user_prompt', {}).get(name)
 
     user_prompt = user_prompt.format(question=search_box)
+
+    return user_prompt, system_prompt
+
+def generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('data_visualization', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('data_visualization', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box, data = search_data)
 
     return user_prompt, system_prompt

@@ -7,11 +7,11 @@ class Question(BaseModel):
     bedrock_model_id: str = "anthropic.claude-3-sonnet-20240229-v1:0"
     use_rag_flag: bool = True
     visualize_results_flag: bool = True
-    intent_ner_recognition_flag: bool = False
-    agent_cot_flag: bool = False
-    profile_name: str = "shopping_guide"
-    explain_gen_process_flag: bool = False
-    gen_suggested_question_flag: bool = False
+    intent_ner_recognition_flag: bool = True
+    agent_cot_flag: bool = True
+    profile_name: str = "shopping-demo"
+    explain_gen_process_flag: bool = True
+    gen_suggested_question_flag: bool = True
     top_k: float = 250
     top_p: float = 0.9
     max_tokens: int = 2048
@@ -64,13 +64,21 @@ class SQLSearchResult(BaseModel):
     data_analyse: str
 
 
+class TaskSQLSearchResult(BaseModel):
+    sub_task_query: str
+    sql: str
+    sql_data: list[Any]
+    data_show_type: str
+    sql_gen_process: str
+    data_analyse: str
+
+
 class KnowledgeSearchResult(BaseModel):
     knowledge_response: str
 
 
 class AgentSearchResult(BaseModel):
-    sub_search_task: list[str]
-    agent_sql_search_result: list[SQLSearchResult]
+    agent_sql_search_result: list[TaskSQLSearchResult]
     agent_summary: str
 
 

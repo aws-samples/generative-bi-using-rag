@@ -6,7 +6,51 @@ from utils.navigation import make_sidebar
 
 logger = logging.getLogger(__name__)
 
-
+"""
+prompt dynamoDB 存储格式
+prompt_map_dict = {
+    'text2sql': {
+        'title': 'Text2SQL Prompt',
+        'system_prompt': system_prompt_dict,
+        'user_prompt': user_prompt_dict
+    },
+    'intent': {
+        'title': 'Intent Prompt',
+        'system_prompt': intent_system_prompt_dict,
+        'user_prompt': intent_user_prompt_dict
+    },
+    'knowledge': {
+        'title': 'Knowledge Prompt',
+        'system_prompt': knowledge_system_prompt_dict,
+        'user_prompt': knowledge_user_prompt_dict
+    },
+    'agent': {
+        'title': 'Agent Task Prompt',
+        'system_prompt': agent_system_prompt_dict,
+        'user_prompt': agent_user_prompt_dict
+    },
+    'agent_analyse': {
+        'title': 'Agent Data Analyse Prompt',
+        'system_prompt': agent_analyse_system_prompt_dict,
+        'user_prompt': agent_analyse_user_prompt_dict
+    },
+    'data_summary': {
+        'title': 'Data Summary Prompt',
+        'system_prompt': data_summary_system_prompt_dict,
+        'user_prompt': data_summary_user_prompt_dict
+    },
+    'data_visualization': {
+        'title': 'Data Visualization Prompt',
+        'system_prompt': data_visualization_system_prompt_dict,
+        'user_prompt': data_visualization_user_prompt_dict
+    },
+    'suggestion': {
+        'title': 'Suggest Question Prompt',
+        'system_prompt': suggest_question_system_prompt_dict,
+        'user_prompt': suggest_question_user_prompt_dict
+    }
+}
+"""
 def main():
     load_dotenv()
     logger.info('start prompt management')
