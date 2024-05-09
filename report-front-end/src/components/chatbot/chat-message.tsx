@@ -1,5 +1,5 @@
 import {
-  BarChart,
+  BarChart, ColumnLayout,
   Container,
   ExpandableSection,
   LineChart,
@@ -105,6 +105,15 @@ function ChartPanel(props: ChartTypeProps) {
 }
 
 function IntentSearchPanel(props: ChatMessageProps) {
+
+  const handleUpvote = () => {
+    // todo
+  };
+
+  const handleDownvote = () => {
+    // todo
+  };
+
   switch (props.message.query_intent) {
     case 'normal_search':
       const sql_data = props.message.sql_search_result.sql_data;
@@ -166,13 +175,29 @@ function IntentSearchPanel(props: ChatMessageProps) {
             <ExpandableSection
               variant="footer"
               headerText="SQL">
-              <div className={styles.sql}>
-                <SyntaxHighlighter language="javascript">
-                  {props.message.sql_search_result.sql}
-                </SyntaxHighlighter>
-                <div
-                  style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
-              </div>
+              <SpaceBetween size={'s'}>
+                <div className={styles.sql}>
+                  <SyntaxHighlighter language="javascript">
+                    {props.message.sql_search_result.sql}
+                  </SyntaxHighlighter>
+                  <div
+                    style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
+                </div>
+                <ColumnLayout columns={2}>
+                  <Button
+                    fullWidth
+                    iconName="thumbs-up"
+                    onClick={handleUpvote}>
+                    Upvote
+                  </Button>
+                  <Button
+                    fullWidth
+                    iconName="thumbs-down"
+                    onClick={handleDownvote}>
+                    Downvote
+                  </Button>
+                </ColumnLayout>
+              </SpaceBetween>
             </ExpandableSection>
           </SpaceBetween>
         </Container>
