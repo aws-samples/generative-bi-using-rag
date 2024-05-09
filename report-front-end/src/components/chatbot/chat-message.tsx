@@ -1,5 +1,6 @@
 import {
-  BarChart, ColumnLayout,
+  BarChart,
+  ColumnLayout,
   Container,
   ExpandableSection,
   LineChart,
@@ -12,6 +13,7 @@ import { ChatBotHistoryItem } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "../../styles/chat.module.scss";
+import SuggestedQuestions from "./suggested-questions";
 
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
@@ -244,6 +246,13 @@ export default function ChatMessage(props: ChatMessageProps) {
           () => {
           }
         }/>
+      {props.message.suggested_question.length > 0 ?
+        <ExpandableSection
+          variant="footer"
+          defaultExpanded
+          headerText="Suggested questions">
+          <SuggestedQuestions questions={props.message.suggested_question}></SuggestedQuestions>
+        </ExpandableSection> : null}
     </SpaceBetween>
   );
 }
