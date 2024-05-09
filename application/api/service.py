@@ -13,7 +13,7 @@ from utils.database import get_db_url_dialect
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question
+    generate_suggested_question, data_visualization
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
@@ -288,9 +288,15 @@ def ask(question: Question) -> Answer:
                 search_intent_analyse_result = data_analyse_tool(model_type, search_box,
                                                                  search_intent_result["data"].to_json(
                                                                      orient='records', force_ascii=False), "query")
+
                 sql_search_result.data_analyse = search_intent_analyse_result
-                sql_search_result.sql_data = [list(search_intent_result["data"].columns)] + search_intent_result[
-                    "data"].values.tolist()
+
+                model_select_type, show_select_data = data_visualization(model_type, search_box, search_intent_result["data"], database_profile['prompt_map'])
+
+                sql_search_result.sql_data = show_select_data
+                sql_search_result.data_show_type = model_select_type
+                # sql_search_result.sql_data = [list(search_intent_result["data"].columns)] + search_intent_result[
+                #     "data"].values.tolist()
 
         answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
