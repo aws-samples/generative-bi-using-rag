@@ -264,6 +264,10 @@ def main():
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
 
+                intent_response = {
+                    "intent": "normal_search",
+                    "slot": []
+                }
                 # 通过标志位控制后续的逻辑
                 # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
                 if intent_ner_recognition_flag:
@@ -291,6 +295,9 @@ def main():
                             search_intent_flag = True
                 else:
                     search_intent_flag = True
+
+                with st.expander('Query Intent Response'):
+                    st.write(intent_response)
 
                 # 主要的逻辑部分，调用LLM
                 if reject_intent_flag:
