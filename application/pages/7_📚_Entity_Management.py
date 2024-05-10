@@ -64,10 +64,10 @@ def main():
                         search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity_search)
                         for sample in search_sample_result:
                             sample_score = sample['_score'],
-                            sample_question = sample['_source']['entity'],
+                            sample_entity = sample['_source']['entity'],
                             sample_comment = sample['_source']['comment'].strip()
 
-                            with st.expander(sample_question):
+                            with st.expander(sample_entity):
                                 st.write(sample_score)
                                 st.code(sample_comment)
                                 st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
