@@ -29,10 +29,11 @@ def main():
                                        index=None,
                                        placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add = st.tabs(['View Samples', 'Add New Sample'])
+    tab_view, tab_add = st.tabs(['View Samples', 'Add New Sample', 'Sample Search'])
     if current_profile is not None:
         with tab_view:
             if current_profile is not None:
+                st.write("The display page can show a maximum of 200 pieces of data")
                 for sample in VectorStore.get_all_entity_samples(current_profile):
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
@@ -54,6 +55,20 @@ def main():
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
+        with tab_view:
+            if current_profile is not None:
+                entity = st.text_input('Entity', key='index_question')
+                retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
+            if st.button('Search', type='primary'):
+                if len(entity) > 0:
+                    search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity)
+                    for sample in search_sample_result:
+                        with st.expander(sample['entity']):
+                            st.code(sample['comment'])
+                            st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
+
+
+
     else:
         st.info('Please select data profile in the left sidebar.')
 
