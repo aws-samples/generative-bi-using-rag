@@ -67,7 +67,7 @@ class VectorStore:
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(question)
-        has_same_sample = cls.search_same_query(profile_name, 1, 'uba', embedding['vector_field'])
+        has_same_sample = cls.search_same_query(profile_name, 1, 'uba', embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
         if cls.opensearch_dao.add_sample('uba', profile_name, question, answer, embedding):
@@ -77,7 +77,7 @@ class VectorStore:
     def add_entity_sample(cls, profile_name, entity, comment):
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
-        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_ner', embedding['vector_field'])
+        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_ner', embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
         if cls.opensearch_dao.add_entity_sample('uba_ner', profile_name, entity, comment, embedding):
@@ -87,7 +87,7 @@ class VectorStore:
     def add_agent_cot_sample(cls, profile_name, entity, comment):
         logger.info(f'add agent sample query: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
-        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_agent', embedding['vector_field'])
+        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_agent', embedding)
         if has_same_sample:
             logger.info(f'delete agent sample sample query: {entity} to profile {profile_name}')
         if cls.opensearch_dao.add_agent_cot_sample('uba_agent', profile_name, entity, comment, embedding):
