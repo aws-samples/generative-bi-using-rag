@@ -9,6 +9,7 @@ from utils.navigation import make_sidebar
 
 logger = logging.getLogger(__name__)
 
+
 def delete_entity_sample(profile_name, id):
     VectorStore.delete_entity_sample(profile_name, id)
     st.success(f'Sample {id} deleted.')
@@ -38,7 +39,8 @@ def main():
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
                         st.code(sample['comment'])
-                        st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
+                        st.button('Delete ' + sample['id'], on_click=delete_entity_sample,
+                                  args=[current_profile, sample['id']])
 
         with tab_add:
             if current_profile is not None:
@@ -61,16 +63,15 @@ def main():
                 retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
                 if st.button('Search', type='primary'):
                     if len(entity_search) > 0:
-                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity_search)
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner',
+                                                                         entity_search)
                         for sample in search_sample_result:
-                            sample_score = sample['_score'],
-                            sample_entity = sample['_source']['entity'],
-                            sample_comment = sample['_source']['comment'].strip()
-
-                            with st.expander(sample_entity):
-                                st.write(sample_score)
-                                st.code(sample_comment)
-                                st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
+                            sample_res = {'Score': sample['_score'],
+                                          'Entity': sample['_source']['entity'],
+                                          'Answer': sample['_source']['comment'].strip()}
+                            st.code(sample_res)
+                            st.button('Delete ' + sample['id'], on_click=delete_entity_sample,
+                                          args=[current_profile, sample['id']])
 
 
 
