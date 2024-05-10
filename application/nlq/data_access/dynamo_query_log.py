@@ -12,9 +12,12 @@ DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION')
 
 
 class DynamoQueryLog:
-    def __init__(self, log_id, profile_name, log_info, time_str):
+    def __init__(self, log_id, profile_name, sql, query, intent, log_info, time_str):
         self.log_id = log_id
         self.profile_name = profile_name
+        self.sql = sql
+        self.query = query
+        self.intent = intent
         self.log_info = log_info
         self.time_str = time_str
 
@@ -23,8 +26,11 @@ class DynamoQueryLog:
         return {
             'log_id': self.log_id,
             'profile_name': self.profile_name,
+            'sql': self.sql,
+            'query': self.query,
+            'intent': self.intent,
             'log_info': self.log_info,
-            'day': self.time_str
+            'time_str': self.time_str
         }
 
 
