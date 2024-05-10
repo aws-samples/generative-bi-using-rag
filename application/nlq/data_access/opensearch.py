@@ -41,7 +41,7 @@ class OpenSearchDao:
             "_source": {
                 "includes": ["text", "sql"]
             },
-            "size": 200,
+            "size": 500,
             "query": {
                 "bool": {
                     "must": [],
@@ -82,7 +82,7 @@ class OpenSearchDao:
             "_source": {
                 "includes": ["entity", "comment"]
             },
-            "size": 200,
+            "size": 500,
             "query": {
                 "bool": {
                     "must": [],
@@ -122,7 +122,7 @@ class OpenSearchDao:
             "_source": {
                 "includes": ["query", "comment"]
             },
-            "size": 200,
+            "size": 500,
             "query": {
                 "bool": {
                     "must": [],

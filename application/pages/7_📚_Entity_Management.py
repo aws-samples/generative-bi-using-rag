@@ -34,7 +34,7 @@ def main():
     if current_profile is not None:
         with tab_view:
             if current_profile is not None:
-                st.write("The display page can show a maximum of 200 pieces of data")
+                st.write("The display page can show a maximum of 500 pieces of data")
                 for sample in VectorStore.get_all_entity_samples(current_profile):
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
