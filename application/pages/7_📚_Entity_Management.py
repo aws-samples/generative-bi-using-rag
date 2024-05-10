@@ -59,13 +59,13 @@ def main():
             if current_profile is not None:
                 entity = st.text_input('Entity', key='index_question')
                 retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
-            if st.button('Search', type='primary'):
-                if len(entity) > 0:
-                    search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity)
-                    for sample in search_sample_result:
-                        with st.expander(sample['entity']):
-                            st.code(sample['comment'])
-                            st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
+                if st.button('Search', type='primary'):
+                    if len(entity) > 0:
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity)
+                        for sample in search_sample_result:
+                            with st.expander(sample['entity']):
+                                st.code(sample['comment'])
+                                st.button('Delete ' + sample['id'], on_click=delete_entity_sample, args=[current_profile, sample['id']])
 
 
 
