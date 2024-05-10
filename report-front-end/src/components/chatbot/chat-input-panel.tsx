@@ -2,19 +2,17 @@ import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/compo
 import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import styles from "./chat.module.scss";
-import { ChatBotConfiguration, ChatBotHistoryItem, ChatInputState, } from "./types";
+import { ChatBotHistoryItem, ChatInputState, } from "./types";
 import CustomQuestions from "./custom-questions";
-import { BACKEND_URL } from "../../tools/const";
 import { useSelector } from "react-redux";
 import { UserState } from "@/types/StoreTypes";
+import { query } from "../../common/API";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
-  configuration: ChatBotConfiguration;
-  setConfiguration: Dispatch<SetStateAction<ChatBotConfiguration>>;
   messageHistory: ChatBotHistoryItem[];
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>,
+  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
 }
 
 export abstract class ChatScrollState {
@@ -68,118 +66,14 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     }
   }, [props.messageHistory]);
 
-  const query_test = async () => {
-    props.setLoading(true);
-    try {
-      // const url = `${BACKEND_URL}qa/ask/test?question_type=reject`;
-      // const url = `${BACKEND_URL}qa/ask/test?question_type=knowledge`;
-      // const url = `${BACKEND_URL}qa/ask/test?question_type=normal_table`;
-      // const url = `${BACKEND_URL}qa/ask/test?question_type=normal_line`;
-      const url = `${BACKEND_URL}qa/ask/test?question_type=normal_pie`;
-      // const url = `${BACKEND_URL}qa/ask/test?question_type=agent`;
-      const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json"
-          },
-          method: "POST",
-          body: JSON.stringify({}),
-        }
-      );
-      if (!response.ok) {
-        return;
-      }
-      const result = await response.json();
-      console.log(result);
-      props.setLoading(false);
-      if (result) {
-        props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-          return [...history, result];
-        });
-      }
-    } catch (err) {
-      props.setLoading(false);
-      const result = {
-        query: state.value,
-        query_intent: "Error",
-      };
-      props.setLoading(false);
-      props.setMessageHistory((history: any) => {
-        return [...history, result];
-      });
-      console.error('Query error, ', err);
-    }
-  }
-
-  const query = async () => {
-    props.setLoading(true);
-    try {
-      /*const param = {
-        query: state.value,
-        bedrock_model_id: userInfo.queryConfig.selectedLLM,
-        use_rag_flag: true,
-        visualize_results_flag: true,
-        intent_ner_recognition_flag: userInfo.queryConfig.intentChecked,
-        agent_cot_flag: userInfo.queryConfig.complexChecked,
-        profile_name: userInfo.queryConfig.selectedDataPro,
-        explain_gen_process_flag: true,
-        gen_suggested_question_flag: userInfo.queryConfig.modelSuggestChecked,
-        top_k: userInfo.queryConfig.topK,
-        top_p: userInfo.queryConfig.topP,
-        max_tokens: userInfo.queryConfig.maxLength,
-        temperature: userInfo.queryConfig.temperature
-      };*/
-      // For test purpose
-      const param = {
-        query: state.value,
-        bedrock_model_id: "anthropic.claude-3-sonnet-20240229-v1:0",
-        use_rag_flag: true,
-        visualize_results_flag: true,
-        intent_ner_recognition_flag: true,
-        agent_cot_flag: true,
-        profile_name: "shopping-demo",
-        explain_gen_process_flag: true,
-        gen_suggested_question_flag: true,
-        top_k: 250,
-        top_p: 0.9,
-        max_tokens: 2048,
-        temperature: 0.01
-      };
-      const url = `${BACKEND_URL}qa/ask`;
-      const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json"
-          },
-          method: "POST",
-          body: JSON.stringify(param)
-        }
-      );
-      if (!response.ok) {
-        console.error('Query error, ', response);
-        return;
-      }
-      const result = await response.json();
-      console.log(result);
-      props.setLoading(false);
-      props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [...history, result];
-      });
-    } catch (err) {
-      props.setLoading(false);
-      const result = {
-        query: state.value,
-        query_intent: "Error",
-      };
-      props.setLoading(false);
-      props.setMessageHistory((history: any) => {
-        return [...history, result];
-      });
-      console.error('Query error, ', err);
-    }
-  }
-
   const handleSendMessage = () => {
+    query({
+      query: state.value,
+      setLoading: props.setLoading,
+      configuration: userInfo.queryConfig,
+      setMessageHistory: props.setMessageHistory
+    }).then();
     setTextValue({value: ""});
-    query().then();
   };
 
   const handleSetting = () => {

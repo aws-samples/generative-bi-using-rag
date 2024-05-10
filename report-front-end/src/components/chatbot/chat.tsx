@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from "react";
-import { ChatBotConfiguration, ChatBotHistoryItem } from "./types";
+import { ChatBotHistoryItem } from "./types";
 import ChatInputPanel from "./chat-input-panel";
 import styles from "./chat.module.scss";
 import { Box, SpaceBetween, Spinner } from "@cloudscape-design/components";
@@ -10,16 +10,6 @@ export default function Chat(
   props: {
     setToolsHide: Dispatch<SetStateAction<boolean>>;
   }) {
-  const [configuration, setConfiguration] = useState<ChatBotConfiguration>(
-    () => ({
-      streaming: true,
-      showMetadata: false,
-      maxTokens: 512,
-      temperature: 0.6,
-      topP: 0.9,
-      files: null,
-    })
-  );
 
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -87,6 +77,8 @@ export default function Chat(
           <ChatMessage
             key={idx}
             message={message}
+            setLoading={setLoading}
+            setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
             onThumbsUp={() => handleFeedback("upvote", message)}
             onThumbsDown={() => handleFeedback("downvote", message)}
           />
@@ -106,8 +98,6 @@ export default function Chat(
         <ChatInputPanel
           setToolsHide={props.setToolsHide}
           setLoading={setLoading}
-          configuration={configuration}
-          setConfiguration={setConfiguration}
           messageHistory={messageHistory}
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
         />

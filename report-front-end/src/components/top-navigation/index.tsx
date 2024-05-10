@@ -12,17 +12,6 @@ const CustomTopNavigation = () => {
           alt: "GenBI App",
         },
       }}
-      utilities={[
-        {
-          type: "menu-dropdown",
-          text: "Customer Name",
-          description: "aws_example@amazon.com",
-          iconName: "user-profile",
-          items: [
-            { id: "signout", text: "Sign out" },
-          ],
-        },
-      ]}
     />
   );
 };

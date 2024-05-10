@@ -14,7 +14,7 @@ import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "./chat.module.scss";
 import SuggestedQuestions from "./suggested-questions";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -212,6 +212,8 @@ function IntentSearchPanel(props: IntentProps) {
 
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
+  setLoading: Dispatch<SetStateAction<boolean>>;
+  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
 }
@@ -235,7 +237,11 @@ export default function ChatMessage(props: ChatMessageProps) {
               variant="footer"
               defaultExpanded
               headerText="Suggested questions">
-              <SuggestedQuestions questions={props.message.suggested_question}></SuggestedQuestions>
+              <SuggestedQuestions
+                questions={props.message.suggested_question}
+                setLoading={props.setLoading}
+                setMessageHistory={props.setMessageHistory}
+              />
             </ExpandableSection> : null}
           <ColumnLayout columns={2}>
             <Button
