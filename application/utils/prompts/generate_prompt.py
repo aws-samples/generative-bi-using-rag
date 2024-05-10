@@ -1652,12 +1652,46 @@ def generate_knowledge_prompt(prompt_map, search_box, model_id):
 
     return user_prompt, system_prompt
 
+
 def generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id):
     name = support_model_ids_map[model_id]
 
     system_prompt = prompt_map.get('data_visualization', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('data_visualization', {}).get('user_prompt', {}).get(name)
 
-    user_prompt = user_prompt.format(question=search_box, data = search_data)
+    user_prompt = user_prompt.format(question=search_box, data=search_data)
+
+    return user_prompt, system_prompt
+
+
+def generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('agent_analyse', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('agent_analyse', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box, data=sql_data)
+
+    return user_prompt, system_prompt
+
+
+def generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('data_summary', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('data_summary', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box, data=sql_data)
+
+    return user_prompt, system_prompt
+
+
+def generate_suggest_question_prompt(prompt_map, search_box, model_id):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('suggestion', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('suggestion', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box)
 
     return user_prompt, system_prompt

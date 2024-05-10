@@ -3,15 +3,14 @@ import boto3
 from botocore.config import Config
 
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT, \
-    CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT
+    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
-    generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt
-from utils.tool import get_generated_sql
+    generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt, \
+    generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -338,14 +337,13 @@ def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=
         return default_agent_cot_task
 
 
-def data_analyse_tool(model_id, search_box, sql_data, search_type):
+def data_analyse_tool(model_id, prompt_map, search_box, sql_data, search_type):
     try:
-        system_prompt = CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT
         max_tokens = 2048
         if search_type == "agent":
-            user_prompt = CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+            user_prompt, system_prompt = generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data)
         else:
-            user_prompt = CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+            user_prompt, system_prompt = generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data)
         final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         logger.info(f'{final_response=}')
         return final_response
@@ -455,12 +453,9 @@ def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
     return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
 
 
-def generate_suggested_question(search_box, system_prompt, model_id=None):
+def generate_suggested_question(prompt_map, search_box, model_id=None):
     max_tokens = 2048
-    user_prompt = """
-    Here is the input query: {question}. 
-    Please generate queries based on the input query.
-    """.format(question=search_box)
+    user_prompt, system_prompt = generate_suggest_question_prompt(prompt_map, search_box, model_id)
     user_message = {"role": "user", "content": user_prompt}
     messages = [user_message]
     logger.info(f'{system_prompt=}')

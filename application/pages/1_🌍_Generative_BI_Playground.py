@@ -10,14 +10,11 @@ import random
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
-from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from nlq.business.vector_store import VectorStore
 from utils.llm import get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
     knowledge_search
-from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
 from utils.apis import get_sql_result_tool
-import pprint
 
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
@@ -408,7 +405,7 @@ def main():
                     else:
                         if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                             with st.spinner('Generating data summarize...'):
-                                search_intent_analyse_result = data_analyse_tool(model_type, search_box,
+                                search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                                  search_intent_result["data"].to_json(
                                                                                      orient='records',
                                                                                      force_ascii=False), "query")
@@ -427,7 +424,7 @@ def main():
                                 orient='records')
                             filter_deep_dive_sql_result.append(agent_search_result[i])
 
-                    agent_data_analyse_result = data_analyse_tool(model_type, search_box,
+                    agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                   json.dumps(filter_deep_dive_sql_result,
                                                                              ensure_ascii=False), "agent")
                     logger.info("agent_data_analyse_result")
@@ -476,9 +473,8 @@ def main():
                 # 生成推荐问题
                 if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
                     st.markdown('You might want to further ask:')
-                    active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
                     with st.spinner('Generating suggested questions...'):
-                        generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+                        generated_sq = generate_suggested_question(prompt_map, search_box, model_id=model_type)
                         split_strings = generated_sq.split("[generate]")
                         gen_sq_list = [s.strip() for s in split_strings if s.strip()]
                         sq_result = st.columns(3)

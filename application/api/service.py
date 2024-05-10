@@ -262,7 +262,7 @@ def ask(question: Question) -> Answer:
 
     if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
         active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
-        generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+        generated_sq = generate_suggested_question(prompt_map, search_box, model_id=model_type)
         split_strings = generated_sq.split("[generate]")
         generate_suggested_question_list = [s.strip() for s in split_strings if s.strip()]
 
@@ -283,7 +283,7 @@ def ask(question: Question) -> Answer:
             sql_search_result.data_analyse = "-1"
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
-                search_intent_analyse_result = data_analyse_tool(model_type, search_box,
+                search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                  search_intent_result["data"].to_json(
                                                                      orient='records', force_ascii=False), "query")
 
@@ -318,7 +318,7 @@ def ask(question: Question) -> Answer:
                                                                   data_analyse="")
                 agent_sql_search_result.append(each_task_sql_search_result)
                 sub_search_task.append(agent_search_result[i]["query"])
-        agent_data_analyse_result = data_analyse_tool(model_type, search_box,
+        agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False),
                                                       "agent")
         logger.info("agent_data_analyse_result")

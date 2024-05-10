@@ -3,8 +3,11 @@ from dotenv import load_dotenv
 import logging
 from nlq.business.profile import ProfileManagement
 from utils.navigation import make_sidebar
+from utils.prompts.check_prompt import check_prompt_syntax, find_missing_prompt_syntax
 
 logger = logging.getLogger(__name__)
+
+
 def main():
     load_dotenv()
     logger.info('start prompt management')
@@ -38,13 +41,26 @@ def main():
                     user_prompt_input = st.text_area('User Prompt', user_prompt[model_selected_table], height=500)
 
                     if st.button('Save', type='primary'):
-                        # assign new system/user prompt by selected model
-                        system_prompt[model_selected_table] = system_prompt_input
-                        user_prompt[model_selected_table] = user_prompt_input
+                        # check prompt syntax, missing placeholder will cause backend execution failure
+                        if check_prompt_syntax(system_prompt_input, user_prompt_input,
+                                               prompt_type_selected_table, model_selected_table):
+                            # assign new system/user prompt by selected model
+                            system_prompt[model_selected_table] = system_prompt_input
+                            user_prompt[model_selected_table] = user_prompt_input
 
-                        # save new profile to DynamoDB
-                        ProfileManagement.update_table_prompt_map(current_profile, prompt_map)
-                        st.success('saved.')
+                            # save new profile to DynamoDB
+                            ProfileManagement.update_table_prompt_map(current_profile, prompt_map)
+                            st.success('Saved')
+                        else:
+                            # if missing syntax, find all missing ones and print in page
+                            missing_system_prompt_syntax, missing_user_prompt_syntax = (
+                                find_missing_prompt_syntax(system_prompt_input, user_prompt_input,
+                                                           prompt_type_selected_table, model_selected_table))
+                            st.error(
+                                'Failed to save prompts  \n'
+                                'Missing syntax in System Prompt: {}  \n'
+                                'Missing syntax in User Prompt: {}'
+                                .format(missing_system_prompt_syntax, missing_user_prompt_syntax))
 
     else:
         st.info('Please select data profile in the left sidebar.')
