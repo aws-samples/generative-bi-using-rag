@@ -67,6 +67,9 @@ class VectorStore:
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(question)
+        has_same_sample = cls.search_same_query(profile_name, 1, 'uba', embedding['vector_field'])
+        if has_same_sample:
+            logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
         if cls.opensearch_dao.add_sample('uba', profile_name, question, answer, embedding):
             logger.info('Sample added')
 
@@ -74,13 +77,19 @@ class VectorStore:
     def add_entity_sample(cls, profile_name, entity, comment):
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
+        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_ner', embedding['vector_field'])
+        if has_same_sample:
+            logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
         if cls.opensearch_dao.add_entity_sample('uba_ner', profile_name, entity, comment, embedding):
             logger.info('Sample added')
 
     @classmethod
     def add_agent_cot_sample(cls, profile_name, entity, comment):
-        logger.info(f'add sample entity: {entity} to profile {profile_name}')
+        logger.info(f'add agent sample query: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
+        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_agent', embedding['vector_field'])
+        if has_same_sample:
+            logger.info(f'delete agent sample sample query: {entity} to profile {profile_name}')
         if cls.opensearch_dao.add_agent_cot_sample('uba_agent', profile_name, entity, comment, embedding):
             logger.info('Sample added')
 
@@ -124,3 +133,20 @@ class VectorStore:
         logger.info(f'search sample question: {query}  {index_name} from profile {profile_name}')
         sample_list = cls.opensearch_dao.search_sample(profile_name, top_k, index_name, query)
         return sample_list
+
+    @classmethod
+    def search_sample_with_embedding(cls, profile_name, top_k, index_name, query_embedding):
+        sample_list = cls.opensearch_dao.search_sample_with_embedding(profile_name, top_k, index_name, query_embedding)
+        return sample_list
+
+    @classmethod
+    def search_same_query(cls, profile_name, top_k, index_name, embedding):
+        search_res = cls.search_sample_with_embedding(profile_name, top_k, index_name, embedding)
+        if len(search_res) > 0:
+            similarity_sample = search_res[0]
+            similarity_score = similarity_sample["_score"]
+            similarity_id = similarity_sample['_id']
+            if similarity_score == 1.0:
+                cls.delete_agent_cot_sample(profile_name, similarity_id)
+                return True
+        return False
