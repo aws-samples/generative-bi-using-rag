@@ -191,6 +191,10 @@ class OpenSearchDao:
 
     def search_sample(self, profile_name, top_k, index_name, query):
         records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
+        return self.search_sample_with_embedding(profile_name, top_k, index_name,  records_with_embedding['vector_field'])
+
+
+    def search_sample_with_embedding(self, profile_name, top_k, index_name, query_embedding):
         search_query = {
             "size": top_k,  # Adjust the size as needed to retrieve more or fewer results
             "query": {
@@ -205,7 +209,7 @@ class OpenSearchDao:
                             "knn": {
                                 "vector_field": {
                                     # Make sure 'vector_field' is the name of your vector field in OpenSearch
-                                    "vector": records_with_embedding['vector_field'],
+                                    "vector": query_embedding,
                                     "k": top_k  # Adjust k as needed to retrieve more or fewer nearest neighbors
                                 }
                             }
