@@ -178,7 +178,7 @@ def main():
         use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results_flag = st.checkbox("Visualize Results", True)
         intent_ner_recognition_flag = st.checkbox("Intent NER", True)
-        agent_cot_flag = st.checkbox("Agent COT", False)
+        agent_cot_flag = st.checkbox("Agent COT", True)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
 
@@ -261,6 +261,10 @@ def main():
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
 
+                intent_response = {
+                    "intent": "normal_search",
+                    "slot": []
+                }
                 # 通过标志位控制后续的逻辑
                 # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
                 if intent_ner_recognition_flag:
@@ -288,6 +292,9 @@ def main():
                             search_intent_flag = True
                 else:
                     search_intent_flag = True
+
+                with st.expander('Query Intent Response'):
+                    st.write(intent_response)
 
                 # 主要的逻辑部分，调用LLM
                 if reject_intent_flag:

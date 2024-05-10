@@ -13,6 +13,11 @@
 使用该框架,您可以利用自然语言处理和生成式人工智能的力量,无缝地与数据源进行交互,从而实现更高效的数据探索和分析。
 ![Screenshot](./assets/screenshot-genbi.png)
 
+[用户操作手册](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C%E6%89%8B%E5%86%8C)
+
+[项目数据流程图](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E9%A1%B9%E7%9B%AE%E6%B5%81%E7%A8%8B%E5%9B%BE)
+
+
 ## 部署指南
 
 ### 1. 准备EC2实例

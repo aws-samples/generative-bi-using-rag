@@ -169,7 +169,6 @@ def ask(question: Question) -> Answer:
     explain_gen_process_flag = question.explain_gen_process_flag
     gen_suggested_question_flag = question.gen_suggested_question_flag
 
-
     reject_intent_flag = False
     search_intent_flag = False
     agent_intent_flag = False
@@ -267,7 +266,6 @@ def ask(question: Question) -> Answer:
         split_strings = generated_sq.split("[generate]")
         generate_suggested_question_list = [s.strip() for s in split_strings if s.strip()]
 
-
     # 连接数据库，执行SQL, 记录历史记录并展示
     if search_intent_flag:
         if normal_search_result.sql != "":
@@ -291,7 +289,9 @@ def ask(question: Question) -> Answer:
 
                 sql_search_result.data_analyse = search_intent_analyse_result
 
-                model_select_type, show_select_data = data_visualization(model_type, search_box, search_intent_result["data"], database_profile['prompt_map'])
+                model_select_type, show_select_data = data_visualization(model_type, search_box,
+                                                                         search_intent_result["data"],
+                                                                         database_profile['prompt_map'])
 
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
@@ -312,10 +312,10 @@ def ask(question: Question) -> Answer:
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
-                                                              sql_data=each_task_sql_res,
-                                                              sql=each_task_res["sql"], data_show_type="table",
-                                                              sql_gen_process="",
-                                                              data_analyse="")
+                                                                  sql_data=each_task_sql_res,
+                                                                  sql=each_task_res["sql"], data_show_type="table",
+                                                                  sql_gen_process="",
+                                                                  data_analyse="")
                 agent_sql_search_result.append(each_task_sql_search_result)
                 sub_search_task.append(agent_search_result[i]["query"])
         agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,

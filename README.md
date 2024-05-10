@@ -14,6 +14,11 @@ A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with 
 
 ![Screenshot](./assets/screenshot-genbi.png)
 
+[User Operation Manual](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C%E6%89%8B%E5%86%8C)
+
+[Project Data Flowchart](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E9%A1%B9%E7%9B%AE%E6%B5%81%E7%A8%8B%E5%9B%BE)
+
+
 ## Deployment Guide
 
 ### 1. Prepare EC2 Instance

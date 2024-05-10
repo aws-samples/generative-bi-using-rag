@@ -3,6 +3,7 @@ import logging
 from opensearchpy import OpenSearch
 from opensearchpy.helpers import bulk
 
+from utils.llm import create_vector_embedding_with_bedrock
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class OpenSearchDao:
             "_source": {
                 "includes": ["text", "sql"]
             },
-            "size": 20,
+            "size": 5000,
             "query": {
                 "bool": {
                     "must": [],
@@ -81,7 +82,7 @@ class OpenSearchDao:
             "_source": {
                 "includes": ["entity", "comment"]
             },
-            "size": 20,
+            "size": 5000,
             "query": {
                 "bool": {
                     "must": [],
@@ -121,7 +122,7 @@ class OpenSearchDao:
             "_source": {
                 "includes": ["query", "comment"]
             },
-            "size": 20,
+            "size": 5000,
             "query": {
                 "bool": {
                     "must": [],
@@ -187,3 +188,38 @@ class OpenSearchDao:
 
     def delete_sample(self, index_name, profile_name, doc_id):
         return self.opensearch_client.delete(index=index_name, id=doc_id)
+
+    def search_sample(self, profile_name, top_k, index_name, query):
+        records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
+        search_query = {
+            "size": top_k,  # Adjust the size as needed to retrieve more or fewer results
+            "query": {
+                "bool": {
+                    "filter": {
+                        "match_phrase": {
+                            "profile": profile_name
+                        }
+                    },
+                    "must": [
+                        {
+                            "knn": {
+                                "vector_field": {
+                                    # Make sure 'vector_field' is the name of your vector field in OpenSearch
+                                    "vector": records_with_embedding['vector_field'],
+                                    "k": top_k  # Adjust k as needed to retrieve more or fewer nearest neighbors
+                                }
+                            }
+                        }
+                    ]
+                }
+
+            }
+        }
+
+        # Execute the search query
+        response = self.opensearch_client.search(
+            body=search_query,
+            index=index_name
+        )
+
+        return response['hits']['hits']

@@ -6,8 +6,8 @@ import logging
 
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum, ErrorEnum
-from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion, Upvote, SQLSearchResult, \
-    AgentSearchResult, KnowledgeSearchResult, TaskSQLSearchResult
+from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion, SQLSearchResult, \
+    AgentSearchResult, KnowledgeSearchResult, TaskSQLSearchResult, FeedBackInput
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -66,14 +66,15 @@ def ask_mock_bar(question_type: str):
                 'agent_summary': ''
             },
             'suggested_question': [
-                '40岁以上女性用户浏览次数最多的前3个商品类别是什么', '30岁以下男性用户浏览次数最多的前3个商品类别是什么', '30岁以上用户浏览次数最少的商品类别是什么']
+                '40岁以上女性用户浏览次数最多的前3个商品类别是什么',
+                '30岁以下男性用户浏览次数最多的前3个商品类别是什么', '30岁以上用户浏览次数最少的商品类别是什么']
         }
         sql_search_result = SQLSearchResult(
-                                            sql_data=mock_data["sql_search_result"]["sql_data"],
-                                            sql=mock_data["sql_search_result"]["sql"],
-                                            data_show_type=mock_data["sql_search_result"]["data_show_type"],
-                                            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
-                                            data_analyse=mock_data["sql_search_result"]["data_analyse"])
+            sql_data=mock_data["sql_search_result"]["sql_data"],
+            sql=mock_data["sql_search_result"]["sql"],
+            data_show_type=mock_data["sql_search_result"]["data_show_type"],
+            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
+            data_analyse=mock_data["sql_search_result"]["data_analyse"])
 
         agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
 
@@ -108,56 +109,60 @@ def ask_mock_bar(question_type: str):
             },
             'suggested_question': []
         }
-        sql_search_result = SQLSearchResult(sql_data=mock_data["sql_search_result"]["sql_data"], sql=mock_data["sql_search_result"]["sql"], data_show_type=mock_data["sql_search_result"]["data_show_type"],
+        sql_search_result = SQLSearchResult(sql_data=mock_data["sql_search_result"]["sql_data"],
+                                            sql=mock_data["sql_search_result"]["sql"],
+                                            data_show_type=mock_data["sql_search_result"]["data_show_type"],
                                             sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
                                             data_analyse=mock_data["sql_search_result"]["data_analyse"])
 
         agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
 
         knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
-        answer = Answer(query=mock_data["query"], query_intent="normal_search", knowledge_search_result=knowledge_search_result,
+        answer = Answer(query=mock_data["query"], query_intent="normal_search",
+                        knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=["男性最喜欢的购买类别是什么", "女性最喜欢的购买类别是什么", "女性最喜欢的购买类别是什么"])
+                        suggested_question=["男性最喜欢的购买类别是什么", "女性最喜欢的购买类别是什么",
+                                            "女性最喜欢的购买类别是什么"])
         return answer
     elif question_type == "normal_line":
         mock_data = {
-    'query': '销量前10的商品是什么，输出商品id和销量',
-    'query_intent': 'normal_search',
-    'knowledge_search_result': {
-        'knowledge_response': ''
-    },
-    'sql_search_result': {
-        'sql': "\nSELECT \n `item_id`, \n COUNT(`user_id`) AS sales_count\nFROM \n `interactions`\nWHERE\n `event_type` = 'Purchase'\nGROUP BY\n `item_id`\nORDER BY \n sales_count DESC\nLIMIT 10;\n",
-        'sql_data': [
-            ['item_id', 'sales_count'],
-            ['0790267c-c708-424d-81f5-46903a9c8444', 65],
-            ['575c0ac0-5494-4c64-a886-a9c0cf8b779a', 48],
-            ['b20ba076-58a7-4602-9b56-4bee46e98388', 46],
-            ['aff05423-76e8-4339-a478-fc17d51ed985', 44],
-            ['0987bfa1-0a23-4b90-8882-8a6e9bd91e24', 42],
-            ['a6f43f84-a89a-446f-8adc-8b1a23a30a81', 21],
-            ['24c62ad2-6977-4f69-be75-e37d897c1434', 20],
-            ['9c1a2048-7aac-4565-b836-d8d4f726322c', 16],
-            ['4496471c-b098-4915-9a1a-8b9e60043737', 14],
-            ['5afced84-ed2d-4520-a06d-dcfeab382e52', 14]
-        ],
-        'data_show_type': 'line',
-        'sql_gen_process': "\n\n这个查询首先从 `interactions` 表中选择出所有 `event_type` 为 'Purchase' 的记录，这代表用户购买了商品。然后按照 `item_id` 对购买记录进行分组计数，得到每个商品的销量。最后按销量降序排列并限制输出前 10 行记录，包含了商品 ID 和对应的销量数。",
-        'data_analyse': '根据给定的数据,销量前10的商品及其销量如下:\n\n1. 商品ID为0790267c-c708-424d-81f5-46903a9c8444的商品,销量为65件。\n2. 商品ID为575c0ac0-5494-4c64-a886-a9c0cf8b779a的商品,销量为48件。 \n3. 商品ID为b20ba076-58a7-4602-9b56-4bee46e98388的商品,销量为46件。\n4. 商品ID为aff05423-76e8-4339-a478-fc17d51ed985的商品,销量为44件。\n5. 商品ID为0987bfa1-0a23-4b90-8882-8a6e9bd91e24的商品,销量为42件。\n6. 商品ID为a6f43f84-a89a-446f-8adc-8b1a23a30a81的商品,销量为21件。\n7. 商品ID为24c62ad2-6977-4f69-be75-e37d897c1434的商品,销量为20件。\n8. 商品ID为9c1a2048-7aac-4565-b836-d8d4f726322c的商品,销量为16件。\n9. 商品ID为4496471c-b098-4915-9a1a-8b9e60043737的商品,销量为14件。 \n10. 商品ID为5afced84-ed2d-4520-a06d-dcfeab382e52的商品,销量为14件。'
-    },
-    'agent_search_result': {
-        'sub_search_task': [],
-        'agent_sql_search_result': [],
-        'agent_summary': ''
-    },
-    'suggested_question': []
-}
+            'query': '销量前10的商品是什么，输出商品id和销量',
+            'query_intent': 'normal_search',
+            'knowledge_search_result': {
+                'knowledge_response': ''
+            },
+            'sql_search_result': {
+                'sql': "\nSELECT \n `item_id`, \n COUNT(`user_id`) AS sales_count\nFROM \n `interactions`\nWHERE\n `event_type` = 'Purchase'\nGROUP BY\n `item_id`\nORDER BY \n sales_count DESC\nLIMIT 10;\n",
+                'sql_data': [
+                    ['item_id', 'sales_count'],
+                    ['0790267c-c708-424d-81f5-46903a9c8444', 65],
+                    ['575c0ac0-5494-4c64-a886-a9c0cf8b779a', 48],
+                    ['b20ba076-58a7-4602-9b56-4bee46e98388', 46],
+                    ['aff05423-76e8-4339-a478-fc17d51ed985', 44],
+                    ['0987bfa1-0a23-4b90-8882-8a6e9bd91e24', 42],
+                    ['a6f43f84-a89a-446f-8adc-8b1a23a30a81', 21],
+                    ['24c62ad2-6977-4f69-be75-e37d897c1434', 20],
+                    ['9c1a2048-7aac-4565-b836-d8d4f726322c', 16],
+                    ['4496471c-b098-4915-9a1a-8b9e60043737', 14],
+                    ['5afced84-ed2d-4520-a06d-dcfeab382e52', 14]
+                ],
+                'data_show_type': 'line',
+                'sql_gen_process': "\n\n这个查询首先从 `interactions` 表中选择出所有 `event_type` 为 'Purchase' 的记录，这代表用户购买了商品。然后按照 `item_id` 对购买记录进行分组计数，得到每个商品的销量。最后按销量降序排列并限制输出前 10 行记录，包含了商品 ID 和对应的销量数。",
+                'data_analyse': '根据给定的数据,销量前10的商品及其销量如下:\n\n1. 商品ID为0790267c-c708-424d-81f5-46903a9c8444的商品,销量为65件。\n2. 商品ID为575c0ac0-5494-4c64-a886-a9c0cf8b779a的商品,销量为48件。 \n3. 商品ID为b20ba076-58a7-4602-9b56-4bee46e98388的商品,销量为46件。\n4. 商品ID为aff05423-76e8-4339-a478-fc17d51ed985的商品,销量为44件。\n5. 商品ID为0987bfa1-0a23-4b90-8882-8a6e9bd91e24的商品,销量为42件。\n6. 商品ID为a6f43f84-a89a-446f-8adc-8b1a23a30a81的商品,销量为21件。\n7. 商品ID为24c62ad2-6977-4f69-be75-e37d897c1434的商品,销量为20件。\n8. 商品ID为9c1a2048-7aac-4565-b836-d8d4f726322c的商品,销量为16件。\n9. 商品ID为4496471c-b098-4915-9a1a-8b9e60043737的商品,销量为14件。 \n10. 商品ID为5afced84-ed2d-4520-a06d-dcfeab382e52的商品,销量为14件。'
+            },
+            'agent_search_result': {
+                'sub_search_task': [],
+                'agent_sql_search_result': [],
+                'agent_summary': ''
+            },
+            'suggested_question': []
+        }
         sql_search_result = SQLSearchResult(
-                                            sql_data=mock_data["sql_search_result"]["sql_data"],
-                                            sql=mock_data["sql_search_result"]["sql"],
-                                            data_show_type=mock_data["sql_search_result"]["data_show_type"],
-                                            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
-                                            data_analyse=mock_data["sql_search_result"]["data_analyse"])
+            sql_data=mock_data["sql_search_result"]["sql_data"],
+            sql=mock_data["sql_search_result"]["sql"],
+            data_show_type=mock_data["sql_search_result"]["data_show_type"],
+            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
+            data_analyse=mock_data["sql_search_result"]["data_analyse"])
 
         agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
 
@@ -194,11 +199,11 @@ def ask_mock_bar(question_type: str):
             'suggested_question': []
         }
         sql_search_result = SQLSearchResult(
-                                            sql_data=mock_data["sql_search_result"]["sql_data"],
-                                            sql=mock_data["sql_search_result"]["sql"],
-                                            data_show_type=mock_data["sql_search_result"]["data_show_type"],
-                                            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
-                                            data_analyse=mock_data["sql_search_result"]["data_analyse"])
+            sql_data=mock_data["sql_search_result"]["sql_data"],
+            sql=mock_data["sql_search_result"]["sql"],
+            data_show_type=mock_data["sql_search_result"]["data_show_type"],
+            sql_gen_process=mock_data["sql_search_result"]["sql_gen_process"],
+            data_analyse=mock_data["sql_search_result"]["data_analyse"])
 
         agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
 
@@ -211,46 +216,46 @@ def ask_mock_bar(question_type: str):
         return answer
     elif question_type == "agent":
         mock_data = {
-    'query': '为什么销量下降了，分析一下商品的销售下降的原因',
-    'query_intent': 'agent_search',
-    'knowledge_search_result': {
-        'knowledge_response': ''
-    },
-    'sql_search_result': {
-        'sql': '',
-        'sql_data': [],
-        'data_show_type': 'table',
-        'sql_gen_process': '',
-        'data_analyse': ''
-    },
-    'agent_search_result': {
-        'agent_sql_search_result': [{
-            'sub_task_query': '分析不同时间段的商品总销售量和销售收入的变化趋势',
-            'sql': "\nSELECT\n    DATE_FORMAT(`timestamp`, '%Y-%m') AS month_year,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS total_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS total_revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    month_year\nORDER BY\n    month_year\nLIMIT 100;\n",
-            'sql_data': [
-                ['month_year', 'total_purchases', 'total_revenue'],
-                ['2023-12', 2162, 617303.8590472937]
-            ],
-            'data_show_type': 'table',
-            'sql_gen_process': '',
-            'data_analyse': ''
-        }, {
-            'sub_task_query': '分析促销商品和非促销商品的销售量和销售收入对比',
-            'sql': "\nSELECT\n    `promoted`,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS num_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    `promoted`\nLIMIT 100;\n",
-            'sql_data': [
-                ['promoted', 'num_purchases', 'revenue'],
-                ['F', 9, 707.0],
-                ['N', 1594, 466924.7089368105],
-                ['Y', 531, 147015.8301193714]
-            ],
-            'data_show_type': 'table',
-            'sql_gen_process': '',
-            'data_analyse': ''
-        }],
-        'agent_summary': '根据提供的数据和问题"为什么销量下降了，分析一下商品的销售下降的原因"，我们可以进行以下分析:\n\n1. 分析不同时间段的商品总销售量和销售收入的变化趋势。\n\n根据第一个查询的结果，我们可以看到每个月的总购买量和总销售收入。通过对比不同月份的数据变化,可以发现销售量和收入是否出现了下降的趋势。如果出现了下降,我们可以进一步分析下降的时间段。\n\n2. 分析促销商品和非促销商品的销售量和销售收入对比。\n\n根据第二个查询的结果,我们可以比较促销商品和非促销商品的购买量和销售收入。如果促销商品的销售表现较差,可能意味着促销活动效果不佳,导致整体销量下降。相反,如果非促销商品的销售表现较差,则可能需要分析其他原因。\n\n3. 进一步分析可能影响销量的其他因素。\n\n除了时间趋势和促销活动外,还可以分析其他可能影响销量的因素,例如商品类别、价格区间、地理位置等。通过对这些因素进行分组统计和对比,或许能发现销量下降的潜在原因。\n\n总的来说,通过分析不同时间段的销售趋势、促销活动效果,以及其他可能的影响因素,我们可以对商品销售下降的原因有一个初步的了解。当然,实际情况可能更加复杂,需要结合更多的数据和上下文信息进行综合分析。'
-    },
-    'suggested_question': []
-}
+            'query': '为什么销量下降了，分析一下商品的销售下降的原因',
+            'query_intent': 'agent_search',
+            'knowledge_search_result': {
+                'knowledge_response': ''
+            },
+            'sql_search_result': {
+                'sql': '',
+                'sql_data': [],
+                'data_show_type': 'table',
+                'sql_gen_process': '',
+                'data_analyse': ''
+            },
+            'agent_search_result': {
+                'agent_sql_search_result': [{
+                    'sub_task_query': '分析不同时间段的商品总销售量和销售收入的变化趋势',
+                    'sql': "\nSELECT\n    DATE_FORMAT(`timestamp`, '%Y-%m') AS month_year,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS total_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS total_revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    month_year\nORDER BY\n    month_year\nLIMIT 100;\n",
+                    'sql_data': [
+                        ['month_year', 'total_purchases', 'total_revenue'],
+                        ['2023-12', 2162, 617303.8590472937]
+                    ],
+                    'data_show_type': 'table',
+                    'sql_gen_process': '',
+                    'data_analyse': ''
+                }, {
+                    'sub_task_query': '分析促销商品和非促销商品的销售量和销售收入对比',
+                    'sql': "\nSELECT\n    `promoted`,\n    COUNT(DISTINCT CASE WHEN `event_type` = 'Purchase' THEN `inter`.`item_id` END) AS num_purchases,\n    SUM(CASE WHEN `event_type` = 'Purchase' THEN `i`.`price` END) AS revenue\nFROM\n    `interactions` AS `inter`\nJOIN\n    `items` AS `i` ON `inter`.`item_id` = `i`.`item_id`\nGROUP BY\n    `promoted`\nLIMIT 100;\n",
+                    'sql_data': [
+                        ['promoted', 'num_purchases', 'revenue'],
+                        ['F', 9, 707.0],
+                        ['N', 1594, 466924.7089368105],
+                        ['Y', 531, 147015.8301193714]
+                    ],
+                    'data_show_type': 'table',
+                    'sql_gen_process': '',
+                    'data_analyse': ''
+                }],
+                'agent_summary': '根据提供的数据和问题"为什么销量下降了，分析一下商品的销售下降的原因"，我们可以进行以下分析:\n\n1. 分析不同时间段的商品总销售量和销售收入的变化趋势。\n\n根据第一个查询的结果，我们可以看到每个月的总购买量和总销售收入。通过对比不同月份的数据变化,可以发现销售量和收入是否出现了下降的趋势。如果出现了下降,我们可以进一步分析下降的时间段。\n\n2. 分析促销商品和非促销商品的销售量和销售收入对比。\n\n根据第二个查询的结果,我们可以比较促销商品和非促销商品的购买量和销售收入。如果促销商品的销售表现较差,可能意味着促销活动效果不佳,导致整体销量下降。相反,如果非促销商品的销售表现较差,则可能需要分析其他原因。\n\n3. 进一步分析可能影响销量的其他因素。\n\n除了时间趋势和促销活动外,还可以分析其他可能影响销量的因素,例如商品类别、价格区间、地理位置等。通过对这些因素进行分组统计和对比,或许能发现销量下降的潜在原因。\n\n总的来说,通过分析不同时间段的销售趋势、促销活动效果,以及其他可能的影响因素,我们可以对商品销售下降的原因有一个初步的了解。当然,实际情况可能更加复杂,需要结合更多的数据和上下文信息进行综合分析。'
+            },
+            'suggested_question': []
+        }
 
         sql_search_result = SQLSearchResult(query=mock_data["query"], sql_data=[], sql="", data_show_type="table",
                                             sql_gen_process="",
@@ -260,17 +265,21 @@ def ask_mock_bar(question_type: str):
         agent_search_response.agent_summary = mock_data["agent_search_result"]["agent_summary"]
         agent_search_response.sub_search_task = mock_data["agent_search_result"]["sub_search_task"]
 
-        sql_search_result_one = TaskSQLSearchResult(sub_task_query = mock_data["agent_search_result"]["agent_sql_search_result"][0]["sub_task_query"],sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql_data"],
-                                            sql=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql"],
-                                            data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][0]["data_show_type"],
-                                            sql_gen_process="",
-                                            data_analyse="")
+        sql_search_result_one = TaskSQLSearchResult(
+            sub_task_query=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sub_task_query"],
+            sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql_data"],
+            sql=mock_data["agent_search_result"]["agent_sql_search_result"][0]["sql"],
+            data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][0]["data_show_type"],
+            sql_gen_process="",
+            data_analyse="")
 
-        sql_search_result_two = TaskSQLSearchResult(sub_task_query = mock_data["agent_search_result"]["agent_sql_search_result"][1]["sub_task_query"], sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql_data"],
-                                            sql=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql"],
-                                            data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][1]["data_show_type"],
-                                            sql_gen_process="",
-                                            data_analyse="")
+        sql_search_result_two = TaskSQLSearchResult(
+            sub_task_query=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sub_task_query"],
+            sql_data=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql_data"],
+            sql=mock_data["agent_search_result"]["agent_sql_search_result"][1]["sql"],
+            data_show_type=mock_data["agent_search_result"]["agent_sql_search_result"][1]["data_show_type"],
+            sql_gen_process="",
+            data_analyse="")
 
         agent_search_response.agent_sql_search_result = [sql_search_result_one, sql_search_result_two]
         knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
@@ -310,8 +319,6 @@ def ask_mock_bar(question_type: str):
 
         agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
 
-
-
         knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
 
         knowledge_search_result.knowledge_response = mock_data["knowledge_search_result"]["knowledge_response"]
@@ -338,11 +345,16 @@ def ask_mock_bar(question_type: str):
         return answer
 
 
-@router.post("/upvote")
-def upvote(upvote_input: Upvote):
-    upvote_res = service.user_feedback_upvote(upvote_input.data_profiles,upvote_input.query,
-                                              upvote_input.query_intent, upvote_input.query_answer_list)
-    return upvote_res
+@router.post("/user_feedback")
+def user_feedback(input_data: FeedBackInput):
+    feedback_type = input_data.feedback_type
+    if feedback_type == "upvote":
+        upvote_res = service.user_feedback_upvote(input_data.data_profiles, input_data.query,
+                                                  input_data.query_intent, input_data.query_answer_list)
+        return upvote_res
+    else:
+        logger.info("user downvote {}", input_data)
+        return True
 
 
 @router.websocket("/ws")

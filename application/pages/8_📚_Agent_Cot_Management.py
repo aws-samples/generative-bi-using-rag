@@ -29,10 +29,11 @@ def main():
                                        index=None,
                                        placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add = st.tabs(['View Samples', 'Add New Sample'])
+    tab_view, tab_add, tab_search = st.tabs(['View Samples', 'Add New Sample', 'Sample Search'])
     if current_profile is not None:
         with tab_view:
             if current_profile is not None:
+                st.write("The display page can show a maximum of 5000 pieces of data")
                 for sample in VectorStore.get_all_agent_cot_samples(current_profile):
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['query']):
@@ -54,6 +55,22 @@ def main():
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
+
+        with tab_search:
+            if current_profile is not None:
+                entity_search = st.text_input('Entity Search', key='index_entity_search')
+                retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
+                if st.button('Search', type='primary'):
+                    if len(entity_search) > 0:
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_agent',
+                                                                         entity_search)
+                        for sample in search_sample_result:
+                            sample_res = {'Score': sample['_score'],
+                                          'Entity': sample['_source']['query'],
+                                          'Answer': sample['_source']['comment'].strip()}
+                            st.code(sample_res)
+                            st.button('Delete ' + sample['_id'], key=sample['_id'], on_click=delete_entity_sample,
+                                      args=[current_profile, sample['_id']])
     else:
         st.info('Please select data profile in the left sidebar.')
 
