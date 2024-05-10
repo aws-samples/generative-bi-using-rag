@@ -1,4 +1,4 @@
-import { Badge, SideNavigation } from "@cloudscape-design/components";
+import { SideNavigation } from "@cloudscape-design/components";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 

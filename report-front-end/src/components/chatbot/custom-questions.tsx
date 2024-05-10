@@ -1,7 +1,7 @@
 import { Link, SpaceBetween } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "@aws-amplify/ui-react";
-import styles from "../../styles/chat.module.scss";
+import styles from "./chat.module.scss";
 import { ChatInputState } from "./types";
 import { BACKEND_URL } from "../../tools/const";
 
@@ -50,14 +50,13 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
               </Button>
             ))}
           </div>
-          <div
-            style={{float: 'right'}}>
+          <div style={{float: 'right'}}>
             <Link
               variant="primary"
               onFollow={
                 () => setShowMoreQuestions(false)
               }>
-              Show more suggestions
+              <p className={styles.text}>More sample suggestions</p>
             </Link>
           </div>
         </SpaceBetween>
@@ -81,7 +80,7 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
               onFollow={
                 () => setShowMoreQuestions(true)
               }>
-              Show less suggestions
+              <p className={styles.text}>Less sample suggestions</p>
             </Link>
           </div>
         </SpaceBetween>

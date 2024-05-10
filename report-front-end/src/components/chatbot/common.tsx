@@ -1,4 +1,4 @@
-import styles from "../../styles/chat.module.scss";
+import styles from "./chat.module.scss";
 import Button from "@cloudscape-design/components/button";
 
 export default function Common() {

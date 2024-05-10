@@ -1,4 +1,4 @@
-@use "@cloudscape-design/design-tokens/index" as awsui;
+@use "../../../node_modules/@cloudscape-design/design-tokens/index" as awsui;
 
 .chat_container {
   margin-bottom: -40px;
@@ -38,6 +38,16 @@
   font-size: 3rem;
   font-weight: bolder;
   opacity: 0.4;
+}
+
+.text {
+  color: gray;
+  font-size: small;
+  font-weight: lighter;
+  margin: 2px;
+  text-decoration: underline;
+  text-underline: gray;
+  text-underline-offset: auto;
 }
 
 .input_container {
@@ -131,8 +141,11 @@
 }
 
 .button_border {
-  border: 2px dashed #ccc;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  padding: 6px;
   background-color: white;
+  color: gray;
 }
 
 @media (max-width: 689px) {
