@@ -147,6 +147,15 @@ class VectorStore:
             similarity_score = similarity_sample["_score"]
             similarity_id = similarity_sample['_id']
             if similarity_score == 1.0:
-                cls.delete_agent_cot_sample(profile_name, similarity_id)
-                return True
+                if index_name == "uba":
+                    cls.delete_sample(profile_name, similarity_id)
+                    return True
+                elif index_name == "uba_ner":
+                    cls.delete_entity_sample(profile_name, similarity_id)
+                    return True
+                elif index_name == "uba_agent":
+                    cls.delete_agent_cot_sample(profile_name, similarity_id)
+                    return True
+                else:
+                    return False
         return False
