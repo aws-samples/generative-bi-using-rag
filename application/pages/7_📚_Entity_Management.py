@@ -29,7 +29,7 @@ def main():
                                        index=None,
                                        placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add = st.tabs(['View Samples', 'Add New Sample', 'Sample Search'])
+    tab_view, tab_add, tab_search = st.tabs(['View Samples', 'Add New Sample', 'Sample Search'])
     if current_profile is not None:
         with tab_view:
             if current_profile is not None:
@@ -55,7 +55,7 @@ def main():
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
-        with tab_view:
+        with tab_search:
             if current_profile is not None:
                 entity = st.text_input('Entity', key='index_question')
                 retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
