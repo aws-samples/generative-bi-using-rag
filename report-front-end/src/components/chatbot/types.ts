@@ -1,22 +1,28 @@
-export interface ChatBotConfiguration {
-  streaming: boolean;
-  showMetadata: boolean;
-  maxTokens: number;
-  temperature: number;
-  topP: number;
-}
-
 export interface ChatInputState {
   value: string;
 }
 
+export enum ChatBotMessageType {
+  AI = "ai",
+  Human = "human",
+}
+
+/*export interface ChatBotHistoryItem {
+  type: ChatBotMessageType;
+  content: any;
+}*/
+
 export interface ChatBotHistoryItem {
   query: string,
   query_intent: string,
-  knowledge_search_result: { knowledge_response: string },
+  knowledge_search_result: KnowledgeSearchResult,
   sql_search_result: SQLSearchResult,
   agent_search_result: AgentSearchResult,
   suggested_question: string[]
+}
+
+export interface KnowledgeSearchResult {
+  knowledge_response: string;
 }
 
 export interface SQLSearchResult {
@@ -28,7 +34,7 @@ export interface SQLSearchResult {
 }
 
 export interface AgentSQLSearchResult {
-  sub_search_task: string;
+  sub_task_query: string;
   sql_search_result: SQLSearchResult;
 }
 

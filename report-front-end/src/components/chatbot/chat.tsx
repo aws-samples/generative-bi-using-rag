@@ -64,7 +64,6 @@ export default function Chat(
         return;
       }
       const result = await response.json();
-      console.log(result);
     } catch (err) {
       console.error('Query error, ', err);
     }

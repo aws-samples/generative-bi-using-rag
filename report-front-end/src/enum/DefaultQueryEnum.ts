@@ -1,6 +1,6 @@
 export const DEFAULT_QUERY_CONFIG = {
-  selectedLLM: "shopping-demo",
-  selectedDataPro: "anthropic.claude-3-opus-20240229-v1:0",
+  selectedLLM: "anthropic.claude-3-opus-20240229-v1:0",
+  selectedDataPro: "shopping-demo",
   intentChecked: false,
   complexChecked: false,
   modelSuggestChecked: false,
