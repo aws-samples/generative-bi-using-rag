@@ -9,26 +9,16 @@ import {
   Table,
   TextContent
 } from "@cloudscape-design/components";
-import { ChatBotHistoryItem } from "./types";
+import { ChatBotHistoryItem, SQLSearchResult } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "../../styles/chat.module.scss";
 import SuggestedQuestions from "./suggested-questions";
 import { useState } from "react";
 
-export interface ChatMessageProps {
-  message: ChatBotHistoryItem;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
-}
-
 export interface ChartTypeProps {
   data_show_type: string;
   sql_data: any[][];
-}
-
-export interface IntentProps {
-  message: ChatBotHistoryItem;
 }
 
 function ChartPanel(props: ChartTypeProps) {
@@ -111,77 +101,87 @@ function ChartPanel(props: ChartTypeProps) {
 
 }
 
+export interface IntentProps {
+  message: ChatBotHistoryItem;
+}
+
+function SQLResultPanel(props: IntentProps) {
+  const sql_data = props.message.sql_search_result.sql_data;
+  let headers: any = [];
+  let content: any = [];
+  if (sql_data.length > 0) {
+    // convert data from server to generate table
+    headers = sql_data[0].map((header: string) => {
+      return {
+        header: header,
+        cell: (item: { [x: string]: any; }) => item[header],
+      };
+    });
+    const items = sql_data.slice(1, sql_data.length);
+    content = items.map((item) => {
+      const map: any = new Map(item.map((value, index) => {
+        return [sql_data[0][index], value];
+      }));
+      return Object.fromEntries(map);
+    });
+  }
+  return (
+    <div>
+      <SpaceBetween size={'s'}>
+        {sql_data.length > 0 ?
+          <ExpandableSection
+            variant="footer"
+            defaultExpanded
+            headerText="Table">
+            <Table
+              columnDefinitions={headers}
+              enableKeyboardNavigation
+              items={content}
+              resizableColumns
+            />
+          </ExpandableSection> : null
+        }
+        {props.message.sql_search_result.data_show_type !== "table" && props.message.sql_search_result.sql_data.length > 0 ?
+          <ExpandableSection
+            variant="footer"
+            defaultExpanded
+            headerActions={<Button>Edit</Button>}
+            headerText="Chart">
+            <ChartPanel
+              data_show_type={props.message.sql_search_result.data_show_type}
+              sql_data={props.message.sql_search_result.sql_data}
+            />
+          </ExpandableSection> : null
+        }
+        <ExpandableSection
+          variant="footer"
+          defaultExpanded
+          headerText="Answer with insights">
+          <div
+            style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.data_analyse}</div>
+        </ExpandableSection>
+        <ExpandableSection
+          variant="footer"
+          headerText="SQL">
+          <div className={styles.sql}>
+            <SyntaxHighlighter language="javascript">
+              {props.message.sql_search_result.sql}
+            </SyntaxHighlighter>
+            <div
+              style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
+          </div>
+        </ExpandableSection>
+      </SpaceBetween>
+    </div>
+  );
+}
+
 function IntentSearchPanel(props: IntentProps) {
 
   switch (props.message.query_intent) {
     case 'normal_search':
-      const sql_data = props.message.sql_search_result.sql_data;
-      let headers: any = [];
-      let content: any = [];
-      if (sql_data.length > 0) {
-        // convert data from server to generate table
-        headers = sql_data[0].map((header: string) => {
-          return {
-            header: header,
-            cell: (item: { [x: string]: any; }) => item[header],
-          };
-        });
-        const items = sql_data.slice(1, sql_data.length);
-        content = items.map((item) => {
-          const map: any = new Map(item.map((value, index) => {
-            return [sql_data[0][index], value];
-          }));
-          return Object.fromEntries(map);
-        });
-      }
       return (
-        <div>
-          <SpaceBetween size={'s'}>
-            {sql_data.length > 0 ?
-              <ExpandableSection
-                variant="footer"
-                defaultExpanded
-                headerText="Table">
-                <Table
-                  columnDefinitions={headers}
-                  enableKeyboardNavigation
-                  items={content}
-                  resizableColumns
-                />
-              </ExpandableSection> : null
-            }
-            {props.message.sql_search_result.data_show_type !== "table" && props.message.sql_search_result.sql_data.length > 0 ?
-              <ExpandableSection
-                variant="footer"
-                defaultExpanded
-                headerActions={<Button>Edit</Button>}
-                headerText="Chart">
-                <ChartPanel
-                  data_show_type={props.message.sql_search_result.data_show_type}
-                  sql_data={props.message.sql_search_result.sql_data}
-                />
-              </ExpandableSection> : null
-            }
-            <ExpandableSection
-              variant="footer"
-              defaultExpanded
-              headerText="Answer with insights">
-              <div
-                style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.data_analyse}</div>
-            </ExpandableSection>
-            <ExpandableSection
-              variant="footer"
-              headerText="SQL">
-              <div className={styles.sql}>
-                <SyntaxHighlighter language="javascript">
-                  {props.message.sql_search_result.sql}
-                </SyntaxHighlighter>
-                <div
-                  style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
-              </div>
-            </ExpandableSection>
-          </SpaceBetween>
-        </div>
+        <SQLResultPanel message={props.message} />
       );
     case 'reject_search':
       return (
@@ -208,6 +208,12 @@ function IntentSearchPanel(props: IntentProps) {
         </Container>
       );
   }
+}
+
+export interface ChatMessageProps {
+  message: ChatBotHistoryItem;
+  onThumbsUp: () => void;
+  onThumbsDown: () => void;
 }
 
 export default function ChatMessage(props: ChatMessageProps) {

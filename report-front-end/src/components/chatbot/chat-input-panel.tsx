@@ -9,6 +9,7 @@ import { useSelector } from "react-redux";
 import { UserState } from "@/types/StoreTypes";
 
 export interface ChatInputPanelProps {
+  setToolsHide: Dispatch<SetStateAction<boolean>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   configuration: ChatBotConfiguration;
   setConfiguration: Dispatch<SetStateAction<ChatBotConfiguration>>;
@@ -179,6 +180,10 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     query().then();
   };
 
+  const handleSetting = () => {
+    props.setToolsHide(false);
+  };
+
   return (
     <SpaceBetween direction="vertical" size="l">
       <div className={styles.input_area_container}>
@@ -219,6 +224,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 <Button
                   iconName="settings"
                   variant="icon"
+                  onClick={handleSetting}
                 />
               </div>
             </div>

@@ -1,11 +1,12 @@
 import { AppLayout } from "@cloudscape-design/components";
 import Navigation from "../navigation";
 import {
-  ReactElement,
+  Dispatch,
   JSXElementConstructor,
+  ReactElement,
   ReactNode,
   ReactPortal,
-  useState,
+  SetStateAction,
 } from "react";
 import ConfigPanel from "../config-panel";
 
@@ -19,18 +20,22 @@ const PageLayout = (props: {
     | ReactPortal
     | null
     | undefined;
+  toolsHide: boolean;
+  setToolsHide: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [openTools, setOpenTools] = useState(true);
+  // const [openTools, setOpenTools] = useState(true);
   return (
     <AppLayout
       navigation={<Navigation />}
+      navigationHide={true}
       content={props.content}
       tools={<ConfigPanel />}
-      toolsOpen={openTools}
+      toolsOpen={true}
       onToolsChange={({ detail }) => {
-        setOpenTools(detail.open);
+        props.setToolsHide(true);
       }}
       toolsWidth={450}
+      toolsHide={props.toolsHide}
     />
   );
 };

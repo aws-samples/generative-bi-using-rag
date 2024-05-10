@@ -1,4 +1,4 @@
-import { SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { ChatBotConfiguration, ChatBotHistoryItem } from "./types";
 import ChatInputPanel from "./chat-input-panel";
 import styles from "../../styles/chat.module.scss";
@@ -6,7 +6,10 @@ import { Box, SpaceBetween, Spinner } from "@cloudscape-design/components";
 import ChatMessage from "./chat-message";
 import { BACKEND_URL } from "../../tools/const";
 
-export default function Chat() {
+export default function Chat(
+  props: {
+    setToolsHide: Dispatch<SetStateAction<boolean>>;
+  }) {
   const [configuration, setConfiguration] = useState<ChatBotConfiguration>(
     () => ({
       streaming: true,
@@ -101,6 +104,7 @@ export default function Chat() {
       </div>
       <div className={styles.input_container}>
         <ChatInputPanel
+          setToolsHide={props.setToolsHide}
           setLoading={setLoading}
           configuration={configuration}
           setConfiguration={setConfiguration}
