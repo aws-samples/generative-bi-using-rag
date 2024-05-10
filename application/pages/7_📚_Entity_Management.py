@@ -57,11 +57,11 @@ def main():
                         st.error('please input valid question and answer')
         with tab_search:
             if current_profile is not None:
-                entity = st.text_input('Entity', key='index_question')
+                entity_search = st.text_input('Entity Search', key='index_entity_search')
                 retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
                 if st.button('Search', type='primary'):
-                    if len(entity) > 0:
-                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity)
+                    if len(entity_search) > 0:
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_ner', entity_search)
                         for sample in search_sample_result:
                             with st.expander(sample['entity']):
                                 st.code(sample['comment'])
