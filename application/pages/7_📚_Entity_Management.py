@@ -70,7 +70,7 @@ def main():
                                           'Entity': sample['_source']['entity'],
                                           'Answer': sample['_source']['comment'].strip()}
                             st.code(sample_res)
-                            st.button('Delete ' + sample['id'], on_click=delete_entity_sample,
+                            st.button('Delete ' + sample['_id'], on_click=delete_entity_sample,
                                           args=[current_profile, sample['id']])
 
 
