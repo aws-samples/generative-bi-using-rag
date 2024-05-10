@@ -1,7 +1,7 @@
 import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import styles from "../../styles/chat.module.scss";
+import styles from "./chat.module.scss";
 import { ChatBotConfiguration, ChatBotHistoryItem, ChatInputState, } from "./types";
 import CustomQuestions from "./custom-questions";
 import { BACKEND_URL } from "../../tools/const";
@@ -91,9 +91,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       const result = await response.json();
       console.log(result);
       props.setLoading(false);
-      props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [...history, result];
-      });
+      if (result) {
+        props.setMessageHistory((history: ChatBotHistoryItem[]) => {
+          return [...history, result];
+        });
+      }
     } catch (err) {
       props.setLoading(false);
       const result = {

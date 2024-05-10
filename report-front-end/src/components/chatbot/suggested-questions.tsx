@@ -1,5 +1,5 @@
 import { Button } from "@aws-amplify/ui-react";
-import styles from "../../styles/chat.module.scss";
+import styles from "./chat.module.scss";
 
 export interface SuggestedQuestionsProps {
   questions: string[];
@@ -7,12 +7,16 @@ export interface SuggestedQuestionsProps {
 
 export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
 
+  const handleQuery = () => {
+  };
+
   return (
     <div className={styles.questions_grid}>
       {props.questions.map((question, kid) => (
         <Button
           key={kid}
-          onClick={() => {}}>
+          className={styles.button_border}
+          onClick={handleQuery}>
           {question}
         </Button>
       ))}

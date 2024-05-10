@@ -12,7 +12,7 @@ import {
 import { ChatBotHistoryItem, SQLSearchResult } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
-import styles from "../../styles/chat.module.scss";
+import styles from "./chat.module.scss";
 import SuggestedQuestions from "./suggested-questions";
 import { useState } from "react";
 

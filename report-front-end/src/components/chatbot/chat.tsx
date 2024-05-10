@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { ChatBotConfiguration, ChatBotHistoryItem } from "./types";
 import ChatInputPanel from "./chat-input-panel";
-import styles from "../../styles/chat.module.scss";
+import styles from "./chat.module.scss";
 import { Box, SpaceBetween, Spinner } from "@cloudscape-design/components";
 import ChatMessage from "./chat-message";
 import { BACKEND_URL } from "../../tools/const";
