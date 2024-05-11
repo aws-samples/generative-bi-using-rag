@@ -212,7 +212,7 @@ function IntentSearchPanel(props: IntentSearchProps) {
             <ExpandableSection
               variant="footer"
               defaultExpanded
-              headerText="Data summary">
+              headerText="Answer with insights">
               <div style={{whiteSpace: "pre-line"}}>{props.message.agent_search_result.agent_summary}</div>
             </ExpandableSection> : null
           }

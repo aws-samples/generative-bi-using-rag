@@ -35,6 +35,10 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     props.setToolsHide(false);
   };
 
+  const handleClear = () => {
+    props.setMessageHistory([]);
+  };
+
   return (
     <SpaceBetween direction="vertical" size="l">
       <div className={styles.input_area_container}>
@@ -71,6 +75,12 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   iconName={"angle-right-double"}
                   variant="primary">
                   Send
+                </Button>
+                <Button
+                  iconName="remove"
+                  variant="icon"
+                  onClick={handleClear}
+                >
                 </Button>
                 <Button
                   iconName="settings"

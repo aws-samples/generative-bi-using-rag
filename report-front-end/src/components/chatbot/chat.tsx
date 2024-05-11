@@ -69,7 +69,7 @@ export default function Chat(
     }
   };
 
-  // On first render and on unmount there is no DOM element so `el` will be `null`
+  // On first render and on unmount there is no DOM element so `element` will be `null`
   const scrollTo = (element : any) => {
     if (element) {
       element.scrollIntoView({behavior: "smooth"});
@@ -78,7 +78,7 @@ export default function Chat(
 
   return (
     <div className={styles.chat_container}>
-      <SpaceBetween size={'l'}>
+      <SpaceBetween size={'xxl'}>
         {messageHistory.map((message, idx) => {
             const isLast = idx === messageHistory.length - 1;
             return (
@@ -96,9 +96,11 @@ export default function Chat(
           }
         )}
         {loading && (
-          <Box float="left">
-            <Spinner/>
-          </Box>
+          <div ref={loading ? scrollTo : undefined}>
+            <Box float="left">
+              <Spinner/>
+            </Box>
+          </div>
         )}
       </SpaceBetween>
       <div className={styles.welcome_text}>
