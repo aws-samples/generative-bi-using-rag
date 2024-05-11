@@ -1,15 +1,16 @@
-
 import json
 import boto3
 from botocore.config import Config
+
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT, \
-    CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT
+    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
-    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt
+    generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
+    generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt, \
+    generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -95,7 +96,6 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
     except Exception as e:
         logger.error("Couldn't invoke LLama 70B")
         logger.error(e)
-
 
 
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
@@ -267,10 +267,10 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
     return response
 
 
-def text_to_sql(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
+def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                 model_provider=None, with_response_stream=False):
-    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, search_box, sql_examples, ner_example, model_id,
-                                                     dialect=dialect)
+    user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
+                                                     model_id, dialect=dialect)
     max_tokens = 2048
     response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
     return response
@@ -309,9 +309,10 @@ LIMIT 10;</query>'''
         return final_response
 
 
-def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
+def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=None):
     default_agent_cot_task = {"task_1": search_box}
-    agent_system_prompt = generate_agent_cot_system_prompt(ddl, agent_cot_example)
+    user_prompt, system_prompt = generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id,
+                                                                  agent_cot_example)
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
         if intent_endpoint:
@@ -323,9 +324,8 @@ def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-            system_prompt = agent_system_prompt
             max_tokens = 2048
-            user_message = {"role": "user", "content": search_box}
+            user_message = {"role": "user", "content": user_prompt}
             messages = [user_message]
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
             final_response = response.get("content")[0].get("text")
@@ -337,14 +337,13 @@ def get_agent_cot_task(model_id, search_box, ddl, agent_cot_example=None):
         return default_agent_cot_task
 
 
-def data_analyse_tool(model_id, search_box, sql_data, search_type):
+def data_analyse_tool(model_id, prompt_map, search_box, sql_data, search_type):
     try:
-        system_prompt = CLAUDE3_DATA_ANALYSE_SYSTEM_PROMPT
         max_tokens = 2048
         if search_type == "agent":
-            user_prompt = CLAUDE3_AGENT_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+            user_prompt, system_prompt = generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data)
         else:
-            user_prompt = CLAUDE3_QUERY_DATA_ANALYSE_USER_PROMPT.format(question=search_box, data=sql_data)
+            user_prompt, system_prompt = generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data)
         final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         logger.info(f'{final_response=}')
         return final_response
@@ -353,7 +352,7 @@ def data_analyse_tool(model_id, search_box, sql_data, search_type):
     return ""
 
 
-def get_query_intent(model_id, search_box):
+def get_query_intent(model_id, search_box, prompt_map):
     default_intent = {"intent": "normal_search"}
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
@@ -366,110 +365,66 @@ def get_query_intent(model_id, search_box):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-            system_prompt = SEARCH_INTENT_PROMPT_CLAUDE3
+            user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
             max_tokens = 2048
-            final_response = invoke_llm_model(model_id, system_prompt, search_box, max_tokens, False)
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict
     except Exception as e:
         logger.error("get_query_intent is error:{}".format(e))
         return default_intent
-    
-def knowledge_search(model_id, search_box):
-    try: 
-        # this serves a placeholder for an existing case
-        system_prompt = "You are a knowledge QA bot. And please answer questions based on the knowledge context and existing knowledge\n" \
-                        "<rules>\n" \
-                        "1. answer should as concise as possible\n" \
-                        "2. if you don't know the answer to the question, just answer you don't know.\n" \
-                        "</rules>\n"\
-                        """
-<context>
-Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
- {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
- {'Acronym': 'SKU',
-  'Full name': 'Stock Keeping Unit',
-  'Comment': 'Product code; Material number; Style color'},
- {'Acronym': 'order_dt', 'Full name': 'order_date'},
- {'Acronym': 'Owned Eco', 'Full name': 'Owned E-commerce'},
- {'Acronym': 'desc', 'Full name': 'description'},
- {'Acronym': 'etc', 'Full name': 'et cetera', 'Comment': '意为“等等”'},
- {'Acronym': 'amt', 'Full name': 'amount'},
- {'Acronym': 'qty', 'Full name': 'quantity'},
- {'Acronym': 'PE', 'Full name': 'product engine'},
- {'Acronym': 'YA', 'Full name': 'YOUNG ATHLETES'},
- {'Acronym': 'FTW', 'Full name': 'FOOTWEAR'},
- {'Acronym': 'FW', 'Full name': 'FOOTWEAR'},
- {'Acronym': 'APP', 'Full name': 'APPAREL'},
- {'Acronym': 'AP', 'Full name': 'APPAREL'},
- {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
- {'Acronym': 'MTD',
-  'Full name': 'Month to Date',
-  'Comment': "It's\xa0the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
- {'Acronym': 'WTD',
-  'Full name': 'Week to Date',
-  'Comment': "It's\xa0the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
- {'Acronym': 'YTD',
-  'Full name': 'Year to Date',
-  'Comment': "It's\xa0the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
- {'Acronym': 'YOY',
-  'Full name': 'Year-Over-Year',
-  'Comment': 'Year-over-year\xa0(YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
- {'Acronym': 'cxl', 'Full name': 'Cancel'},
- {'Acronym': 'rtn', 'Full name': 'Return'},
- {'Acronym': 'cxl%', 'Full name': 'Cancel Rate'},
- {'Acronym': 'rtn%', 'Full name': 'Return Rate'},
- {'Acronym': 'LY', 'Full name': 'Last year'},
- {'Acronym': 'CY', 'Full name': 'Current year'},
- {'Acronym': 'TY', 'Full name': 'This year'},
- {'Acronym': 'MKD', 'Full name': 'Markdown'},
- {'Acronym': 'MD', 'Full name': 'Markdown'},
- {'Acronym': 'AUR', 'Full name': 'Average unit retail'},
- {'Acronym': 'diff', 'Full name': 'different'},
- {'Acronym': 'FY', 'Full name': 'fiscal year'}]
- Here's a list of formulas that may help you answer the question.
- [{'Formula': 'Net Demand = Demand - Cancel'},
- {'Formula': 'Net Revenue = Demand - Cancel - Return'},
- {'Formula': 'Return Rate = Return/Demand'},
- {'Formula': 'Cancel Rate = Cancel/Demand'},
- {'Formula': 'rtn% = Return/Demand'},
- {'Formula': 'cxl% = Cancel/Demand'},
- {'Formula': 'Total Rate = Return Rate + Cancel Rate'},
- {'Formula': 'D2N Rate = Return Rate + Cancel Rate'},
- {'Formula': 'Cancel/Return Rate = Return Rate + Cancel Rate'},
- {'Formula': 'Demand Share =Demand for this product/Total Demand'},
- {'Formula': 'MTD = 2023/12/1~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
- {'Formula': 'WTD = 2023/12/4~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current week up until now, but not including today's date, because it might not be complete yet.The week start at Monday."},
- {'Formula': 'YTD = 2023/1/1~202312/7',
-  'Comment': "It's\xa0the period starting from the beginning of the current year up until now, but not including today's date, because it might not be complete yet."},
- {'Formula': 'YOY = This year period / Last year period',
-  'Comment': 'Year-over-year\xa0(YOY) is a financial term used to compare data for a specific period of time with the corresponding period from the previous year. It is a way to analyze and assess the growth or decline of a particular variable over a twelve-month period.'},
- {'Formula': 'AUR = Net Revenue/Net Quantity',
-  'Comment': 'Net Revenue  = Demand amt - Cancel amt – Return amt\nNet quantity = Demand qty - Cancel qty – Return qty '}]
- </context>
-"""
+
+
+def knowledge_search(model_id, search_box, prompt_map):
+    try:
+        user_prompt, system_prompt = generate_knowledge_prompt(prompt_map, search_box, model_id)
         max_tokens = 2048
-        user_prompt = """
-        Here is the input query: {question}. 
-        Please generate queries based on the input query.
-        """.format(question=search_box)
-        user_message = {"role": "user", "content": user_prompt}
-        messages = [user_message]
-        logger.info(f'{system_prompt=}')
-        logger.info(f'{messages=}')
-        
-        response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream=False)
-        final_response = response.get("content")[0].get("text")
+        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
         return final_response
     except Exception as e:
         logger.error("knowledge_search is error")
     return ""
+
+
+def select_data_visualization_type(model_id, search_box, search_data, prompt_map):
+    default_data_visualization = {
+        "show_type": "table",
+        "format_data": []
+    }
+    try:
+        user_prompt, system_prompt = generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id)
+        max_tokens = 2048
+        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        data_visualization_dict = json_parse.parse(final_response)
+        return data_visualization_dict
+    except Exception as e:
+        logger.error("select_data_visualization_type is error {}", e)
+        return default_data_visualization
+
+
+def data_visualization(model_id, search_box, search_data, prompt_map):
+    columns = list(search_data.columns)
+    data_list = search_data.values.tolist()
+    all_columns_data = [columns] + data_list
+    try:
+        if len(columns) != 2:
+            return "table", all_columns_data
+        else:
+            if len(all_columns_data) == 0:
+                return "table", all_columns_data
+            else:
+                if len(all_columns_data) > 10:
+                    all_columns_data = all_columns_data[0:5]
+                model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data, prompt_map)
+                model_select_type = model_select_type_dict["show_type"]
+                model_select_type_columns = model_select_type_dict["format_data"][0]
+                data_list = search_data[model_select_type_columns].values.tolist()
+                return model_select_type, [model_select_type_columns] + data_list
+    except Exception as e:
+        logger.error("data_visualization is error {}", e)
+        return "table", all_columns_data
+
 
 def create_vector_embedding_with_bedrock(text, index_name):
     payload = {"inputText": f"{text}"}
@@ -498,13 +453,9 @@ def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
     return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
 
 
-
-def generate_suggested_question(search_box, system_prompt, model_id=None):
+def generate_suggested_question(prompt_map, search_box, model_id=None):
     max_tokens = 2048
-    user_prompt = """
-    Here is the input query: {question}. 
-    Please generate queries based on the input query.
-    """.format(question=search_box)
+    user_prompt, system_prompt = generate_suggest_question_prompt(prompt_map, search_box, model_id)
     user_message = {"role": "user", "content": user_prompt}
     messages = [user_message]
     logger.info(f'{system_prompt=}')

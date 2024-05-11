@@ -10,17 +10,14 @@ import random
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
-from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from nlq.business.vector_store import VectorStore
-from utils.llm import text_to_sql, get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
+from utils.llm import get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
     knowledge_search
-from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 from utils.navigation import make_sidebar
-from utils.tool import get_generated_sql
-from utils.opensearch import get_retrieve_opensearch
-from utils.domain import SearchTextSqlResult
 from utils.apis import get_sql_result_tool
-import pprint
+
+from utils.opensearch import get_retrieve_opensearch
+from utils.text_search import normal_text_search, agent_text_search
 
 logger = logging.getLogger(__name__)
 
@@ -61,20 +58,19 @@ def do_visualize_results(nlq_chain, sql_result):
 
         # hacky way to get around the issue of selectbox not updating when the options change
         chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
-                                                               ['Table', 'Bar', 'Line', 'Pie'],
-                                                               on_change=nlq_chain.set_visualization_config_change,
-                                                               key=random.randint(0, 10000)
-                                                               )
+                                                           ['Table', 'Bar', 'Line', 'Pie'],
+                                                           on_change=nlq_chain.set_visualization_config_change
+                                                           )
         if chart_type != 'Table':
             x_column = visualize_config_columns[1].selectbox(f'Choose x-axis column', available_columns,
-                                                                 on_change=nlq_chain.set_visualization_config_change,
-                                                                 key=random.randint(0, 10000)
-                                                                 )
+                                                             on_change=nlq_chain.set_visualization_config_change,
+                                                             key=random.randint(0, 10000)
+                                                             )
             y_column = visualize_config_columns[2].selectbox('Choose y-axis column',
-                                                                 reversed(available_columns.to_list()),
-                                                                 on_change=nlq_chain.set_visualization_config_change,
-                                                                 key=random.randint(0, 10000)
-                                                                 )
+                                                             reversed(available_columns.to_list()),
+                                                             on_change=nlq_chain.set_visualization_config_change,
+                                                             key=random.randint(0, 10000)
+                                                             )
         if chart_type == 'Table':
             st.dataframe(sql_query_result, hide_index=True)
         elif chart_type == 'Bar':
@@ -87,147 +83,13 @@ def do_visualize_results(nlq_chain, sql_result):
         st.markdown('No visualization generated.')
 
 
-def normal_text_search(search_box, model_type, database_profile, entity_slot, env_vars, selected_profile, current_nlq_chain, explain_gen_process_flag=False, use_rag_flag=True,
-                       model_provider=None):
-    entity_slot_retrieve = []
-    retrieve_result = []
-    response = ""
-    sql = ""
-
-    try:
-        # fix db url is Empty
-        if database_profile['db_url'] == '':
-            conn_name = database_profile['conn_name']
-            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
-            database_profile['db_url'] = db_url
-            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
-        
-        # perform entity retrieval
-        if len(entity_slot) > 0 and use_rag_flag:
-            with st.status("Performing entity retrieval...") as status_text:
-                for each_entity in entity_slot:
-                    entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
-                                                            selected_profile, 1, 0.7)
-                    if len(entity_retrieve) > 0:
-                        entity_slot_retrieve.extend(entity_retrieve)
-                examples = []
-                for example in entity_retrieve:
-                    examples.append({'Score': example['_score'],
-                                        'Question': example['_source']['entity'],
-                                        'Answer': example['_source']['comment'].strip()})
-                st.write(examples)
-                status_text.update(label=f"Entity Retrieval Completed: {len(entity_slot_retrieve)} entities retrieved", state="complete", expanded=False)
-        
-        # perform QA retrieval
-        if use_rag_flag:
-            with st.status("Performing QA retrieval...") as status_text:
-                retrieve_result = get_retrieve_opensearch(env_vars, search_box, "query",
-                                                        selected_profile, 3, 0.5)
-                examples = []
-                for example in retrieve_result:
-                    examples.append({'Score': example['_score'],
-                                        'Question': example['_source']['text'],
-                                        'Answer': example['_source']['sql'].strip()})
-                st.write(examples)
-                status_text.update(label=f"QA Retrieval Completed: {len(retrieve_result)} entities retrieved", state="complete", expanded=False)
-
-    
-        # perform SQL generation
-        with st.status("Generating SQL...") as status_text:
-            response = text_to_sql(database_profile['tables_info'],
-                                database_profile['hints'],
-                                search_box,
-                                model_id=model_type,
-                                sql_examples=retrieve_result,
-                                ner_example=entity_slot_retrieve,
-                                dialect=database_profile['db_type'],
-                                model_provider=model_provider)
-            sql = get_generated_sql(response)
-
-            search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                            retrieve_result=retrieve_result, response=response, sql="")
-            search_result.entity_slot_retrieve = entity_slot_retrieve
-            search_result.retrieve_result = retrieve_result
-            search_result.response = response
-            search_result.sql = sql
-
-            if sql != "":
-                current_nlq_chain.set_generated_sql(sql)
-                st.code(sql, language="sql")
-                
-                current_nlq_chain.set_generated_sql_response(response)
-                
-                if explain_gen_process_flag:
-                    with st.spinner('Generating explanations...'):
-                        # hiding generation process for now
-                        # st.session_state.messages[selected_profile].append(
-                        #     {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain(), "type": "text"})
-                        st.markdown(current_nlq_chain.get_generated_sql_explain())
-
-                # add a upvote(green)/downvote button with logo
-                feedback = st.columns(2)
-                feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                    use_container_width=True,
-                                    on_click=upvote_clicked,
-                                    args=[current_nlq_chain.get_question(),
-                                            current_nlq_chain.get_generated_sql(),
-                                            env_vars])
-
-                if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                    # do something here
-                    pass
-
-                st.session_state.messages[selected_profile].append(
-                    {"role": "assistant", "content": "SQL:" + sql, "type": "sql"})
-            else:
-                st.write("Unable to generate SQL at the moment, please provide more information")
-            
-        status_text.update(label="SQL Generation Completed", state="complete", expanded=False)
-    except Exception as e:
-        logger.error(e)
-    return search_result
-
-
-def agent_text_search(search_box, model_type, database_profile, entity_slot, env_vars, selected_profile, use_rag_flag,
-                      agent_cot_task_result):
-    agent_search_results = []
-    try:
-        for each_task in agent_cot_task_result:
-            each_res_dict = {}
-            each_task_query = agent_cot_task_result[each_task]
-            each_res_dict["query"] = each_task_query
-            entity_slot_retrieve = []
-            retrieve_result = []
-            if use_rag_flag:
-                entity_slot_retrieve = get_retrieve_opensearch(env_vars, each_task_query, "ner",
-                                                               selected_profile, 3, 0.5)
-
-                retrieve_result = get_retrieve_opensearch(env_vars, each_task_query, "query",
-                                                          selected_profile, 3, 0.5)
-            each_task_response = text_to_sql(database_profile['tables_info'],
-                                             database_profile['hints'],
-                                             each_task_query,
-                                             model_id=model_type,
-                                             sql_examples=retrieve_result,
-                                             ner_example=entity_slot_retrieve,
-                                             dialect=database_profile['db_type'],
-                                             model_provider=None)
-            each_task_sql = get_generated_sql(each_task_response)
-            each_res_dict["response"] = each_task_response
-            each_res_dict["sql"] = each_task_sql
-            if each_res_dict["sql"] != "":
-                agent_search_results.append(each_res_dict)
-    except Exception as e:
-        logger.error(e)
-    return agent_search_results
-
 def recurrent_display(messages, i, current_nlq_chain):
     # hacking way of displaying messages, since the chat_message does not support multiple messages outside of "with" statement
     current_role = messages[i]["role"]
     message = messages[i]
     if message["type"] == "pandas":
         if isinstance(message["content"], pd.DataFrame):
-            do_visualize_results(current_nlq_chain, message["content"])
+            st.dataframe(message["content"], hide_index=True)
         elif isinstance(message["content"], list):
             for each_content in message["content"]:
                 st.write(each_content["query"])
@@ -236,14 +98,11 @@ def recurrent_display(messages, i, current_nlq_chain):
         st.markdown(message["content"])
     elif message["type"] == "error":
         st.error(message["content"])
-    if i + 1 < len(messages):
-        if current_role != messages[i + 1]["role"]:
-            return i
-        else:
-            return recurrent_display(messages, i + 1, current_nlq_chain)
-    else:
-        return i
-        
+    elif message["type"] == "sql":
+        with st.expander("The Generate SQL"):
+            st.code(message["content"],  language="sql")
+    return i
+
 
 def main():
     load_dotenv()
@@ -319,13 +178,14 @@ def main():
         use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results_flag = st.checkbox("Visualize Results", True)
         intent_ner_recognition_flag = st.checkbox("Intent NER", True)
-        agent_cot_flag = st.checkbox("Agent COT", False)
+        agent_cot_flag = st.checkbox("Agent COT", True)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
 
-    st.chat_message("assistant").write(f"I'm the Generative BI assistant. Please **ask a question** or **select a sample question** below to start.")
+    st.chat_message("assistant").write(
+        f"I'm the Generative BI assistant. Please **ask a question** or **select a sample question** below to start.")
 
     # Display sample questions
     comments = st.session_state.profiles[selected_profile]['comments']
@@ -340,12 +200,12 @@ def main():
     search_sample_columns = st.columns(question_column_number)
 
     for i, sample in enumerate(search_samples):
-        i = i % question_column_number 
+        i = i % question_column_number
         search_sample_columns[i].button(sample, use_container_width=True, on_click=sample_question_clicked,
                                         args=[sample])
-                    
+
     current_nlq_chain = st.session_state.nlq_chain
-    
+
     # Display chat messages from history
     logger.info(f'{st.session_state.messages}')
     if selected_profile in st.session_state.messages:
@@ -354,8 +214,8 @@ def main():
         for i in range(len(st.session_state.messages[selected_profile])):
             print('!!!!!')
             print(i, new_index)
-            if i - 1 < new_index:
-                continue
+            # if i - 1 < new_index:
+            #     continue
             with st.chat_message(st.session_state.messages[selected_profile][i]["role"]):
                 new_index = recurrent_display(st.session_state.messages[selected_profile], i, current_nlq_chain)
 
@@ -377,7 +237,8 @@ def main():
         if search_box is not None and len(search_box) > 0:
             with st.chat_message("user"):
                 current_nlq_chain.set_question(search_box)
-                st.session_state.messages[selected_profile].append({"role": "user", "content": search_box, "type": "text"})
+                st.session_state.messages[selected_profile].append(
+                    {"role": "user", "content": search_box, "type": "text"})
                 st.markdown(current_nlq_chain.get_question())
             with st.chat_message("assistant"):
                 # retrieve_result = []
@@ -390,7 +251,7 @@ def main():
                 agent_cot_task_result = {}
 
                 database_profile = st.session_state.profiles[selected_profile]
-                
+
                 with st.spinner('Connecting to database...'):
                     # fix db url is Empty
                     if database_profile['db_url'] == '':
@@ -398,15 +259,21 @@ def main():
                         db_url = ConnectionManagement.get_db_url_by_name(conn_name)
                         database_profile['db_url'] = db_url
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+                    prompt_map = database_profile['prompt_map']
 
+                intent_response = {
+                    "intent": "normal_search",
+                    "slot": []
+                }
                 # 通过标志位控制后续的逻辑
                 # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
                 if intent_ner_recognition_flag:
                     with st.status("Performing intent recognition...") as status_text:
-                        intent_response = get_query_intent(model_type, search_box)
+                        intent_response = get_query_intent(model_type, search_box, prompt_map)
                         intent = intent_response.get("intent", "normal_search")
                         entity_slot = intent_response.get("slot", [])
-                        status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question", state="complete", expanded=False)
+                        status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
+                                           state="complete", expanded=False)
                         if intent == "reject_search":
                             reject_intent_flag = True
                             search_intent_flag = False
@@ -426,6 +293,9 @@ def main():
                 else:
                     search_intent_flag = True
 
+                with st.expander('Query Intent Response'):
+                    st.write(intent_response)
+
                 # 主要的逻辑部分，调用LLM
                 if reject_intent_flag:
                     st.write("Your query statement is currently not supported by the system")
@@ -433,12 +303,14 @@ def main():
                 elif search_intent_flag:
                     # 执行普通的查询，并可视化结果
                     normal_search_result = normal_text_search(search_box, model_type,
-                                                                database_profile,
-                                                                entity_slot, env_vars,
-                                                                selected_profile, current_nlq_chain, explain_gen_process_flag, use_rag_flag)
+                                                              database_profile,
+                                                              entity_slot, env_vars,
+                                                              selected_profile,
+                                                              explain_gen_process_flag, use_rag_flag)
                 elif knowledge_search_flag:
                     with st.spinner('Performing knowledge search...'):
-                        response = knowledge_search(search_box=search_box, model_id=model_type)
+                        response = knowledge_search(search_box=search_box, model_id=model_type,
+                                                    prompt_map=prompt_map)
                         logger.info(f'got llm response for knowledge_search: {response}')
                         st.markdown(f'This is a knowledge search question.\n{response}')
 
@@ -447,7 +319,7 @@ def main():
                     with st.spinner('Generating SQL... (Take up to 40s)'):
                         agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
                                                                      selected_profile, 2, 0.5)
-                        agent_cot_task_result = get_agent_cot_task(model_type, search_box,
+                        agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
                                                                    database_profile['tables_info'],
                                                                    agent_cot_retrieve)
                         with st.expander(f'Agent Query Retrieve : {len(agent_cot_retrieve)}'):
@@ -460,30 +332,88 @@ def main():
                                                                 selected_profile, use_rag_flag, agent_cot_task_result)
                 else:
                     st.error("Intent recognition error")
-                
-                # 前端结果显示agent cot任务拆分信息, normal查询的可视化已经合并到了normal_text_search函数中
-                if agent_intent_flag:
+
+                # 前端结果显示agent cot任务拆分信息, normal_text_search 的显示，做了拆分，为了方便跟API逻辑一致
+                if search_intent_flag:
+                    entity_slot_retrieve = normal_search_result.entity_slot_retrieve
+                    if use_rag_flag:
+                        with st.status("Performing QA retrieval...") as status_text:
+                            examples = []
+                            for example in entity_slot_retrieve:
+                                examples.append({'Score': example['_score'],
+                                                 'Question': example['_source']['entity'],
+                                                 'Answer': example['_source']['comment'].strip()})
+                            st.write(examples)
+                            status_text.update(
+                                label=f"Entity Retrieval Completed: {len(entity_slot_retrieve)} entities retrieved",
+                                state="complete", expanded=False)
+                    retrieve_result = normal_search_result.retrieve_result
+                    if use_rag_flag:
+                        with st.status("Performing QA retrieval...") as status_text:
+                            examples = []
+                            for example in retrieve_result:
+                                examples.append({'Score': example['_score'],
+                                                 'Question': example['_source']['text'],
+                                                 'Answer': example['_source']['sql'].strip()})
+                            st.write(examples)
+                            status_text.update(
+                                label=f"QA Retrieval Completed: {len(retrieve_result)} entities retrieved",
+                                state="complete", expanded=False)
+                    if normal_search_result.sql != "":
+                        current_nlq_chain.set_generated_sql(normal_search_result.sql)
+                        st.code(normal_search_result.sql, language="sql")
+
+                        current_nlq_chain.set_generated_sql_response(normal_search_result.response)
+
+                        if explain_gen_process_flag:
+                            with st.spinner('Generating explanations...'):
+                                # hiding generation process for now
+                                # st.session_state.messages[selected_profile].append(
+                                #     {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain(), "type": "text"})
+                                st.markdown(current_nlq_chain.get_generated_sql_explain())
+
+                        # add a upvote(green)/downvote button with logo
+                        feedback = st.columns(2)
+                        feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                           use_container_width=True,
+                                           on_click=upvote_clicked,
+                                           args=[current_nlq_chain.get_question(),
+                                                 current_nlq_chain.get_generated_sql(),
+                                                 env_vars])
+
+                        if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                            # do something here
+                            pass
+
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant", "content": "SQL:" + normal_search_result.sql, "type": "sql"})
+                    else:
+                        st.write("Unable to generate SQL at the moment, please provide more information")
+                elif agent_intent_flag:
                     with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
                         st.write(agent_search_result)
 
                 # 连接数据库，执行SQL, 记录历史记录并展示
                 if search_intent_flag:
                     with st.spinner('Executing query...'):
-                        search_intent_result = get_sql_result_tool(st.session_state['profiles'][current_nlq_chain.profile],
-                                                                    current_nlq_chain.get_generated_sql())
+                        search_intent_result = get_sql_result_tool(
+                            st.session_state['profiles'][current_nlq_chain.profile],
+                            current_nlq_chain.get_generated_sql())
                     if search_intent_result["status_code"] == 500:
                         with st.expander("The SQL Error Info"):
                             st.markdown(search_intent_result["error_info"])
                     else:
                         if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                             with st.spinner('Generating data summarize...'):
-                                search_intent_analyse_result = data_analyse_tool(model_type, search_box,
-                                                                            search_intent_result["data"].to_json(orient='records', force_ascii=False), "query")
+                                search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
+                                                                                 search_intent_result["data"].to_json(
+                                                                                     orient='records',
+                                                                                     force_ascii=False), "query")
                                 st.markdown(search_intent_analyse_result)
                                 st.session_state.messages[selected_profile].append(
                                     {"role": "assistant", "content": search_intent_analyse_result, "type": "text"})
                     st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
-                    
+
                 elif agent_intent_flag:
                     for i in range(len(agent_search_result)):
                         each_task_res = get_sql_result_tool(
@@ -494,8 +424,9 @@ def main():
                                 orient='records')
                             filter_deep_dive_sql_result.append(agent_search_result[i])
 
-                    agent_data_analyse_result = data_analyse_tool(model_type, search_box,
-                                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False), "agent")
+                    agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
+                                                                  json.dumps(filter_deep_dive_sql_result,
+                                                                             ensure_ascii=False), "agent")
                     logger.info("agent_data_analyse_result")
                     logger.info(agent_data_analyse_result)
                     st.session_state.messages[selected_profile].append(
@@ -534,7 +465,7 @@ def main():
                     if current_search_sql_result is not None and len(current_search_sql_result) > 0:
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": current_search_sql_result, "type": "pandas"})
-                                # Reset change flag to False
+                        # Reset change flag to False
                         do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
                     else:
                         st.markdown("No relevant data found")
@@ -542,9 +473,8 @@ def main():
                 # 生成推荐问题
                 if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
                     st.markdown('You might want to further ask:')
-                    active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
                     with st.spinner('Generating suggested questions...'):
-                        generated_sq = generate_suggested_question(search_box, active_prompt, model_id=model_type)
+                        generated_sq = generate_suggested_question(prompt_map, search_box, model_id=model_type)
                         split_strings = generated_sq.split("[generate]")
                         gen_sq_list = [s.strip() for s in split_strings if s.strip()]
                         sq_result = st.columns(3)
