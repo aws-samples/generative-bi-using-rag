@@ -101,7 +101,10 @@ class DynamoQueryLogDao:
             raise
 
     def add(self, entity):
-        self.table.put_item(Item=entity.to_dict())
+        try:
+            self.table.put_item(Item=entity.to_dict())
+        except Exception as e:
+            logger.error("add log entity is error {}",e)
 
     def update(self, entity):
         self.table.put_item(Item=entity.to_dict())
