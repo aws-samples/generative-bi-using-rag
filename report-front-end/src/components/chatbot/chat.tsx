@@ -71,10 +71,25 @@ export default function Chat(
 
   // On first render and on unmount there is no DOM element so `element` will be `null`
   const scrollTo = (element : any) => {
-    if (element) {
+    if (element && !isInViewPort(element)) {
       element.scrollIntoView({behavior: "smooth"});
     }
   };
+
+  function isInViewPort(element: any) {
+    const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+    const {
+      top,
+      right,
+      bottom,
+      left,
+    } = element.getBoundingClientRect();
+
+    return (
+      top >= 0 && left >= 0 && right <= viewWidth && bottom <= (viewHeight - 200)
+    );
+  }
 
   return (
     <div className={styles.chat_container}>
@@ -82,7 +97,7 @@ export default function Chat(
         {messageHistory.map((message, idx) => {
             const isLast = idx === messageHistory.length - 1;
             return (
-              <div key={idx} ref={isLast ? scrollTo : undefined}>
+              <div key={idx} ref={isLast && !loading ? scrollTo : undefined}>
                 <ChatMessage
                   key={idx}
                   message={message}
