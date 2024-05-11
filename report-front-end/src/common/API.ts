@@ -1,11 +1,11 @@
-import { ChatBotConfiguration, ChatBotHistoryItem } from "@/components/chatbot/types";
+import { ChatBotHistoryItem } from "@/components/chatbot/types";
 import { Dispatch, SetStateAction } from "react";
 import { BACKEND_URL } from "../tools/const";
 
 export interface QueryProps {
   query: string;
   setLoading: Dispatch<SetStateAction<boolean>>;
-  configuration: ChatBotConfiguration;
+  configuration: any;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
 }
 
@@ -30,7 +30,6 @@ export async function query_test(props: QueryProps) {
       return;
     }
     const result = await response.json();
-    console.log(result);
     props.setLoading(false);
     if (result) {
       props.setMessageHistory((history: ChatBotHistoryItem[]) => {
@@ -54,36 +53,20 @@ export async function query_test(props: QueryProps) {
 export async function query(props: QueryProps) {
   props.setLoading(true);
   try {
-    /*const param = {
-      query: state.value,
-      bedrock_model_id: userInfo.queryConfig.selectedLLM,
-      use_rag_flag: true,
-      visualize_results_flag: true,
-      intent_ner_recognition_flag: userInfo.queryConfig.intentChecked,
-      agent_cot_flag: userInfo.queryConfig.complexChecked,
-      profile_name: userInfo.queryConfig.selectedDataPro,
-      explain_gen_process_flag: true,
-      gen_suggested_question_flag: userInfo.queryConfig.modelSuggestChecked,
-      top_k: userInfo.queryConfig.topK,
-      top_p: userInfo.queryConfig.topP,
-      max_tokens: userInfo.queryConfig.maxLength,
-      temperature: userInfo.queryConfig.temperature
-    };*/
-    // For test purpose
     const param = {
       query: props.query,
-      bedrock_model_id: "anthropic.claude-3-sonnet-20240229-v1:0",
+      bedrock_model_id: props.configuration.selectedLLM,
       use_rag_flag: true,
       visualize_results_flag: true,
-      intent_ner_recognition_flag: true,
-      agent_cot_flag: true,
-      profile_name: "shopping-demo",
+      intent_ner_recognition_flag: props.configuration.intentChecked,
+      agent_cot_flag: props.configuration.complexChecked,
+      profile_name: props.configuration.selectedDataPro,
       explain_gen_process_flag: true,
-      gen_suggested_question_flag: true,
-      top_k: 250,
-      top_p: 0.9,
-      max_tokens: 2048,
-      temperature: 0.01
+      gen_suggested_question_flag: props.configuration.modelSuggestChecked,
+      top_k: props.configuration.topK,
+      top_p: props.configuration.topP,
+      max_tokens: props.configuration.maxLength,
+      temperature: props.configuration.temperature
     };
     const url = `${BACKEND_URL}qa/ask`;
     const response = await fetch(url, {
@@ -109,6 +92,10 @@ export async function query(props: QueryProps) {
     const result = {
       query: props.query,
       query_intent: "Error",
+      knowledge_search_result: {},
+      sql_search_result: [],
+      agent_search_result: {},
+      suggested_question: []
     };
     props.setLoading(false);
     props.setMessageHistory((history: any) => {

@@ -101,12 +101,12 @@ function ChartPanel(props: ChartTypeProps) {
 
 }
 
-export interface IntentProps {
-  message: ChatBotHistoryItem;
+export interface SQLResultProps {
+  result: SQLSearchResult;
 }
 
-function SQLResultPanel(props: IntentProps) {
-  const sql_data = props.message.sql_search_result.sql_data;
+function SQLResultPanel(props: SQLResultProps) {
+  const sql_data = props.result?.sql_data ?? [];
   let headers: any = [];
   let content: any = [];
   if (sql_data.length > 0) {
@@ -141,34 +141,35 @@ function SQLResultPanel(props: IntentProps) {
             />
           </ExpandableSection> : null
         }
-        {props.message.sql_search_result.data_show_type !== "table" && props.message.sql_search_result.sql_data.length > 0 ?
+        {props.result.data_show_type !== "table" && sql_data.length > 0 ?
           <ExpandableSection
             variant="footer"
             defaultExpanded
             headerActions={<Button>Edit</Button>}
             headerText="Chart">
             <ChartPanel
-              data_show_type={props.message.sql_search_result.data_show_type}
-              sql_data={props.message.sql_search_result.sql_data}
+              data_show_type={props.result.data_show_type}
+              sql_data={props.result.sql_data}
             />
           </ExpandableSection> : null
         }
-        <ExpandableSection
-          variant="footer"
-          defaultExpanded
-          headerText="Answer with insights">
-          <div
-            style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.data_analyse}</div>
-        </ExpandableSection>
+        {props.result?.data_analyse ?
+          <ExpandableSection
+            variant="footer"
+            defaultExpanded
+            headerText="Answer with insights">
+            <div
+              style={{whiteSpace: "pre-line"}}>{props.result.data_analyse}</div>
+          </ExpandableSection> : null}
         <ExpandableSection
           variant="footer"
           headerText="SQL">
           <div className={styles.sql}>
             <SyntaxHighlighter language="javascript">
-              {props.message.sql_search_result.sql}
+              {props.result.sql}
             </SyntaxHighlighter>
             <div
-              style={{whiteSpace: "pre-line"}}>{props.message.sql_search_result.sql_gen_process}</div>
+              style={{whiteSpace: "pre-line"}}>{props.result.sql_gen_process}</div>
           </div>
         </ExpandableSection>
       </SpaceBetween>
@@ -176,36 +177,54 @@ function SQLResultPanel(props: IntentProps) {
   );
 }
 
-function IntentSearchPanel(props: IntentProps) {
+
+export interface IntentSearchProps {
+  message: ChatBotHistoryItem;
+}
+
+function IntentSearchPanel(props: IntentSearchProps) {
 
   switch (props.message.query_intent) {
     case 'normal_search':
       return (
-        <SQLResultPanel message={props.message} />
+        <SQLResultPanel result={props.message.sql_search_result}/>
       );
     case 'reject_search':
       return (
-        <Container>
-          <div style={{whiteSpace: "pre-line"}}>该搜索系统暂不支持</div>
-        </Container>
+        <div style={{whiteSpace: "pre-line"}}>该搜索系统暂不支持</div>
       );
     case 'agent_search':
       return (
-        <Container>
-          Todo: agent_search
-        </Container>
+        <SpaceBetween size={'m'}>
+          {props.message.agent_search_result.agent_sql_search_result.map((message, idx) => (
+            <SpaceBetween
+              key={idx}
+              size={'s'}>
+              <TextContent>
+                <h4>{message.sub_task_query}</h4>
+              </TextContent>
+              <SQLResultPanel
+                result={message.sql_search_result}
+              />
+            </SpaceBetween>
+          ))}
+          {props.message.agent_search_result.agent_summary ?
+            <ExpandableSection
+              variant="footer"
+              defaultExpanded
+              headerText="Data summary">
+              <div style={{whiteSpace: "pre-line"}}>{props.message.agent_search_result.agent_summary}</div>
+            </ExpandableSection> : null
+          }
+        </SpaceBetween>
       );
     case 'knowledge_search':
       return (
-        <Container>
-          <div style={{whiteSpace: "pre-line"}}>{props.message.knowledge_search_result.knowledge_response}</div>
-        </Container>
+        <div style={{whiteSpace: "pre-line"}}>{props.message.knowledge_search_result.knowledge_response}</div>
       );
     default:
       return (
-        <Container>
-          <div style={{whiteSpace: "pre-line"}}>结果返回错误，请检查您的网络设置，稍后请重试</div>
-        </Container>
+        <div style={{whiteSpace: "pre-line"}}>结果返回错误，请检查您的网络设置，稍后请重试</div>
       );
   }
 }
@@ -243,28 +262,29 @@ export default function ChatMessage(props: ChatMessageProps) {
                 setMessageHistory={props.setMessageHistory}
               />
             </ExpandableSection> : null}
-          <ColumnLayout columns={2}>
-            <Button
-              fullWidth
-              iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
-              onClick={() => {
-                props.onThumbsUp();
-                setSelectedIcon(1);
-              }}
-            >
-              Upvote
-            </Button>
-            <Button
-              fullWidth
-              iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
-              onClick={() => {
-                props.onThumbsDown();
-                setSelectedIcon(0);
-              }}
-            >
-              Downvote
-            </Button>
-          </ColumnLayout>
+          {props.message.query_intent === "agent_search" || props.message.query_intent === "normal_search" ?
+            <ColumnLayout columns={2}>
+              <Button
+                fullWidth
+                iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
+                onClick={() => {
+                  props.onThumbsUp();
+                  setSelectedIcon(1);
+                }}
+              >
+                Upvote
+              </Button>
+              <Button
+                fullWidth
+                iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
+                onClick={() => {
+                  props.onThumbsDown();
+                  setSelectedIcon(0);
+                }}
+              >
+                Downvote
+              </Button>
+            </ColumnLayout> : null}
         </SpaceBetween>
       </Container>
     </SpaceBetween>
