@@ -1,5 +1,5 @@
 import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/components";
-import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from "react";
+import { Dispatch, SetStateAction, useState, } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatInputState, } from "./types";
@@ -15,56 +15,11 @@ export interface ChatInputPanelProps {
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
 }
 
-export abstract class ChatScrollState {
-  static userHasScrolled = false;
-  static skipNextScrollEvent = false;
-  static skipNextHistoryUpdate = false;
-}
-
 export default function ChatInputPanel(props: ChatInputPanelProps) {
   const [state, setTextValue] = useState<ChatInputState>({
     value: ""
   });
   const userInfo = useSelector<UserState>((state) => state) as UserState;
-
-  useEffect(() => {
-    const onWindowScroll = () => {
-      if (ChatScrollState.skipNextScrollEvent) {
-        ChatScrollState.skipNextScrollEvent = false;
-        return;
-      }
-
-      const isScrollToTheEnd =
-        Math.abs(
-          window.innerHeight +
-          window.scrollY -
-          document.documentElement.scrollHeight
-        ) <= 10;
-
-      ChatScrollState.userHasScrolled = !isScrollToTheEnd;
-    };
-
-    window.addEventListener("scroll", onWindowScroll);
-
-    return () => {
-      window.removeEventListener("scroll", onWindowScroll);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    if (ChatScrollState.skipNextHistoryUpdate) {
-      ChatScrollState.skipNextHistoryUpdate = false;
-      return;
-    }
-
-    if (!ChatScrollState.userHasScrolled && props.messageHistory.length > 0) {
-      ChatScrollState.skipNextScrollEvent = true;
-      window.scrollTo({
-        top: document.documentElement.scrollHeight + 1000,
-        behavior: "smooth",
-      });
-    }
-  }, [props.messageHistory]);
 
   const handleSendMessage = () => {
     query({
@@ -108,7 +63,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 value={state.value}
                 placeholder={"Send a message"}
               />
-              <div style={{marginLeft: "8px"}}>
+              <SpaceBetween size={'xs'} direction={'horizontal'}>
                 <Button
                   disabled={state.value.length === 0}
                   onClick={handleSendMessage}
@@ -120,9 +75,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 <Button
                   iconName="settings"
                   variant="icon"
-                  onClick={handleSetting}
-                />
-              </div>
+                  onClick={handleSetting}>
+                </Button>
+              </SpaceBetween>
             </div>
           </SpaceBetween>
         </Container>
