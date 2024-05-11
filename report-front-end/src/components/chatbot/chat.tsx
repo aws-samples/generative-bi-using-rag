@@ -69,23 +69,38 @@ export default function Chat(
     }
   };
 
+  // On first render and on unmount there is no DOM element so `element` will be `null`
+  const scrollTo = (element : any) => {
+    if (element) {
+      element.scrollIntoView({behavior: "smooth"});
+    }
+  };
+
   return (
     <div className={styles.chat_container}>
-      <SpaceBetween size={'l'}>
-        {messageHistory.map((message, idx) => (
-          <ChatMessage
-            key={idx}
-            message={message}
-            setLoading={setLoading}
-            setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
-            onThumbsUp={() => handleFeedback("upvote", message)}
-            onThumbsDown={() => handleFeedback("downvote", message)}
-          />
-        ))}
+      <SpaceBetween size={'xxl'}>
+        {messageHistory.map((message, idx) => {
+            const isLast = idx === messageHistory.length - 1;
+            return (
+              <div key={idx} ref={isLast ? scrollTo : undefined}>
+                <ChatMessage
+                  key={idx}
+                  message={message}
+                  setLoading={setLoading}
+                  setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
+                  onThumbsUp={() => handleFeedback("upvote", message)}
+                  onThumbsDown={() => handleFeedback("downvote", message)}
+                />
+              </div>
+            );
+          }
+        )}
         {loading && (
-          <Box float="left">
-            <Spinner/>
-          </Box>
+          <div ref={loading ? scrollTo : undefined}>
+            <Box float="left">
+              <Spinner/>
+            </Box>
+          </div>
         )}
       </SpaceBetween>
       <div className={styles.welcome_text}>

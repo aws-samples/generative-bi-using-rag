@@ -9,47 +9,6 @@ export interface QueryProps {
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
 }
 
-export async function query_test(props: QueryProps) {
-  props.setLoading(true);
-  try {
-    // const url = `${BACKEND_URL}qa/ask/test?question_type=reject`;
-    // const url = `${BACKEND_URL}qa/ask/test?question_type=knowledge`;
-    // const url = `${BACKEND_URL}qa/ask/test?question_type=normal_table`;
-    // const url = `${BACKEND_URL}qa/ask/test?question_type=normal_line`;
-    const url = `${BACKEND_URL}qa/ask/test?question_type=normal_pie`;
-    // const url = `${BACKEND_URL}qa/ask/test?question_type=agent`;
-    const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify({}),
-      }
-    );
-    if (!response.ok) {
-      return;
-    }
-    const result = await response.json();
-    props.setLoading(false);
-    if (result) {
-      props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [...history, result];
-      });
-    }
-  } catch (err) {
-    props.setLoading(false);
-    const result = {
-      query: props.query,
-      query_intent: "Error",
-    };
-    props.setLoading(false);
-    props.setMessageHistory((history: any) => {
-      return [...history, result];
-    });
-    console.error('Query error, ', err);
-  }
-}
-
 export async function query(props: QueryProps) {
   props.setLoading(true);
   try {
