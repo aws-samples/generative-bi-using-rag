@@ -2,6 +2,7 @@ import logging
 import time
 import random
 from datetime import datetime
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -33,3 +34,11 @@ def get_current_time():
     # 注意：strftime默认不直接支持毫秒，需要单独处理
     formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')
     return formatted_time
+
+
+def get_generated_sql_explain(generated_sql_response):
+    index = generated_sql_response.find("</sql>")
+    if index != -1:
+        return generated_sql_response[index + len("</sql>"):]
+    else:
+        return generated_sql_response

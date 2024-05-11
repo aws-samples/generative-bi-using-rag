@@ -330,8 +330,14 @@ def ask(question: Question) -> Answer:
                     orient='records')
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
-                sub_task_sql_result = SQLSearchResult(sql_data=each_task_sql_res, sql=each_task_res["sql"], data_show_type="table",
-                                                    sql_gen_process="",
+
+                model_select_type, show_select_data = data_visualization(model_type, agent_search_result[i]["query"],
+                                                                         each_task_res["data"],
+                                                                         database_profile['prompt_map'])
+
+                each_task_sql_response = agent_search_result[i]["response"]
+                sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"], data_show_type=model_select_type,
+                                                    sql_gen_process=each_task_sql_response,
                                                     data_analyse="")
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
