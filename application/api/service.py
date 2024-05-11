@@ -8,6 +8,7 @@ from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
+from nlq.business.log_store import LogManagement
 from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
@@ -16,6 +17,7 @@ from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_wit
     generate_suggested_question, data_visualization
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
+from utils.tool import generate_log_id, get_current_time
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult
 from .exception_handler import BizException
@@ -179,6 +181,10 @@ def ask(question: Question) -> Answer:
 
     filter_deep_dive_sql_result = []
 
+    log_id = generate_log_id()
+    current_time = get_current_time()
+    log_info = ""
+
     all_profiles = ProfileManagement.get_all_profiles_with_info()
     database_profile = all_profiles[selected_profile]
 
@@ -188,7 +194,7 @@ def ask(question: Question) -> Answer:
                                         sql_gen_process="",
                                         data_analyse="")
 
-    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
+    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
 
     knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
 
@@ -232,6 +238,8 @@ def ask(question: Question) -> Answer:
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[])
+        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
+                                          intent="reject_search", log_info="", time_str=current_time)
         return answer
     elif search_intent_flag:
         normal_search_result = normal_text_search(search_box, model_type,
@@ -246,6 +254,10 @@ def ask(question: Question) -> Answer:
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[])
+
+        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
+                                          intent="knowledge_search", log_info=knowledge_search_result.knowledge_response,
+                                          time_str=current_time)
         return answer
 
     else:
@@ -298,6 +310,12 @@ def ask(question: Question) -> Answer:
                 # sql_search_result.sql_data = [list(search_intent_result["data"].columns)] + search_intent_result[
                 #     "data"].values.tolist()
 
+        log_info = search_intent_result["error_info"] + ";" + sql_search_result.data_analyse
+        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql, query=search_box,
+                                          intent="normal_search",
+                                          log_info=log_info,
+                                          time_str=current_time)
+
         answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=generate_suggested_question_list)
@@ -311,13 +329,30 @@ def ask(question: Question) -> Answer:
                     orient='records')
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
+
+                model_select_type, show_select_data = data_visualization(model_type, agent_search_result[i]["query"],
+                                                                         each_task_res["data"],
+                                                                         database_profile['prompt_map'])
+
+                each_task_sql_response = agent_search_result[i]["response"]
+                sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"], data_show_type=model_select_type,
+                                                    sql_gen_process=each_task_sql_response,
+                                                    data_analyse="")
+
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
-                                                                  sql_data=each_task_sql_res,
-                                                                  sql=each_task_res["sql"], data_show_type="table",
-                                                                  sql_gen_process="",
-                                                                  data_analyse="")
+                                                                  sql_search_result=sub_task_sql_result)
                 agent_sql_search_result.append(each_task_sql_search_result)
+
                 sub_search_task.append(agent_search_result[i]["query"])
+                log_info = ""
+            else:
+                log_info = agent_search_result[i]["query"] + "The SQL error Info: " + each_task_res["error_info"] + "。"
+            log_id = generate_log_id()
+            LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=each_task_res["sql"],
+                                              query=search_box + "; The sub task is " + agent_search_result[i]["query"],
+                                              intent="agent_search",
+                                              log_info=log_info,
+                                              time_str=current_time)
         agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False),
                                                       "agent")
