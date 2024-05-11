@@ -14,7 +14,7 @@ PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'
 class ProfileConfigEntity:
 
     def __init__(self, profile_name: str, conn_name: str, schemas: List[str], tables: List[str], comments: str,
-                 tables_info: dict = None, prompt_map: dict = prompt_map_dict):
+                 tables_info: dict = None, prompt_map: dict = prompt_map_dict, **kwargs):
         self.profile_name = profile_name
         self.conn_name = conn_name
         self.schemas = schemas
