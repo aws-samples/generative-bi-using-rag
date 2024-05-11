@@ -188,7 +188,7 @@ def ask(question: Question) -> Answer:
                                         sql_gen_process="",
                                         data_analyse="")
 
-    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[], sub_search_task=[])
+    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
 
     knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
 
@@ -311,11 +311,12 @@ def ask(question: Question) -> Answer:
                     orient='records')
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
+                sub_task_sql_result = SQLSearchResult(sql_data=each_task_sql_res, sql=each_task_res["sql"], data_show_type="table",
+                                                    sql_gen_process="",
+                                                    data_analyse="")
+
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
-                                                                  sql_data=each_task_sql_res,
-                                                                  sql=each_task_res["sql"], data_show_type="table",
-                                                                  sql_gen_process="",
-                                                                  data_analyse="")
+                                                                  sub_task_sql_result=sub_task_sql_result)
                 agent_sql_search_result.append(each_task_sql_search_result)
                 sub_search_task.append(agent_search_result[i]["query"])
         agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,

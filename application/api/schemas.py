@@ -67,11 +67,7 @@ class SQLSearchResult(BaseModel):
 
 class TaskSQLSearchResult(BaseModel):
     sub_task_query: str
-    sql: str
-    sql_data: list[Any]
-    data_show_type: str
-    sql_gen_process: str
-    data_analyse: str
+    sub_task_sql_result: SQLSearchResult
 
 
 class KnowledgeSearchResult(BaseModel):
