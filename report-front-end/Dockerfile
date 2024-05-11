@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:18.20.0 AS builder
+FROM public.ecr.aws/docker/library/node:20.9.0 AS builder
 COPY . /tmp/frontend/
 RUN cd /tmp/frontend/ && npm ci && npm run build
 

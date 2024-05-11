@@ -17,9 +17,9 @@ import { useSelector, useDispatch } from "react-redux";
 const ConfigPanel = () => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
   const dispatch = useDispatch();
-  const [intentChecked, setIntentChecked] = useState(false);
-  const [complexChecked, setComplexChecked] = useState(false);
-  const [modelSuggestChecked, setModelSuggestChecked] = useState(false);
+  const [intentChecked, setIntentChecked] = useState(true);
+  const [complexChecked, setComplexChecked] = useState(true);
+  const [modelSuggestChecked, setModelSuggestChecked] = useState(true);
   const [temperature, setTemperature] = useState(1);
   const [topP, setTopP] = useState(0.999);
   const [topK, setTopK] = useState(250);
