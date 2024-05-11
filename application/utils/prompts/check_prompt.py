@@ -75,32 +75,24 @@ required_syntax_map = {
     },
     'agent': {
         'system_prompt': {
-            'mixtral-8x7b-instruct-0': [
-                'table_schema_data',
-                'sql_guidance',
-                'example_data'
-            ],
-            'llama3-70b-instruct-0': [
-                'table_schema_data',
-                'sql_guidance',
-                'example_data'
-            ],
-            'haiku-20240307v1-0': [
-                'table_schema_data',
-                'sql_guidance',
-                'example_data'
-            ],
-            'sonnet-20240229v1-0': [
-                'table_schema_data',
-                'sql_guidance',
-                'example_data'
-            ]
+            'mixtral-8x7b-instruct-0': [],
+            'llama3-70b-instruct-0': [],
+            'haiku-20240307v1-0': [],
+            'sonnet-20240229v1-0': []
         },
         'user_prompt': {
-            'mixtral-8x7b-instruct-0': ['question'],
-            'llama3-70b-instruct-0': ['question'],
-            'haiku-20240307v1-0': ['question'],
-            'sonnet-20240229v1-0': ['question']
+            'mixtral-8x7b-instruct-0': ['table_schema_data',
+                                        'sql_guidance',
+                                        'example_data', 'question'],
+            'llama3-70b-instruct-0': ['table_schema_data',
+                                      'sql_guidance',
+                                      'example_data', 'question'],
+            'haiku-20240307v1-0': ['table_schema_data',
+                                   'sql_guidance',
+                                   'example_data', 'question'],
+            'sonnet-20240229v1-0': ['table_schema_data',
+                                    'sql_guidance',
+                                    'example_data', 'question']
         }
     },
     'agent_analyse': {
