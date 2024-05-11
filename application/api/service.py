@@ -293,7 +293,7 @@ def ask(question: Question) -> Answer:
         search_intent_result = get_sql_result_tool(database_profile,
                                                    current_nlq_chain.get_generated_sql())
         if search_intent_result["status_code"] == 500:
-            sql_search_result.data_analyse = "-1"
+            sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                 search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
