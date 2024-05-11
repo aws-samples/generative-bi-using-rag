@@ -67,7 +67,7 @@ class SQLSearchResult(BaseModel):
 
 class TaskSQLSearchResult(BaseModel):
     sub_task_query: str
-    sub_task_sql_result: SQLSearchResult
+    sql_search_result: SQLSearchResult
 
 
 class KnowledgeSearchResult(BaseModel):

@@ -316,7 +316,7 @@ def ask(question: Question) -> Answer:
                                                     data_analyse="")
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
-                                                                  sub_task_sql_result=sub_task_sql_result)
+                                                                  sql_search_result=sub_task_sql_result)
                 agent_sql_search_result.append(each_task_sql_search_result)
                 sub_search_task.append(agent_search_result[i]["query"])
         agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
