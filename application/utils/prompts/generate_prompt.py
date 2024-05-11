@@ -1624,8 +1624,12 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
     user_prompt = prompt_map.get('agent', {}).get('user_prompt', {}).get(name)
 
     # reformat prompts
-    system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
-                                         example_data=AGENT_COT_EXAMPLE)
+    if agent_cot_example_str != "":
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
+                                             example_data=agent_cot_example_str)
+    else:
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
+                                             example_data=AGENT_COT_EXAMPLE)
     user_prompt = user_prompt.format(question=search_box)
 
     return user_prompt, system_prompt
