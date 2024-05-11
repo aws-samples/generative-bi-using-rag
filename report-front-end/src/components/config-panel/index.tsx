@@ -20,7 +20,7 @@ const ConfigPanel = () => {
   const [intentChecked, setIntentChecked] = useState(true);
   const [complexChecked, setComplexChecked] = useState(true);
   const [modelSuggestChecked, setModelSuggestChecked] = useState(true);
-  const [temperature, setTemperature] = useState(1);
+  const [temperature, setTemperature] = useState(0.01);
   const [topP, setTopP] = useState(0.999);
   const [topK, setTopK] = useState(250);
   const [maxLength, setMaxLength] = useState(2048);
