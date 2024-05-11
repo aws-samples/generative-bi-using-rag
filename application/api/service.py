@@ -311,7 +311,6 @@ def ask(question: Question) -> Answer:
                 #     "data"].values.tolist()
 
         log_info = search_intent_result["error_info"] + ";" + sql_search_result.data_analyse
-        log_id = generate_log_id()
         LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql, query=search_box,
                                           intent="normal_search",
                                           log_info=log_info,
@@ -348,7 +347,7 @@ def ask(question: Question) -> Answer:
                 log_info = ""
             else:
                 log_info = agent_search_result[i]["query"] + "The SQL error Info: " + each_task_res["error_info"] + "。"
-
+            log_id = generate_log_id()
             LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=each_task_res["sql"],
                                               query=search_box + "; The sub task is " + agent_search_result[i]["query"],
                                               intent="agent_search",
