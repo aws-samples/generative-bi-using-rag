@@ -673,7 +673,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -710,7 +711,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -746,7 +748,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -782,7 +785,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -1626,10 +1630,10 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
 
     # reformat prompts
     if agent_cot_example_str != "":
-        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance="",
                                              example_data=agent_cot_example_str)
     else:
-        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance="",
                                              example_data=AGENT_COT_EXAMPLE)
     user_prompt = user_prompt.format(question=search_box)
 
