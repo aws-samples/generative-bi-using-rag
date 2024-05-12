@@ -650,7 +650,7 @@ Please generate queries based on the input query.
 # agent任务拆分
 agent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -673,7 +673,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -682,11 +683,12 @@ here is a example:
 
 Please conduct a thorough analysis of the user's question according to the above instructions, and finally only output the JSON structure without outputting any other content.
 
+
 """
 
 agent_system_prompt_dict['llama3-70b-instruct-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -709,7 +711,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -722,7 +725,7 @@ Please conduct a thorough analysis of the user's question according to the above
 
 agent_system_prompt_dict['haiku-20240307v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -745,7 +748,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -758,7 +762,7 @@ Please conduct a thorough analysis of the user's question according to the above
 
 agent_system_prompt_dict['sonnet-20240229v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -781,7 +785,8 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -1624,8 +1629,12 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
     user_prompt = prompt_map.get('agent', {}).get('user_prompt', {}).get(name)
 
     # reformat prompts
-    system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
-                                         example_data=AGENT_COT_EXAMPLE)
+    if agent_cot_example_str != "":
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance="",
+                                             example_data=agent_cot_example_str)
+    else:
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance="",
+                                             example_data=AGENT_COT_EXAMPLE)
     user_prompt = user_prompt.format(question=search_box)
 
     return user_prompt, system_prompt

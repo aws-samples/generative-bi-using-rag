@@ -353,8 +353,9 @@ def user_feedback(input_data: FeedBackInput):
                                                   input_data.query_intent, input_data.query_answer_list)
         return upvote_res
     else:
-        logger.info("user downvote {}", input_data)
-        return True
+        downvote_res = service.user_feedback_downvote(input_data.data_profiles, input_data.query,
+                                                  input_data.query_intent, input_data.query_answer_list)
+        return downvote_res
 
 
 @router.websocket("/ws")

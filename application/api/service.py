@@ -209,6 +209,7 @@ def ask(question: Question) -> Answer:
         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
     prompt_map = database_profile['prompt_map']
 
+    entity_slot = []
     # 通过标志位控制后续的逻辑
     # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
     if intent_ner_recognition_flag:
@@ -292,7 +293,7 @@ def ask(question: Question) -> Answer:
         search_intent_result = get_sql_result_tool(database_profile,
                                                    current_nlq_chain.get_generated_sql())
         if search_intent_result["status_code"] == 500:
-            sql_search_result.data_analyse = "-1"
+            sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                 search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
@@ -315,7 +316,6 @@ def ask(question: Question) -> Answer:
                                           intent="normal_search",
                                           log_info=log_info,
                                           time_str=current_time)
-
         answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=generate_suggested_question_list)
@@ -381,6 +381,31 @@ def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, quer
         return True
     except Exception as e:
         return False
+
+def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
+    try:
+        if query_intent == "normal_search":
+            if len(query_answer_list) > 0:
+                log_id = generate_log_id()
+                current_time = get_current_time()
+                LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+                                                  sql=query_answer_list[0].sql, query=query,
+                                                  intent="normal_search_user_downvote",
+                                                  log_info="",
+                                                  time_str=current_time)
+        elif query_intent == "agent_search":
+            for each in query_answer_list:
+                log_id = generate_log_id()
+                current_time = get_current_time()
+                LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+                                                  sql=each.sql, query=query + "; The sub task is " + each.query,
+                                                  intent="agent_search_user_downvote",
+                                                  log_info="",
+                                                  time_str=current_time)
+        return True
+    except Exception as e:
+        return False
+
 
 
 def get_nlq_chain(question: Question) -> NLQChain:
