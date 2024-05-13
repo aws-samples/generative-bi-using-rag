@@ -4,6 +4,8 @@ import { Button } from "@aws-amplify/ui-react";
 import styles from "./chat.module.scss";
 import { ChatInputState } from "./types";
 import { BACKEND_URL } from "../../tools/const";
+import { useSelector } from "react-redux";
+import { UserState } from "@/types/StoreTypes";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
@@ -14,8 +16,10 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   const [showMoreQuestions, setShowMoreQuestions] = useState(true);
   const [questions, setQuestions] = useState<string[]>([]);
 
-  const getRecommendQuestions = async () => {
-    const url = `${BACKEND_URL}qa/get_custom_question?data_profile=shopping-demo`;
+  const userInfo = useSelector<UserState>((state) => state) as UserState;
+
+  const getRecommendQuestions = async (data_profile: string) => {
+    const url = `${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`;
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -33,8 +37,11 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   }
 
   useEffect(() => {
-    getRecommendQuestions().then();
-  }, []);
+    const data_profile = userInfo.queryConfig.selectedDataPro;
+    if (data_profile) {
+      getRecommendQuestions(data_profile).then();
+    }
+  }, [userInfo]);
 
   return (
     <div>
