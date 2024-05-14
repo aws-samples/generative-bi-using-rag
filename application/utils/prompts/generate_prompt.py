@@ -673,6 +673,14 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
+
 Here are some examples of breaking down complex problems into subtasks:
 
 <example>
@@ -711,6 +719,14 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
+
 Here are some examples of breaking down complex problems into subtasks:
 
 <example>
@@ -748,6 +764,14 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
+
 Here are some examples of breaking down complex problems into subtasks:
 
 <example>
@@ -784,6 +808,14 @@ Here are some guidelines you should follow:
 {sql_guidance}
 
 </guidelines> 
+
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
 
 Here are some examples of breaking down complex problems into subtasks:
 
@@ -845,7 +877,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
@@ -863,7 +894,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 agent_analyse_user_prompt_dict['haiku-20240307v1-0'] = """
@@ -881,7 +911,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 agent_analyse_user_prompt_dict['sonnet-20240229v1-0'] = """
@@ -899,7 +928,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 # data summary prompt
