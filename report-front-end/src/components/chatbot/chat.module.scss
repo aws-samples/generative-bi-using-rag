@@ -82,7 +82,7 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .input_textarea {
@@ -91,7 +91,7 @@
   padding: 12px 12px 12px 4px;
   background-color: transparent;
   outline: none;
-  width: 100%;
+  width: 95%;
   height: 100%;
   font-size: 1rem;
 }
@@ -159,7 +159,7 @@
 }
 
 .button:active {
-  background-color: #0972d3;
+  background-color: #539fe5;
 }
 
 @media (max-width: 689px) {

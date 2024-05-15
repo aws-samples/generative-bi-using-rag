@@ -9,12 +9,23 @@ import {
   Table,
   TextContent
 } from "@cloudscape-design/components";
-import { ChatBotAnswerItem, ChatBotHistoryItem, ChatBotMessageType, SQLSearchResult } from "./types";
+import {
+  ChatBotAnswerItem,
+  ChatBotHistoryItem,
+  ChatBotMessageType,
+  FeedBackItem,
+  FeedBackType,
+  SQLSearchResult
+} from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "./chat.module.scss";
 import SuggestedQuestions from "./suggested-questions";
 import { Dispatch, SetStateAction, useState } from "react";
+import { addUserFeedback } from "../../common/API";
+import { useSelector } from "react-redux";
+import { UserState } from "@/types/StoreTypes";
+import { DEFAULT_QUERY_CONFIG } from "../../enum/DefaultQueryEnum";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -102,17 +113,18 @@ function ChartPanel(props: ChartTypeProps) {
 }
 
 export interface SQLResultProps {
+  query: string;
   intent: string;
   result: SQLSearchResult;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
 }
 
 function SQLResultPanel(props: SQLResultProps) {
 
   const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
+  const userInfo = useSelector<UserState>((state) => state) as UserState;
 
   const sql_data = props.result?.sql_data ?? [];
+  const sql_data_chart = props.result?.sql_data_chart ?? [];
   let headers: any = [];
   let content: any = [];
   if (sql_data.length > 0) {
@@ -151,11 +163,21 @@ function SQLResultPanel(props: SQLResultProps) {
           <ExpandableSection
             variant="footer"
             defaultExpanded
-            headerActions={<Button>Edit</Button>}
             headerText="Chart">
             <ChartPanel
               data_show_type={props.result.data_show_type}
               sql_data={props.result.sql_data}
+            />
+          </ExpandableSection> : null
+        }
+        {props.result.data_show_type === "table" && sql_data_chart.length > 0 ?
+          <ExpandableSection
+            variant="footer"
+            defaultExpanded
+            headerText="Chart">
+            <ChartPanel
+              data_show_type={sql_data_chart[0].chart_type}
+              sql_data={sql_data_chart[0].chart_data}
             />
           </ExpandableSection> : null
         }
@@ -177,29 +199,42 @@ function SQLResultPanel(props: SQLResultProps) {
               </SyntaxHighlighter>
               <div style={{whiteSpace: "pre-line"}}>{props.result.sql_gen_process}</div>
             </div>
-            {props.intent === "normal_search" ?
-              <ColumnLayout columns={2}>
-                <Button
-                  fullWidth
-                  iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
-                  onClick={() => {
-                    props.onThumbsUp();
-                    setSelectedIcon(1);
-                  }}
-                >
-                  Upvote
-                </Button>
-                <Button
-                  fullWidth
-                  iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
-                  onClick={() => {
-                    props.onThumbsDown();
-                    setSelectedIcon(0);
-                  }}
-                >
-                  Downvote
-                </Button>
-              </ColumnLayout> : null}
+            <ColumnLayout columns={2}>
+              <Button
+                fullWidth
+                iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
+                onClick={() => {
+                  const feedbackData = {
+                    feedback_type: FeedBackType.UPVOTE,
+                    data_profiles: userInfo.queryConfig.data_profiles || DEFAULT_QUERY_CONFIG.selectedDataPro,
+                    query: props.query,
+                    query_intent: props.intent,
+                    query_answer: props.result.sql
+                  };
+                  handleFeedback(feedbackData);
+                  setSelectedIcon(1);
+                }}
+              >
+                Upvote
+              </Button>
+              <Button
+                fullWidth
+                iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
+                onClick={() => {
+                  const feedbackData = {
+                    feedback_type: FeedBackType.DOWNVOTE,
+                    data_profiles: userInfo.queryConfig.data_profiles || DEFAULT_QUERY_CONFIG.selectedDataPro,
+                    query: props.query,
+                    query_intent: props.intent,
+                    query_answer: props.result.sql
+                  };
+                  handleFeedback(feedbackData);
+                  setSelectedIcon(0);
+                }}
+              >
+                Downvote
+              </Button>
+            </ColumnLayout>
           </SpaceBetween>
         </ExpandableSection>
       </SpaceBetween>
@@ -210,8 +245,6 @@ function SQLResultPanel(props: SQLResultProps) {
 
 export interface IntentSearchProps {
   message: ChatBotAnswerItem;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
 }
 
 function IntentSearchPanel(props: IntentSearchProps) {
@@ -220,10 +253,9 @@ function IntentSearchPanel(props: IntentSearchProps) {
     case 'normal_search':
       return (
         <SQLResultPanel
+          query={props.message.query}
           intent={props.message.query_intent}
           result={props.message.sql_search_result}
-          onThumbsUp={props.onThumbsUp}
-          onThumbsDown={props.onThumbsDown}
         />
       );
     case 'reject_search':
@@ -241,10 +273,9 @@ function IntentSearchPanel(props: IntentSearchProps) {
                 <h4>{message.sub_task_query}</h4>
               </TextContent>
               <SQLResultPanel
+                query={message.sub_task_query}
                 intent={props.message.query_intent}
                 result={message.sql_search_result}
-                onThumbsUp={props.onThumbsUp}
-                onThumbsDown={props.onThumbsDown}
               />
             </SpaceBetween>
           ))}
@@ -278,8 +309,6 @@ function AIChatMessage(props: ChatMessageProps) {
       <SpaceBetween size={'s'}>
         <IntentSearchPanel
           message={content}
-          onThumbsUp={props.onThumbsUp}
-          onThumbsDown={props.onThumbsDown}
         />
         {content.suggested_question?.length > 0 ?
           <ExpandableSection
@@ -301,8 +330,6 @@ export interface ChatMessageProps {
   message: ChatBotHistoryItem;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
@@ -318,10 +345,12 @@ export default function ChatMessage(props: ChatMessageProps) {
         <AIChatMessage
           message={props.message}
           setLoading={props.setLoading}
-          setMessageHistory={props.setMessageHistory}
-          onThumbsUp={props.onThumbsUp}
-          onThumbsDown={props.onThumbsDown}/>
+          setMessageHistory={props.setMessageHistory}/>
       )}
     </SpaceBetween>
   );
 }
+
+const handleFeedback = (feedbackData: FeedBackItem) => {
+  addUserFeedback(feedbackData).then();
+};

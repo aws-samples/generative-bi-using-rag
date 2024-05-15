@@ -29,6 +29,7 @@ export async function query(props: QueryProps) {
       profile_name: props.configuration.selectedDataPro || DEFAULT_QUERY_CONFIG.selectedDataPro,
       explain_gen_process_flag: true,
       gen_suggested_question_flag: props.configuration.modelSuggestChecked,
+      answer_with_insights: props.configuration.answerInsightChecked || DEFAULT_QUERY_CONFIG.answerInsightChecked,
       top_k: props.configuration.topK,
       top_p: props.configuration.topP,
       max_tokens: props.configuration.maxLength,
@@ -73,6 +74,28 @@ export async function query(props: QueryProps) {
         content: result
       }];
     });
+    console.error('Query error, ', err);
+  }
+}
+
+export async function addUserFeedback(feedbackData: {}) {
+  // call api
+  try {
+    const url = `${BACKEND_URL}qa/user_feedback`;
+    const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify(feedbackData)
+      }
+    );
+    if (!response.ok) {
+      console.error('AddUserFeedback error, ', response);
+      return;
+    }
+    const result = await response.json();
+  } catch (err) {
     console.error('Query error, ', err);
   }
 }
