@@ -1,0 +1,60 @@
+.login-page {
+  width: 600px;
+  height: 400px;
+  position: relative;
+  top: 100px;
+  margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0px 1px 14px rgba(0, 7, 22, 0.14), 0px 0px 4px rgba(65, 77, 92, 0.2);
+
+  .login-page-title {
+    display: block;
+    padding-top: 26px;
+    padding-left: 26px;
+    font-family: 'Open Sans';
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 30px;
+    color: rgba(0, 7, 22);
+  }
+
+  .login-page-name {
+    display: inline-block;
+    width: 100%;
+    margin-top: 50px;
+    padding-left: 26px;
+  }
+
+  .login-page-pwd {
+    display: inline-block;
+    width: 100%;
+    margin-top: 30px;
+    padding-left: 26px;
+  }
+
+  .login-page-span {
+    width: 90px;
+    float: left;
+    line-height: 30px;
+  }
+
+  .login-page-input {
+    width: 360px;
+  }
+
+  .login-page-btn {
+    margin-top: 50px;
+    text-align: center;
+    .login {
+      margin-right: 30px;
+    }
+  }
+
+  .login-page-support {
+    margin-top: 40px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    color:royalblue;
+  }
+}
