@@ -44,7 +44,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       <div className={styles.input_area_container}>
         <Container>
           <SpaceBetween size={'s'}>
-            <CustomQuestions setTextValue={setTextValue}></CustomQuestions>
+            <CustomQuestions
+              setTextValue={setTextValue}
+              setLoading={props.setLoading}
+              setMessageHistory={props.setMessageHistory}
+            ></CustomQuestions>
             <div className={styles.input_textarea_container}>
               <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
                 <Icon name="microphone" variant="disabled"/>
@@ -58,12 +62,12 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 onChange={(e) =>
                   setTextValue((state) => ({...state, value: e.target.value}))
                 }
-                onKeyDown={(e) => {
+                /*onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage();
                   }
-                }}
+                }}*/
                 value={state.value}
                 placeholder={"Send a message"}
               />
@@ -72,7 +76,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   disabled={state.value.length === 0}
                   onClick={handleSendMessage}
                   iconAlign="right"
-                  iconName={"angle-right-double"}
+                  iconName="angle-right-double"
                   variant="primary">
                   Send
                 </Button>

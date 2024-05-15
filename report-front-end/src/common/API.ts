@@ -1,4 +1,4 @@
-import { ChatBotHistoryItem } from "@/components/chatbot/types";
+import { ChatBotHistoryItem, ChatBotMessageType } from "../components/chatbot/types";
 import { Dispatch, SetStateAction } from "react";
 import { BACKEND_URL } from "../tools/const";
 import { DEFAULT_QUERY_CONFIG } from "../enum/DefaultQueryEnum";
@@ -11,6 +11,12 @@ export interface QueryProps {
 }
 
 export async function query(props: QueryProps) {
+  props.setMessageHistory((history: ChatBotHistoryItem[]) => {
+    return [...history, {
+      type: ChatBotMessageType.Human,
+      content: props.query
+    }];
+  });
   props.setLoading(true);
   try {
     const param = {
@@ -45,7 +51,10 @@ export async function query(props: QueryProps) {
     console.log(result);
     props.setLoading(false);
     props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-      return [...history, result];
+      return [...history, {
+        type: ChatBotMessageType.AI,
+        content: result
+      }];
     });
   } catch (err) {
     props.setLoading(false);
@@ -59,7 +68,10 @@ export async function query(props: QueryProps) {
     };
     props.setLoading(false);
     props.setMessageHistory((history: any) => {
-      return [...history, result];
+      return [...history, {
+        type: ChatBotMessageType.AI,
+        content: result
+      }];
     });
     console.error('Query error, ', err);
   }

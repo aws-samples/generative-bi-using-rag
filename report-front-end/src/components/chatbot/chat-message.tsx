@@ -9,7 +9,7 @@ import {
   Table,
   TextContent
 } from "@cloudscape-design/components";
-import { ChatBotHistoryItem, SQLSearchResult } from "./types";
+import { ChatBotAnswerItem, ChatBotHistoryItem, ChatBotMessageType, SQLSearchResult } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import styles from "./chat.module.scss";
@@ -102,10 +102,16 @@ function ChartPanel(props: ChartTypeProps) {
 }
 
 export interface SQLResultProps {
+  intent: string;
   result: SQLSearchResult;
+  onThumbsUp: () => void;
+  onThumbsDown: () => void;
 }
 
 function SQLResultPanel(props: SQLResultProps) {
+
+  const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
+
   const sql_data = props.result?.sql_data ?? [];
   let headers: any = [];
   let content: any = [];
@@ -164,13 +170,37 @@ function SQLResultPanel(props: SQLResultProps) {
         <ExpandableSection
           variant="footer"
           headerText="SQL">
-          <div className={styles.sql}>
-            <SyntaxHighlighter language="javascript">
-              {props.result.sql}
-            </SyntaxHighlighter>
-            <div
-              style={{whiteSpace: "pre-line"}}>{props.result.sql_gen_process}</div>
-          </div>
+          <SpaceBetween size={'s'}>
+            <div className={styles.sql}>
+              <SyntaxHighlighter language="javascript">
+                {props.result.sql}
+              </SyntaxHighlighter>
+              <div style={{whiteSpace: "pre-line"}}>{props.result.sql_gen_process}</div>
+            </div>
+            {props.intent === "normal_search" ?
+              <ColumnLayout columns={2}>
+                <Button
+                  fullWidth
+                  iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
+                  onClick={() => {
+                    props.onThumbsUp();
+                    setSelectedIcon(1);
+                  }}
+                >
+                  Upvote
+                </Button>
+                <Button
+                  fullWidth
+                  iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
+                  onClick={() => {
+                    props.onThumbsDown();
+                    setSelectedIcon(0);
+                  }}
+                >
+                  Downvote
+                </Button>
+              </ColumnLayout> : null}
+          </SpaceBetween>
         </ExpandableSection>
       </SpaceBetween>
     </div>
@@ -179,7 +209,9 @@ function SQLResultPanel(props: SQLResultProps) {
 
 
 export interface IntentSearchProps {
-  message: ChatBotHistoryItem;
+  message: ChatBotAnswerItem;
+  onThumbsUp: () => void;
+  onThumbsDown: () => void;
 }
 
 function IntentSearchPanel(props: IntentSearchProps) {
@@ -187,7 +219,12 @@ function IntentSearchPanel(props: IntentSearchProps) {
   switch (props.message.query_intent) {
     case 'normal_search':
       return (
-        <SQLResultPanel result={props.message.sql_search_result}/>
+        <SQLResultPanel
+          intent={props.message.query_intent}
+          result={props.message.sql_search_result}
+          onThumbsUp={props.onThumbsUp}
+          onThumbsDown={props.onThumbsDown}
+        />
       );
     case 'reject_search':
       return (
@@ -204,7 +241,10 @@ function IntentSearchPanel(props: IntentSearchProps) {
                 <h4>{message.sub_task_query}</h4>
               </TextContent>
               <SQLResultPanel
+                intent={props.message.query_intent}
                 result={message.sql_search_result}
+                onThumbsUp={props.onThumbsUp}
+                onThumbsDown={props.onThumbsDown}
               />
             </SpaceBetween>
           ))}
@@ -229,6 +269,34 @@ function IntentSearchPanel(props: IntentSearchProps) {
   }
 }
 
+function AIChatMessage(props: ChatMessageProps) {
+
+  const content = props.message.content as ChatBotAnswerItem;
+
+  return (
+    <Container>
+      <SpaceBetween size={'s'}>
+        <IntentSearchPanel
+          message={content}
+          onThumbsUp={props.onThumbsUp}
+          onThumbsDown={props.onThumbsDown}
+        />
+        {content.suggested_question?.length > 0 ?
+          <ExpandableSection
+            variant="footer"
+            defaultExpanded
+            headerText="Suggested questions">
+            <SuggestedQuestions
+              questions={content.suggested_question}
+              setLoading={props.setLoading}
+              setMessageHistory={props.setMessageHistory}
+            />
+          </ExpandableSection> : null}
+      </SpaceBetween>
+    </Container>
+  );
+}
+
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
   setLoading: Dispatch<SetStateAction<boolean>>;
@@ -239,54 +307,21 @@ export interface ChatMessageProps {
 
 export default function ChatMessage(props: ChatMessageProps) {
 
-  const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
-
   return (
     <SpaceBetween size={'m'}>
-      <TextContent>
-        <h3>{props.message.query}</h3>
-      </TextContent>
-      <Container>
-        <SpaceBetween size={'s'}>
-          <IntentSearchPanel
-            message={props.message}
-          />
-          {props.message.suggested_question.length > 0 ?
-            <ExpandableSection
-              variant="footer"
-              defaultExpanded
-              headerText="Suggested questions">
-              <SuggestedQuestions
-                questions={props.message.suggested_question}
-                setLoading={props.setLoading}
-                setMessageHistory={props.setMessageHistory}
-              />
-            </ExpandableSection> : null}
-          {props.message.query_intent === "agent_search" || props.message.query_intent === "normal_search" ?
-            <ColumnLayout columns={2}>
-              <Button
-                fullWidth
-                iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
-                onClick={() => {
-                  props.onThumbsUp();
-                  setSelectedIcon(1);
-                }}
-              >
-                Upvote
-              </Button>
-              <Button
-                fullWidth
-                iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
-                onClick={() => {
-                  props.onThumbsDown();
-                  setSelectedIcon(0);
-                }}
-              >
-                Downvote
-              </Button>
-            </ColumnLayout> : null}
-        </SpaceBetween>
-      </Container>
+      {props.message.type === ChatBotMessageType.Human && (
+        <TextContent className={styles.question}>
+          <h3>{props.message.content.toString()}</h3>
+        </TextContent>
+      )}
+      {props.message.type === ChatBotMessageType.AI && (
+        <AIChatMessage
+          message={props.message}
+          setLoading={props.setLoading}
+          setMessageHistory={props.setMessageHistory}
+          onThumbsUp={props.onThumbsUp}
+          onThumbsDown={props.onThumbsDown}/>
+      )}
     </SpaceBetween>
   );
 }
