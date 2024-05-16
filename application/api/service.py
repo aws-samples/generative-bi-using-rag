@@ -316,6 +316,7 @@ def ask(question: Question) -> Answer:
                                                                          search_intent_result["data"],
                                                                          database_profile['prompt_map'])
                     if len(show_chart_data) != 0:
+                        sql_chart_data = ChartEntity(chart_type="", chart_data=[])
                         sql_chart_data.chart_type = select_chart_type
                         sql_chart_data.chart_data = show_chart_data
                         sql_search_result.sql_data_chart = [sql_chart_data]
@@ -354,7 +355,17 @@ def ask(question: Question) -> Answer:
                 sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"],
                                                       data_show_type=model_select_type,
                                                       sql_gen_process=each_task_sql_response,
-                                                      data_analyse="", sql_chart_data=[])
+                                                      data_analyse="", sql_data_chart=[])
+                if need_chart_flag:
+                    select_chart_type, show_chart_data = data_visualization_chart(model_type, agent_search_result[i]["query"],
+                                                                                  each_task_res["data"],
+                                                                                  database_profile['prompt_map'])
+                    if len(show_chart_data) != 0:
+                        sub_sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                        sub_sql_chart_data.chart_type = select_chart_type
+                        sub_sql_chart_data.chart_data = show_chart_data
+                        sub_task_sql_result.sql_data_chart = [sub_sql_chart_data]
+
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
                                                                   sql_search_result=sub_task_sql_result)
