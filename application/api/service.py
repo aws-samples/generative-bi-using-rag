@@ -195,7 +195,7 @@ def ask(question: Question) -> Answer:
 
     sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                         sql_gen_process="",
-                                        data_analyse="", sql_chart_data=[])
+                                        data_analyse="", sql_data_chart=[])
 
     agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
 
