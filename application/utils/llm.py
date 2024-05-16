@@ -327,8 +327,7 @@ def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=
             max_tokens = 2048
             user_message = {"role": "user", "content": user_prompt}
             messages = [user_message]
-            response = invoke_llm_model(model_id, system_prompt, messages, max_tokens)
-            final_response = response.get("content")[0].get("text")
+            final_response = invoke_llm_model(model_id, system_prompt, messages, max_tokens)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict
