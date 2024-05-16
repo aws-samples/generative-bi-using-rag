@@ -379,14 +379,14 @@ def ask(question: Question) -> Answer:
                         sub_sql_chart_data = ChartEntity(chart_type="", chart_data=[])
                         if select_chart_type == "table":
                             if len(list(each_task_res["data"].columns)) == len(show_chart_data[0]):
-                                sub_sql_chart_data.sql_data_chart = []
+                                sub_task_sql_result.sql_data_chart = []
                             else:
                                 sub_sql_chart_data.chart_type = select_chart_type
                                 sub_sql_chart_data.chart_data = show_chart_data
                                 sub_task_sql_result.sql_data_chart = [sql_chart_data]
                         else:
                             if len(show_chart_data[0]) > 2:
-                                sql_search_result.sql_data_chart = []
+                                sub_task_sql_result.sql_data_chart = []
                             else:
                                 sub_sql_chart_data.chart_type = select_chart_type
                                 sub_sql_chart_data.chart_data = show_chart_data
