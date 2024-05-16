@@ -302,19 +302,19 @@ def ask(question: Question) -> Answer:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                 if answer_with_insights:
                     search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
-                                                                 search_intent_result["data"].to_json(
-                                                                     orient='records', force_ascii=False), "query")
+                                                                     search_intent_result["data"].to_json(
+                                                                         orient='records', force_ascii=False), "query")
 
                     sql_search_result.data_analyse = search_intent_analyse_result
 
-
                 model_select_type, show_select_data, need_chart_flag = data_visualization(model_type, search_box,
-                                                                         search_intent_result["data"],
-                                                                         database_profile['prompt_map'])
+                                                                                          search_intent_result["data"],
+                                                                                          database_profile[
+                                                                                              'prompt_map'])
                 if need_chart_flag:
                     select_chart_type, show_chart_data = data_visualization_chart(model_type, search_box,
-                                                                         search_intent_result["data"],
-                                                                         database_profile['prompt_map'])
+                                                                                  search_intent_result["data"],
+                                                                                  database_profile['prompt_map'])
                     # 格式化数据检查格式
                     if len(show_chart_data) != 0:
                         sql_chart_data = ChartEntity(chart_type="", chart_data=[])
@@ -332,7 +332,6 @@ def ask(question: Question) -> Answer:
                                 sql_chart_data.chart_type = select_chart_type
                                 sql_chart_data.chart_data = show_chart_data
                                 sql_search_result.sql_data_chart = [sql_chart_data]
-
 
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
@@ -359,9 +358,12 @@ def ask(question: Question) -> Answer:
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
 
-                model_select_type, show_select_data, need_chart_flag = data_visualization(model_type, agent_search_result[i]["query"],
-                                                                         each_task_res["data"],
-                                                                         database_profile['prompt_map'])
+                model_select_type, show_select_data, need_chart_flag = data_visualization(model_type,
+                                                                                          agent_search_result[i][
+                                                                                              "query"],
+                                                                                          each_task_res["data"],
+                                                                                          database_profile[
+                                                                                              'prompt_map'])
 
                 each_task_sql_response = agent_search_result[i]["response"]
                 sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"],
@@ -369,7 +371,8 @@ def ask(question: Question) -> Answer:
                                                       sql_gen_process=each_task_sql_response,
                                                       data_analyse="", sql_data_chart=[])
                 if need_chart_flag:
-                    select_chart_type, show_chart_data = data_visualization_chart(model_type, agent_search_result[i]["query"],
+                    select_chart_type, show_chart_data = data_visualization_chart(model_type,
+                                                                                  agent_search_result[i]["query"],
                                                                                   each_task_res["data"],
                                                                                   database_profile['prompt_map'])
                     if len(show_chart_data) != 0:
@@ -388,7 +391,6 @@ def ask(question: Question) -> Answer:
                                 sub_sql_chart_data.chart_type = select_chart_type
                                 sub_sql_chart_data.chart_data = show_chart_data
                                 sub_task_sql_result.sql_data_chart = [sub_sql_chart_data]
-
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
                                                                   sql_search_result=sub_task_sql_result)
@@ -436,18 +438,18 @@ def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, qu
             log_id = generate_log_id()
             current_time = get_current_time()
             LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
-                                                  sql=query_answer, query=query,
-                                                  intent="normal_search_user_downvote",
-                                                  log_info="",
-                                                  time_str=current_time)
+                                              sql=query_answer, query=query,
+                                              intent="normal_search_user_downvote",
+                                              log_info="",
+                                              time_str=current_time)
         elif query_intent == "agent_search":
             log_id = generate_log_id()
             current_time = get_current_time()
             LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
-                                                  sql=query_answer, query=query,
-                                                  intent="agent_search_user_downvote",
-                                                  log_info="",
-                                                  time_str=current_time)
+                                              sql=query_answer, query=query,
+                                              intent="agent_search_user_downvote",
+                                              log_info="",
+                                              time_str=current_time)
         return True
     except Exception as e:
         return False
