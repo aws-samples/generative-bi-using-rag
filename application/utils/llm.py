@@ -409,10 +409,10 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     all_columns_data = [columns] + data_list
     try:
         if len(columns) != 2:
-            return "table", all_columns_data
+            return "table", all_columns_data, True
         else:
             if len(all_columns_data) == 0:
-                return "table", all_columns_data
+                return "table", all_columns_data, False
             else:
                 if len(all_columns_data) > 10:
                     all_columns_data = all_columns_data[0:5]
@@ -420,7 +420,27 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
                 model_select_type = model_select_type_dict["show_type"]
                 model_select_type_columns = model_select_type_dict["format_data"][0]
                 data_list = search_data[model_select_type_columns].values.tolist()
-                return model_select_type, [model_select_type_columns] + data_list
+                return model_select_type, [model_select_type_columns] + data_list, False
+    except Exception as e:
+        logger.error("data_visualization is error {}", e)
+        return "table", all_columns_data, False
+
+
+def data_visualization_chart(model_id, search_box, search_data, prompt_map):
+    columns = list(search_data.columns)
+    data_list = search_data.values.tolist()
+    all_columns_data = [columns] + data_list
+    try:
+        if len(all_columns_data) == 0:
+            return "table", all_columns_data
+        else:
+            if len(all_columns_data) > 10:
+                all_columns_data = all_columns_data[0:5]
+            model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data, prompt_map)
+            model_select_type = model_select_type_dict["show_type"]
+            model_select_type_columns = model_select_type_dict["format_data"][0]
+            data_list = search_data[model_select_type_columns].values.tolist()
+            return model_select_type, [model_select_type_columns] + data_list
     except Exception as e:
         logger.error("data_visualization is error {}", e)
         return "table", all_columns_data

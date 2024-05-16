@@ -14,7 +14,7 @@ from utils.database import get_db_url_dialect
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization
+    generate_suggested_question, data_visualization, data_visualization_chart
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time
@@ -170,6 +170,7 @@ def ask(question: Question) -> Answer:
     use_rag_flag = question.use_rag_flag
     explain_gen_process_flag = question.explain_gen_process_flag
     gen_suggested_question_flag = question.gen_suggested_question_flag
+    answer_with_insights = question.answer_with_insights
 
     reject_intent_flag = False
     search_intent_flag = False
@@ -299,15 +300,26 @@ def ask(question: Question) -> Answer:
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
-                search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
+                if answer_with_insights:
+                    search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                  search_intent_result["data"].to_json(
                                                                      orient='records', force_ascii=False), "query")
 
-                sql_search_result.data_analyse = search_intent_analyse_result
+                    sql_search_result.data_analyse = search_intent_analyse_result
 
-                model_select_type, show_select_data = data_visualization(model_type, search_box,
+
+                model_select_type, show_select_data, need_chart_flag = data_visualization(model_type, search_box,
                                                                          search_intent_result["data"],
                                                                          database_profile['prompt_map'])
+                if need_chart_flag:
+                    select_chart_type, show_chart_data = data_visualization_chart(model_type, search_box,
+                                                                         search_intent_result["data"],
+                                                                         database_profile['prompt_map'])
+                    if len(show_chart_data) != 0:
+                        sql_chart_data.chart_type = select_chart_type
+                        sql_chart_data.chart_data = show_chart_data
+                        sql_search_result.sql_data_chart = [sql_search_result]
+
 
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
@@ -334,7 +346,7 @@ def ask(question: Question) -> Answer:
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
 
-                model_select_type, show_select_data = data_visualization(model_type, agent_search_result[i]["query"],
+                model_select_type, show_select_data, need_chart_flag = data_visualization(model_type, agent_search_result[i]["query"],
                                                                          each_task_res["data"],
                                                                          database_profile['prompt_map'])
 
