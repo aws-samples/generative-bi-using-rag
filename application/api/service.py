@@ -318,7 +318,7 @@ def ask(question: Question) -> Answer:
                     if len(show_chart_data) != 0:
                         sql_chart_data.chart_type = select_chart_type
                         sql_chart_data.chart_data = show_chart_data
-                        sql_search_result.sql_data_chart = [sql_search_result]
+                        sql_search_result.sql_data_chart = [sql_chart_data]
 
 
                 sql_search_result.sql_data = show_select_data
