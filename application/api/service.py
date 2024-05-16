@@ -396,23 +396,21 @@ def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, quer
         return False
 
 
-def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
+def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
-            if len(query_answer_list) > 0:
-                log_id = generate_log_id()
-                current_time = get_current_time()
-                LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
-                                                  sql=query_answer_list[0].sql, query=query,
+            log_id = generate_log_id()
+            current_time = get_current_time()
+            LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+                                                  sql=query_answer, query=query,
                                                   intent="normal_search_user_downvote",
                                                   log_info="",
                                                   time_str=current_time)
         elif query_intent == "agent_search":
-            for each in query_answer_list:
-                log_id = generate_log_id()
-                current_time = get_current_time()
-                LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
-                                                  sql=each.sql, query=query + "; The sub task is " + each.query,
+            log_id = generate_log_id()
+            current_time = get_current_time()
+            LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+                                                  sql=query_answer, query=query,
                                                   intent="agent_search_user_downvote",
                                                   log_info="",
                                                   time_str=current_time)
