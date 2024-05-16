@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from "react";
-import { ChatBotHistoryItem } from "./types";
+import { ChatBotAnswerItem, ChatBotHistoryItem } from "./types";
 import ChatInputPanel from "./chat-input-panel";
 import styles from "./chat.module.scss";
 import { Box, SpaceBetween, Spinner } from "@cloudscape-design/components";
@@ -14,7 +14,7 @@ export default function Chat(
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleFeedback = (feedbackType: "upvote" | "downvote", message: ChatBotHistoryItem) => {
+  const handleFeedback = (feedbackType: "upvote" | "downvote", message: ChatBotAnswerItem) => {
     let feedbackData = {};
     if (message.query_intent === "normal_search") {
       feedbackData = {
@@ -103,8 +103,8 @@ export default function Chat(
                   message={message}
                   setLoading={setLoading}
                   setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
-                  onThumbsUp={() => handleFeedback("upvote", message)}
-                  onThumbsDown={() => handleFeedback("downvote", message)}
+                  onThumbsUp={() => handleFeedback("upvote", message.content as ChatBotAnswerItem)}
+                  onThumbsDown={() => handleFeedback("downvote", message.content as ChatBotAnswerItem)}
                 />
               </div>
             );

@@ -30,7 +30,7 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
       {props.questions.map((question, kid) => (
         <Button
           key={kid}
-          className={styles.button_border}
+          className={styles.button}
           onClick={() => handleSendMessage(question)}>
           {question}
         </Button>

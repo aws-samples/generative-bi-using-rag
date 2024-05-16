@@ -7,12 +7,12 @@ export enum ChatBotMessageType {
   Human = "human",
 }
 
-/*export interface ChatBotHistoryItem {
-  type: ChatBotMessageType;
-  content: any;
-}*/
-
 export interface ChatBotHistoryItem {
+  type: ChatBotMessageType;
+  content: string | ChatBotAnswerItem;
+}
+
+export interface ChatBotAnswerItem {
   query: string,
   query_intent: string,
   knowledge_search_result: KnowledgeSearchResult,

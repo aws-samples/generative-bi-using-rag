@@ -40,6 +40,11 @@
   opacity: 0.4;
 }
 
+.question {
+  margin-top: 15px;
+  //margin-left: 21px;
+}
+
 .text {
   color: gray;
   font-size: small;
@@ -140,12 +145,21 @@
   grid-gap: 15px;
 }
 
-.button_border {
+.button {
   border: 1px dashed #ccc;
   border-radius: 8px;
   padding: 6px;
   background-color: white;
   color: gray;
+}
+
+.button:hover {
+  background-color: lightgray;
+  transition: 0.7s;
+}
+
+.button:active {
+  background-color: #0972d3;
 }
 
 @media (max-width: 689px) {
