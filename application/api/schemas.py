@@ -11,7 +11,7 @@ class Question(BaseModel):
     agent_cot_flag: bool = True
     profile_name: str = "shopping-demo"
     explain_gen_process_flag: bool = True
-    gen_suggested_question_flag: bool = True
+    gen_suggested_question_flag: bool = False
     answer_with_insights: bool = False
     top_k: float = 250
     top_p: float = 0.9
@@ -62,7 +62,7 @@ class SQLSearchResult(BaseModel):
     data_show_type: str
     sql_gen_process: str
     data_analyse: str
-    sql_data_chart: ChartEntity
+    sql_data_chart: list[ChartEntity]
 
 
 class TaskSQLSearchResult(BaseModel):

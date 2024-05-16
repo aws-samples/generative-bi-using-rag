@@ -19,7 +19,7 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult
+    TaskSQLSearchResult, ChartEntity
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum
@@ -190,9 +190,11 @@ def ask(question: Question) -> Answer:
 
     current_nlq_chain = NLQChain(selected_profile)
 
+    sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+
     sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                         sql_gen_process="",
-                                        data_analyse="")
+                                        data_analyse="", sql_chart_data=[])
 
     agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
 
@@ -257,7 +259,8 @@ def ask(question: Question) -> Answer:
                         suggested_question=[])
 
         LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
-                                          intent="knowledge_search", log_info=knowledge_search_result.knowledge_response,
+                                          intent="knowledge_search",
+                                          log_info=knowledge_search_result.knowledge_response,
                                           time_str=current_time)
         return answer
 
@@ -312,7 +315,8 @@ def ask(question: Question) -> Answer:
                 #     "data"].values.tolist()
 
         log_info = search_intent_result["error_info"] + ";" + sql_search_result.data_analyse
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql, query=search_box,
+        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql,
+                                          query=search_box,
                                           intent="normal_search",
                                           log_info=log_info,
                                           time_str=current_time)
@@ -335,9 +339,10 @@ def ask(question: Question) -> Answer:
                                                                          database_profile['prompt_map'])
 
                 each_task_sql_response = agent_search_result[i]["response"]
-                sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"], data_show_type=model_select_type,
-                                                    sql_gen_process=each_task_sql_response,
-                                                    data_analyse="")
+                sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"],
+                                                      data_show_type=model_select_type,
+                                                      sql_gen_process=each_task_sql_response,
+                                                      data_analyse="", sql_chart_data=[])
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
                                                                   sql_search_result=sub_task_sql_result)
@@ -378,6 +383,7 @@ def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, quer
     except Exception as e:
         return False
 
+
 def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
     try:
         if query_intent == "normal_search":
@@ -401,7 +407,6 @@ def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, qu
         return True
     except Exception as e:
         return False
-
 
 
 def get_nlq_chain(question: Question) -> NLQChain:
