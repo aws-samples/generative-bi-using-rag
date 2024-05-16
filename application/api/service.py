@@ -367,17 +367,13 @@ def ask(question: Question) -> Answer:
         return answer
 
 
-def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
+def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
-            if len(query_answer_list) > 0:
-                VectorStore.add_sample(data_profiles, query_answer_list[0].query, query_answer_list[0].sql)
+            VectorStore.add_sample(data_profiles, query, query_answer)
         elif query_intent == "agent_search":
-            query_list = []
-            for each in query_answer_list:
-                query_list.append(each.query)
-                VectorStore.add_sample(data_profiles, each.query, each.sql)
-            VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
+            VectorStore.add_sample(data_profiles, query, query_answer)
+            # VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
         return True
     except Exception as e:
         return False

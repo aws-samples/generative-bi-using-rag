@@ -254,7 +254,7 @@ def main():
         intent_ner_recognition_flag = st.checkbox("Intent NER", True)
         agent_cot_flag = st.checkbox("Agent COT", True)
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
-        data_with_analyse = st.checkbox("Data With Analyse", False)
+        data_with_analyse = st.checkbox("Answer With Insights", False)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
