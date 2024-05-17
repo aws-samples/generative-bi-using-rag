@@ -17,7 +17,7 @@ from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_wit
     generate_suggested_question, data_visualization
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
-from utils.tool import generate_log_id, get_current_time, get_generated_sql
+from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity
 from .exception_handler import BizException
@@ -347,7 +347,7 @@ def ask(question: Question) -> Answer:
                                                                                           database_profile[
                                                                                               'prompt_map'])
 
-                each_task_sql_response = get_generated_sql(agent_search_result[i]["response"])
+                each_task_sql_response = get_generated_sql_explain(agent_search_result[i]["response"])
                 sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"],
                                                       data_show_type=model_select_type,
                                                       sql_gen_process=each_task_sql_response,
