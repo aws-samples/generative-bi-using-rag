@@ -19,7 +19,8 @@ const ConfigPanel = () => {
   const dispatch = useDispatch();
   const [intentChecked, setIntentChecked] = useState(true);
   const [complexChecked, setComplexChecked] = useState(true);
-  const [modelSuggestChecked, setModelSuggestChecked] = useState(true);
+  const [answerInsightChecked, setAnswerInsightChecked] = useState(false);
+  const [modelSuggestChecked, setModelSuggestChecked] = useState(false);
   const [temperature, setTemperature] = useState(0.01);
   const [topP, setTopP] = useState(0.999);
   const [topK, setTopK] = useState(250);
@@ -83,6 +84,7 @@ const ConfigPanel = () => {
       selectedDataPro,
       intentChecked,
       complexChecked,
+      answerInsightChecked,
       modelSuggestChecked,
       temperature,
       topP,
@@ -95,6 +97,7 @@ const ConfigPanel = () => {
     selectedDataPro,
     intentChecked,
     complexChecked,
+    answerInsightChecked,
     modelSuggestChecked,
     temperature,
     topP,
@@ -107,6 +110,7 @@ const ConfigPanel = () => {
     selectedDataPro: any,
     intentChecked: boolean,
     complexChecked: boolean,
+    answerInsightChecked: boolean,
     modelSuggestChecked: boolean,
     temperature: number,
     topP: number,
@@ -120,6 +124,7 @@ const ConfigPanel = () => {
         selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
         intentChecked,
         complexChecked,
+        answerInsightChecked,
         modelSuggestChecked,
         temperature,
         topP,
@@ -166,6 +171,12 @@ const ConfigPanel = () => {
           checked={modelSuggestChecked}
         >
           Model suggestion Query
+        </Toggle>
+        <Toggle
+          onChange={({ detail }) => setAnswerInsightChecked(detail.checked)}
+          checked={answerInsightChecked}
+        >
+          Answer with Insights
         </Toggle>
 
         <FormField label="Temperature">

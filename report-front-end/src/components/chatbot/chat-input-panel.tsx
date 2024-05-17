@@ -40,58 +40,58 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   };
 
   return (
-    <SpaceBetween direction="vertical" size="l">
-      <div className={styles.input_area_container}>
-        <Container>
-          <SpaceBetween size={'s'}>
-            <CustomQuestions setTextValue={setTextValue}></CustomQuestions>
-            <div className={styles.input_textarea_container}>
-              <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
-                <Icon name="microphone" variant="disabled"/>
-              </SpaceBetween>
-              <TextareaAutosize
-                className={styles.input_textarea}
-                maxRows={6}
-                minRows={1}
-                spellCheck={true}
-                autoFocus
-                onChange={(e) =>
-                  setTextValue((state) => ({...state, value: e.target.value}))
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                value={state.value}
-                placeholder={"Send a message"}
-              />
-              <SpaceBetween size={'xs'} direction={'horizontal'}>
-                <Button
-                  disabled={state.value.length === 0}
-                  onClick={handleSendMessage}
-                  iconAlign="right"
-                  iconName={"angle-right-double"}
-                  variant="primary">
-                  Send
-                </Button>
-                <Button
-                  iconName="remove"
-                  variant="icon"
-                  onClick={handleClear}
-                >
-                </Button>
-                <Button
-                  iconName="settings"
-                  variant="icon"
-                  onClick={handleSetting}>
-                </Button>
-              </SpaceBetween>
-            </div>
+    <Container>
+      <SpaceBetween size={'s'}>
+        <CustomQuestions
+          setTextValue={setTextValue}
+          setLoading={props.setLoading}
+          setMessageHistory={props.setMessageHistory}
+        ></CustomQuestions>
+        <div className={styles.input_textarea_container}>
+          <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
+            <Icon name="microphone" variant="disabled"/>
           </SpaceBetween>
-        </Container>
-      </div>
-    </SpaceBetween>
+          <TextareaAutosize
+            className={styles.input_textarea}
+            maxRows={6}
+            minRows={1}
+            spellCheck={true}
+            autoFocus
+            onChange={(e) =>
+              setTextValue((state) => ({...state, value: e.target.value}))
+            }
+            /*onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}*/
+            value={state.value}
+            placeholder={"Send a message"}
+          />
+          <SpaceBetween size={'xs'} direction={'horizontal'}>
+            <Button
+              disabled={state.value.length === 0}
+              onClick={handleSendMessage}
+              iconAlign="right"
+              iconName="angle-right-double"
+              variant="primary">
+              Send
+            </Button>
+            <Button
+              iconName="remove"
+              variant="icon"
+              onClick={handleClear}
+            >
+            </Button>
+            <Button
+              iconName="settings"
+              variant="icon"
+              onClick={handleSetting}>
+            </Button>
+          </SpaceBetween>
+        </div>
+      </SpaceBetween>
+    </Container>
   );
 }
