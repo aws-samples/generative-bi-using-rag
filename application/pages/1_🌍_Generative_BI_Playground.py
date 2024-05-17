@@ -181,7 +181,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
 
             status_text.update(
                     label=f"Generating SQL Done",
-                    state="complete", expanded=False)
+                    state="complete", expanded=True)
 
 
             search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
