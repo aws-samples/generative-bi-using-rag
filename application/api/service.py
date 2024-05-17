@@ -17,7 +17,7 @@ from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_wit
     generate_suggested_question, data_visualization, data_visualization_chart
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
-from utils.tool import generate_log_id, get_current_time
+from utils.tool import generate_log_id, get_current_time, get_generated_sql
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity
 from .exception_handler import BizException
@@ -307,36 +307,18 @@ def ask(question: Question) -> Answer:
 
                     sql_search_result.data_analyse = search_intent_analyse_result
 
-                model_select_type, show_select_data, need_chart_flag = data_visualization(model_type, search_box,
+                model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(model_type, search_box,
                                                                                           search_intent_result["data"],
-                                                                                          database_profile[
-                                                                                              'prompt_map'])
-                if need_chart_flag:
-                    select_chart_type, show_chart_data = data_visualization_chart(model_type, search_box,
-                                                                                  search_intent_result["data"],
-                                                                                  database_profile['prompt_map'])
-                    # 格式化数据检查格式
-                    if len(show_chart_data) != 0:
-                        sql_chart_data = ChartEntity(chart_type="", chart_data=[])
-                        if select_chart_type == "table":
-                            if len(list(search_intent_result["data"].columns)) == len(show_chart_data[0]):
-                                sql_search_result.sql_data_chart = []
-                            else:
-                                sql_chart_data.chart_type = select_chart_type
-                                sql_chart_data.chart_data = show_chart_data
-                                sql_search_result.sql_data_chart = [sql_chart_data]
-                        else:
-                            if len(show_chart_data[0]) > 2:
-                                sql_search_result.sql_data_chart = []
-                            else:
-                                sql_chart_data.chart_type = select_chart_type
-                                sql_chart_data.chart_data = show_chart_data
-                                sql_search_result.sql_data_chart = [sql_chart_data]
+                                                                                          database_profile['prompt_map'])
+
+                if select_chart_type != "-1":
+                    sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                    sql_chart_data.chart_type = select_chart_type
+                    sql_chart_data.chart_data = show_chart_data
+                    sql_search_result.sql_data_chart = [sql_chart_data]
 
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
-                # sql_search_result.sql_data = [list(search_intent_result["data"].columns)] + search_intent_result[
-                #     "data"].values.tolist()
 
         log_info = search_intent_result["error_info"] + ";" + sql_search_result.data_analyse
         LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql,
@@ -358,39 +340,23 @@ def ask(question: Question) -> Answer:
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
 
-                model_select_type, show_select_data, need_chart_flag = data_visualization(model_type,
+                model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(model_type,
                                                                                           agent_search_result[i][
                                                                                               "query"],
                                                                                           each_task_res["data"],
                                                                                           database_profile[
                                                                                               'prompt_map'])
 
-                each_task_sql_response = agent_search_result[i]["response"]
+                each_task_sql_response = get_generated_sql(agent_search_result[i]["response"])
                 sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"],
                                                       data_show_type=model_select_type,
                                                       sql_gen_process=each_task_sql_response,
                                                       data_analyse="", sql_data_chart=[])
-                if need_chart_flag:
-                    select_chart_type, show_chart_data = data_visualization_chart(model_type,
-                                                                                  agent_search_result[i]["query"],
-                                                                                  each_task_res["data"],
-                                                                                  database_profile['prompt_map'])
-                    if len(show_chart_data) != 0:
-                        sub_sql_chart_data = ChartEntity(chart_type="", chart_data=[])
-                        if select_chart_type == "table":
-                            if len(list(each_task_res["data"].columns)) == len(show_chart_data[0]):
-                                sub_task_sql_result.sql_data_chart = []
-                            else:
-                                sub_sql_chart_data.chart_type = select_chart_type
-                                sub_sql_chart_data.chart_data = show_chart_data
-                                sub_task_sql_result.sql_data_chart = [sql_chart_data]
-                        else:
-                            if len(show_chart_data[0]) > 2:
-                                sub_task_sql_result.sql_data_chart = []
-                            else:
-                                sub_sql_chart_data.chart_type = select_chart_type
-                                sub_sql_chart_data.chart_data = show_chart_data
-                                sub_task_sql_result.sql_data_chart = [sub_sql_chart_data]
+                if select_chart_type != "-1":
+                    sub_sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                    sub_sql_chart_data.chart_type = select_chart_type
+                    sub_sql_chart_data.chart_data = show_chart_data
+                    sub_task_sql_result.sql_data_chart = [sub_sql_chart_data]
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
                                                                   sql_search_result=sub_task_sql_result)
