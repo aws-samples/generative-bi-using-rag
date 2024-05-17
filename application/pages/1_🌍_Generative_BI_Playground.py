@@ -163,11 +163,27 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
                                dialect=database_profile['db_type'],
                                model_provider=model_provider)
 
+            sql = get_generated_sql(response)
+
+            st.code(sql, language="sql")
+
+            feedback = st.columns(2)
+            feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                               use_container_width=True,
+                               on_click=upvote_clicked,
+                               args=[search_box,
+                                     sql,
+                                     env_vars])
+
+            if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                # do something here
+                pass
+
             status_text.update(
                     label=f"Generating SQL Done",
                     state="complete", expanded=False)
 
-            sql = get_generated_sql(response)
+
             search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                                 retrieve_result=retrieve_result, response=response, sql="")
             search_result.entity_slot_retrieve = entity_slot_retrieve
@@ -205,7 +221,7 @@ def main():
 
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
-        all_profiles.update(demo_profile)
+        # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
 
     if 'selected_sample' not in st.session_state:
@@ -439,25 +455,11 @@ def main():
                         current_nlq_chain.set_generated_sql_response(normal_search_result.response)
 
                         if explain_gen_process_flag:
-                            with st.spinner('Generating explanations...'):
-                                # hiding generation process for now
-                                # st.session_state.messages[selected_profile].append(
-                                #     {"role": "assistant", "content": current_nlq_chain.get_generated_sql_explain(), "type": "text"})
+                            with st.status("Generating explanations...") as status_text:
                                 st.markdown(current_nlq_chain.get_generated_sql_explain())
-
-                        # add a upvote(green)/downvote button with logo
-                        feedback = st.columns(2)
-                        feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                           use_container_width=True,
-                                           on_click=upvote_clicked,
-                                           args=[current_nlq_chain.get_question(),
-                                                 current_nlq_chain.get_generated_sql(),
-                                                 env_vars])
-
-                        if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                            # do something here
-                            pass
-
+                                status_text.update(
+                                    label=f"Generating explanations Done",
+                                    state="complete", expanded=False)
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": "SQL:" + normal_search_result.sql, "type": "sql"})
                     else:
