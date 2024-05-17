@@ -87,10 +87,7 @@ class ProfileConfigDao:
                     {"AttributeName": "profile_name", "AttributeType": "S"},
                     # {"AttributeName": "conn_name", "AttributeType": "S"},
                 ],
-                ProvisionedThroughput={
-                    "ReadCapacityUnits": 2,
-                    "WriteCapacityUnits": 1,
-                },
+                BillingMode='PAY_PER_REQUEST',
             )
             self.table.wait_until_exists()
             logger.info(f"DynamoDB Table {self.table_name} created")

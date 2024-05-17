@@ -325,10 +325,7 @@ def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=
             return intent_result_dict
         else:
             max_tokens = 2048
-            user_message = {"role": "user", "content": user_prompt}
-            messages = [user_message]
-            response = invoke_llm_model(model_id, system_prompt, messages, max_tokens)
-            final_response = response.get("content")[0].get("text")
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict
@@ -408,22 +405,33 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     data_list = search_data.values.tolist()
     all_columns_data = [columns] + data_list
     try:
-        if len(columns) != 2:
-            return "table", all_columns_data
+        if len(all_columns_data) < 1:
+            return "table", all_columns_data, "-1", []
         else:
-            if len(all_columns_data) == 0:
-                return "table", all_columns_data
+            if len(all_columns_data) > 10:
+                all_columns_data = all_columns_data[0:5]
+            model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data, prompt_map)
+            model_select_type = model_select_type_dict["show_type"]
+            model_select_type_columns = model_select_type_dict["format_data"][0]
+            data_list = search_data[model_select_type_columns].values.tolist()
+
+            # 返回格式校验
+            if len(columns) != 2:
+                if model_select_type == "table":
+                    return "table", all_columns_data, "-1", []
+                else:
+                    if len(model_select_type_columns) == 2:
+                        return "table", all_columns_data, model_select_type, [model_select_type_columns] + data_list
+                    else:
+                        return "table", all_columns_data, "-1", []
             else:
-                if len(all_columns_data) > 10:
-                    all_columns_data = all_columns_data[0:5]
-                model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data, prompt_map)
-                model_select_type = model_select_type_dict["show_type"]
-                model_select_type_columns = model_select_type_dict["format_data"][0]
-                data_list = search_data[model_select_type_columns].values.tolist()
-                return model_select_type, [model_select_type_columns] + data_list
+                if model_select_type == "table":
+                    return "table", all_columns_data, "-1", []
+                else:
+                    return model_select_type, [model_select_type_columns] + data_list, "-1", []
     except Exception as e:
         logger.error("data_visualization is error {}", e)
-        return "table", all_columns_data
+        return "table", all_columns_data, "-1", []
 
 
 def create_vector_embedding_with_bedrock(text, index_name):

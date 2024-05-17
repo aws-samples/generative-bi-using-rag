@@ -17,9 +17,9 @@ from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_wit
     generate_suggested_question, data_visualization
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
-from utils.tool import generate_log_id, get_current_time
+from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult
+    TaskSQLSearchResult, ChartEntity
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum
@@ -170,6 +170,7 @@ def ask(question: Question) -> Answer:
     use_rag_flag = question.use_rag_flag
     explain_gen_process_flag = question.explain_gen_process_flag
     gen_suggested_question_flag = question.gen_suggested_question_flag
+    answer_with_insights = question.answer_with_insights
 
     reject_intent_flag = False
     search_intent_flag = False
@@ -190,9 +191,11 @@ def ask(question: Question) -> Answer:
 
     current_nlq_chain = NLQChain(selected_profile)
 
+    sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+
     sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                         sql_gen_process="",
-                                        data_analyse="")
+                                        data_analyse="", sql_data_chart=[])
 
     agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
 
@@ -257,7 +260,8 @@ def ask(question: Question) -> Answer:
                         suggested_question=[])
 
         LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
-                                          intent="knowledge_search", log_info=knowledge_search_result.knowledge_response,
+                                          intent="knowledge_search",
+                                          log_info=knowledge_search_result.knowledge_response,
                                           time_str=current_time)
         return answer
 
@@ -296,23 +300,29 @@ def ask(question: Question) -> Answer:
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
-                search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
-                                                                 search_intent_result["data"].to_json(
-                                                                     orient='records', force_ascii=False), "query")
+                if answer_with_insights:
+                    search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
+                                                                     search_intent_result["data"].to_json(
+                                                                         orient='records', force_ascii=False), "query")
 
-                sql_search_result.data_analyse = search_intent_analyse_result
+                    sql_search_result.data_analyse = search_intent_analyse_result
 
-                model_select_type, show_select_data = data_visualization(model_type, search_box,
-                                                                         search_intent_result["data"],
-                                                                         database_profile['prompt_map'])
+                model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(model_type, search_box,
+                                                                                          search_intent_result["data"],
+                                                                                          database_profile['prompt_map'])
+
+                if select_chart_type != "-1":
+                    sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                    sql_chart_data.chart_type = select_chart_type
+                    sql_chart_data.chart_data = show_chart_data
+                    sql_search_result.sql_data_chart = [sql_chart_data]
 
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
-                # sql_search_result.sql_data = [list(search_intent_result["data"].columns)] + search_intent_result[
-                #     "data"].values.tolist()
 
         log_info = search_intent_result["error_info"] + ";" + sql_search_result.data_analyse
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql, query=search_box,
+        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql,
+                                          query=search_box,
                                           intent="normal_search",
                                           log_info=log_info,
                                           time_str=current_time)
@@ -330,14 +340,23 @@ def ask(question: Question) -> Answer:
                 filter_deep_dive_sql_result.append(agent_search_result[i])
                 each_task_sql_res = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
 
-                model_select_type, show_select_data = data_visualization(model_type, agent_search_result[i]["query"],
-                                                                         each_task_res["data"],
-                                                                         database_profile['prompt_map'])
+                model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(model_type,
+                                                                                          agent_search_result[i][
+                                                                                              "query"],
+                                                                                          each_task_res["data"],
+                                                                                          database_profile[
+                                                                                              'prompt_map'])
 
-                each_task_sql_response = agent_search_result[i]["response"]
-                sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"], data_show_type=model_select_type,
-                                                    sql_gen_process=each_task_sql_response,
-                                                    data_analyse="")
+                each_task_sql_response = get_generated_sql_explain(agent_search_result[i]["response"])
+                sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=each_task_res["sql"],
+                                                      data_show_type=model_select_type,
+                                                      sql_gen_process=each_task_sql_response,
+                                                      data_analyse="", sql_data_chart=[])
+                if select_chart_type != "-1":
+                    sub_sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                    sub_sql_chart_data.chart_type = select_chart_type
+                    sub_sql_chart_data.chart_data = show_chart_data
+                    sub_task_sql_result.sql_data_chart = [sub_sql_chart_data]
 
                 each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=agent_search_result[i]["query"],
                                                                   sql_search_result=sub_task_sql_result)
@@ -346,7 +365,7 @@ def ask(question: Question) -> Answer:
                 sub_search_task.append(agent_search_result[i]["query"])
                 log_info = ""
             else:
-                log_info = agent_search_result[i]["query"] + "The SQL error Info: " + each_task_res["error_info"] + "。"
+                log_info = agent_search_result[i]["query"] + "The SQL error Info: "
             log_id = generate_log_id()
             LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=each_task_res["sql"],
                                               query=search_box + "; The sub task is " + agent_search_result[i]["query"],
@@ -367,45 +386,39 @@ def ask(question: Question) -> Answer:
         return answer
 
 
-def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
+def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
-            if len(query_answer_list) > 0:
-                VectorStore.add_sample(data_profiles, query_answer_list[0].query, query_answer_list[0].sql)
+            VectorStore.add_sample(data_profiles, query, query_answer)
         elif query_intent == "agent_search":
-            query_list = []
-            for each in query_answer_list:
-                query_list.append(each.query)
-                VectorStore.add_sample(data_profiles, each.query, each.sql)
-            VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
+            VectorStore.add_sample(data_profiles, query, query_answer)
+            # VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
         return True
     except Exception as e:
         return False
 
-def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer_list):
+
+def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
-            if len(query_answer_list) > 0:
-                log_id = generate_log_id()
-                current_time = get_current_time()
-                LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
-                                                  sql=query_answer_list[0].sql, query=query,
-                                                  intent="normal_search_user_downvote",
-                                                  log_info="",
-                                                  time_str=current_time)
+            log_id = generate_log_id()
+            current_time = get_current_time()
+            LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+                                              sql=query_answer, query=query,
+                                              intent="normal_search_user_downvote",
+                                              log_info="",
+                                              time_str=current_time)
         elif query_intent == "agent_search":
-            for each in query_answer_list:
-                log_id = generate_log_id()
-                current_time = get_current_time()
-                LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
-                                                  sql=each.sql, query=query + "; The sub task is " + each.query,
-                                                  intent="agent_search_user_downvote",
-                                                  log_info="",
-                                                  time_str=current_time)
+            log_id = generate_log_id()
+            current_time = get_current_time()
+            LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+                                              sql=query_answer, query=query,
+                                              intent="agent_search_user_downvote",
+                                              log_info="",
+                                              time_str=current_time)
         return True
     except Exception as e:
         return False
-
 
 
 def get_nlq_chain(question: Question) -> NLQChain:

@@ -350,11 +350,11 @@ def user_feedback(input_data: FeedBackInput):
     feedback_type = input_data.feedback_type
     if feedback_type == "upvote":
         upvote_res = service.user_feedback_upvote(input_data.data_profiles, input_data.query,
-                                                  input_data.query_intent, input_data.query_answer_list)
+                                                  input_data.query_intent, input_data.query_answer)
         return upvote_res
     else:
         downvote_res = service.user_feedback_downvote(input_data.data_profiles, input_data.query,
-                                                  input_data.query_intent, input_data.query_answer_list)
+                                                      input_data.query_intent, input_data.query_answer)
         return downvote_res
 
 
