@@ -450,7 +450,7 @@ def main():
                     #             state="complete", expanded=False)
                     if normal_search_result.sql != "":
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
-                        st.code(normal_search_result.sql, language="sql")
+                        # st.code(normal_search_result.sql, language="sql")
 
                         current_nlq_chain.set_generated_sql_response(normal_search_result.response)
 
