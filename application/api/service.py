@@ -14,7 +14,7 @@ from utils.database import get_db_url_dialect
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization, data_visualization_chart
+    generate_suggested_question, data_visualization
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql
