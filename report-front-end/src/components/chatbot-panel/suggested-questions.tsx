@@ -2,7 +2,7 @@ import { Button } from "@aws-amplify/ui-react";
 import styles from "./chat.module.scss";
 import { query } from "../../common/API";
 import { Dispatch, SetStateAction } from "react";
-import { ChatBotHistoryItem } from "@/components/chatbot/types";
+import { ChatBotHistoryItem } from "@/components/chatbot-panel/types";
 import { useSelector } from "react-redux";
 import { UserState } from "@/types/StoreTypes";
 
