@@ -1,4 +1,4 @@
-import { ChatBotHistoryItem, ChatBotMessageType } from "../components/chatbot/types";
+import { ChatBotHistoryItem, ChatBotMessageType } from "../components/chatbot-panel/types";
 import { Dispatch, SetStateAction } from "react";
 import { BACKEND_URL } from "../tools/const";
 import { DEFAULT_QUERY_CONFIG } from "../enum/DefaultQueryEnum";
