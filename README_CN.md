@@ -196,8 +196,8 @@ preauthorized:
 密码需要从明文转换成哈希过之后的密码，可以通过如下方式，获取
 
 ```python
-import streamlit_authenticator as stauth
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+from streamlit_authenticator.utilities.hasher import Hasher
+hashed_passwords = Hasher(['abc', 'def']).generate()
 ```
 
 
