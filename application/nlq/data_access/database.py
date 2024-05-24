@@ -1,4 +1,6 @@
 import logging
+
+import sqlalchemy
 import sqlalchemy as db
 from sqlalchemy import text, Column, inspect
 
@@ -55,6 +57,12 @@ class RelationDatabase():
             engine = db.create_engine(db_url)
             inspector = inspect(engine)
             schemas = inspector.get_schema_names()
+        elif connection.db_type == 'mysql':
+            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
+                                    connection.db_port, connection.db_name)
+            engine = db.create_engine(db_url)
+            database_connect = sqlalchemy.inspect(engine)
+            schemas = database_connect.get_schema_names()
         return schemas
 
     @classmethod
