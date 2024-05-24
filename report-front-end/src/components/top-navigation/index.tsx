@@ -1,18 +1,23 @@
 import React from "react";
 import { TopNavigation } from "@cloudscape-design/components";
+import "./style.scss"
+import { APP_LOGO, APP_TITLE } from "../../tools/const";
 
 const CustomTopNavigation = () => {
+
   return (
-    <TopNavigation
-      identity={{
-        href: "#",
-        title: "Guidance for Generative BI on Amazon Web Services",
-        logo: {
-          src: "/Amazoncom-yellow-arrow.png",
-          alt: "amazon icon",
-        },
-      }}
-    />
+    <div className="top-nav" id="awsui-top-navigation">
+      <TopNavigation
+        identity={{
+          href: "#",
+          title: APP_TITLE,
+          logo: {
+            src: APP_LOGO,
+            alt: "icon",
+          },
+        }}
+      />
+    </div>
   );
 };
 

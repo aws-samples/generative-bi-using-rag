@@ -26,6 +26,7 @@ import { addUserFeedback } from "../../common/API";
 import { useSelector } from "react-redux";
 import { UserState } from "@/types/StoreTypes";
 import { DEFAULT_QUERY_CONFIG } from "../../enum/DefaultQueryEnum";
+import { SQL_DISPLAY } from "../../tools/const";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -189,54 +190,56 @@ function SQLResultPanel(props: SQLResultProps) {
             <div
               style={{whiteSpace: "pre-line"}}>{props.result.data_analyse}</div>
           </ExpandableSection> : null}
-        <ExpandableSection
-          variant="footer"
-          headerText="SQL">
-          <SpaceBetween size={'s'}>
-            <div className={styles.sql}>
-              <SyntaxHighlighter language="javascript">
-                {props.result.sql}
-              </SyntaxHighlighter>
-              <div style={{whiteSpace: "pre-line"}}>{props.result.sql_gen_process}</div>
-            </div>
-            <ColumnLayout columns={2}>
-              <Button
-                fullWidth
-                iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
-                onClick={() => {
-                  const feedbackData = {
-                    feedback_type: FeedBackType.UPVOTE,
-                    data_profiles: userInfo.queryConfig.data_profiles || DEFAULT_QUERY_CONFIG.selectedDataPro,
-                    query: props.query,
-                    query_intent: props.intent,
-                    query_answer: props.result.sql
-                  };
-                  handleFeedback(feedbackData);
-                  setSelectedIcon(1);
-                }}
-              >
-                Upvote
-              </Button>
-              <Button
-                fullWidth
-                iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
-                onClick={() => {
-                  const feedbackData = {
-                    feedback_type: FeedBackType.DOWNVOTE,
-                    data_profiles: userInfo.queryConfig.data_profiles || DEFAULT_QUERY_CONFIG.selectedDataPro,
-                    query: props.query,
-                    query_intent: props.intent,
-                    query_answer: props.result.sql
-                  };
-                  handleFeedback(feedbackData);
-                  setSelectedIcon(0);
-                }}
-              >
-                Downvote
-              </Button>
-            </ColumnLayout>
-          </SpaceBetween>
-        </ExpandableSection>
+        {SQL_DISPLAY === 'yes' && (
+          <ExpandableSection
+            variant="footer"
+            headerText="SQL">
+            <SpaceBetween size={'s'}>
+              <div className={styles.sql}>
+                <SyntaxHighlighter language="javascript">
+                  {props.result.sql}
+                </SyntaxHighlighter>
+                <div style={{whiteSpace: "pre-line"}}>{props.result.sql_gen_process}</div>
+              </div>
+              <ColumnLayout columns={2}>
+                <Button
+                  fullWidth
+                  iconName={selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"}
+                  onClick={() => {
+                    const feedbackData = {
+                      feedback_type: FeedBackType.UPVOTE,
+                      data_profiles: userInfo.queryConfig.data_profiles || DEFAULT_QUERY_CONFIG.selectedDataPro,
+                      query: props.query,
+                      query_intent: props.intent,
+                      query_answer: props.result.sql
+                    };
+                    handleFeedback(feedbackData);
+                    setSelectedIcon(1);
+                  }}
+                >
+                  Upvote
+                </Button>
+                <Button
+                  fullWidth
+                  iconName={selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"}
+                  onClick={() => {
+                    const feedbackData = {
+                      feedback_type: FeedBackType.DOWNVOTE,
+                      data_profiles: userInfo.queryConfig.data_profiles || DEFAULT_QUERY_CONFIG.selectedDataPro,
+                      query: props.query,
+                      query_intent: props.intent,
+                      query_answer: props.result.sql
+                    };
+                    handleFeedback(feedbackData);
+                    setSelectedIcon(0);
+                  }}
+                >
+                  Downvote
+                </Button>
+              </ColumnLayout>
+            </SpaceBetween>
+          </ExpandableSection>)
+        }
       </SpaceBetween>
     </div>
   );
