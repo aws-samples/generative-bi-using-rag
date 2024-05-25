@@ -50,10 +50,17 @@ After the role is created, and then add permission by creating inline policy as 
             "Sid": "VisualEditor0",
             "Effect": "Allow",
             "Action": [
-                "bedrock:*",
-                "dynamodb:*"
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "dynamodb:*Table",
+                "dynamodb:*Item",
+                "dynamodb:Scan",
+                "dynamodb:Query"
             ],
-            "Resource": "*"
+            "Resource": [
+                "arn:aws:bedrock:us-west-2::foundation-model/*",
+                "arn:aws:dynamodb:us-west-2:**YOURACCOUNTID**:table/Nlq*"
+            ]
         }
     ]
 }
