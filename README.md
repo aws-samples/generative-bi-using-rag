@@ -210,8 +210,8 @@ preauthorized:
 change the password to hashed password
 
 ```python
-import streamlit_authenticator as stauth
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+from streamlit_authenticator.utilities.hasher import Hasher
+hashed_passwords = Hasher(['abc', 'def']).generate()
 ```
 
 
