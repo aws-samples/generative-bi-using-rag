@@ -6,7 +6,6 @@ import AlertMsg from "./components/alert-msg";
 import { ActionType, UserState } from "./types/StoreTypes";
 import { useDispatch, useSelector } from "react-redux";
 import LoginPage from "./components/login-page";
-import CustomTopNavigation from "./components/top-navigation";
 
 function App() {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
@@ -22,16 +21,13 @@ function App() {
     }
   };
   return (
-    <div className="Rp-Demo-App">
+    <div style={{ height: "100%" }}>
       <AlertMsg />
       {(!userInfo || !userInfo.userId || userInfo.userId === "") && (
         <LoginPage />
       )}
       {userInfo && userInfo.userId && userInfo.userId !== "" && (
-        <>
-          <CustomTopNavigation />
-          <PageRouter />
-        </>
+        <PageRouter />
       )}
     </div>
   );

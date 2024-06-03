@@ -1,5 +1,5 @@
 import { AppLayout } from "@cloudscape-design/components";
-import Navigation from "../navigation";
+import Navigation from "../side-navigation";
 import {
   Dispatch,
   JSXElementConstructor,
@@ -26,6 +26,7 @@ const PageLayout = (props: {
   // const [openTools, setOpenTools] = useState(true);
   return (
     <AppLayout
+      headerSelector="#awsui-top-navigation"
       navigation={<Navigation />}
       navigationHide={true}
       content={props.content}

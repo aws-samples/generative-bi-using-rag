@@ -9,7 +9,7 @@ EXPOSE 8800
 CMD ["nginx", "-g", "daemon off;"]
 
 # run on linux ec2/lambda/ecs(amd64)
-# docker buildx build --platform linux/amd64 --network host -t my_tag.
+# docker buildx build --platform linux/amd64 --network host -t my_tag .
 
 # run on lambda/macOS(arm64)
-# docker buildx build --platform linux/arm64 --network host -t my_tag.
+# docker buildx build --platform linux/arm64 --network host -t my_tag .

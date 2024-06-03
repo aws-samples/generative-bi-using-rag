@@ -11,7 +11,7 @@ QUERY_LOG_TABLE_NAME = 'NlqQueryLogging'
 DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION')
 
 
-class DynamoQueryLog:
+class DynamoQueryLogEntity:
     def __init__(self, log_id, profile_name, sql, query, intent, log_info, time_str):
         self.log_id = log_id
         self.profile_name = profile_name
@@ -101,7 +101,14 @@ class DynamoQueryLogDao:
             raise
 
     def add(self, entity):
-        self.table.put_item(Item=entity.to_dict())
+        try:
+            self.table.put_item(Item=entity.to_dict())
+        except Exception as e:
+            logger.error("add log entity is error {}",e)
 
     def update(self, entity):
         self.table.put_item(Item=entity.to_dict())
+
+    def add_log(self, log_id, profile_name, sql, query, intent, log_info, time_str):
+        entity = DynamoQueryLogEntity(log_id, profile_name, sql, query, intent, log_info, time_str)
+        self.add(entity)
