@@ -6,6 +6,8 @@ export const APP_TITLE = process.env.REACT_APP_TITLE;
 
 export const APP_LOGO = process.env.REACT_APP_LOGO || '';
 
+export const APP_RIGHT_LOGO = process.env.REACT_APP_RIGHT_LOGO || '';
+
 export const SQL_DISPLAY = process.env.REACT_APP_SQL_DISPLAY;
 
 export const AMPLIFY_CONFIG_JSON = "__bi_demo_app_amplify_config_json__";
