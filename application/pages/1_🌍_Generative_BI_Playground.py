@@ -221,7 +221,7 @@ def main():
 
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
-        # all_profiles.update(demo_profile)
+        all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
 
     if 'selected_sample' not in st.session_state:
