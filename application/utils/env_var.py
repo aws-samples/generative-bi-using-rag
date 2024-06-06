@@ -13,6 +13,8 @@ RDS_PQ_SCHEMA = os.getenv('RDS_PQ_SCHEMA')
 
 BEDROCK_REGION = os.getenv('BEDROCK_REGION')
 
+DYNAMODB_AWS_REGION = os.getenv('DYNAMODB_AWS_REGION')
+
 AOS_HOST = os.getenv('AOS_HOST')
 AOS_PORT = os.getenv('AOS_PORT')
 AOS_USER = os.getenv('AOS_USER')
