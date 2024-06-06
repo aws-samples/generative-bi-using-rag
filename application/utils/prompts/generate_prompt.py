@@ -146,7 +146,7 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 intent_system_prompt_dict['llama3-70b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 3 main intents:
+There are 4 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
@@ -199,7 +199,7 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 intent_system_prompt_dict['haiku-20240307v1-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 3 main intents:
+There are 4 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
@@ -252,7 +252,7 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 intent_system_prompt_dict['sonnet-20240229v1-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 3 main intents:
+There are 4 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
@@ -1266,6 +1266,9 @@ You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
 
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
+
+
 {sql_guidance}
 
 </guidelines> 
@@ -1310,6 +1313,8 @@ Here are some ner info to help generate SQL.
 You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
+
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
 
 {sql_guidance}
 
@@ -1356,6 +1361,8 @@ You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
 
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
+
 {sql_guidance}
 
 </guidelines> 
@@ -1400,6 +1407,8 @@ Here are some ner info to help generate SQL.
 You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
+
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
 
 {sql_guidance}
 
@@ -1490,7 +1499,7 @@ def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, n
         long_string += "{}: {}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
             "description"])
         long_string += ddl_string
-        long_string += "\n"
+        long_string += "\n \n"
 
     # trying CREATE TABLE ddl
     # long_string = generate_create_table_ddl(long_string)

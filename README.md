@@ -50,10 +50,17 @@ After the role is created, and then add permission by creating inline policy as 
             "Sid": "VisualEditor0",
             "Effect": "Allow",
             "Action": [
-                "bedrock:*",
-                "dynamodb:*"
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "dynamodb:*Table",
+                "dynamodb:*Item",
+                "dynamodb:Scan",
+                "dynamodb:Query"
             ],
-            "Resource": "*"
+            "Resource": [
+                "arn:aws:bedrock:us-west-2::foundation-model/*",
+                "arn:aws:dynamodb:us-west-2:**YOURACCOUNTID**:table/Nlq*"
+            ]
         }
     ]
 }
@@ -203,8 +210,8 @@ preauthorized:
 change the password to hashed password
 
 ```python
-import streamlit_authenticator as stauth
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+from streamlit_authenticator.utilities.hasher import Hasher
+hashed_passwords = Hasher(['abc', 'def']).generate()
 ```
 
 
