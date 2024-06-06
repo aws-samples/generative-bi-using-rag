@@ -221,7 +221,7 @@ def main():
 
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
-        all_profiles.update(demo_profile)
+        # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
 
     if 'selected_sample' not in st.session_state:
@@ -248,6 +248,12 @@ def main():
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
+
+    session_state_list = list(st.session_state.get('profiles', {}).keys())
+
+    hava_session_state_flag = False
+    if len(session_state_list) > 0:
+        hava_session_state_flag = True
 
     with st.sidebar:
         st.title('Setting')
@@ -277,6 +283,10 @@ def main():
 
     st.chat_message("assistant").write(
         f"I'm the Generative BI assistant. Please **ask a question** or **select a sample question** below to start.")
+
+    if not hava_session_state_flag:
+        st.info("You should first create a database connection and then create a data profile")
+        return
 
     # Display sample questions
     comments = st.session_state.profiles[selected_profile]['comments']
