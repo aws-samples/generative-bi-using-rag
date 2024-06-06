@@ -223,6 +223,9 @@ def main():
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
+    else:
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state['profiles'] = all_profiles
 
     if 'selected_sample' not in st.session_state:
         st.session_state['selected_sample'] = ''
@@ -249,7 +252,8 @@ def main():
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
-    session_state_list = list(st.session_state.get('profiles', {}).keys())
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
+    session_state_list = list(all_profiles.get('profiles', {}).keys())
 
     hava_session_state_flag = False
     if len(session_state_list) > 0:
