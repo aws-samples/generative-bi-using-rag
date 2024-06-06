@@ -320,7 +320,7 @@ def ask(question: Question) -> Answer:
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
 
-        log_info = search_intent_result["error_info"] + ";" + sql_search_result.data_analyse
+        log_info = str(search_intent_result["error_info"]) + ";" + sql_search_result.data_analyse
         LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql,
                                           query=search_box,
                                           intent="normal_search",
