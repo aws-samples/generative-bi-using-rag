@@ -1,4 +1,4 @@
-import { Mode, applyMode } from "@cloudscape-design/global-styles";
+import { applyMode, Mode } from "@cloudscape-design/global-styles";
 import { NavigationPanelState } from "../types";
 
 const PREFIX = "genai-chatbot";
@@ -8,9 +8,7 @@ const NAVIGATION_PANEL_STATE_STORAGE_NAME = `${PREFIX}-navigation-panel-state`;
 export abstract class Storage {
   static getTheme() {
     const value = localStorage.getItem(THEME_STORAGE_NAME) ?? Mode.Light;
-    const theme = value === Mode.Dark ? Mode.Dark : Mode.Light;
-
-    return theme;
+    return value === Mode.Dark ? Mode.Dark : Mode.Light;
   }
 
   static applyTheme(theme: Mode) {

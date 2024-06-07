@@ -85,7 +85,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   }, [props.messageHistory]);
 
   return (
-    <Container>
+    <Container className={styles.input_area_container}>
       <SpaceBetween size={'s'}>
         <CustomQuestions
           setTextValue={setTextValue}
@@ -112,8 +112,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             <Button
               disabled={state.value.length === 0}
               onClick={handleSendMessage}
-              iconAlign="right"
-              iconName="angle-right-double"
+              iconAlign="left"
+              iconName="status-positive"
               variant="primary">
               Send
             </Button>

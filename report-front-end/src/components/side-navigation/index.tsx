@@ -1,53 +1,26 @@
-import { SideNavigation, SideNavigationProps, } from "@cloudscape-design/components";
-import useOnFollow from "../../common/hooks/use-on-follow";
-import { useNavigationPanelState } from "../../common/hooks/use-navigation-panel-state";
+import { SideNavigation, } from "@cloudscape-design/components";
 import { useState } from "react";
-import { CHATBOT_NAME } from "../../common/constants";
+import { useLocation, useNavigate } from "react-router-dom";
+import { CHATBOT_NAME } from "../../common/constant/constants";
 
-export default function Index() {
-  const onFollow = useOnFollow();
-  const [navigationPanelState, setNavigationPanelState] =
-    useNavigationPanelState();
-  const [items] = useState<SideNavigationProps.Item[]>(() => {
-    const items: SideNavigationProps.Item[] = [
-      {
-        type: "link",
-        text: "Playground",
-        href: "/",
-      }
-    ];
-
-    return items;
-  });
-
-  const onChange = ({
-    detail,
-  }: {
-    detail: SideNavigationProps.ChangeDetail;
-  }) => {
-    const sectionIndex = items.indexOf(detail.item);
-    setNavigationPanelState({
-      collapsedSections: {
-        ...navigationPanelState.collapsedSections,
-        [sectionIndex]: !detail.expanded,
-      },
-    });
-  };
+export default function NavigationPanel() {
+  const location = useLocation();
+  const [activeHref, setActiveHref] = useState(location.pathname ?? "/playground");
+  const navigate = useNavigate();
+  const items: any = [];
 
   return (
     <SideNavigation
-      onFollow={onFollow}
-      onChange={onChange}
-      header={{ href: "/", text: CHATBOT_NAME }}
-      items={items.map((value, idx) => {
-        if (value.type === "section") {
-          const collapsed =
-            navigationPanelState.collapsedSections?.[idx] === true;
-          value.defaultExpanded = !collapsed;
+      activeHref={activeHref}
+      onFollow={event => {
+        if (!event.detail.external) {
+          event.preventDefault();
+          setActiveHref(event.detail.href);
+          navigate(event.detail.href);
         }
-
-        return value;
-      })}
+      }}
+      header={{ href: "/", text: CHATBOT_NAME }}
+      items={items}
     />
   );
 }

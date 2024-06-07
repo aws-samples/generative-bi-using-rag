@@ -1,9 +1,9 @@
 {
   "id": "/",
   "start_url": "/",
-  "name": "GenBI Chatbot",
-  "short_name": "GenBI Chatbot",
-  "description": "GenBI ChatBot Sample",
+  "short_name": "React App",
+  "name": "React App Sample",
+  "description": "Sample",
   "theme_color": "#000000",
   "background_color": "#ffffff",
   "display": "standalone",

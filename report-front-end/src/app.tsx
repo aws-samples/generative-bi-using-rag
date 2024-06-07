@@ -1,7 +1,7 @@
-import { BrowserRouter, Route, Routes, } from "react-router-dom";
-import Playground from "./pages/chatbot/playground";
-import CustomTopNavigation from "./components/top-navigation";
 import "./app.scss";
+import PageRouter from "./pages/page-router";
+import CustomTopNavigation from "./components/top-navigation";
+import { BrowserRouter } from "react-router-dom";
 
 function App() {
 
@@ -11,9 +11,7 @@ function App() {
         <CustomTopNavigation />
         <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
         <div>
-          <Routes>
-            <Route index path="/" element={<Playground />} />
-          </Routes>
+          <PageRouter />
         </div>
       </BrowserRouter>
     </div>

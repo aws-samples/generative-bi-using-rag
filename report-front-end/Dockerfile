@@ -1,9 +1,9 @@
-FROM public.ecr.aws/docker/library/node:20.9.0 AS builder
+FROM public.ecr.aws/docker/library/node:18.17.0 AS builder
 COPY . /tmp/frontend/
 RUN cd /tmp/frontend/ && npm ci && npm run build
 
 FROM public.ecr.aws/docker/library/nginx:1.23-alpine
-COPY --from=builder /tmp/frontend/build/ /usr/share/nginx/public/
+COPY --from=builder /tmp/frontend/dist/ /usr/share/nginx/public/
 COPY nginx-config/ /etc/nginx/
 EXPOSE 8800
 CMD ["nginx", "-g", "daemon off;"]
