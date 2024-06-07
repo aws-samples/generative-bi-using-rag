@@ -1,10 +1,10 @@
 import { Button } from "@aws-amplify/ui-react";
-import styles from "./chat.module.scss";
-import { query } from "../../common/API";
 import { Dispatch, SetStateAction } from "react";
-import { ChatBotHistoryItem } from "@/components/chatbot-panel/types";
+import { ChatBotHistoryItem } from "./types";
+import styles from "./chat.module.scss";
+import { query } from "../../common/api/API";
 import { useSelector } from "react-redux";
-import { UserState } from "@/types/StoreTypes";
+import { UserState } from "../config-panel/types";
 
 export interface SuggestedQuestionsProps {
   questions: string[];
@@ -30,6 +30,7 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
       {props.questions.map((question, kid) => (
         <Button
           key={kid}
+          size="small"
           className={styles.button}
           onClick={() => handleSendMessage(question)}>
           {question}

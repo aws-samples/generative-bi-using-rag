@@ -9,10 +9,10 @@ import {
 } from "@cloudscape-design/components";
 import { SetStateAction, useEffect, useState } from "react";
 import "./style.scss";
-import { BACKEND_URL } from "../../tools/const";
-import { alertMsg } from "../../tools/tool";
-import { ActionType, UserState } from "../../types/StoreTypes";
 import { useSelector, useDispatch } from "react-redux";
+import { BACKEND_URL } from "../../common/constants";
+import { ActionType, UserState } from "./types";
+import { alertMsg } from "../../common/helpers/tools";
 
 const ConfigPanel = () => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
@@ -38,21 +38,21 @@ const ConfigPanel = () => {
   } as any);
 
   useEffect(() => {
-    getSelectData();
+    getSelectData().then();
   }, []);
 
   const getSelectData = async () => {
     setLoading(true);
     try {
-      const reponse = await fetch(`${BACKEND_URL}qa/option`, {
+      const response = await fetch(`${BACKEND_URL}qa/option`, {
         method: "GET",
       });
-      if (!reponse.ok) {
+      if (!response.ok) {
         alertMsg("LLM Option Error", "error");
         return;
       }
-      const result = await reponse.json();
-
+      const result = await response.json();
+      console.log(result);
       if (!result || !result.data_profiles || !result.bedrock_model_ids) {
         alertMsg("LLM Option Error", "error");
         return;

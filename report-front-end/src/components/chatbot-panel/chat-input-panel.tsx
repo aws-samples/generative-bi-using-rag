@@ -1,12 +1,12 @@
 import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useState, } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatInputState, } from "./types";
 import CustomQuestions from "./custom-questions";
+import { query } from "../../common/api/API";
 import { useSelector } from "react-redux";
-import { UserState } from "@/types/StoreTypes";
-import { query } from "../../common/API";
+import { UserState } from "../config-panel/types";
+import styles from "./chat.module.scss";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
@@ -60,12 +60,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             onChange={(e) =>
               setTextValue((state) => ({...state, value: e.target.value}))
             }
-            /*onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}*/
             value={state.value}
             placeholder={"Send a message"}
           />

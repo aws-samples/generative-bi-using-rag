@@ -1,27 +1,53 @@
-import { SideNavigation } from "@cloudscape-design/components";
+import { SideNavigation, SideNavigationProps, } from "@cloudscape-design/components";
+import useOnFollow from "../../common/hooks/use-on-follow";
+import { useNavigationPanelState } from "../../common/hooks/use-navigation-panel-state";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { CHATBOT_NAME } from "../../common/constants";
 
-const Navigation = () => {
-  const navigate = useNavigate();
+export default function Index() {
+  const onFollow = useOnFollow();
+  const [navigationPanelState, setNavigationPanelState] =
+    useNavigationPanelState();
+  const [items] = useState<SideNavigationProps.Item[]>(() => {
+    const items: SideNavigationProps.Item[] = [
+      {
+        type: "link",
+        text: "Playground",
+        href: "/",
+      }
+    ];
 
-  const [activeHref, setActiveHref] = useState(window.location.pathname ?? "/");
+    return items;
+  });
+
+  const onChange = ({
+    detail,
+  }: {
+    detail: SideNavigationProps.ChangeDetail;
+  }) => {
+    const sectionIndex = items.indexOf(detail.item);
+    setNavigationPanelState({
+      collapsedSections: {
+        ...navigationPanelState.collapsedSections,
+        [sectionIndex]: !detail.expanded,
+      },
+    });
+  };
+
   return (
     <SideNavigation
-      activeHref={activeHref}
-      header={{ href: "/", text: "GenBI" }}
-      onFollow={(event) => {
-        if (!event.detail.external) {
-          event.preventDefault();
-          setActiveHref(event.detail.href);
-          navigate(event.detail.href);
+      onFollow={onFollow}
+      onChange={onChange}
+      header={{ href: "/", text: CHATBOT_NAME }}
+      items={items.map((value, idx) => {
+        if (value.type === "section") {
+          const collapsed =
+            navigationPanelState.collapsedSections?.[idx] === true;
+          value.defaultExpanded = !collapsed;
         }
-      }}
-      items={[
-        { type: "link", text: "Playground", href: "/" },
-      ]}
+
+        return value;
+      })}
     />
   );
-};
-
-export default Navigation;
+}
