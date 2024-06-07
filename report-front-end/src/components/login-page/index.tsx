@@ -4,8 +4,8 @@ import App from "../../app";
 import { Amplify } from "aws-amplify";
 import { Storage } from "../../common/helpers/storage";
 import { Mode } from "@cloudscape-design/global-styles";
-import data from '../../../public/aws-exports.json';
 import "@aws-amplify/ui-react/styles.css";
+import { COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_USER_POOL_WEB_CLIENT_ID } from "../../common/constants";
 
 export default function AppConfigured() {
   const [theme, setTheme] = useState(Storage.getTheme());
@@ -13,7 +13,13 @@ export default function AppConfigured() {
   useEffect(() => {
     (async () => {
       try {
-        const awsExports = data;
+        const awsExports = {
+          "Auth": {
+            "region": COGNITO_REGION,
+            "userPoolId": COGNITO_USER_POOL_ID,
+            "userPoolWebClientId": COGNITO_USER_POOL_WEB_CLIENT_ID
+          }
+        }
         Amplify.configure(awsExports);
       } catch (e) {
         console.error(e);
@@ -60,7 +66,7 @@ export default function AppConfigured() {
       colorMode={theme === Mode.Dark ? "dark" : "light"}
     >
       <Authenticator
-        hideSignUp={false}
+        signUpAttributes={['email']}
       >
         <App />
       </Authenticator>
