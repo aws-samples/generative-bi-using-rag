@@ -13,34 +13,12 @@ export default function Chat(
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const scrollTo = (element : any) => {
-    if (element && !isInViewPort(element)) {
-      element.scrollIntoView({behavior: "smooth"});
-    }
-  };
-
-  function isInViewPort(element: any) {
-    const viewWidth = window.innerWidth || document.documentElement.clientWidth;
-    const viewHeight = window.innerHeight || document.documentElement.clientHeight;
-    const {
-      top,
-      right,
-      bottom,
-      left,
-    } = element.getBoundingClientRect();
-
-    return (
-      top >= 0 && left >= 0 && right <= viewWidth && bottom <= (viewHeight - 500)
-    );
-  }
-
   return (
     <div className={styles.chat_container}>
       <SpaceBetween size={'xxl'}>
         {messageHistory.map((message, idx) => {
-            const isLast = idx === messageHistory.length - 2;
             return (
-              <div key={idx} ref={!loading && isLast ? scrollTo : undefined}>
+              <div key={idx}>
                 <ChatMessage
                   key={idx}
                   message={message}
@@ -52,7 +30,8 @@ export default function Chat(
           }
         )}
         {loading && (
-          <div ref={loading ? scrollTo : undefined}>
+          /*<div ref={loading ? scrollTo : undefined}>*/
+          <div>
             <Box float="left">
               <Spinner/>
             </Box>
