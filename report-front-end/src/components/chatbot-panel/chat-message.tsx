@@ -12,21 +12,18 @@ import {
 import {
   ChatBotAnswerItem,
   ChatBotHistoryItem,
-  ChatBotMessageType,
-  FeedBackItem,
-  FeedBackType,
+  ChatBotMessageType, FeedBackItem, FeedBackType,
   SQLSearchResult
 } from "./types";
 import Button from "@cloudscape-design/components/button";
 import SyntaxHighlighter from "react-syntax-highlighter";
-import styles from "./chat.module.scss";
 import SuggestedQuestions from "./suggested-questions";
 import { Dispatch, SetStateAction, useState } from "react";
-import { addUserFeedback } from "../../common/API";
+import { addUserFeedback } from "../../common/api/API";
+import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constants";
+import styles from "./chat.module.scss";
 import { useSelector } from "react-redux";
-import { UserState } from "@/types/StoreTypes";
-import { DEFAULT_QUERY_CONFIG } from "../../enum/DefaultQueryEnum";
-import { SQL_DISPLAY } from "../../tools/const";
+import { UserState } from "../config-panel/types";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -35,80 +32,76 @@ export interface ChartTypeProps {
 
 function ChartPanel(props: ChartTypeProps) {
   const sql_data = props.sql_data;
-  switch (props.data_show_type) {
-    case 'bar':
-      // convert data to bar chart data
-      const header = sql_data[0];
-      const items = sql_data.slice(1, sql_data.length);
-      const key = ['x', 'y'];
-      const content = items.map((item) => {
-        const map: any = new Map(item.map((value, index) => {
-          return [key[index], value];
-        }));
-        return Object.fromEntries(map);
-      });
-      const seriesValue: any = [{
-        title: header[1],
-        type: "bar",
-        data: content
-      }];
-      return (
-        <BarChart
-          series={seriesValue}
-          height={300}
-          hideFilter
-          xTitle={header[0]}
-          yTitle={header[1]}
-        />
-      );
-    case 'line':
-      // convert data to line chart data
-      const lineHeader = sql_data[0];
-      const lineItems = sql_data.slice(1, sql_data.length);
-      const lineKey = ['x', 'y'];
-      const lineContent = lineItems.map((item) => {
-        const map: any = new Map(item.map((value, index) => {
-          return [lineKey[index], value];
-        }));
-        return Object.fromEntries(map);
-      });
-      const lineSeriesValue: any = [{
-        title: lineHeader[1],
-        type: "line",
-        data: lineContent
-      }];
-      return (
-        <LineChart
-          series={lineSeriesValue}
-          height={300}
-          hideFilter
-          xScaleType="categorical"
-          xTitle={lineHeader[0]}
-          yTitle={lineHeader[1]}
-        />
-      );
-    case 'pie':
-      // convert data to pie data
-      const pieHeader = sql_data[0];
-      const pieItems = sql_data.slice(1, sql_data.length);
-      const pieKeys = ['title', 'value'];
-      const pieContent: any = pieItems.map((item) => {
-        const map: any = new Map(item.map((value, index) => {
-          return [pieKeys[index], value];
-        }));
-        return Object.fromEntries(map);
-      });
-      return (
-        <PieChart
-          data={pieContent}
-          detailPopoverContent={(datum, sum) => [
-            {key: pieHeader[1], value: datum.value}
-          ]}
-          hideFilter
-        />
-      );
-    default:
-      return null;
+  if (props.data_show_type === 'bar') {// convert data to bar chart data
+    const header = sql_data[0];
+    const items = sql_data.slice(1, sql_data.length);
+    const key = ['x', 'y'];
+    const content = items.map((item) => {
+      const map: any = new Map(item.map((value, index) => {
+        return [key[index], value];
+      }));
+      return Object.fromEntries(map);
+    });
+    const seriesValue: any = [{
+      title: header[1],
+      type: "bar",
+      data: content
+    }];
+    return (
+      <BarChart
+        series={seriesValue}
+        height={300}
+        hideFilter
+        xTitle={header[0]}
+        yTitle={header[1]}
+      />
+    );
+  } else if (props.data_show_type === 'line') {// convert data to line chart data
+    const lineHeader = sql_data[0];
+    const lineItems = sql_data.slice(1, sql_data.length);
+    const lineKey = ['x', 'y'];
+    const lineContent = lineItems.map((item) => {
+      const map: any = new Map(item.map((value, index) => {
+        return [lineKey[index], value];
+      }));
+      return Object.fromEntries(map);
+    });
+    const lineSeriesValue: any = [{
+      title: lineHeader[1],
+      type: "line",
+      data: lineContent
+    }];
+    return (
+      <LineChart
+        series={lineSeriesValue}
+        height={300}
+        hideFilter
+        xScaleType="categorical"
+        xTitle={lineHeader[0]}
+        yTitle={lineHeader[1]}
+      />
+    );
+  } else if (props.data_show_type === 'pie') {// convert data to pie data
+    const pieHeader = sql_data[0];
+    const pieItems = sql_data.slice(1, sql_data.length);
+    const pieKeys = ['title', 'value'];
+    const pieContent: any = pieItems.map((item) => {
+      const map: any = new Map(item.map((value, index) => {
+        return [pieKeys[index], value];
+      }));
+      return Object.fromEntries(map);
+    });
+    return (
+      <PieChart
+        data={pieContent}
+        detailPopoverContent={(datum) => [
+          {key: pieHeader[1], value: datum.value}
+        ]}
+        hideFilter
+      />
+    );
+  } else {
+    return null;
   }
 
 }
@@ -154,7 +147,6 @@ function SQLResultPanel(props: SQLResultProps) {
             headerText="Table">
             <Table
               columnDefinitions={headers}
-              enableKeyboardNavigation
               items={content}
               resizableColumns
             />

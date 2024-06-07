@@ -1,99 +1,69 @@
-import { Button, Input } from "@cloudscape-design/components";
-import React, { useState } from "react";
-import { alertMsg, showHideSpinner } from "../../tools/tool";
-import { useDispatch } from "react-redux";
-import "./style.scss";
-import { ActionType, UserState } from "../../types/StoreTypes";
-import { DEFAULT_QUERY_CONFIG } from "../../enum/DefaultQueryEnum";
+import { useEffect, useState } from "react";
+import { Authenticator, defaultDarkModeOverride, ThemeProvider, } from "@aws-amplify/ui-react";
+import App from "../../app";
+import { Amplify } from "aws-amplify";
+import { Storage } from "../../common/helpers/storage";
+import { Mode } from "@cloudscape-design/global-styles";
+import data from '../../../public/aws-exports.json';
+import "@aws-amplify/ui-react/styles.css";
 
-const LoginPage = () => {
-  const [userName, setUserName] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoding] = useState(false);
-  const dispatch = useDispatch();
+export default function AppConfigured() {
+  const [theme, setTheme] = useState(Storage.getTheme());
 
-  const closeWindow = () => {
-    window.location.href = "about:blank";
-    window.close();
-  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const awsExports = data;
+        Amplify.configure(awsExports);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, []);
 
-  const doLogin = async () => {
-    setIsLoding(true);
-    const reg =
-      /^\w+((.\w+)|(-\w+))@[A-Za-z0-9]+((.|-)[A-Za-z0-9]+).[A-Za-z0-9]+$/;
-    if (!userName || !reg.test(userName)) {
-      alertMsg("Please enter your vaild email", "warning");
-      setIsLoding(false);
-      return;
-    }
-    if (!password) {
-      alertMsg("Please enter your password", "warning");
-      setIsLoding(false);
-      return;
-    }
-    if (userName !== "bi_example@amazon.com" || password !== "HiGenBI@2024") {
-      alertMsg("Username or password is error", "warning");
-      setIsLoding(false);
-      return;
-    }
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "style"
+        ) {
+          const newValue =
+            document.documentElement.style.getPropertyValue(
+              "--app-color-scheme"
+            );
 
-    showHideSpinner(true);
-    try {
-      showHideSpinner(false);
+          const mode = newValue === "dark" ? Mode.Dark : Mode.Light;
+          if (mode !== theme) {
+            setTheme(mode);
+          }
+        }
+      });
+    });
 
-      alertMsg("Login success", "success");
-      const loginUser: UserState = {
-        userId: "bi_example",
-        email: "bi_example@amazon.com",
-        account: "bi_example",
-        displayName: "bi_example",
-        loginExpiration: +new Date() + 18000000,
-        queryConfig: DEFAULT_QUERY_CONFIG,
-      };
-      dispatch({ type: ActionType.Update, state: loginUser });
-      setIsLoding(false);
-    } catch (error) {
-      showHideSpinner(false);
-      alertMsg("Wrong user name or password", "error");
-      setIsLoding(false);
-    }
-  };
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [theme]);
 
   return (
-    <div className="login-page">
-      <span className="login-page-title">Gen BI Login</span>
-      <div className="login-page-name">
-        <span className="login-page-span">User Name:</span>
-        <Input
-          className="login-page-input"
-          value={userName}
-          onChange={({ detail }) => setUserName(detail.value)}
-          placeholder="**@your_domain.com"
-        />
-      </div>
-      <div className="login-page-pwd">
-        <span className="login-page-span">Password:</span>
-        <Input
-          className="login-page-input"
-          type="password"
-          value={password}
-          onChange={({ detail }) => setPassword(detail.value)}
-          placeholder="your password"
-        />
-      </div>
-      <div className="login-page-btn">
-        <Button
-          variant="primary"
-          className="login"
-          onClick={doLogin}
-          disabled={isLoading}
-        >
-          Login
-        </Button>
-        <Button onClick={closeWindow}>Close Page</Button>
-      </div>
-    </div>
+    <ThemeProvider
+      theme={{
+        name: "default-theme",
+        overrides: [defaultDarkModeOverride],
+      }}
+      colorMode={theme === Mode.Dark ? "dark" : "light"}
+    >
+      <Authenticator
+        hideSignUp={false}
+      >
+        <App />
+      </Authenticator>
+    </ThemeProvider>
   );
-};
-
-export default LoginPage;
+}

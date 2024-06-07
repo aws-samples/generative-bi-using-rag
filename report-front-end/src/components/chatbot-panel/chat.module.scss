@@ -146,11 +146,11 @@
 }
 
 .button {
-  border: 1px dashed #ccc;
-  border-radius: 8px;
+  border: 1px dashed #ccc !important;
+  border-radius: 8px !important;
   padding: 6px;
   background-color: white;
-  color: gray;
+  color: gray !important;
 }
 
 .button:hover {

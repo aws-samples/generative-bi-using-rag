@@ -1,13 +1,12 @@
 import { Link, SpaceBetween } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "@aws-amplify/ui-react";
-import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatInputState } from "./types";
-import { BACKEND_URL } from "../../tools/const";
+import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../../common/constants";
+import { query } from "../../common/api/API";
 import { useSelector } from "react-redux";
-import { UserState } from "@/types/StoreTypes";
-import { DEFAULT_QUERY_CONFIG } from "../../enum/DefaultQueryEnum";
-import { query } from "../../common/API";
+import { UserState } from "../config-panel/types";
+import styles from "./chat.module.scss";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
@@ -24,6 +23,7 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
 
   const getRecommendQuestions = async (data_profile: string) => {
     const url = `${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`;
+    console.log(url);
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -41,12 +41,9 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   }
 
   useEffect(() => {
-    let data_profile = userInfo.queryConfig.selectedDataPro;
-    if (!data_profile) {
-      data_profile = DEFAULT_QUERY_CONFIG.selectedDataPro;
-    }
+    const data_profile = DEFAULT_QUERY_CONFIG.selectedDataPro;
     getRecommendQuestions(data_profile).then();
-  }, [userInfo]);
+  }, []);
 
   const handleSendMessage = (question: string) => {
     query({
@@ -65,8 +62,8 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
             {questions.slice(0, Math.min(3, questions.length)).map((question, kid) => (
               <Button
                 key={kid}
+                size="small"
                 className={styles.button}
-                // onClick={() => props.setTextValue({value: question})}>
                 onClick={() => handleSendMessage(question)}>
                 {question}
               </Button>
@@ -89,8 +86,8 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
             {questions.map((question, kid) => (
               <Button
                 key={kid}
+                size="small"
                 className={styles.button}
-                // onClick={() => props.setTextValue({value: question})}>
                 onClick={() => handleSendMessage(question)}>
                 {question}
               </Button>

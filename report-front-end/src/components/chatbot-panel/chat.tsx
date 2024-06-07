@@ -1,9 +1,9 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { ChatBotHistoryItem } from "./types";
 import ChatInputPanel from "./chat-input-panel";
-import styles from "./chat.module.scss";
 import { Box, SpaceBetween, Spinner } from "@cloudscape-design/components";
 import ChatMessage from "./chat-message";
+import styles from "./chat.module.scss";
 
 export default function Chat(
   props: {
@@ -13,7 +13,6 @@ export default function Chat(
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // On first render and on unmount there is no DOM element so `element` will be `null`
   const scrollTo = (element : any) => {
     if (element && !isInViewPort(element)) {
       element.scrollIntoView({behavior: "smooth"});
