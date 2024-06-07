@@ -5,6 +5,8 @@ This is a comprehensive framework designed to enable Generative BI capabilities 
 - Text-to-SQL functionality for querying customized data sources using natural language.
 - User-friendly interface for adding, editing, and managing data sources, tables, and column descriptions.
 - Performance enhancement through the integration of historical question-answer ranking and entity recognition.
+- Customize business information, including entity information, formulas, SQL samples, and analysis ideas for complex business problems.
+- Add agent task splitting function to handle complex attribution analysis problems.
 - Intuitive question-answering UI that provides insights into the underlying Text-to-SQL mechanism.
 - Simple agent design interface for handling complex queries through a conversational approach.
 

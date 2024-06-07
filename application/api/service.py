@@ -37,7 +37,7 @@ datasource_profile = {}
 for i, v in env_vars['data_sources'].items():
     datasource_profile[i] = v
 all_profiles = ProfileManagement.get_all_profiles_with_info()
-all_profiles.update(datasource_profile)
+# all_profiles.update(datasource_profile)
 
 
 def get_option() -> Option:
