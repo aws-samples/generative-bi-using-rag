@@ -12,7 +12,9 @@ import {
 import {
   ChatBotAnswerItem,
   ChatBotHistoryItem,
-  ChatBotMessageType, FeedBackItem, FeedBackType,
+  ChatBotMessageType,
+  FeedBackItem,
+  FeedBackType,
   SQLSearchResult
 } from "./types";
 import Button from "@cloudscape-design/components/button";
@@ -187,7 +189,7 @@ function SQLResultPanel(props: SQLResultProps) {
             variant="footer"
             headerText="SQL">
             <SpaceBetween size={'s'}>
-              <div className={styles.sql}>
+              <div className={styles.sql_container}>
                 <SyntaxHighlighter language="javascript">
                   {props.result.sql}
                 </SyntaxHighlighter>
