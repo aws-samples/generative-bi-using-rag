@@ -8,6 +8,10 @@ import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 
 import path from "path";
 
+interface Ec2StackProps extends StackProps {
+  aosEndpoint: string;
+}
+
 export class Ec2Stack extends NestedStack {
   _vpc;
   _securityGroup;
@@ -15,7 +19,7 @@ export class Ec2Stack extends NestedStack {
   _dnsName;
   _publicIP;
 
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
+  constructor(scope: Construct, id: string, props: Ec2StackProps) {
     super(scope, id, props);
     this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
       isDefault: true,

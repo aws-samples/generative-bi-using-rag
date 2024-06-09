@@ -2,6 +2,7 @@ import { Duration, Stack, StackProps, CfnParameter, CfnOutput } from 'aws-cdk-li
 import { Construct } from 'constructs';
 import { Ec2Stack } from './ec2/ec2-stack';
 import { LLMStack } from './model/llm-stack';
+import { AOSStack } from './aos/aos-stack';
 
 export class MainStack extends Stack {
 
@@ -29,14 +30,21 @@ export class MainStack extends Stack {
       });
     }
 
+    const _AosStack = new AOSStack(this, 'aos-Stack', {
+      env: props.env,
+    });
+    
     const _Ec2Stack = new Ec2Stack(this, 'ec2-Stack', {
       env: props.env,
+      aosEndpoint: _AosStack.endpoint,
     });
 
     if (_LlmStack) {
       _Ec2Stack.addDependency(_LlmStack);
     }
 
+    _Ec2Stack.addDependency(_AosStack); // Ensure EC2 stack waits for AOS stack
+    
     new CfnOutput(this, 'Ec2PublicIP', {
       value: _Ec2Stack._publicIP,
       description: 'Public IP of the EC2 instance',
