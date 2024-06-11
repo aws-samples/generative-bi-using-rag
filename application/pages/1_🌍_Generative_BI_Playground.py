@@ -252,8 +252,7 @@ def main():
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
-    all_profiles = ProfileManagement.get_all_profiles_with_info()
-    session_state_list = list(all_profiles.get('profiles', {}).keys())
+    session_state_list = list(st.session_state.get('profiles', {}).keys())
 
     hava_session_state_flag = False
     if len(session_state_list) > 0:
