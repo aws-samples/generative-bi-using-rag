@@ -84,7 +84,7 @@ async def websocket_endpoint(websocket: WebSocket):
             #         await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
             #         await response_websocket(websocket, session_id, final_sql_query_result)
             #         await response_websocket(websocket, session_id, "\n")
-            #     await response_websocket(websocket, session_id, "", ContentEnum.END)
+                await response_websocket(websocket, session_id, "", ContentEnum.END)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)

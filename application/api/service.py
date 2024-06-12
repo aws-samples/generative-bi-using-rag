@@ -23,7 +23,7 @@ from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSe
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum, ContentEnum
-from fastapi import  WebSocket
+from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
@@ -437,7 +437,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
                                           intent="reject_search", log_info="", time_str=current_time)
         return answer
     elif search_intent_flag:
-        normal_search_result = normal_text_search(search_box, model_type,
+        normal_search_result = normal_text_search_websocket(search_box, model_type,
                                                   database_profile,
                                                   entity_slot, env_vars,
                                                   selected_profile, use_rag_flag)
