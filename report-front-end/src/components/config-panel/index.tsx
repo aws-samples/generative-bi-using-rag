@@ -8,11 +8,11 @@ import {
   Toggle,
 } from "@cloudscape-design/components";
 import { SetStateAction, useEffect, useState } from "react";
-import "./style.scss";
 import { useSelector, useDispatch } from "react-redux";
-import { BACKEND_URL } from "../../common/constants";
+import { BACKEND_URL } from "../../common/constant/constants";
 import { ActionType, UserState } from "./types";
 import { alertMsg } from "../../common/helpers/tools";
+import "./style.scss";
 
 const ConfigPanel = () => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
@@ -25,7 +25,6 @@ const ConfigPanel = () => {
   const [topP, setTopP] = useState(0.999);
   const [topK, setTopK] = useState(250);
   const [maxLength, setMaxLength] = useState(2048);
-  const [loading, setLoading] = useState(false);
   const [llmOptions, setLLMOptions] = useState([] as any[]);
   const [dataProOptions, setDataProOptions] = useState([] as any[]);
   const [selectedLLM, setSelectedLLM] = useState({
@@ -42,7 +41,6 @@ const ConfigPanel = () => {
   }, []);
 
   const getSelectData = async () => {
-    setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}qa/option`, {
         method: "GET",
@@ -75,7 +73,6 @@ const ConfigPanel = () => {
     } catch (error) {
       console.error("getSelectData Error", error);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -135,7 +132,7 @@ const ConfigPanel = () => {
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
   };
   return (
-    <HelpPanel header="Configuration" loading={loading}>
+    <HelpPanel header="Configuration">
       <SpaceBetween size="l">
         <FormField label="LLM" description="Select a large language model">
           <Select

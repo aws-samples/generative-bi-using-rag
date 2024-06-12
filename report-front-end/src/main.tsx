@@ -5,7 +5,7 @@ import { Storage } from "./common/helpers/storage";
 import "@cloudscape-design/global-styles/index.css";
 import { Provider } from "react-redux";
 import userReduxStore from "./components/config-panel/store";
-import AppConfigured from "./components/login-page";
+import AppConfigured from "./pages/login-page";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

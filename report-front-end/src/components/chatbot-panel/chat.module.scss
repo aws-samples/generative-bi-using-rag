@@ -41,8 +41,8 @@
 }
 
 .question {
-  margin-top: 15px;
-  //margin-left: 21px;
+  margin-top: 30px;
+  margin-left: 20px;
 }
 
 .text {
@@ -72,10 +72,12 @@
 }
 
 .input_area_container {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 10px;
+  box-shadow: 0 0 3px gray !important;
+}
+
+.answer_area_container {
+  box-shadow: 0 0 3px gray !important;
+  margin-bottom: 30px;
 }
 
 .input_textarea_container {
@@ -146,7 +148,7 @@
 }
 
 .button {
-  border: 1px dashed #ccc !important;
+  border: 2px dashed #ccc !important;
   border-radius: 8px !important;
   padding: 6px;
   background-color: white;

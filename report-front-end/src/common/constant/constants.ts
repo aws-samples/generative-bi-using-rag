@@ -26,9 +26,3 @@ export const APP_LOGO = import.meta.env.VITE_LOGO || '';
 export const APP_RIGHT_LOGO = import.meta.env.VITE_RIGHT_LOGO || '';
 
 export const SQL_DISPLAY = import.meta.env.VITE_SQL_DISPLAY;
-
-export const COGNITO_REGION = import.meta.env.VITE_COGNITO_REGION;
-
-export const COGNITO_USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID;
-
-export const COGNITO_USER_POOL_WEB_CLIENT_ID = import.meta.env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID;

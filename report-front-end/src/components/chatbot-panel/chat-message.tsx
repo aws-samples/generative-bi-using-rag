@@ -22,7 +22,7 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import SuggestedQuestions from "./suggested-questions";
 import { Dispatch, SetStateAction, useState } from "react";
 import { addUserFeedback } from "../../common/api/API";
-import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constants";
+import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constant/constants";
 import styles from "./chat.module.scss";
 import { useSelector } from "react-redux";
 import { UserState } from "../config-panel/types";
@@ -150,7 +150,7 @@ function SQLResultPanel(props: SQLResultProps) {
             <Table
               columnDefinitions={headers}
               items={content}
-              resizableColumns
+              variant="embedded"
             />
           </ExpandableSection> : null
         }
@@ -302,7 +302,7 @@ function AIChatMessage(props: ChatMessageProps) {
   const content = props.message.content as ChatBotAnswerItem;
 
   return (
-    <Container>
+    <Container className={styles.answer_area_container}>
       <SpaceBetween size={'s'}>
         <IntentSearchPanel
           message={content}
@@ -330,7 +330,6 @@ export interface ChatMessageProps {
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
-
   return (
     <SpaceBetween size={'m'}>
       {props.message.type === ChatBotMessageType.Human && (
