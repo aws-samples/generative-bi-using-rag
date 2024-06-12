@@ -3,9 +3,6 @@ import os
 from typing import Union
 from dotenv import load_dotenv
 import logging
-
-from websocket import WebSocket
-
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
@@ -26,6 +23,7 @@ from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSe
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum, ContentEnum
+from fastapi import  WebSocket
 
 logger = logging.getLogger(__name__)
 
