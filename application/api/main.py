@@ -4,13 +4,18 @@ import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
 
+from nlq.business.connection import ConnectionManagement
 from nlq.business.profile import ProfileManagement
+from utils.llm import get_query_intent
+from utils.tool import generate_log_id, get_current_time
 from .enum import ContentEnum, ErrorEnum
 from .schemas import Question, QuestionSocket, Answer, Option, CustomQuestion, SQLSearchResult, \
-    AgentSearchResult, KnowledgeSearchResult, TaskSQLSearchResult, FeedBackInput
+    AgentSearchResult, KnowledgeSearchResult, TaskSQLSearchResult, FeedBackInput, ChartEntity
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
+
+from .service import ask_websocket
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/qa", tags=["qa"])
@@ -367,33 +372,31 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 question_json = json.loads(data)
                 question = QuestionSocket(**question_json)
-                logger.info(question)
                 session_id = question.session_id
-                if not session_id:
-                    await response_websocket(websocket, session_id, ErrorEnum.INVAILD_SESSION_ID.get_message(),
-                                             ContentEnum.EXCEPTION)
-                    continue
-                current_nlq_chain = service.get_nlq_chain(question)
-                if question.use_rag:
-                    examples = service.get_example(current_nlq_chain)
-                    await response_websocket(websocket, session_id, "Examples:\n```json\n")
-                    await response_websocket(websocket, session_id, str(examples))
-                    await response_websocket(websocket, session_id, "\n```\n")
-                response = service.ask_with_response_stream(question, current_nlq_chain)
-                if os.getenv('SAGEMAKER_ENDPOINT_SQL', ''):
-                    await response_sagemaker_sql(websocket, session_id, response, current_nlq_chain)
-                    await response_websocket(websocket, session_id, "\n")
-                    explain_response = service.explain_with_response_stream(current_nlq_chain)
-                    await response_sagemaker_explain(websocket, session_id, explain_response)
-                else:
-                    await response_bedrock(websocket, session_id, response, current_nlq_chain)
+                await ask_websocket(websocket, question)
 
-                if question.query_result:
-                    final_sql_query_result = service.get_executed_result(current_nlq_chain)
-                    await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
-                    await response_websocket(websocket, session_id, final_sql_query_result)
-                    await response_websocket(websocket, session_id, "\n")
-                await response_websocket(websocket, session_id, "", ContentEnum.END)
+
+            #     current_nlq_chain = service.get_nlq_chain(question)
+            #     if question.use_rag:
+            #         examples = service.get_example(current_nlq_chain)
+            #         await response_websocket(websocket, session_id, "Examples:\n```json\n")
+            #         await response_websocket(websocket, session_id, str(examples))
+            #         await response_websocket(websocket, session_id, "\n```\n")
+            #     response = service.ask_with_response_stream(question, current_nlq_chain)
+            #     if os.getenv('SAGEMAKER_ENDPOINT_SQL', ''):
+            #         await response_sagemaker_sql(websocket, session_id, response, current_nlq_chain)
+            #         await response_websocket(websocket, session_id, "\n")
+            #         explain_response = service.explain_with_response_stream(current_nlq_chain)
+            #         await response_sagemaker_explain(websocket, session_id, explain_response)
+            #     else:
+            #         await response_bedrock(websocket, session_id, response, current_nlq_chain)
+            #
+            #     if question.query_result:
+            #         final_sql_query_result = service.get_executed_result(current_nlq_chain)
+            #         await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
+            #         await response_websocket(websocket, session_id, final_sql_query_result)
+            #         await response_websocket(websocket, session_id, "\n")
+            #     await response_websocket(websocket, session_id, "", ContentEnum.END)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)

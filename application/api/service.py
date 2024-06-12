@@ -4,6 +4,8 @@ from typing import Union
 from dotenv import load_dotenv
 import logging
 
+from websocket import WebSocket
+
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
@@ -19,10 +21,10 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity
+    TaskSQLSearchResult, ChartEntity, QuestionSocket
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
-from .enum import ErrorEnum
+from .enum import ErrorEnum, ContentEnum
 
 logger = logging.getLogger(__name__)
 
@@ -386,6 +388,111 @@ def ask(question: Question) -> Answer:
         return answer
 
 
+async def ask_websocket(websocket: WebSocket, question : QuestionSocket):
+    logger.info(question)
+    session_id = question.session_id
+
+    intent_ner_recognition_flag = question.intent_ner_recognition_flag
+    agent_cot_flag = question.agent_cot_flag
+
+    model_type = question.bedrock_model_id
+    search_box = question.query
+    selected_profile = question.profile_name
+    use_rag_flag = question.use_rag_flag
+    explain_gen_process_flag = question.explain_gen_process_flag
+    gen_suggested_question_flag = question.gen_suggested_question_flag
+    answer_with_insights = question.answer_with_insights
+
+    reject_intent_flag = False
+    search_intent_flag = False
+    agent_intent_flag = False
+    knowledge_search_flag = False
+
+    agent_search_result = []
+    normal_search_result = None
+
+    filter_deep_dive_sql_result = []
+
+    log_id = generate_log_id()
+    current_time = get_current_time()
+    log_info = ""
+
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
+    database_profile = all_profiles[selected_profile]
+
+    current_nlq_chain = NLQChain(selected_profile)
+
+    sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+
+    sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
+                                        sql_gen_process="",
+                                        data_analyse="", sql_data_chart=[])
+
+    agent_search_response = AgentSearchResult(agent_summary="", agent_sql_search_result=[])
+
+    knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
+
+    agent_sql_search_result = []
+
+    generate_suggested_question_list = []
+
+    if database_profile['db_url'] == '':
+        conn_name = database_profile['conn_name']
+        db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+        database_profile['db_url'] = db_url
+        database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+    prompt_map = database_profile['prompt_map']
+
+    entity_slot = []
+    # 通过标志位控制后续的逻辑
+    # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
+    if intent_ner_recognition_flag:
+        await response_websocket(websocket, session_id, "正在进行意图识别\n")
+        intent_response = get_query_intent(model_type, search_box, prompt_map)
+        await response_websocket(websocket, session_id, "意图识别完成\n")
+        intent = intent_response.get("intent", "normal_search")
+        entity_slot = intent_response.get("slot", [])
+        if intent == "reject_search":
+            reject_intent_flag = True
+            search_intent_flag = False
+        elif intent == "agent_search":
+            agent_intent_flag = True
+            if agent_cot_flag:
+                search_intent_flag = False
+            else:
+                search_intent_flag = True
+                agent_intent_flag = False
+        elif intent == "knowledge_search":
+            knowledge_search_flag = True
+            search_intent_flag = False
+            agent_intent_flag = False
+        else:
+            search_intent_flag = True
+    else:
+        search_intent_flag = True
+
+    if reject_intent_flag:
+        answer = Answer(query=search_box, query_intent="reject_search",
+                        knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[])
+
+        return answer
+    elif search_intent_flag:
+        normal_search_result = normal_text_search(search_box, model_type,
+                                                  database_profile,
+                                                  entity_slot, env_vars,
+                                                  selected_profile, use_rag_flag)
+    elif knowledge_search_flag:
+        response = knowledge_search(search_box=search_box, model_id=model_type, prompt_map=prompt_map)
+
+        knowledge_search_result.knowledge_response = response
+        answer = Answer(query=search_box, query_intent="knowledge_search",
+                        knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[])
+
+
 def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
@@ -445,3 +552,14 @@ def get_executed_result(current_nlq_chain: NLQChain) -> str:
     sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[current_nlq_chain.profile])
     final_sql_query_result = sql_query_result.to_markdown()
     return final_sql_query_result
+
+
+async def response_websocket(websocket: WebSocket, session_id: str, content: str,
+                             content_type: ContentEnum = ContentEnum.COMMON):
+    content_obj = {
+        "session_id": session_id,
+        "content_type": content_type.value,
+        "content": content,
+    }
+    final_content = json.dumps(content_obj)
+    await websocket.send_text(final_content)

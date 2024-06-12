@@ -46,18 +46,20 @@ class RelationDatabase():
             db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
                                     connection.db_port, connection.db_name)
             engine = db.create_engine(db_url)
-            with engine.connect() as conn:
-                query = text("""
-                    SELECT nspname AS schema_name
-                    FROM pg_catalog.pg_namespace
-                    WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' AND nspname <> 'public'
-                    AND has_schema_privilege(nspname, 'USAGE');
-                """)
-
-                # Executing the query
-                result = conn.execute(query)
-                schemas = [row['schema_name'] for row in result.mappings()]
-                print(schemas)
+            # with engine.connect() as conn:
+            #     query = text("""
+            #         SELECT nspname AS schema_name
+            #         FROM pg_catalog.pg_namespace
+            #         WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' AND nspname <> 'public'
+            #         AND has_schema_privilege(nspname, 'USAGE');
+            #     """)
+            #
+            #     # Executing the query
+            #     result = conn.execute(query)
+            #     schemas = [row['schema_name'] for row in result.mappings()]
+            #     print(schemas)
+            inspector = sqlalchemy.inspect(engine)
+            schemas = inspector.get_schema_names()
         elif connection.db_type == 'redshift':
             db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
                                     connection.db_port, connection.db_name)

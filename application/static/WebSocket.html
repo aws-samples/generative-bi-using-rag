@@ -68,23 +68,23 @@
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" value="" id="chkAgentCot" checked>
                     <label class="form-check-label" for="chkAgentCot">
-                        Explain Generation Process
+                        Agnet Cot
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="chkExplainGenerationProcess" checked>
+                    <input class="form-check-input" type="checkbox" value="" id="chkExplainGenerationProcess">
                     <label class="form-check-label" for="chkExplainGenerationProcess">
                         Explain Generation Process
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="chkAnswerWithInsight" checked>
+                    <input class="form-check-input" type="checkbox" value="" id="chkAnswerWithInsight">
                     <label class="form-check-label" for="chkAnswerWithInsight">
                         Answer With Insights
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="chkGenerateSuggestQuestion" checked>
+                    <input class="form-check-input" type="checkbox" value="" id="chkGenerateSuggestQuestion">
                     <label class="form-check-label" for="chkGenerateSuggestQuestion">
                         Generate Suggested Questions
                     </label>
@@ -156,12 +156,20 @@
             disableAsk();
             var payload = {
                 "session_id": session_id,
-                "keywords": $("#textKeywords").val(),
-                "use_rag": $("#chkUseRag").prop("checked"),
-                "query_result": $("#chkQueryResult").prop("checked"),
-                "intent_ner_recognition": $("#chkIntentNerRecognition").prop("checked"),
-                "profile_name": $("#selectDataProfile").val(),
+                "query":$("#textKeywords").val(),
                 "bedrock_model_id": $("#selectBedrockModelId").val(),
+                "use_rag_flag": $("#chkUseRag").prop("checked"),
+                "visualize_results_flag" : $("#chkQueryResult").prop("checked"),
+                "intent_ner_recognition_flag" : $("#chkIntentNerRecognition").prop("checked"),
+                "agent_cot_flag" : $("#chkAgentCot").prop("checked"),
+                "profile_name" : $("#selectDataProfile").val(),
+                "explain_gen_process_flag" : $("#chkExplainGenerationProcess").prop("checked"),
+                "gen_suggested_question_flag" : $("#chkGenerateSuggestQuestion").prop("checked"),
+                "answer_with_insights" : $("#chkAnswerWithInsight").prop("checked"),
+                "top_k" : 250,
+                "top_p" : 0.9,
+                "max_tokens" : 4096,
+                "temperature" : 0.1,
             };
             ws.send(JSON.stringify(payload));
             event.preventDefault();
