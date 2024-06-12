@@ -1,5 +1,6 @@
 import logging
 
+from websocket import WebSocket
 from nlq.business.connection import ConnectionManagement
 from utils.domain import SearchTextSqlResult
 from utils.llm import text_to_sql

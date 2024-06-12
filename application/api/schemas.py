@@ -17,10 +17,9 @@ class Question(BaseModel):
     top_p: float = 0.9
     max_tokens: int = 2048
     temperature: float = 0.01
-
-
-class QuestionSocket(Question):
-    session_id: str
+    context_window: int = 3
+    session_id: str = "-1"
+    user_id: str = "admin"
 
 
 class Example(BaseModel):
