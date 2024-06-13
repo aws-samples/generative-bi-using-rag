@@ -281,6 +281,7 @@ def main():
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         data_with_analyse = st.checkbox("Answer With Insights", False)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
+        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 3)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
 
@@ -437,30 +438,6 @@ def main():
 
                 # 前端结果显示agent cot任务拆分信息, normal_text_search 的显示，做了拆分，为了方便跟API逻辑一致
                 if search_intent_flag:
-                    entity_slot_retrieve = normal_search_result.entity_slot_retrieve
-                    # if use_rag_flag:
-                    #     with st.status("Performing QA retrieval...") as status_text:
-                    #         examples = []
-                    #         for example in entity_slot_retrieve:
-                    #             examples.append({'Score': example['_score'],
-                    #                              'Question': example['_source']['entity'],
-                    #                              'Answer': example['_source']['comment'].strip()})
-                    #         st.write(examples)
-                    #         status_text.update(
-                    #             label=f"Entity Retrieval Completed: {len(entity_slot_retrieve)} entities retrieved",
-                    #             state="complete", expanded=False)
-                    # retrieve_result = normal_search_result.retrieve_result
-                    # if use_rag_flag:
-                    #     with st.status("Performing QA retrieval...") as status_text:
-                    #         examples = []
-                    #         for example in retrieve_result:
-                    #             examples.append({'Score': example['_score'],
-                    #                              'Question': example['_source']['text'],
-                    #                              'Answer': example['_source']['sql'].strip()})
-                    #         st.write(examples)
-                    #         status_text.update(
-                    #             label=f"QA Retrieval Completed: {len(retrieve_result)} entities retrieved",
-                    #             state="complete", expanded=False)
                     if normal_search_result.sql != "":
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
                         # st.code(normal_search_result.sql, language="sql")

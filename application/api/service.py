@@ -405,9 +405,9 @@ async def ask_websocket(websocket: WebSocket, question : Question):
     # 通过标志位控制后续的逻辑
     # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
     if intent_ner_recognition_flag:
-        await response_websocket(websocket, session_id, "正在进行意图识别\n")
+        await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start")
         intent_response = get_query_intent(model_type, search_box, prompt_map)
-        await response_websocket(websocket, session_id, "意图识别完成\n")
+        await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "end")
         intent = intent_response.get("intent", "normal_search")
         entity_slot = intent_response.get("slot", [])
         if intent == "reject_search":
@@ -437,7 +437,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
                                           intent="reject_search", log_info="", time_str=current_time)
         return answer
     elif search_intent_flag:
-        normal_search_result = normal_text_search_websocket(search_box, model_type,
+        normal_search_result = await normal_text_search_websocket(websocket, session_id, search_box, model_type,
                                                   database_profile,
                                                   entity_slot, env_vars,
                                                   selected_profile, use_rag_flag)
@@ -485,16 +485,24 @@ async def ask_websocket(websocket: WebSocket, question : Question):
         else:
             sql_search_result.sql = "-1"
 
+        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "start")
+
         search_intent_result = get_sql_result_tool(database_profile,
                                                    current_nlq_chain.get_generated_sql())
+
+        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "end")
+
         if search_intent_result["status_code"] == 500:
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                 if answer_with_insights:
+                    await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE, "start")
                     search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                      search_intent_result["data"].to_json(
                                                                          orient='records', force_ascii=False), "query")
+
+                    await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE, "end")
 
                     sql_search_result.data_analyse = search_intent_analyse_result
 
@@ -647,22 +655,22 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
             database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
 
         if len(entity_slot) > 0 and use_rag:
-            await response_websocket(websocket, session_id, "Start NER Info Searching")
+            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start")
             for each_entity in entity_slot:
                 entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
                                                           selected_profile, 1, 0.7)
                 if len(entity_retrieve) > 0:
                     entity_slot_retrieve.extend(entity_retrieve)
-            await response_websocket(websocket, session_id, "NER Info Searching Done")
+            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "end")
 
 
         if use_rag:
-            await response_websocket(websocket, session_id, "Start Example SQL Searching")
+            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start")
             retrieve_result = get_retrieve_opensearch(env_vars, search_box, "query",
                                                       selected_profile, 3, 0.5)
-            await response_websocket(websocket, session_id, "Example SQL Searching Done")
+            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end")
 
-        await response_websocket(websocket, session_id, "Start Generate SQL")
+        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end")
 
         response = text_to_sql(database_profile['tables_info'],
                                database_profile['hints'],
@@ -673,8 +681,8 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
                                ner_example=entity_slot_retrieve,
                                dialect=database_profile['db_type'],
                                model_provider=model_provider)
-
-        await response_websocket(websocket, session_id, "Generate SQL Done")
+        logger.info(f'{response=}')
+        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end")
         sql = get_generated_sql(response)
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
@@ -687,12 +695,21 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
     return search_result
 
 
-async def response_websocket(websocket: WebSocket, session_id: str, content: str,
-                             content_type: ContentEnum = ContentEnum.COMMON):
+async def response_websocket(websocket: WebSocket, session_id: str, content,
+                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1", user_id: str = "admin"):
+    if content_type == ContentEnum.STATE:
+        content_json = {
+            "text": content,
+            "status": status
+        }
+        content = content_json
+
     content_obj = {
         "session_id": session_id,
+        "user_id": user_id,
         "content_type": content_type.value,
         "content": content,
     }
+    logger.info(content_obj)
     final_content = json.dumps(content_obj)
     await websocket.send_text(final_content)

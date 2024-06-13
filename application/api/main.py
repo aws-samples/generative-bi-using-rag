@@ -61,7 +61,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 question_json = json.loads(data)
                 question = Question(**question_json)
                 session_id = question.session_id
-                await ask_websocket(websocket, question)
+                ask_result = await ask_websocket(websocket, question)
+                logger.info(ask_result)
 
 
             #     current_nlq_chain = service.get_nlq_chain(question)
@@ -84,7 +85,7 @@ async def websocket_endpoint(websocket: WebSocket):
             #         await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
             #         await response_websocket(websocket, session_id, final_sql_query_result)
             #         await response_websocket(websocket, session_id, "\n")
-                await response_websocket(websocket, session_id, "", ContentEnum.END)
+                await response_websocket(websocket, session_id, ask_result.dict(), ContentEnum.END)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)
@@ -131,12 +132,21 @@ async def response_bedrock(websocket: WebSocket, session_id: str, response: dict
     current_nlq_chain.set_generated_sql_response(''.join(result_pieces))
 
 
-async def response_websocket(websocket: WebSocket, session_id: str, content: str,
-                             content_type: ContentEnum = ContentEnum.COMMON):
+async def response_websocket(websocket: WebSocket, session_id: str, content,
+                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1", user_id: str = "admin"):
+    if content_type == ContentEnum.STATE:
+        content_json = {
+            "text": content,
+            "status": status
+        }
+        content = content_json
+
     content_obj = {
         "session_id": session_id,
+        "user_id": user_id,
         "content_type": content_type.value,
         "content": content,
     }
+    logger.info(content_obj)
     final_content = json.dumps(content_obj)
     await websocket.send_text(final_content)
