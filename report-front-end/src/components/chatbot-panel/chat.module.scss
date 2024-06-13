@@ -26,6 +26,11 @@
   }
 }
 
+.status_container {
+  max-width: 400px;
+  margin-left: 20px;
+}
+
 .sql_container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -155,13 +160,10 @@
   color: gray !important;
 }
 
-.button:hover {
-  background-color: lightgray;
-  transition: 0.7s;
-}
-
-.button:active {
-  background-color: #539fe5;
+.button:focus {
+  outline: none;
+  border-color: transparent;
+  background-color: white;
 }
 
 @media (max-width: 689px) {
