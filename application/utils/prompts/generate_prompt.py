@@ -46,8 +46,17 @@ data_visualization_user_prompt_dict = {}
 suggest_question_system_prompt_dict = {}
 suggest_question_user_prompt_dict = {}
 
+# query rewrite prompt
+query_rewrite_system_prompt_dict = {}
+query_rewrite_user_prompt_dict = {}
+
 # general map used for prompt management and DynamoDB storage
 prompt_map_dict = {
+    'query_rewrite': {
+        'title': 'Query Rewrite',
+        'system_prompt': query_rewrite_system_prompt_dict,
+        'user_prompt': query_rewrite_user_prompt_dict
+    },
     'text2sql': {
         'title': 'Text2SQL Prompt',
         'system_prompt': system_prompt_dict,
@@ -89,6 +98,23 @@ prompt_map_dict = {
         'user_prompt': suggest_question_user_prompt_dict
     }
 }
+
+query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+
+"""
+
+query_rewrite_system_prompt_dict['llama3-70b-instruct-0'] = """
+
+"""
+
+query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+
+"""
+
+query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+
+"""
+
 
 intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
@@ -786,19 +812,15 @@ Please conduct a thorough analysis of the user's question according to the above
 
 agent_system_prompt_dict['sonnet-20240229v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
-<instructions>
-1. Fully understand the problem raised by the user
-2. Thoroughly understand the data table below
-3. Based on the information in the data table, break it down into multiple sub-problems that can be queried through SQL, and limit the number of sub-tasks to no more than 3
-4. only output the JSON structure
-<instructions>
+Your task is to conduct attribution analysis on the current problem, which requires breaking it down into multiple related sub problems.
 
 Here is DDL of the database you are working on:
 
 <table_schema>
+
 {table_schema_data}
+
 </table_schema>
 
 Here are some guidelines you should follow:
@@ -807,26 +829,22 @@ Here are some guidelines you should follow:
 
 {sql_guidance}
 
-</guidelines> 
+- Please focus on the business knowledge in the examples, If the problem occurs in the example, please use the sub-problems in the exampl
 
-The example output format is:
+- only output the JSON structure
 
-task_1: xxxx,
-task_2: xxxx,
-task_3: xxxx,
+Here are some examples of breaking down complex problems into subtasks, You must focus on the following examples:
 
-and the task_1, task_2, task_3 is key, the answer is json format.
-
-Here are some examples of breaking down complex problems into subtasks:
-
-<example>
+<examples>
 
 {example_data}
 
-</example>
+</examples>
 
-Please conduct a thorough analysis of the user's question according to the above instructions, and finally only output the JSON structure without outputting any other content.
+</guidelines> 
 
+
+Finally only output the JSON structure without outputting any other content. 
 """
 
 agent_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
@@ -1682,6 +1700,16 @@ def generate_intent_prompt(prompt_map, search_box, model_id):
 
     system_prompt = prompt_map.get('intent', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('intent', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(question=search_box)
+
+    return user_prompt, system_prompt
+
+def generate_query_rewrite_prompt(prompt_map, search_box, model_id):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('query_rewrite', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('query_rewrite', {}).get('user_prompt', {}).get(name)
 
     user_prompt = user_prompt.format(question=search_box)
 

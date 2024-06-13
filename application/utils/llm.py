@@ -374,6 +374,30 @@ def get_query_intent(model_id, search_box, prompt_map):
         return default_intent
 
 
+def get_query_rewrite(model_id, search_box, prompt_map):
+    query_rewrite = {"query_rewrite": search_box}
+    try:
+        intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
+        if intent_endpoint:
+            # TODO may need to modify the prompt
+            body = json.dumps(
+                {"query": generate_sagemaker_intent_prompt(search_box, meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
+            response = invoke_model_sagemaker_endpoint(intent_endpoint, body)
+            logger.info(f'{response=}')
+            intent_result_dict = json_parse.parse(response)
+            return intent_result_dict
+        else:
+            user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
+            max_tokens = 2048
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+            logger.info(f'{final_response=}')
+            intent_result_dict = json_parse.parse(final_response)
+            return intent_result_dict
+    except Exception as e:
+        logger.error("get_query_intent is error:{}".format(e))
+        return query_rewrite
+
+
 def knowledge_search(model_id, search_box, prompt_map):
     try:
         user_prompt, system_prompt = generate_knowledge_prompt(prompt_map, search_box, model_id)
@@ -413,7 +437,8 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
                 all_columns_data_sample = all_columns_data[0:5]
             else:
                 all_columns_data_sample = all_columns_data
-            model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data_sample, prompt_map)
+            model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data_sample,
+                                                                    prompt_map)
             model_select_type = model_select_type_dict["show_type"]
             model_select_type_columns = model_select_type_dict["format_data"][0]
             data_list = search_data[model_select_type_columns].values.tolist()

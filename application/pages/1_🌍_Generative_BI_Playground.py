@@ -366,6 +366,11 @@ def main():
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
 
+
+                # 多轮对话，query改写
+
+
+
                 intent_response = {
                     "intent": "normal_search",
                     "slot": []
