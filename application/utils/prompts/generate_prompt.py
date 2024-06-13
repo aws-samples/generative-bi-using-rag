@@ -100,21 +100,56 @@ prompt_map_dict = {
 }
 
 query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-
+You are a data query bot.
 """
 
 query_rewrite_system_prompt_dict['llama3-70b-instruct-0'] = """
-
+You are a data query bot.
 """
 
-query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-
+query_rewrite_system_prompt_dict['haiku-20240307v1-0'] = """
+You are a data query bot.
 """
 
-query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-
+query_rewrite_system_prompt_dict['sonnet-20240229v1-0'] = """
+You are a data query bot.
 """
 
+query_rewrite_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
+
+query_rewrite_user_prompt_dict['llama3-70b-instruct-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
+
+query_rewrite_user_prompt_dict['haiku-20240307v1-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
+
+query_rewrite_user_prompt_dict['sonnet-20240229v1-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
 
 intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
@@ -1510,7 +1545,8 @@ table_prompt_mapper = table_prompt.TablePromptMapper()
 guidance_prompt_mapper = guidance_prompt.GuidancePromptMapper()
 
 
-def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
+def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None,
+                        dialect='mysql'):
     long_string = ""
     for table_name, table_data in ddl.items():
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
@@ -1705,13 +1741,14 @@ def generate_intent_prompt(prompt_map, search_box, model_id):
 
     return user_prompt, system_prompt
 
-def generate_query_rewrite_prompt(prompt_map, search_box, model_id):
+
+def generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query):
     name = support_model_ids_map[model_id]
 
     system_prompt = prompt_map.get('query_rewrite', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('query_rewrite', {}).get('user_prompt', {}).get(name)
 
-    user_prompt = user_prompt.format(question=search_box)
+    user_prompt = user_prompt.format(chat_history=history_query, question=search_box)
 
     return user_prompt, system_prompt
 

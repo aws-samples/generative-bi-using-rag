@@ -13,12 +13,12 @@ from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from utils.domain import SearchTextSqlResult
 from utils.llm import get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
-    knowledge_search, text_to_sql
+    knowledge_search, text_to_sql, get_query_rewrite
 from utils.navigation import make_sidebar
 from utils.apis import get_sql_result_tool
 
 from utils.opensearch import get_retrieve_opensearch
-from utils.text_search import normal_text_search, agent_text_search
+from utils.text_search import agent_text_search
 from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,14 @@ def upvote_agent_clicked(question, comment, env_vars):
 def clean_st_history(selected_profile):
     st.session_state.messages[selected_profile] = []
 
+def get_user_history(selected_profile):
+    history_list = st.session_state.messages[selected_profile]
+    history_query = []
+    for messages in history_list:
+        current_role = messages["role"]
+        if current_role == "user":
+            history_query.append(messages["content"])
+    return history_query
 
 def do_visualize_results(nlq_chain, sql_result):
     sql_query_result = sql_result
@@ -366,11 +374,15 @@ def main():
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
 
-
                 # 多轮对话，query改写
+                user_query_history = get_user_history(selected_profile)
+                if len(user_query_history) > 0:
+                    user_query_history = user_query_history[-context_window:]
+                    logger.info("The Chat history is {history}".format(history=",".join(user_query_history)))
+                    new_search_box = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+                    logger.info("The Origin query is {query}  query rewrite is {new_query}".format(query = search_box, new_query = new_search_box))
 
-
-
+                    search_box = new_search_box
                 intent_response = {
                     "intent": "normal_search",
                     "slot": []

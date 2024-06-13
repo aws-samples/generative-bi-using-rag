@@ -10,7 +10,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
     generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt, \
-    generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt
+    generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
+    generate_query_rewrite_prompt
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -374,8 +375,11 @@ def get_query_intent(model_id, search_box, prompt_map):
         return default_intent
 
 
-def get_query_rewrite(model_id, search_box, prompt_map):
+def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
     query_rewrite = {"query_rewrite": search_box}
+    history_query = ""
+    for item in chat_history:
+        history_query = history_query + "user : " + item + "\n"
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
         if intent_endpoint:
@@ -387,14 +391,13 @@ def get_query_rewrite(model_id, search_box, prompt_map):
             intent_result_dict = json_parse.parse(response)
             return intent_result_dict
         else:
-            user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
+            user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
             max_tokens = 2048
             final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             logger.info(f'{final_response=}')
-            intent_result_dict = json_parse.parse(final_response)
-            return intent_result_dict
+            return final_response
     except Exception as e:
-        logger.error("get_query_intent is error:{}".format(e))
+        logger.error("get_query_rewrite is error:{}".format(e))
         return query_rewrite
 
 
