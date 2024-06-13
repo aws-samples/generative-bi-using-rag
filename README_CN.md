@@ -165,7 +165,7 @@ docker exec nlq-webserver python opensearch_deploy.py custom false
 
 ```
 username: admin
-password: awsadmin
+password: # 请按照以下教程设定密码
 ```
 
 如果你想修改密码或者增加用户，可以修改如下文件
