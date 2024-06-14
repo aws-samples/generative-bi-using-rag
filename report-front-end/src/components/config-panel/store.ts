@@ -4,7 +4,6 @@ import { DEFAULT_QUERY_CONFIG, LOCALSTORAGE_KEY } from "../../common/constant/co
 
 const defaultUserState: UserState = {
   userId: "",
-  account: "",
   displayName: "",
   email: "@amazon.com",
   loginExpiration: +new Date() + 6000,

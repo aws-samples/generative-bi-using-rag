@@ -31,7 +31,8 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
       query: question,
       configuration: userInfo.queryConfig,
       sendMessage: props.sendMessage,
-      setMessageHistory: props.setMessageHistory
+      setMessageHistory: props.setMessageHistory,
+      userId: userInfo.userId
     });
   };
 

@@ -58,9 +58,7 @@ export default function AppConfigured() {
       }}
       colorMode={theme === Mode.Dark ? "dark" : "light"}
     >
-      <Authenticator
-        signUpAttributes={['email']}
-      >
+      <Authenticator signUpAttributes={['email']}>
         <App />
       </Authenticator>
     </ThemeProvider>

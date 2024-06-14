@@ -45,7 +45,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       query: state.value,
       configuration: userInfo.queryConfig,
       sendMessage: props.sendMessage,
-      setMessageHistory: props.setMessageHistory
+      setMessageHistory: props.setMessageHistory,
+      userId: userInfo.userId
     });
   };
 
