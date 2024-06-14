@@ -6,7 +6,6 @@ export enum ActionType {
 
 export type UserState = {
   userId: string;
-  account: string;
   displayName: string;
   email: string;
   loginExpiration: number;

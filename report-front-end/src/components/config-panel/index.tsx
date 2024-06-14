@@ -20,6 +20,7 @@ const ConfigPanel = () => {
   const [intentChecked, setIntentChecked] = useState(true);
   const [complexChecked, setComplexChecked] = useState(true);
   const [answerInsightChecked, setAnswerInsightChecked] = useState(false);
+  const [contextWindow, setContextWindow] = useState(false);
   const [modelSuggestChecked, setModelSuggestChecked] = useState(false);
   const [temperature, setTemperature] = useState(0.01);
   const [topP, setTopP] = useState(0.999);
@@ -174,6 +175,12 @@ const ConfigPanel = () => {
           checked={answerInsightChecked}
         >
           Answer with Insights
+        </Toggle>
+        <Toggle
+          onChange={({ detail }) => setContextWindow(detail.checked)}
+          checked={contextWindow}
+        >
+          Context window
         </Toggle>
 
         <FormField label="Temperature">

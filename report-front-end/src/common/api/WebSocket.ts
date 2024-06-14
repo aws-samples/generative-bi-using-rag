@@ -42,8 +42,10 @@ export function queryWithWS(props: {
   query: string;
   configuration: any;
   sendMessage: SendJsonMessage;
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>
+  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  userId: string;
 }) {
+
   props.setMessageHistory((history: ChatBotHistoryItem[]) => {
     return [...history, {
       type: ChatBotMessageType.Human,
@@ -67,7 +69,7 @@ export function queryWithWS(props: {
     temperature: props.configuration.temperature,
     context_window: 3,
     session_id: "-1",
-    user_id: "admin"
+    user_id: props.userId
   };
   props.sendMessage(param);
 }
