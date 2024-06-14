@@ -16,7 +16,7 @@ from utils.llm import get_query_intent, generate_suggested_question, get_agent_c
     knowledge_search, text_to_sql, get_query_rewrite
 from utils.navigation import make_sidebar
 from utils.apis import get_sql_result_tool
-
+from utils.prompts.generate_prompt import prompt_map_dict
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import agent_text_search
 from utils.tool import get_generated_sql
@@ -373,6 +373,11 @@ def main():
                         database_profile['db_url'] = db_url
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
+                    for key in prompt_map_dict:
+                        if key not in prompt_map:
+                            prompt_map[key] = prompt_map_dict[key]
+                    ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
+
 
                 # 多轮对话，query改写
                 user_query_history = get_user_history(selected_profile)

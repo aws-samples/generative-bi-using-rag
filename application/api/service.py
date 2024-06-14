@@ -670,7 +670,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
                                                       selected_profile, 3, 0.5)
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end")
 
-        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end")
+        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start")
 
         response = text_to_sql(database_profile['tables_info'],
                                database_profile['hints'],
