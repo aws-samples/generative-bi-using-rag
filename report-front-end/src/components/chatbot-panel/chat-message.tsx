@@ -26,6 +26,7 @@ import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constant/constan
 import styles from "./chat.module.scss";
 import { useSelector } from "react-redux";
 import { UserState } from "../config-panel/types";
+import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -316,6 +317,7 @@ function AIChatMessage(props: ChatMessageProps) {
               questions={content.suggested_question}
               setLoading={props.setLoading}
               setMessageHistory={props.setMessageHistory}
+              sendMessage={props.sendMessage}
             />
           </ExpandableSection> : null}
       </SpaceBetween>
@@ -327,6 +329,7 @@ export interface ChatMessageProps {
   message: ChatBotHistoryItem;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  sendMessage: SendJsonMessage;
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
@@ -341,7 +344,9 @@ export default function ChatMessage(props: ChatMessageProps) {
         <AIChatMessage
           message={props.message}
           setLoading={props.setLoading}
-          setMessageHistory={props.setMessageHistory}/>
+          setMessageHistory={props.setMessageHistory}
+          sendMessage={props.sendMessage}
+        />
       )}
     </SpaceBetween>
   );
