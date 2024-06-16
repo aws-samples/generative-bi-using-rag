@@ -17,7 +17,7 @@ export class AOSStack extends cdk.Stack {
     });
 
     // Create a Security Group for OpenSearch
-    this._securityGroup = new ec2.SecurityGroup(this, 'NLQOpenSearchSG', {
+    this._securityGroup = new ec2.SecurityGroup(this, 'GenBIOpenSearchSG', {
       vpc: this._vpc,
       description: 'Allow access to OpenSearch',
       allowAllOutbound: true
@@ -37,7 +37,7 @@ export class AOSStack extends cdk.Stack {
     }
 
     // Create the OpenSearch domain
-    const domain = new opensearch.Domain(this, 'NLQOpenSearchDomain', {
+    const domain = new opensearch.Domain(this, 'GenBIOpenSearchDomain', {
       version: opensearch.EngineVersion.OPENSEARCH_2_9,
       vpc: this._vpc,
       vpcSubnets: [
@@ -83,10 +83,10 @@ export class AOSStack extends cdk.Stack {
   }
 }
 
-const app = new cdk.App();
-new AOSStack(app, 'AOSStack', {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION
-  }
-});
+// const app = new cdk.App();
+// new AOSStack(app, 'AOSStack', {
+//   env: {
+//     account: process.env.CDK_DEFAULT_ACCOUNT,
+//     region: process.env.CDK_DEFAULT_REGION
+//   }
+// });
