@@ -1,6 +1,6 @@
 import { ChatBotHistoryItem, ChatBotMessageType, FeedBackItem } from "../../components/chatbot-panel/types";
 import { Dispatch, SetStateAction } from "react";
-import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../constants";
+import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../constant/constants";
 
 export async function query(props: {
   query: string;

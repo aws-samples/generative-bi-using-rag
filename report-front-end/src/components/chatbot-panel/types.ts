@@ -12,6 +12,18 @@ export interface ChatBotHistoryItem {
   content: string | ChatBotAnswerItem;
 }
 
+export interface ChatBotMessageItem {
+  session_id: string,
+  user_id: string,
+  content_type: string,
+  content: StatusMessageItem
+}
+
+export interface StatusMessageItem {
+  status: string;
+  text: string;
+}
+
 export interface ChatBotAnswerItem {
   query: string,
   query_intent: string,

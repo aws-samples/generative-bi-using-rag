@@ -4,12 +4,8 @@
   "version": "3.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:dev": "tsc && cross-env NODE_ENV=development vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "format": "npx prettier --ignore-path .gitignore --write \"**/*.+(tsx|js|ts|json)\""
+    "start": "vite",
+    "build": "vite build"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^5.3.2",
@@ -28,7 +24,7 @@
     "react-router-dom": "^6.15.0",
     "react-speech-recognition": "^3.10.0",
     "react-textarea-autosize": "^8.5.3",
-    "react-use-websocket": "^4.5.0",
+    "react-use-websocket": "^4.8.1",
     "regenerator-runtime": "^0.14.0",
     "remark-gfm": "^4.0.0",
     "uuid": "^9.0.0",

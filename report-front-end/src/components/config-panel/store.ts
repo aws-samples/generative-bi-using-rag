@@ -1,10 +1,9 @@
 import { createStore } from "redux";
 import { ActionType, UserAction, UserState } from "./types";
-import { DEFAULT_QUERY_CONFIG, LOCALSTORAGE_KEY } from "../../common/constants";
+import { DEFAULT_QUERY_CONFIG, LOCALSTORAGE_KEY } from "../../common/constant/constants";
 
 const defaultUserState: UserState = {
   userId: "",
-  account: "",
   displayName: "",
   email: "@amazon.com",
   loginExpiration: +new Date() + 6000,

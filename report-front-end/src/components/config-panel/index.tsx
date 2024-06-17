@@ -8,11 +8,11 @@ import {
   Toggle,
 } from "@cloudscape-design/components";
 import { SetStateAction, useEffect, useState } from "react";
-import "./style.scss";
 import { useSelector, useDispatch } from "react-redux";
-import { BACKEND_URL } from "../../common/constants";
+import { BACKEND_URL } from "../../common/constant/constants";
 import { ActionType, UserState } from "./types";
 import { alertMsg } from "../../common/helpers/tools";
+import "./style.scss";
 
 const ConfigPanel = () => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
@@ -20,12 +20,12 @@ const ConfigPanel = () => {
   const [intentChecked, setIntentChecked] = useState(true);
   const [complexChecked, setComplexChecked] = useState(true);
   const [answerInsightChecked, setAnswerInsightChecked] = useState(false);
+  const [contextWindow, setContextWindow] = useState(false);
   const [modelSuggestChecked, setModelSuggestChecked] = useState(false);
   const [temperature, setTemperature] = useState(0.01);
   const [topP, setTopP] = useState(0.999);
   const [topK, setTopK] = useState(250);
   const [maxLength, setMaxLength] = useState(2048);
-  const [loading, setLoading] = useState(false);
   const [llmOptions, setLLMOptions] = useState([] as any[]);
   const [dataProOptions, setDataProOptions] = useState([] as any[]);
   const [selectedLLM, setSelectedLLM] = useState({
@@ -42,7 +42,6 @@ const ConfigPanel = () => {
   }, []);
 
   const getSelectData = async () => {
-    setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}qa/option`, {
         method: "GET",
@@ -75,7 +74,6 @@ const ConfigPanel = () => {
     } catch (error) {
       console.error("getSelectData Error", error);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -135,7 +133,7 @@ const ConfigPanel = () => {
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
   };
   return (
-    <HelpPanel header="Configuration" loading={loading}>
+    <HelpPanel header="Configuration">
       <SpaceBetween size="l">
         <FormField label="LLM" description="Select a large language model">
           <Select
@@ -177,6 +175,12 @@ const ConfigPanel = () => {
           checked={answerInsightChecked}
         >
           Answer with Insights
+        </Toggle>
+        <Toggle
+          onChange={({ detail }) => setContextWindow(detail.checked)}
+          checked={contextWindow}
+        >
+          Context window
         </Toggle>
 
         <FormField label="Temperature">

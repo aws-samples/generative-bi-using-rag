@@ -6,12 +6,10 @@ import { Mode } from "@cloudscape-design/global-styles";
 import { useEffect, useState } from "react";
 import { Storage } from "../../common/helpers/storage";
 import { Auth } from "aws-amplify";
-import useOnFollow from "../../common/hooks/use-on-follow";
-import { APP_LOGO, APP_RIGHT_LOGO, APP_TITLE, CHATBOT_NAME } from "../../common/constants";
+import { APP_LOGO, APP_RIGHT_LOGO, APP_TITLE, CHATBOT_NAME } from "../../common/constant/constants";
 import "./style.scss";
 
 export default function CustomTopNavigation() {
-  const onFollow = useOnFollow();
   const [userName, setUserName] = useState<string | null>(null);
   const [theme, setTheme] = useState<Mode>(Storage.getTheme());
 
@@ -79,7 +77,6 @@ export default function CustomTopNavigation() {
                 text: "Sign out",
               },
             ],
-            onItemFollow: onFollow,
           },
           {
             type: "button",

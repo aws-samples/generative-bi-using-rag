@@ -1,18 +1,21 @@
 import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ChatBotHistoryItem, ChatInputState, } from "./types";
+import { ChatBotHistoryItem, ChatBotMessageItem, ChatInputState, } from "./types";
 import CustomQuestions from "./custom-questions";
-import { query } from "../../common/api/API";
 import { useSelector } from "react-redux";
 import { UserState } from "../config-panel/types";
 import styles from "./chat.module.scss";
+import { queryWithWS } from "../../common/api/WebSocket";
+import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
+  sendMessage: SendJsonMessage;
 }
 
 export abstract class ChatScrollState {
@@ -28,13 +31,23 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
 
   const handleSendMessage = () => {
-    query({
+    setTextValue({value: ""});
+    // Call Fast API
+/*    query({
       query: state.value,
       setLoading: props.setLoading,
       configuration: userInfo.queryConfig,
-      setMessageHistory: props.setMessageHistory
-    }).then();
-    setTextValue({value: ""});
+      setMessageHistory: props.setMessageHistory,
+    }).then();*/
+
+    // Call WebSocket API
+    queryWithWS({
+      query: state.value,
+      configuration: userInfo.queryConfig,
+      sendMessage: props.sendMessage,
+      setMessageHistory: props.setMessageHistory,
+      userId: userInfo.userId
+    });
   };
 
   const handleSetting = () => {
@@ -85,12 +98,13 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   }, [props.messageHistory]);
 
   return (
-    <Container>
+    <Container className={styles.input_area_container}>
       <SpaceBetween size={'s'}>
         <CustomQuestions
           setTextValue={setTextValue}
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
+          sendMessage={props.sendMessage}
         ></CustomQuestions>
         <div className={styles.input_textarea_container}>
           <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
@@ -112,8 +126,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             <Button
               disabled={state.value.length === 0}
               onClick={handleSendMessage}
-              iconAlign="right"
-              iconName="angle-right-double"
+              iconAlign="left"
+              iconName="status-positive"
               variant="primary">
               Send
             </Button>

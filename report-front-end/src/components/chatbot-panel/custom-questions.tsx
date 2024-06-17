@@ -2,16 +2,18 @@ import { Link, SpaceBetween } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "@aws-amplify/ui-react";
 import { ChatBotHistoryItem, ChatInputState } from "./types";
-import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../../common/constants";
-import { query } from "../../common/api/API";
+import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../../common/constant/constants";
 import { useSelector } from "react-redux";
 import { UserState } from "../config-panel/types";
 import styles from "./chat.module.scss";
+import { queryWithWS } from "../../common/api/WebSocket";
+import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  sendMessage: SendJsonMessage;
 }
 
 export default function CustomQuestions(props: RecommendQuestionsProps) {
@@ -46,12 +48,22 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   }, []);
 
   const handleSendMessage = (question: string) => {
-    query({
+    // Call Fast API
+    /*query({
       query: question,
       setLoading: props.setLoading,
       configuration: userInfo.queryConfig,
       setMessageHistory: props.setMessageHistory
-    }).then();
+    }).then();*/
+
+    // Call WebSocket API
+    queryWithWS({
+      query: question,
+      configuration: userInfo.queryConfig,
+      sendMessage: props.sendMessage,
+      setMessageHistory: props.setMessageHistory,
+      userId: userInfo.userId
+    });
   };
 
   return (

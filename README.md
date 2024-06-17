@@ -180,7 +180,7 @@ the default account is
 
 ```
 username: admin
-password: awsadmin
+password: # Please set the password following instructions below
 ```
 
 if you want change the password or add username, you can change the 
