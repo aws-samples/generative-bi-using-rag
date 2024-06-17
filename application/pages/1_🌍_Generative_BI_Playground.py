@@ -440,21 +440,23 @@ def main():
                         st.markdown(f'This is a knowledge search question.\n{response}')
 
                 elif agent_intent_flag:
-                    with st.spinner('Generating SQL... (Take up to 40s)'):
+                    with st.spinner('Analysis Of Complex Problems'):
                         agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
                                                                      selected_profile, 2, 0.5)
                         agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
                                                                    database_profile['tables_info'],
                                                                    agent_cot_retrieve)
-                        with st.expander(f'Agent Query Retrieve : {len(agent_cot_retrieve)}'):
-                            agent_examples = []
-                            for example in agent_cot_retrieve:
-                                agent_examples.append({'Score': example['_score'],
+                    with st.expander(f'Agent Query Retrieve : {len(agent_cot_retrieve)}'):
+                        agent_examples = []
+                        for example in agent_cot_retrieve:
+                            agent_examples.append({'Score': example['_score'],
                                                  'Question': example['_source']['query'],
                                                  'Answer': example['_source']['comment'].strip()})
-                            st.write(agent_examples)
-                        with st.expander(f'Agent Task : {len(agent_cot_task_result)}'):
-                            st.write(agent_cot_task_result)
+                        st.write(agent_examples)
+                    with st.expander(f'Agent Task : {len(agent_cot_task_result)}'):
+                        st.write(agent_cot_task_result)
+
+                    with st.spinner('Generate SQL For Multiple Sub Problems'):
                         agent_search_result = agent_text_search(search_box, model_type,
                                                                 database_profile,
                                                                 entity_slot, env_vars,
