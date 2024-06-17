@@ -8,6 +8,7 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 // add rds stack
 export class RDSStack extends cdk.Stack {
     _vpc;
+    public readonly endpoint: string;
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
         
@@ -39,7 +40,7 @@ export class RDSStack extends cdk.Stack {
             databaseName: 'GenBIDB',
             credentials: rds.Credentials.fromSecret(templatedSecret),
         });
-
+        this.endpoint = database.instanceEndpoint.hostname;
         // Output the database endpoint
         new cdk.CfnOutput(this, 'RDSEndpoint', {
             value: database.instanceEndpoint.hostname,
