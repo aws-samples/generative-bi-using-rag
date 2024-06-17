@@ -7,6 +7,8 @@
 - 通过自然语言查询自定义数据源的Text-to-SQL功能。
 - 用户友好的界面,可添加、编辑和管理数据源、表和列描述。
 - 通过集成历史问题答案排名和实体识别来提高性能。
+- 自定义业务信息，包括实体信息，公式，SQL样本，复杂业务问题分析思路等。
+- 增加agent任务拆分功能，能够处理复杂的归因分析问题。
 - 直观的问答界面,可深入了解底层的Text-to-SQL机制。
 - 简单的代理设计界面,可通过对话方式处理复杂查询。
 
@@ -163,7 +165,7 @@ docker exec nlq-webserver python opensearch_deploy.py custom false
 
 ```
 username: admin
-password: awsadmin
+password: # 请按照以下教程设定密码
 ```
 
 如果你想修改密码或者增加用户，可以修改如下文件
@@ -196,8 +198,8 @@ preauthorized:
 密码需要从明文转换成哈希过之后的密码，可以通过如下方式，获取
 
 ```python
-import streamlit_authenticator as stauth
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+from streamlit_authenticator.utilities.hasher import Hasher
+hashed_passwords = Hasher(['abc', 'def']).generate()
 ```
 
 

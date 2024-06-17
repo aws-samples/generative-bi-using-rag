@@ -21,4 +21,5 @@ class ErrorEnum(Enum):
 class ContentEnum(Enum):
     EXCEPTION = "exception"
     COMMON = "common"
+    STATE = "state"
     END = "end"

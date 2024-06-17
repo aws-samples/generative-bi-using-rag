@@ -8,12 +8,16 @@ st.set_page_config(
 
 make_sidebar()
 
-st.write("## Welcome to Generative BI Playground!👋")
+st.write("## Welcome to Generative BI using RAG on AWS!👋")
 
 st.sidebar.success("Select a demo above.")
 
 st.markdown(
     """
-    Welcome to the Natural Language Querying Playground! This interactive application is designed to bridge the gap between natural language and databases. Enter your query in plain English, and watch as it's transformed into a SQL or Pandas command. The result can then be visualized, giving you insights without needing to write any code. Experiment, learn, and see the power of NLQ in action!
+In the data analysis scenario, analysts often need to write multi-round, complex query statements to obtain business insights.
+
+Amazon Web Services (AWS) has built an intelligent data analysis assistant solution to address this scenario. Leveraging the powerful natural language understanding capabilities of large language models, non-technical users can query and analyze data through natural language, without needing to master SQL or other professional skills, helping business users obtain data insights and improve decision-making efficiency. 
+
+This guide is based on services such as Amazon Bedrock, Amazon OpenSearch, and Amazon DynamoDB.
 """
 )

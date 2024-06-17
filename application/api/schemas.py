@@ -11,28 +11,21 @@ class Question(BaseModel):
     agent_cot_flag: bool = True
     profile_name: str = "shopping-demo"
     explain_gen_process_flag: bool = True
-    gen_suggested_question_flag: bool = True
+    gen_suggested_question_flag: bool = False
+    answer_with_insights: bool = False
     top_k: float = 250
     top_p: float = 0.9
     max_tokens: int = 2048
     temperature: float = 0.01
-
-
-class QuestionSocket(Question):
-    session_id: str
+    context_window: int = 3
+    session_id: str = "-1"
+    user_id: str = "admin"
 
 
 class Example(BaseModel):
     score: float
     question: str
     answer: str
-
-
-# class Answer(BaseModel):
-#     examples: list[Example]
-#     sql: str
-#     sql_explain: str
-#     sql_query_result: list[Any]
 
 
 class QueryEntity(BaseModel):
@@ -45,7 +38,7 @@ class FeedBackInput(BaseModel):
     data_profiles: str
     query: str
     query_intent: str
-    query_answer_list: list[QueryEntity]
+    query_answer: str
 
 
 class Option(BaseModel):
@@ -57,21 +50,23 @@ class CustomQuestion(BaseModel):
     custom_question: list[str]
 
 
+class ChartEntity(BaseModel):
+    chart_type: str
+    chart_data: list[Any]
+
+
 class SQLSearchResult(BaseModel):
     sql: str
     sql_data: list[Any]
     data_show_type: str
     sql_gen_process: str
     data_analyse: str
+    sql_data_chart: list[ChartEntity]
 
 
 class TaskSQLSearchResult(BaseModel):
     sub_task_query: str
-    sql: str
-    sql_data: list[Any]
-    data_show_type: str
-    sql_gen_process: str
-    data_analyse: str
+    sql_search_result: SQLSearchResult
 
 
 class KnowledgeSearchResult(BaseModel):

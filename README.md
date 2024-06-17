@@ -5,6 +5,8 @@ This is a comprehensive framework designed to enable Generative BI capabilities 
 - Text-to-SQL functionality for querying customized data sources using natural language.
 - User-friendly interface for adding, editing, and managing data sources, tables, and column descriptions.
 - Performance enhancement through the integration of historical question-answer ranking and entity recognition.
+- Customize business information, including entity information, formulas, SQL samples, and analysis ideas for complex business problems.
+- Add agent task splitting function to handle complex attribution analysis problems.
 - Intuitive question-answering UI that provides insights into the underlying Text-to-SQL mechanism.
 - Simple agent design interface for handling complex queries through a conversational approach.
 
@@ -50,10 +52,17 @@ After the role is created, and then add permission by creating inline policy as 
             "Sid": "VisualEditor0",
             "Effect": "Allow",
             "Action": [
-                "bedrock:*",
-                "dynamodb:*"
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "dynamodb:*Table",
+                "dynamodb:*Item",
+                "dynamodb:Scan",
+                "dynamodb:Query"
             ],
-            "Resource": "*"
+            "Resource": [
+                "arn:aws:bedrock:us-west-2::foundation-model/*",
+                "arn:aws:dynamodb:us-west-2:**YOURACCOUNTID**:table/Nlq*"
+            ]
         }
     ]
 }
@@ -171,7 +180,7 @@ the default account is
 
 ```
 username: admin
-password: awsadmin
+password: # Please set the password following instructions below
 ```
 
 if you want change the password or add username, you can change the 
@@ -203,8 +212,8 @@ preauthorized:
 change the password to hashed password
 
 ```python
-import streamlit_authenticator as stauth
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+from streamlit_authenticator.utilities.hasher import Hasher
+hashed_passwords = Hasher(['abc', 'def']).generate()
 ```
 
 

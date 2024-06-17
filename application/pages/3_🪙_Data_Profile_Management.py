@@ -53,6 +53,10 @@ def main():
                     ProfileManagement.add_profile(profile_name, selected_conn_name, schema_names, selected_tables, comments)
                     st.success('Profile created.')
                     st.session_state.profile_page_mode = 'default'
+                    table_definitions = ConnectionManagement.get_table_definition_by_config(conn_config, schema_names,
+                                                                                        selected_tables)
+                    st.write(table_definitions)
+                    ProfileManagement.update_table_def(profile_name, table_definitions, merge_before_update=True)
 
                 # st.session_state.profile_page_mode = 'default'
     elif st.session_state.profile_page_mode == 'update' and st.session_state.current_profile_name is not None:

@@ -46,8 +46,17 @@ data_visualization_user_prompt_dict = {}
 suggest_question_system_prompt_dict = {}
 suggest_question_user_prompt_dict = {}
 
+# query rewrite prompt
+query_rewrite_system_prompt_dict = {}
+query_rewrite_user_prompt_dict = {}
+
 # general map used for prompt management and DynamoDB storage
 prompt_map_dict = {
+    'query_rewrite': {
+        'title': 'Query Rewrite',
+        'system_prompt': query_rewrite_system_prompt_dict,
+        'user_prompt': query_rewrite_user_prompt_dict
+    },
     'text2sql': {
         'title': 'Text2SQL Prompt',
         'system_prompt': system_prompt_dict,
@@ -89,6 +98,58 @@ prompt_map_dict = {
         'user_prompt': suggest_question_user_prompt_dict
     }
 }
+
+query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+You are a data query bot.
+"""
+
+query_rewrite_system_prompt_dict['llama3-70b-instruct-0'] = """
+You are a data query bot.
+"""
+
+query_rewrite_system_prompt_dict['haiku-20240307v1-0'] = """
+You are a data query bot.
+"""
+
+query_rewrite_system_prompt_dict['sonnet-20240229v1-0'] = """
+You are a data query bot.
+"""
+
+query_rewrite_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
+
+query_rewrite_user_prompt_dict['llama3-70b-instruct-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
+
+query_rewrite_user_prompt_dict['haiku-20240307v1-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
+
+query_rewrite_user_prompt_dict['sonnet-20240229v1-0'] = """
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:
+"""
 
 intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
@@ -146,7 +207,7 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 intent_system_prompt_dict['llama3-70b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 3 main intents:
+There are 4 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
@@ -199,7 +260,7 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 intent_system_prompt_dict['haiku-20240307v1-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 3 main intents:
+There are 4 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
@@ -252,7 +313,7 @@ Please perform intent recognition and entity extraction. Return only the JSON st
 intent_system_prompt_dict['sonnet-20240229v1-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.
 
-There are 3 main intents:
+There are 4 main intents:
 <intent>
 - normal_search: Query relevant data from the data table
 - reject_search: Delete data from the table, add data to the table, modify data in the table, display usernames and passwords in the table, and other topics unrelated to data query
@@ -650,7 +711,7 @@ Please generate queries based on the input query.
 # agent任务拆分
 agent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -673,7 +734,16 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
+
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -682,11 +752,12 @@ here is a example:
 
 Please conduct a thorough analysis of the user's question according to the above instructions, and finally only output the JSON structure without outputting any other content.
 
+
 """
 
 agent_system_prompt_dict['llama3-70b-instruct-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -709,7 +780,16 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
+
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -722,7 +802,7 @@ Please conduct a thorough analysis of the user's question according to the above
 
 agent_system_prompt_dict['haiku-20240307v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
+Your current task is to break down the current problem into multiple word problems based on the problem and the provided data table structure.
 
 <instructions>
 1. Fully understand the problem raised by the user
@@ -745,7 +825,16 @@ Here are some guidelines you should follow:
 
 </guidelines> 
 
-here is a example:
+The example output format is:
+
+task_1: xxxx,
+task_2: xxxx,
+task_3: xxxx,
+
+and the task_1, task_2, task_3 is key, the answer is json format.
+
+Here are some examples of breaking down complex problems into subtasks:
+
 <example>
 
 {example_data}
@@ -758,19 +847,15 @@ Please conduct a thorough analysis of the user's question according to the above
 
 agent_system_prompt_dict['sonnet-20240229v1-0'] = """
 you are a data analysis expert as well as a retail expert. 
-Your current task is to conduct an in-depth analysis of the data.
 
-<instructions>
-1. Fully understand the problem raised by the user
-2. Thoroughly understand the data table below
-3. Based on the information in the data table, break it down into multiple sub-problems that can be queried through SQL, and limit the number of sub-tasks to no more than 3
-4. only output the JSON structure
-<instructions>
+Your task is to conduct attribution analysis on the current problem, which requires breaking it down into multiple related sub problems.
 
 Here is DDL of the database you are working on:
 
 <table_schema>
+
 {table_schema_data}
+
 </table_schema>
 
 Here are some guidelines you should follow:
@@ -779,17 +864,22 @@ Here are some guidelines you should follow:
 
 {sql_guidance}
 
-</guidelines> 
+- Please focus on the business knowledge in the examples, If the problem occurs in the example, please use the sub-problems in the exampl
 
-here is a example:
-<example>
+- only output the JSON structure
+
+Here are some examples of breaking down complex problems into subtasks, You must focus on the following examples:
+
+<examples>
 
 {example_data}
 
-</example>
+</examples>
 
-Please conduct a thorough analysis of the user's question according to the above instructions, and finally only output the JSON structure without outputting any other content.
+</guidelines> 
 
+
+Finally only output the JSON structure without outputting any other content. 
 """
 
 agent_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
@@ -840,7 +930,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 agent_analyse_user_prompt_dict['llama3-70b-instruct-0'] = """
@@ -858,7 +947,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 agent_analyse_user_prompt_dict['haiku-20240307v1-0'] = """
@@ -876,7 +964,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 agent_analyse_user_prompt_dict['sonnet-20240229v1-0'] = """
@@ -894,7 +981,6 @@ The user question is：{question}
 
 The data related to the question is：{data}
 
-Think step by step.
 """
 
 # data summary prompt
@@ -1233,6 +1319,9 @@ You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
 
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
+
+
 {sql_guidance}
 
 </guidelines> 
@@ -1277,6 +1366,8 @@ Here are some ner info to help generate SQL.
 You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
+
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
 
 {sql_guidance}
 
@@ -1323,6 +1414,8 @@ You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
 
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
+
 {sql_guidance}
 
 </guidelines> 
@@ -1367,6 +1460,8 @@ Here are some ner info to help generate SQL.
 You ALWAYS follow these guidelines when writing your response:
 
 <guidelines>
+
+When performing multi table association, if selecting the primary key, To prevent ambiguous columns, it is necessary to add a table name.
 
 {sql_guidance}
 
@@ -1450,14 +1545,15 @@ table_prompt_mapper = table_prompt.TablePromptMapper()
 guidance_prompt_mapper = guidance_prompt.GuidancePromptMapper()
 
 
-def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
+def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None,
+                        dialect='mysql'):
     long_string = ""
     for table_name, table_data in ddl.items():
         ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
         long_string += "{}: {}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
             "description"])
         long_string += ddl_string
-        long_string += "\n"
+        long_string += "\n \n"
 
     # trying CREATE TABLE ddl
     # long_string = generate_create_table_ddl(long_string)
@@ -1624,8 +1720,12 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
     user_prompt = prompt_map.get('agent', {}).get('user_prompt', {}).get(name)
 
     # reformat prompts
-    system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance=agent_cot_example_str,
-                                         example_data=AGENT_COT_EXAMPLE)
+    if agent_cot_example_str != "":
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance="",
+                                             example_data=agent_cot_example_str)
+    else:
+        system_prompt = system_prompt.format(table_schema_data=ddl, sql_guidance="",
+                                             example_data=AGENT_COT_EXAMPLE)
     user_prompt = user_prompt.format(question=search_box)
 
     return user_prompt, system_prompt
@@ -1638,6 +1738,17 @@ def generate_intent_prompt(prompt_map, search_box, model_id):
     user_prompt = prompt_map.get('intent', {}).get('user_prompt', {}).get(name)
 
     user_prompt = user_prompt.format(question=search_box)
+
+    return user_prompt, system_prompt
+
+
+def generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query):
+    name = support_model_ids_map[model_id]
+
+    system_prompt = prompt_map.get('query_rewrite', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('query_rewrite', {}).get('user_prompt', {}).get(name)
+
+    user_prompt = user_prompt.format(chat_history=history_query, question=search_box)
 
     return user_prompt, system_prompt
 

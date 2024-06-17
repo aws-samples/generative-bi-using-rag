@@ -10,7 +10,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
     generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt, \
-    generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt
+    generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
+    generate_query_rewrite_prompt
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -23,7 +24,8 @@ config = Config(
     retries={
         'max_attempts': 10,
         'mode': 'standard'
-    }
+    },
+    read_timeout=600
 )
 # model IDs are here:
 # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-claude.html
@@ -271,7 +273,7 @@ def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_examp
                 model_provider=None, with_response_stream=False):
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
                                                      model_id, dialect=dialect)
-    max_tokens = 2048
+    max_tokens = 4096
     response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
     return response
 
@@ -325,10 +327,7 @@ def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=
             return intent_result_dict
         else:
             max_tokens = 2048
-            user_message = {"role": "user", "content": user_prompt}
-            messages = [user_message]
-            response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-            final_response = response.get("content")[0].get("text")
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             logger.info(f'{final_response=}')
             intent_result_dict = json_parse.parse(final_response)
             return intent_result_dict
@@ -376,6 +375,32 @@ def get_query_intent(model_id, search_box, prompt_map):
         return default_intent
 
 
+def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
+    query_rewrite = {"query_rewrite": search_box}
+    history_query = ""
+    for item in chat_history:
+        history_query = history_query + "user : " + item + "\n"
+    try:
+        intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
+        if intent_endpoint:
+            # TODO may need to modify the prompt
+            body = json.dumps(
+                {"query": generate_sagemaker_intent_prompt(search_box, meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
+            response = invoke_model_sagemaker_endpoint(intent_endpoint, body)
+            logger.info(f'{response=}')
+            intent_result_dict = json_parse.parse(response)
+            return intent_result_dict
+        else:
+            user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
+            max_tokens = 2048
+            final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+            logger.info(f'{final_response=}')
+            return final_response
+    except Exception as e:
+        logger.error("get_query_rewrite is error:{}".format(e))
+        return query_rewrite
+
+
 def knowledge_search(model_id, search_box, prompt_map):
     try:
         user_prompt, system_prompt = generate_knowledge_prompt(prompt_map, search_box, model_id)
@@ -408,22 +433,36 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     data_list = search_data.values.tolist()
     all_columns_data = [columns] + data_list
     try:
-        if len(columns) != 2:
-            return "table", all_columns_data
+        if len(all_columns_data) < 1:
+            return "table", all_columns_data, "-1", []
         else:
-            if len(all_columns_data) == 0:
-                return "table", all_columns_data
+            if len(all_columns_data) > 10:
+                all_columns_data_sample = all_columns_data[0:5]
             else:
-                if len(all_columns_data) > 10:
-                    all_columns_data = all_columns_data[0:5]
-                model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data, prompt_map)
-                model_select_type = model_select_type_dict["show_type"]
-                model_select_type_columns = model_select_type_dict["format_data"][0]
-                data_list = search_data[model_select_type_columns].values.tolist()
-                return model_select_type, [model_select_type_columns] + data_list
+                all_columns_data_sample = all_columns_data
+            model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data_sample,
+                                                                    prompt_map)
+            model_select_type = model_select_type_dict["show_type"]
+            model_select_type_columns = model_select_type_dict["format_data"][0]
+            data_list = search_data[model_select_type_columns].values.tolist()
+
+            # 返回格式校验
+            if len(columns) != 2:
+                if model_select_type == "table":
+                    return "table", all_columns_data, "-1", []
+                else:
+                    if len(model_select_type_columns) == 2:
+                        return "table", all_columns_data, model_select_type, [model_select_type_columns] + data_list
+                    else:
+                        return "table", all_columns_data, "-1", []
+            else:
+                if model_select_type == "table":
+                    return "table", all_columns_data, "-1", []
+                else:
+                    return model_select_type, [model_select_type_columns] + data_list, "-1", []
     except Exception as e:
         logger.error("data_visualization is error {}", e)
-        return "table", all_columns_data
+        return "table", all_columns_data, "-1", []
 
 
 def create_vector_embedding_with_bedrock(text, index_name):

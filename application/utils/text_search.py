@@ -60,6 +60,11 @@ def normal_text_search(search_box, model_type, database_profile, entity_slot, en
 def agent_text_search(search_box, model_type, database_profile, entity_slot, env_vars, selected_profile, use_rag,
                       agent_cot_task_result):
     agent_search_results = []
+    default_agent_search_results = []
+    default_each_res_dict = {}
+    default_each_res_dict["query"] = search_box
+    default_each_res_dict["response"] = ""
+    default_each_res_dict["sql"] = "-1"
     try:
         for each_task in agent_cot_task_result:
             each_res_dict = {}
@@ -87,6 +92,7 @@ def agent_text_search(search_box, model_type, database_profile, entity_slot, env
             each_res_dict["sql"] = each_task_sql
             if each_res_dict["sql"] != "":
                 agent_search_results.append(each_res_dict)
+        return agent_search_results
     except Exception as e:
         logger.error(e)
-    return agent_search_results
+    return default_agent_search_results
