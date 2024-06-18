@@ -13,3 +13,4 @@ langchain-core~=0.1.30
 sqlparse~=0.4.2
 debugpy
 pandas==2.0.3
+tenacity==8.3.0
