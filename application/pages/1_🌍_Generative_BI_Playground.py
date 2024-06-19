@@ -30,8 +30,13 @@ def sample_question_clicked(sample):
 
 
 def upvote_clicked(question, sql, env_vars):
-    # HACK: configurable opensearch endpoint
-
+    """
+    add upvote button to opensearch
+    :param question: user question
+    :param sql: true SQL
+    :param env_vars:
+    :return:
+    """
     current_profile = st.session_state.current_profile
     VectorStore.add_sample(current_profile, question, sql)
     logger.info(f'up voted "{question}" with sql "{sql}"')
@@ -269,6 +274,7 @@ def main():
     with st.sidebar:
         st.title('Setting')
         # The default option can be the first one in the profiles dictionary, if exists
+
         selected_profile = st.selectbox("Data Profile", list(st.session_state.get('profiles', {}).keys()))
         if selected_profile != st.session_state.current_profile:
             # clear session state
@@ -382,12 +388,15 @@ def main():
                 # 多轮对话，query改写
                 user_query_history = get_user_history(selected_profile)
                 if len(user_query_history) > 0:
-                    user_query_history = user_query_history[-context_window:]
-                    logger.info("The Chat history is {history}".format(history=",".join(user_query_history)))
-                    new_search_box = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
-                    logger.info("The Origin query is {query}  query rewrite is {new_query}".format(query = search_box, new_query = new_search_box))
-
-                    search_box = new_search_box
+                    with st.status("Query Context Understanding") as status_text:
+                        user_query_history = user_query_history[-context_window:]
+                        logger.info("The Chat history is {history}".format(history=",".join(user_query_history)))
+                        new_search_box = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+                        logger.info("The Origin query is {query}  query rewrite is {new_query}".format(query=search_box,
+                                                                                                       new_query=new_search_box))
+                        search_box = new_search_box
+                    st.write(search_box)
+                    status_text.update(label=f"Query Context Rewrite Completed", state="complete", expanded=False)
                 intent_response = {
                     "intent": "normal_search",
                     "slot": []
