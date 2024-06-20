@@ -24,9 +24,12 @@
 
 ![面向用户的界面.png](./assets/user_front_end_cn.png)
 
-[用户操作手册](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97)
 
-[项目数据流程图](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E6%9E%B6%E6%9E%84%E5%9B%BE)
+
+- 系统架构图
+
+
+![img.png](./assets/aws_architecture.png)
 
 
 ## 2、部署指南以及用户操作指南
