@@ -45,24 +45,18 @@ export class MainStack extends cdk.Stack {
 
     const aosEndpoint = _AosStack.endpoint;
 
-    // ======== Step 3. Define the ECS ========= 
+    // ======== Step 3. Define the RDSStack =========
+    const _RdsStack = new RDSStack(this, 'rds-Stack', {
+      env: props.env,
+    });
+    
+    // ======== Step 4. Define the ECS ========= 
     // pass the aosEndpoint and aosPassword to the ecs stack
     const _EcsStack = new ECSStack(this, 'ecs-Stack', {
       env: props.env,
       aosEndpoint: aosEndpoint
     });    
 
-    // ======== Step 4. Define the RDSStack =========
-    const _RdsStack = new RDSStack(this, 'rds-Stack', {
-      env: props.env,
-    });
-
-    // Output the RDS endpoint
-    new CfnOutput(this, 'RDSEndpoint', {
-      value: _RdsStack.endpoint,
-    });
-
-    // ======== Step 5. Add dependencies =========
     _EcsStack.addDependency(_AosStack);
 
     // if (_LlmStack) {
@@ -73,16 +67,21 @@ export class MainStack extends cdk.Stack {
       value: aosEndpoint,
       description: 'The endpoint of the OpenSearch domain'
     });
-
-    // ======== Step 6. Run a python script to initiate opensearch =========
-    // const ec2Instance = _EcsStack.ec2Instance; // 假设您在 ECSStack 中创建了一个 EC2 实例
-
-    // const userData = ec2.UserData.forLinux();
-    // userData.addCommands(
-    //     'python3 /path/to/init_rds.py', // 初始化 RDS 脚本
-    //     'python3 /path/to/create_opensearch_index.py' // 为 OpenSearch 建立索引脚本
-    // );
-
-    // ec2Instance.addUserData(userData);
+    new cdk.CfnOutput(this, 'RDSEndpoint', {
+      value: _RdsStack.endpoint,
+      description: 'The endpoint of the RDS instance'
+    });
+    new cdk.CfnOutput(this, 'StreamlitEndpoint', {
+      value: _EcsStack.streamlitEndpoint,
+      description: 'The endpoint of the Streamlit service'
+    });
+    new cdk.CfnOutput(this, 'FrontendEndpoint', {
+      value: _EcsStack.frontendEndpoint,
+      description: 'The endpoint of the Frontend service'
+    });
+    new cdk.CfnOutput(this, 'APIEndpoint', {
+      value: _EcsStack.apiEndpoint,
+      description: 'The endpoint of the API service'
+    });
   }
 }
