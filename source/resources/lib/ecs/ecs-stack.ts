@@ -23,7 +23,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
       
 
     // Get the AOS password secret
-    const aosPasswordSecret = secretsmanager.Secret.fromSecretNameV2(this, 'AOSPasswordSecret', 'aosPasswordSecret');
+    // const aosPasswordSecret = secretsmanager.Secret.fromSecretNameV2(this, 'AOSPasswordSecret', 'aosPasswordSecret');
 
     // Create ECR repositories and Docker image assets
     const services = [
@@ -33,17 +33,12 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     ];
 
     const repositoriesAndImages = services.map(service => {
-      const repository = new ecr.Repository(this, `${service.name}Repository`, {
-        repositoryName: `${service.name.toLowerCase()}-repository`,
-        removalPolicy: cdk.RemovalPolicy.DESTROY,  // only for demo purposes
-      });
-
       const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
         directory: service.dockerfileDirectory, // Dockerfile location
         file: service.dockerfile, // Dockerfile filename
       });
 
-      return { repository, dockerImageAsset, port: service.port };
+      return { dockerImageAsset, port: service.port };
     });
 
     //  Create an ECS cluster
@@ -88,6 +83,18 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     });
     taskRole.addToPolicy(dynamoDBAccessPolicy);
 
+    // Add secrets manager access policy
+    const opensearchHostUrlSecretAccessPolicy = new iam.PolicyStatement({
+      actions: [
+      "secretsmanager:GetSecretValue"
+      ],
+      resources: [
+      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
+      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
+      ]
+    });
+    taskRole.addToPolicy(opensearchHostUrlSecretAccessPolicy);
+
     // Add Bedrock access policy
     if (props.env?.region !== "cn-north-1" && props.env?.region !== "cn-northwest-1") {
       const bedrockAccessPolicy = new iam.PolicyStatement({
@@ -121,10 +128,14 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     });
 
     // add environment variables
-    containerStreamlit.addEnvironment('AOS_HOST', props.aosEndpoint);
-    containerStreamlit.addEnvironment('AOS_PORT', '443');
-    containerStreamlit.addEnvironment('AOS_USER', 'master-user');
-    containerStreamlit.addEnvironment('AOS_PASSWORD', aosPasswordSecret.toString());
+    containerStreamlit.addEnvironment('OPENSEARCH_TYPE', 'service');
+    containerStreamlit.addEnvironment('AOS_INDEX', 'uba');
+    containerStreamlit.addEnvironment('AOS_INDEX_NER', 'uba_ner');
+    containerStreamlit.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+    containerStreamlit.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
     containerStreamlit.addPortMappings({
       containerPort: repositoriesAndImages[0].port,
     });
@@ -184,10 +195,15 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     });
 
     // add environment variables
-    containerAPI.addEnvironment('AOS_HOST', props.aosEndpoint);
-    containerAPI.addEnvironment('AOS_PORT', '443');
-    containerAPI.addEnvironment('AOS_USER', 'master-user');
-    containerAPI.addEnvironment('AOS_PASSWORD', aosPasswordSecret.toString());
+    containerAPI.addEnvironment('OPENSEARCH_TYPE', 'service');
+    containerAPI.addEnvironment('AOS_INDEX', 'uba');
+    containerAPI.addEnvironment('AOS_INDEX_NER', 'uba_ner');
+    containerAPI.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+    containerAPI.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
+    containerAPI.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
+    containerAPI.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
+    containerAPI.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
+
     containerAPI.addPortMappings({
       containerPort: repositoriesAndImages[2].port,
     });
