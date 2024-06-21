@@ -11,7 +11,9 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export class ECSStack extends cdk.Stack {
   _vpc;
-  public readonly endpoint: string;
+  public readonly streamlitEndpoint: string;
+  public readonly frontendEndpoint: string;
+  public readonly apiEndpoint: string;
 constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint: string }) {
     super(scope, id, props);
     // Create a VPC
@@ -19,17 +21,15 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
         isDefault: true,
     });
       
-    // Dockerfile location
-    const dockerfileDirectory = path.join(__dirname, '../../../../application');
 
     // Get the AOS password secret
     const aosPasswordSecret = secretsmanager.Secret.fromSecretNameV2(this, 'AOSPasswordSecret', 'aosPasswordSecret');
 
     // Create ECR repositories and Docker image assets
     const services = [
-      { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501},
-      // { name: 'genbi-frontend', dockerfile: 'Dockerfile-b', port: 3000},
-      // { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000 },
+      { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501, dockerfileDirectory: path.join(__dirname, '../../../../application')},
+      { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 3000, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
+      { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000, dockerfileDirectory: path.join(__dirname, '../../../../application')},
     ];
 
     const repositoriesAndImages = services.map(service => {
@@ -39,7 +39,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
       });
 
       const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
-        directory: dockerfileDirectory, // Dockerfile location
+        directory: service.dockerfileDirectory, // Dockerfile location
         file: service.dockerfile, // Dockerfile filename
       });
 
@@ -47,7 +47,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     });
 
     //  Create an ECS cluster
-    const cluster = new ecs.Cluster(this, 'NLQCluster', {
+    const cluster = new ecs.Cluster(this, 'GenBiCluster', {
       vpc: this._vpc,
     });
 
@@ -103,36 +103,121 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     } 
 
     // Create ECS services through Fargate
-    repositoriesAndImages.forEach(({ dockerImageAsset, port }, index) => {
-      const taskDefinition = new ecs.FargateTaskDefinition(this, `GenBiTaskDefinition${index + 1}`, {
-        memoryLimitMiB: 512,
-        cpu: 256,
-        executionRole: taskExecutionRole,
-        taskRole: taskRole
-      });
+    // ======= 1. Streamlit Service =======
+    const taskDefinitionStreamlit = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionStreamlit', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+      executionRole: taskExecutionRole,
+      taskRole: taskRole
+    });
 
-      const container = taskDefinition.addContainer(`GenBiContainer${index + 1}`, {
-        image: ecs.ContainerImage.fromDockerImageAsset(dockerImageAsset),
-        memoryLimitMiB: 512,
-        cpu: 256,
-      });
+    const containerStreamlit = taskDefinitionStreamlit.addContainer('GenBiContainerStreamlit', {
+      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[0].dockerImageAsset),
+      memoryLimitMiB: 512,
+      cpu: 256,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'GenBiStreamlit',
+      }),
+    });
 
-      // add environment variables
-      container.addEnvironment('AOS_HOST', props.aosEndpoint);
-      container.addEnvironment('AOS_PORT', '443');
-      container.addEnvironment('AOS_USER', 'master-user');
-      container.addEnvironment('AOS_PASSWORD', aosPasswordSecret.toString());
-      container.addPortMappings({
-        containerPort: port,
-      });
+    // add environment variables
+    containerStreamlit.addEnvironment('AOS_HOST', props.aosEndpoint);
+    containerStreamlit.addEnvironment('AOS_PORT', '443');
+    containerStreamlit.addEnvironment('AOS_USER', 'master-user');
+    containerStreamlit.addEnvironment('AOS_PASSWORD', aosPasswordSecret.toString());
+    containerStreamlit.addPortMappings({
+      containerPort: repositoriesAndImages[0].port,
+    });
 
-      const fargateService = new ecs_patterns.ApplicationLoadBalancedFargateService(this, `GenBiFargateService${index + 1}`, {
-        cluster: cluster,
-        taskDefinition: taskDefinition,
-        publicLoadBalancer: true,
-        taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-        assignPublicIp: true
-      });
+    const fargateServiceStreamlit = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceStreamlit', {
+      cluster: cluster,
+      taskDefinition: taskDefinitionStreamlit,
+      publicLoadBalancer: true,
+      taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true
+    });
+
+    // ======= 2. Frontend Service =======
+    const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+      executionRole: taskExecutionRole,
+      taskRole: taskRole
+    });
+
+    const containerFrontend = taskDefinitionFrontend.addContainer('GenBiContainerFrontend', {
+      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[1].dockerImageAsset),
+      memoryLimitMiB: 512,
+      cpu: 256,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'GenBiFrontend',
+      }),
+    });
+
+    containerFrontend.addPortMappings({
+      containerPort: repositoriesAndImages[1].port,
+    });
+
+    const fargateServiceFrontend = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceFrontend', {
+      cluster: cluster,
+      taskDefinition: taskDefinitionFrontend,
+      publicLoadBalancer: true,
+      taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true
+    });
+
+    // ======= 3. API Service =======
+    const taskDefinitionAPI = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionAPI', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+      executionRole: taskExecutionRole,
+      taskRole: taskRole
+    });
+
+    const containerAPI = taskDefinitionAPI.addContainer('GenBiContainerAPI', {
+      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[2].dockerImageAsset),
+      memoryLimitMiB: 512,
+      cpu: 256,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'GenBiAPI',
+      }),
+    });
+
+    // add environment variables
+    containerAPI.addEnvironment('AOS_HOST', props.aosEndpoint);
+    containerAPI.addEnvironment('AOS_PORT', '443');
+    containerAPI.addEnvironment('AOS_USER', 'master-user');
+    containerAPI.addEnvironment('AOS_PASSWORD', aosPasswordSecret.toString());
+    containerAPI.addPortMappings({
+      containerPort: repositoriesAndImages[2].port,
+    });
+
+    const fargateServiceAPI = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceAPI', {
+      cluster: cluster,
+      taskDefinition: taskDefinitionAPI,
+      publicLoadBalancer: true,
+      taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true
+    });
+
+    // Output the endpoint
+    this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
+    this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
+    this.apiEndpoint = fargateServiceAPI.loadBalancer.loadBalancerDnsName;
+
+    new cdk.CfnOutput(this, 'StreamlitEndpoint', {
+      value: this.streamlitEndpoint,
+      description: 'The endpoint of the Streamlit service'
+    });
+
+    new cdk.CfnOutput(this, 'FrontendEndpoint', {
+      value: this.frontendEndpoint,
+      description: 'The endpoint of the Frontend service'
+    });
+
+    new cdk.CfnOutput(this, 'APIEndpoint', {
+      value: this.apiEndpoint,
+      description: 'The endpoint of the API service'
     });
   }
 }
