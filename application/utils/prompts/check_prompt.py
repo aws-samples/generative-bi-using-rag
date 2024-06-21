@@ -8,7 +8,8 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': ['dialect'],
             'llama3-70b-instruct-0': ['dialect'],
             'haiku-20240307v1-0': ['dialect'],
-            'sonnet-20240229v1-0': ['dialect']
+            'sonnet-20240229v1-0': ['dialect'],
+            'sonnet-3-5-20240620v1-0': ['dialect']
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': [
@@ -42,6 +43,14 @@ required_syntax_map = {
                 'ner_info',
                 'sql_guidance',
                 'question'
+            ],
+            'sonnet-3-5-20240620v1-0': [
+                'dialect_prompt',
+                'sql_schema',
+                'examples',
+                'ner_info',
+                'sql_guidance',
+                'question'
             ]
         }
     },
@@ -50,13 +59,15 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': ['question'],
             'llama3-70b-instruct-0': ['question'],
             'haiku-20240307v1-0': ['question'],
-            'sonnet-20240229v1-0': ['question']
+            'sonnet-20240229v1-0': ['question'],
+            'sonnet-3-5-20240620v1-0': ['question']
         },
     },
     'knowledge': {
@@ -64,13 +75,15 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': ['question'],
             'llama3-70b-instruct-0': ['question'],
             'haiku-20240307v1-0': ['question'],
-            'sonnet-20240229v1-0': ['question']
+            'sonnet-20240229v1-0': ['question'],
+            'sonnet-3-5-20240620v1-0': ['question']
         }
     },
     'agent': {
@@ -87,13 +100,17 @@ required_syntax_map = {
                                    'example_data'],
             'sonnet-20240229v1-0': ['table_schema_data',
                                     'sql_guidance',
+                                    'example_data'],
+            'sonnet-3-5-20240620v1-0': ['table_schema_data',
+                                    'sql_guidance',
                                     'example_data']
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': ['question'],
             'llama3-70b-instruct-0': ['question'],
             'haiku-20240307v1-0': ['question'],
-            'sonnet-20240229v1-0': ['question']
+            'sonnet-20240229v1-0': ['question'],
+            'sonnet-3-5-20240620v1-0': ['question']
         }
     },
     'agent_analyse': {
@@ -101,7 +118,8 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': [
@@ -117,6 +135,10 @@ required_syntax_map = {
                 'data'
             ],
             'sonnet-20240229v1-0': [
+                'question',
+                'data'
+            ],
+            'sonnet-3-5-20240620v1-0': [
                 'question',
                 'data'
             ]
@@ -127,7 +149,8 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': [
@@ -143,6 +166,10 @@ required_syntax_map = {
                 'data'
             ],
             'sonnet-20240229v1-0': [
+                'question',
+                'data'
+            ],
+            'sonnet-3-5-20240620v1-0': [
                 'question',
                 'data'
             ]
@@ -153,7 +180,8 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': [
@@ -171,6 +199,10 @@ required_syntax_map = {
             'sonnet-20240229v1-0': [
                 'question',
                 'data'
+            ],
+            'sonnet-3-5-20240620v1-0': [
+                'question',
+                'data'
             ]
         }
     },
@@ -179,13 +211,15 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': ['question'],
             'llama3-70b-instruct-0': ['question'],
             'haiku-20240307v1-0': ['question'],
-            'sonnet-20240229v1-0': ['question']
+            'sonnet-20240229v1-0': ['question'],
+            'sonnet-3-5-20240620v1-0': ['question']
         }
     },
     'query_rewrite': {
@@ -193,13 +227,15 @@ required_syntax_map = {
             'mixtral-8x7b-instruct-0': [],
             'llama3-70b-instruct-0': [],
             'haiku-20240307v1-0': [],
-            'sonnet-20240229v1-0': []
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
         },
         'user_prompt': {
             'mixtral-8x7b-instruct-0': ['chat_history', 'question'],
             'llama3-70b-instruct-0': ['chat_history', 'question'],
             'haiku-20240307v1-0': ['chat_history', 'question'],
-            'sonnet-20240229v1-0': ['chat_history', 'question']
+            'sonnet-20240229v1-0': ['chat_history', 'question'],
+            'sonnet-3-5-20240620v1-0': ['chat_history', 'question']
         }
     }
 }

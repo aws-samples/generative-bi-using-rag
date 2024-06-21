@@ -262,7 +262,7 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
@@ -384,7 +384,7 @@ def main():
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)
-                if len(user_query_history) > 0:
+                if len(user_query_history) > 0 and context_window > 0:
                     with st.status("Query Context Understanding") as status_text:
                         user_query_history = user_query_history[-context_window:]
                         logger.info("The Chat history is {history}".format(history=",".join(user_query_history)))
