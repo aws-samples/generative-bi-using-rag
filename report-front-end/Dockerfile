@@ -1,11 +1,13 @@
 FROM public.ecr.aws/docker/library/node:18.17.0 AS builder
-COPY . /tmp/frontend/
-RUN cd /tmp/frontend/ && npm ci && npm run build
+WORKDIR /frontend
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
 FROM public.ecr.aws/docker/library/nginx:1.23-alpine
-COPY --from=builder /tmp/frontend/dist/ /usr/share/nginx/public/
-COPY nginx-config/ /etc/nginx/
-EXPOSE 8800
+COPY --from=builder /frontend/dist/ /usr/share/nginx/html/
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
 # run on linux ec2/lambda/ecs(amd64)
