@@ -3,7 +3,7 @@ import os
 import boto3
 import json
 from nlq.data_access.opensearch import OpenSearchDao
-from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD
+from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class VectorStore:
     @classmethod
     def get_all_samples(cls, profile_name):
         logger.info(f'get all samples for {profile_name}...')
-        samples = cls.opensearch_dao.retrieve_samples('uba', profile_name)
+        samples = cls.opensearch_dao.retrieve_samples(opensearch_info['sql_index'], profile_name)
 
         sample_list = []
         for sample in samples:
@@ -30,7 +30,7 @@ class VectorStore:
     @classmethod
     def get_all_entity_samples(cls, profile_name):
         logger.info(f'get all samples for {profile_name}...')
-        samples = cls.opensearch_dao.retrieve_entity_samples('uba_ner', profile_name)
+        samples = cls.opensearch_dao.retrieve_entity_samples(opensearch_info['ner_index'], profile_name)
 
         sample_list = []
         if samples is None:
@@ -48,7 +48,7 @@ class VectorStore:
     @classmethod
     def get_all_agent_cot_samples(cls, profile_name):
         logger.info(f'get all agent cot samples for {profile_name}...')
-        samples = cls.opensearch_dao.retrieve_agent_cot_samples('uba_agent', profile_name)
+        samples = cls.opensearch_dao.retrieve_agent_cot_samples(opensearch_info['agent_index'], profile_name)
 
         sample_list = []
         if samples is None:
@@ -67,30 +67,30 @@ class VectorStore:
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(question)
-        has_same_sample = cls.search_same_query(profile_name, 1, 'uba', embedding)
+        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
-        if cls.opensearch_dao.add_sample('uba', profile_name, question, answer, embedding):
+        if cls.opensearch_dao.add_sample(opensearch_info['sql_index'], profile_name, question, answer, embedding):
             logger.info('Sample added')
 
     @classmethod
     def add_entity_sample(cls, profile_name, entity, comment):
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
-        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_ner', embedding)
+        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['ner_index'], embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
-        if cls.opensearch_dao.add_entity_sample('uba_ner', profile_name, entity, comment, embedding):
+        if cls.opensearch_dao.add_entity_sample(opensearch_info['ner_index'], profile_name, entity, comment, embedding):
             logger.info('Sample added')
 
     @classmethod
     def add_agent_cot_sample(cls, profile_name, entity, comment):
         logger.info(f'add agent sample query: {entity} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(entity)
-        has_same_sample = cls.search_same_query(profile_name, 1, 'uba_agent', embedding)
+        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['agent_index'], embedding)
         if has_same_sample:
             logger.info(f'delete agent sample sample query: {entity} to profile {profile_name}')
-        if cls.opensearch_dao.add_agent_cot_sample('uba_agent', profile_name, entity, comment, embedding):
+        if cls.opensearch_dao.add_agent_cot_sample(opensearch_info['agent_index'], profile_name, entity, comment, embedding):
             logger.info('Sample added')
 
     @classmethod
@@ -113,19 +113,19 @@ class VectorStore:
     @classmethod
     def delete_sample(cls, profile_name, doc_id):
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
-        ret = cls.opensearch_dao.delete_sample('uba', profile_name, doc_id)
+        ret = cls.opensearch_dao.delete_sample(opensearch_info['sql_index'], profile_name, doc_id)
         print(ret)
 
     @classmethod
     def delete_entity_sample(cls, profile_name, doc_id):
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
-        ret = cls.opensearch_dao.delete_sample('uba_ner', profile_name, doc_id)
+        ret = cls.opensearch_dao.delete_sample(opensearch_info['ner_index'], profile_name, doc_id)
         print(ret)
 
     @classmethod
     def delete_agent_cot_sample(cls, profile_name, doc_id):
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
-        ret = cls.opensearch_dao.delete_sample('uba_agent', profile_name, doc_id)
+        ret = cls.opensearch_dao.delete_sample(opensearch_info['agent_index'], profile_name, doc_id)
         print(ret)
 
     @classmethod
@@ -147,13 +147,13 @@ class VectorStore:
             similarity_score = similarity_sample["_score"]
             similarity_id = similarity_sample['_id']
             if similarity_score == 1.0:
-                if index_name == "uba":
+                if index_name == opensearch_info['sql_index']:
                     cls.delete_sample(profile_name, similarity_id)
                     return True
-                elif index_name == "uba_ner":
+                elif index_name == opensearch_info['ner_index']:
                     cls.delete_entity_sample(profile_name, similarity_id)
                     return True
-                elif index_name == "uba_agent":
+                elif index_name == opensearch_info['agent_index']:
                     cls.delete_agent_cot_sample(profile_name, similarity_id)
                     return True
                 else:
