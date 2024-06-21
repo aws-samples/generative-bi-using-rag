@@ -63,6 +63,14 @@ After the role is created, and then add permission by creating inline policy as 
                 "arn:aws:bedrock:us-west-2::foundation-model/*",
                 "arn:aws:dynamodb:us-west-2:**YOURACCOUNTID**:table/Nlq*"
             ]
+        },
+        {
+            "Sid": "SecretsManagerAccess",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": "arn:aws:secretsmanager:us-west-2:**YOURACCOUNTID**:secret:*"
         }
     ]
 }
@@ -88,7 +96,7 @@ sudo su - ec2-user
 
 ```bash  
 # Install components
-sudo yum install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
+sudo dnf install docker python3-pip git -y && pip3 install -U awscli && pip3 install docker-compose
 
 # For Amazon Linux 2，use yum to replace dnf
 

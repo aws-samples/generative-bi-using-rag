@@ -3,10 +3,10 @@ import time
 import streamlit as st
 from dotenv import load_dotenv
 import logging
-from nlq.business.connection import ConnectionManagement
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from utils.navigation import make_sidebar
+from utils.env_var import opensearch_info
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,6 @@ def main():
             if current_profile is not None:
                 st.write("The display page can show a maximum of 5000 pieces of data")
                 for sample in VectorStore.get_all_samples(current_profile):
-                    # st.write(f"Sample: {sample}")
                     with st.expander(sample['text']):
                         st.code(sample['sql'])
                         st.button('Delete ' + sample['id'], on_click=delete_sample, args=[current_profile, sample['id']])
@@ -52,8 +51,6 @@ def main():
                         VectorStore.add_sample(current_profile, question, answer)
                         st.success('Sample added')
                         time.sleep(2)
-                        # del st.session_state['index_question']
-                        # del st.session_state['index_answer']
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
@@ -63,7 +60,7 @@ def main():
                 retrieve_number = st.slider("Question Retrieve Number", 0, 100, 10)
                 if st.button('Search', type='primary'):
                     if len(entity_search) > 0:
-                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba',
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, opensearch_info['sql_index'],
                                                                          entity_search)
                         for sample in search_sample_result:
                             sample_res = {'Score': sample['_score'],

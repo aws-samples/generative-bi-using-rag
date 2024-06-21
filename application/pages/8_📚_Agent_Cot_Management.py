@@ -6,6 +6,7 @@ import logging
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from utils.navigation import make_sidebar
+from utils.env_var import opensearch_info
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ def main():
                 retrieve_number = st.slider("Entity Retrieve Number", 0, 100, 10)
                 if st.button('Search', type='primary'):
                     if len(entity_search) > 0:
-                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, 'uba_agent',
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, opensearch_info['agent_index'],
                                                                          entity_search)
                         for sample in search_sample_result:
                             sample_res = {'Score': sample['_score'],

@@ -17,11 +17,19 @@ RDS_PQ_SCHEMA = os.getenv('RDS_PQ_SCHEMA')
 BEDROCK_REGION = os.getenv('BEDROCK_REGION')
 
 DYNAMODB_AWS_REGION = os.getenv('DYNAMODB_AWS_REGION')
+OPENSEARCH_REGION = os.getenv('AOS_AWS_REGION')
 
 AOS_HOST = os.getenv('AOS_HOST')
 AOS_PORT = os.getenv('AOS_PORT')
 AOS_USER = os.getenv('AOS_USER')
 AOS_PASSWORD = os.getenv('AOS_PASSWORD')
+AOS_DOMAIN = os.getenv('AOS_DOMAIN')
+
+AOS_INDEX = os.getenv('AOS_INDEX')
+AOS_INDEX_NER = os.getenv('AOS_INDEX_NER')
+AOS_INDEX_AGENT = os.getenv('AOS_INDEX_AGENT')
+
+EMBEDDING_DIMENSION = os.getenv('EMBEDDING_DIMENSION')
 
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 
@@ -58,3 +66,16 @@ if OPENSEARCH_TYPE == "service":
     AOS_PORT = opensearch_port
     AOS_USER = opensearch_username
     AOS_PASSWORD = opensearch_password
+
+opensearch_info = {
+    'host': AOS_HOST,
+    'port': AOS_PORT,
+    'username': AOS_USER,
+    'password': AOS_PASSWORD,
+    'domain': AOS_DOMAIN,
+    'region': OPENSEARCH_REGION,
+    'sql_index': AOS_INDEX,
+    'ner_index': AOS_INDEX_NER,
+    'agent_index': AOS_INDEX_AGENT,
+    'embedding_dimension': EMBEDDING_DIMENSION
+}
