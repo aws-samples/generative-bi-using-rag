@@ -6,6 +6,7 @@ import { AOSStack } from './aos/aos-stack';
 import { LLMStack } from './model/llm-stack';
 import { ECSStack } from './ecs/ecs-stack';
 import { RDSStack } from './rds/rds-stack';
+import * as fs from 'fs';
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps={}) {
@@ -46,9 +47,9 @@ export class MainStack extends cdk.Stack {
     const aosEndpoint = _AosStack.endpoint;
 
     // ======== Step 3. Define the RDSStack =========
-    const _RdsStack = new RDSStack(this, 'rds-Stack', {
-      env: props.env,
-    });
+    // const _RdsStack = new RDSStack(this, 'rds-Stack', {
+    //   env: props.env,
+    // });
     
     // ======== Step 4. Define the ECS ========= 
     // pass the aosEndpoint and aosPassword to the ecs stack
@@ -67,10 +68,10 @@ export class MainStack extends cdk.Stack {
       value: aosEndpoint,
       description: 'The endpoint of the OpenSearch domain'
     });
-    new cdk.CfnOutput(this, 'RDSEndpoint', {
-      value: _RdsStack.endpoint,
-      description: 'The endpoint of the RDS instance'
-    });
+    // new cdk.CfnOutput(this, 'RDSEndpoint', {
+    //   value: _RdsStack.endpoint,
+    //   description: 'The endpoint of the RDS instance'
+    // });
     new cdk.CfnOutput(this, 'StreamlitEndpoint', {
       value: _EcsStack.streamlitEndpoint,
       description: 'The endpoint of the Streamlit service'

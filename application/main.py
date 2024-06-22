@@ -23,9 +23,15 @@ biz_exception(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(router)
 
-@app.get("/", status_code=status.HTTP_302_FOUND)
+# changed from "/" to "/test" to avoid health check fails in ECS
+@app.get("/test", status_code=status.HTTP_302_FOUND)
 def index():
     return RedirectResponse("static/WebSocket.html")
+
+# health check
+@app.get("/")
+def health():
+    return {"status": "ok"}
 
 @app.get("/option", response_model=Option)
 def option():
