@@ -5,8 +5,8 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { AOSStack } from './aos/aos-stack';
 import { LLMStack } from './model/llm-stack';
 import { ECSStack } from './ecs/ecs-stack';
+import { CognitoStack } from './cognito/cognito-stack';
 import { RDSStack } from './rds/rds-stack';
-import * as fs from 'fs';
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps={}) {
@@ -50,15 +50,22 @@ export class MainStack extends cdk.Stack {
     // const _RdsStack = new RDSStack(this, 'rds-Stack', {
     //   env: props.env,
     // });
+
+    // ======== Step 4. Define Cognito =========
+    const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
+      env: props.env
+    });
     
-    // ======== Step 4. Define the ECS ========= 
+    // ======== Step 5. Define the ECS ========= 
     // pass the aosEndpoint and aosPassword to the ecs stack
     const _EcsStack = new ECSStack(this, 'ecs-Stack', {
       env: props.env,
-      aosEndpoint: aosEndpoint
-    });    
+      cognitoUserPoolId: _CognitoStack.userPoolId,
+      cognitoUserPoolClientId: _CognitoStack.userPoolClientId,
+    });
 
     _EcsStack.addDependency(_AosStack);
+    _EcsStack.addDependency(_CognitoStack);
 
     // if (_LlmStack) {
     //   _EcsStack.addDependency(_LlmStack);
