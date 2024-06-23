@@ -1,6 +1,8 @@
 # Generative BI using RAG on AWS
 [中文文档](README_CN.md) | [日本語ドキュメント](README_JP.md)
 
+For CDK Deployment Guide, please refer to [CDK Deployment Guide](source/resources/README.md)
+
 This is a comprehensive framework designed to enable Generative BI capabilities on customized data sources (RDS/Redshift) hosted on AWS. It offers the following key features:
 - Text-to-SQL functionality for querying customized data sources using natural language.
 - User-friendly interface for adding, editing, and managing data sources, tables, and column descriptions.
@@ -223,73 +225,6 @@ change the password to hashed password
 from streamlit_authenticator.utilities.hasher import Hasher
 hashed_passwords = Hasher(['abc', 'def']).generate()
 ```
-
-
-## CDK Deployment Guide
-
-### 1. Prepare CDK Pre-requisites
-
-Please follow the instructions in the [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) to install the CDK toolkit.
-
-### 2. Prepare SageMaker Model Assets(For China Region)
-Before deploying the CDK stack, you need to prepare the SageMaker model assets in the S3 bucket.
-
-```bash
-cd generative-bi-using-rag/source/model
-bash prepare_model.sh -s <s3_bucket_name>
-```
-
-### 2. Deploy the CDK Stack
-
-For global regions, execute the following commands:
-```bash
-cd generative-bi-using-rag/source/resources
-npm install
-npx cdk deploy
-```
-
-For China regions, execute the following commands:
-```bash
-cd generative-bi-using-rag/source/resources
-npm install
-npx cdk deploy --parameters S3ModelAssetsBucket=<s3_bucket_name>
-```
-
-### 3. Access the Streamlit Web UI
-After the CDK stack is deployed, wait around 10 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: `http://<your-ec2-public-ip>`
-
-Note: Use HTTP instead of HTTPS. 
-
-## How to use custom data sources with the demo app
-1. First create the corresponding Data Profile in Data Connection Management and Data Profile Management.
-
-![AddConnect](assets/add_database_connect.png)
-
-2. After selecting the Data Profile, start asking questions. For simple questions, the LLM can directly generate the correct SQL. If the generated SQL is incorrect, try adding more annotations to the Schema.  
-
-![CreateProfile](assets/create_data_profile.png)
-
-Then Refresh This Webpage, Click Fetch table definition 
-
-![UpdateProfile](assets/update_data_profile.png)
-
-
-
-3. Use the Schema Management page, select the Data Profile, and add comments to the tables and fields. These comments will be included in the prompt sent to the LLM.
-   (1) For some fields, add values to the Annotation attribute, e.g. "Values: Y|N", "Values: Shanghai|Jiangsu".
-   (2) For table comments, add domain knowledge to help answer business questions.
-
-![AddSchema](assets/add_schema_management.png)
-
-
-![UpdateSchema](assets/update_schema_management.png)
-
-4. Ask the question again. If still unable to generate the correct SQL, add Sample QA pairs to OpenSearch.
-   (1) Using the Index Management page, select the Data Profile then you can add, view and delete QA pairs.
-
-![AddIndex](assets/add_index_sample.png) 
-
-5. Ask again. In theory, the RAG approach (PE uses Few shots) should now be able to generate the correct SQL.
 
 ## Security
 
