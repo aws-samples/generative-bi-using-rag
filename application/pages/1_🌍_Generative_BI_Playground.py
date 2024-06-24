@@ -20,6 +20,7 @@ from utils.prompts.generate_prompt import prompt_map_dict
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import agent_text_search
 from utils.tool import get_generated_sql
+from utils.env_var import opensearch_info
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def sample_question_clicked(sample):
     st.session_state['selected_sample'] = sample
 
 
-def upvote_clicked(question, sql, env_vars):
+def upvote_clicked(question, sql):
     """
     add upvote button to opensearch
     :param question: user question
@@ -42,7 +43,7 @@ def upvote_clicked(question, sql, env_vars):
     logger.info(f'up voted "{question}" with sql "{sql}"')
 
 
-def upvote_agent_clicked(question, comment, env_vars):
+def upvote_agent_clicked(question, comment):
     # HACK: configurable opensearch endpoint
 
     current_profile = st.session_state.current_profile
@@ -126,7 +127,7 @@ def recurrent_display(messages, i):
     return i
 
 
-def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, env_vars, selected_profile,
+def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info, selected_profile,
                                  use_rag,
                                  model_provider=None):
     entity_slot_retrieve = []
@@ -145,7 +146,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
         with st.status("Performing Entity retrieval...") as status_text:
             if len(entity_slot) > 0 and use_rag:
                 for each_entity in entity_slot:
-                    entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
+                    entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
                                                               selected_profile, 1, 0.7)
                     if len(entity_retrieve) > 0:
                         entity_slot_retrieve.extend(entity_retrieve)
@@ -161,7 +162,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
 
         with st.status("Performing QA retrieval...") as status_text:
             if use_rag:
-                retrieve_result = get_retrieve_opensearch(env_vars, search_box, "query",
+                retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
                                                           selected_profile, 3, 0.5)
                 examples = []
                 for example in retrieve_result:
@@ -193,8 +194,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
                                use_container_width=True,
                                on_click=upvote_clicked,
                                args=[search_box,
-                                     sql,
-                                     env_vars])
+                                     sql])
 
             if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
                 # do something here
@@ -218,13 +218,6 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
 def main():
     load_dotenv()
 
-    with open(os.path.join(os.getcwd(), 'config_files', '1_config.json')) as f:
-        env_vars = json.load(f)
-        opensearch_config = env_vars['data_sources']['shopping_guide']['opensearch']
-        for key in opensearch_config:
-            opensearch_config[key] = os.getenv(opensearch_config[key].replace('$', ''))
-        # logger.info(f'{opensearch_config=}')
-
     st.set_page_config(page_title="Demo", layout="wide")
     make_sidebar()
 
@@ -234,11 +227,6 @@ def main():
     demo_profile_suffix = '(demo)'
     # Initialize or set up state variables
     if 'profiles' not in st.session_state:
-        demo_profile = {}
-        for i, v in env_vars['data_sources'].items():
-            if 'is_demo' in v and v['is_demo']:
-                demo_profile[i + demo_profile_suffix] = v
-
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         # all_profiles.update(demo_profile)
@@ -262,7 +250,7 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
@@ -285,9 +273,7 @@ def main():
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
-        # st.session_state['option'] = st.selectbox("Choose your option", ["Text2SQL"])
         model_type = st.selectbox("Choose your model", model_ids)
-        model_provider = None
 
         use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results_flag = st.checkbox("Visualize Results", True)
@@ -384,7 +370,7 @@ def main():
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)
-                if len(user_query_history) > 0:
+                if len(user_query_history) > 0 and context_window > 0:
                     with st.status("Query Context Understanding") as status_text:
                         user_query_history = user_query_history[-context_window:]
                         logger.info("The Chat history is {history}".format(history=",".join(user_query_history)))
@@ -435,7 +421,7 @@ def main():
                     # 执行普通的查询，并可视化结果
                     normal_search_result = normal_text_search_streamlit(search_box, model_type,
                                                                         database_profile,
-                                                                        entity_slot, env_vars,
+                                                                        entity_slot, opensearch_info,
                                                                         selected_profile,
                                                                         explain_gen_process_flag, use_rag_flag)
                 elif knowledge_search_flag:
@@ -447,7 +433,7 @@ def main():
 
                 elif agent_intent_flag:
                     with st.spinner('Analysis Of Complex Problems'):
-                        agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
+                        agent_cot_retrieve = get_retrieve_opensearch(opensearch_info, search_box, "agent",
                                                                      selected_profile, 2, 0.5)
                         agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
                                                                    database_profile['tables_info'],
@@ -465,7 +451,7 @@ def main():
                     with st.spinner('Generate SQL For Multiple Sub Problems'):
                         agent_search_result = agent_text_search(search_box, model_type,
                                                                 database_profile,
-                                                                entity_slot, env_vars,
+                                                                entity_slot, opensearch_info,
                                                                 selected_profile, use_rag_flag, agent_cot_task_result)
                 else:
                     st.error("Intent recognition error")
@@ -552,8 +538,7 @@ def main():
                                        use_container_width=True,
                                        on_click=upvote_agent_clicked,
                                        args=[current_nlq_chain.get_question(),
-                                             agent_cot_task_result,
-                                             env_vars])
+                                             agent_cot_task_result])
 
                     if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
                         # do something here

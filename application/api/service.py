@@ -16,6 +16,7 @@ from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_wit
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
     generate_suggested_question, data_visualization
 from utils.opensearch import get_retrieve_opensearch
+from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
@@ -28,17 +29,7 @@ from fastapi import WebSocket
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-# load config.json as dictionary
-with open(os.path.join(os.getcwd(), 'config_files', '1_config.json')) as f:
-    env_vars = json.load(f)
-opensearch_config = env_vars['data_sources']['shopping_guide']['opensearch']
-for key in opensearch_config:
-    opensearch_config[key] = os.getenv(opensearch_config[key].replace('$', ''))
-datasource_profile = {}
-for i, v in env_vars['data_sources'].items():
-    datasource_profile[i] = v
 all_profiles = ProfileManagement.get_all_profiles_with_info()
-# all_profiles.update(datasource_profile)
 
 
 def get_option() -> Option:
@@ -80,7 +71,7 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
         entity_slot = intent_response.get("slot", [])
         if entity_slot:
             for each_entity in entity_slot:
-                entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner", question.profile_name, 1, 0.7)
+                entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner", question.profile_name, 1, 0.7)
                 if entity_retrieve:
                     entity_slot_retrieve.extend(entity_retrieve)
 
@@ -208,7 +199,7 @@ def ask(question: Question) -> Answer:
     elif search_intent_flag:
         normal_search_result = normal_text_search(search_box, model_type,
                                                   database_profile,
-                                                  entity_slot, env_vars,
+                                                  entity_slot, opensearch_info,
                                                   selected_profile, use_rag_flag)
     elif knowledge_search_flag:
         response = knowledge_search(search_box=search_box, model_id=model_type, prompt_map=prompt_map)
@@ -226,7 +217,7 @@ def ask(question: Question) -> Answer:
         return answer
 
     else:
-        agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
+        agent_cot_retrieve = get_retrieve_opensearch(opensearch_info, search_box, "agent",
                                                      selected_profile, 2, 0.5)
         agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
                                                    database_profile['tables_info'],
@@ -234,7 +225,7 @@ def ask(question: Question) -> Answer:
 
         agent_search_result = agent_text_search(search_box, model_type,
                                                 database_profile,
-                                                entity_slot, env_vars,
+                                                entity_slot, opensearch_info,
                                                 selected_profile, use_rag_flag, agent_cot_task_result)
 
     if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
@@ -439,7 +430,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
     elif search_intent_flag:
         normal_search_result = await normal_text_search_websocket(websocket, session_id, search_box, model_type,
                                                   database_profile,
-                                                  entity_slot, env_vars,
+                                                  entity_slot, opensearch_info,
                                                   selected_profile, use_rag_flag)
     elif knowledge_search_flag:
         response = knowledge_search(search_box=search_box, model_id=model_type, prompt_map=prompt_map)
@@ -457,7 +448,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
         return answer
 
     else:
-        agent_cot_retrieve = get_retrieve_opensearch(env_vars, search_box, "agent",
+        agent_cot_retrieve = get_retrieve_opensearch(opensearch_info, search_box, "agent",
                                                      selected_profile, 2, 0.5)
         agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
                                                    database_profile['tables_info'],
@@ -465,7 +456,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
 
         agent_search_result = agent_text_search(search_box, model_type,
                                                 database_profile,
-                                                entity_slot, env_vars,
+                                                entity_slot, opensearch_info,
                                                 selected_profile, use_rag_flag, agent_cot_task_result)
 
     if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
@@ -639,7 +630,7 @@ def get_executed_result(current_nlq_chain: NLQChain) -> str:
 
 
 async def normal_text_search_websocket(websocket: WebSocket, session_id: str, search_box, model_type, database_profile,
-                                       entity_slot, env_vars, selected_profile, use_rag,
+                                       entity_slot, opensearch_info, selected_profile, use_rag,
                                        model_provider=None):
     entity_slot_retrieve = []
     retrieve_result = []
@@ -657,7 +648,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         if len(entity_slot) > 0 and use_rag:
             await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start")
             for each_entity in entity_slot:
-                entity_retrieve = get_retrieve_opensearch(env_vars, each_entity, "ner",
+                entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
                                                           selected_profile, 1, 0.7)
                 if len(entity_retrieve) > 0:
                     entity_slot_retrieve.extend(entity_retrieve)
@@ -666,7 +657,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
 
         if use_rag:
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start")
-            retrieve_result = get_retrieve_opensearch(env_vars, search_box, "query",
+            retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
                                                       selected_profile, 3, 0.5)
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end")
 
