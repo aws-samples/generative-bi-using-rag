@@ -20,7 +20,7 @@ DYNAMODB_AWS_REGION = os.getenv('DYNAMODB_AWS_REGION')
 OPENSEARCH_REGION = os.getenv('AOS_AWS_REGION')
 
 AOS_HOST = os.getenv('AOS_HOST')
-AOS_PORT = os.getenv('AOS_PORT')
+AOS_PORT = int(os.getenv('AOS_PORT'))
 AOS_USER = os.getenv('AOS_USER')
 AOS_PASSWORD = os.getenv('AOS_PASSWORD')
 AOS_DOMAIN = os.getenv('AOS_DOMAIN')
@@ -35,19 +35,25 @@ AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 
 OPENSEARCH_TYPE = os.getenv('OPENSEARCH_TYPE')
 
+OPENSEARCH_SECRETS_URL_HOST = os.getenv('OPENSEARCH_SECRETS_URL_HOST', 'opensearch-host-url')
+
+OPENSEARCH_SECRETS_USERNAME_PASSWORD = os.getenv('OPENSEARCH_SECRETS_USERNAME_PASSWORD', 'opensearch-master-user')
+
+BEDROCK_SECRETS_AK_SK = os.getenv('BEDROCK_SECRETS_AK_SK')
+
 
 def get_opensearch_parameter():
     try:
         session = boto3.session.Session()
         sm_client = session.client(service_name='secretsmanager', region_name=AWS_DEFAULT_REGION)
-        master_user = sm_client.get_secret_value(SecretId='opensearch-host-url')['SecretString']
+        master_user = sm_client.get_secret_value(SecretId=OPENSEARCH_SECRETS_URL_HOST)['SecretString']
         data = json.loads(master_user)
         es_host_name = data.get('host')
         # cluster endpoint, for example: my-test-domain.us-east-1.es.amazonaws.com/
         host = es_host_name + '/' if es_host_name[-1] != '/' else es_host_name
 
         sm_client = session.client(service_name='secretsmanager', region_name=AWS_DEFAULT_REGION)
-        master_user = sm_client.get_secret_value(SecretId='opensearch-master-user')['SecretString']
+        master_user = sm_client.get_secret_value(SecretId=OPENSEARCH_SECRETS_USERNAME_PASSWORD)['SecretString']
         data = json.loads(master_user)
         username = data.get('username')
         password = data.get('password')
@@ -57,6 +63,25 @@ def get_opensearch_parameter():
         # For a list of exceptions thrown, see
         # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
         raise e
+
+
+def get_bedrock_parameter():
+    bedrock_ak_sk_info = {}
+    try:
+        session = boto3.session.Session()
+        sm_client = session.client(service_name='secretsmanager', region_name=AWS_DEFAULT_REGION)
+        if BEDROCK_SECRETS_AK_SK is not None and BEDROCK_SECRETS_AK_SK != "":
+            bedrock_info = sm_client.get_secret_value(SecretId=BEDROCK_SECRETS_AK_SK)['SecretString']
+            data = json.loads(bedrock_info)
+            access_key = data.get('access_key_id')
+            secret_key = data.get('secret_access_key')
+            bedrock_ak_sk_info['access_key_id'] = access_key
+            bedrock_ak_sk_info['secret_access_key'] = secret_key
+            return bedrock_ak_sk_info
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        return bedrock_ak_sk_info
 
 
 if OPENSEARCH_TYPE == "service":
@@ -78,3 +103,5 @@ opensearch_info = {
     'agent_index': AOS_INDEX_AGENT,
     'embedding_dimension': EMBEDDING_DIMENSION
 }
+
+bedrock_ak_sk_info = get_bedrock_parameter()

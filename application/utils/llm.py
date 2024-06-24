@@ -13,6 +13,7 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemake
     generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
     generate_query_rewrite_prompt
 
+from utils.env_var import bedrock_ak_sk_info
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -38,7 +39,13 @@ sagemaker_client = None
 def get_bedrock_client():
     global bedrock
     if not bedrock:
-        bedrock = boto3.client(service_name='bedrock-runtime', config=config)
+        if len(bedrock_ak_sk_info) == 0:
+            bedrock = boto3.client(service_name='bedrock-runtime', config=config)
+        else:
+            bedrock = boto3.client(
+                service_name='bedrock-runtime',  config=config,
+                aws_access_key_id=bedrock_ak_sk_info['access_key_id'],
+                aws_secret_access_key=bedrock_ak_sk_info['secret_access_key'])
     return bedrock
 
 
