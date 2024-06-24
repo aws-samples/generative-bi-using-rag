@@ -75,10 +75,12 @@ export class MainStack extends cdk.Stack {
       value: aosEndpoint,
       description: 'The endpoint of the OpenSearch domain'
     });
+
     // new cdk.CfnOutput(this, 'RDSEndpoint', {
     //   value: _RdsStack.endpoint,
     //   description: 'The endpoint of the RDS instance'
     // });
+    
     new cdk.CfnOutput(this, 'StreamlitEndpoint', {
       value: _EcsStack.streamlitEndpoint,
       description: 'The endpoint of the Streamlit service'
