@@ -28,19 +28,28 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     // Create ECR repositories and Docker image assets
     const services = [
       { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501, dockerfileDirectory: path.join(__dirname, '../../../../application')},
-      { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 3000, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
       { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000, dockerfileDirectory: path.join(__dirname, '../../../../application')},
+      { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 80, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
     ];
 
-    const repositoriesAndImages = services.map(service => {
-      const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
-        directory: service.dockerfileDirectory, // Dockerfile location
-        file: service.dockerfile, // Dockerfile filename
-      });
+    // const repositoriesAndImages = services.map(service => {
+    //   const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
+    //     directory: service.dockerfileDirectory, // Dockerfile location
+    //     file: service.dockerfile, // Dockerfile filename
+    //   });
+    //   return { dockerImageAsset, port: service.port };
+    // });
 
-      return { dockerImageAsset, port: service.port };
-    });
-
+    const GenBiStreamlitDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiStreamlitDockerImage', {
+        directory: services[0].dockerfileDirectory, 
+        file: services[0].dockerfile, 
+      }), 'port': services[0].port};
+          
+    const GenBiAPIDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiAPIDockerImage', {
+      directory: services[1].dockerfileDirectory, 
+      file: services[1].dockerfile, 
+    }), 'port': services[1].port};
+    
     //  Create an ECS cluster
     const cluster = new ecs.Cluster(this, 'GenBiCluster', {
       vpc: this._vpc,
@@ -134,7 +143,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     });
 
     const containerStreamlit = taskDefinitionStreamlit.addContainer('GenBiContainerStreamlit', {
-      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[0].dockerImageAsset),
+      image: ecs.ContainerImage.fromDockerImageAsset(GenBiStreamlitDockerImageAsset.dockerImageAsset),
       memoryLimitMiB: 512,
       cpu: 256,
       logging: new ecs.AwsLogDriver({
@@ -151,7 +160,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
     containerStreamlit.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
     containerStreamlit.addPortMappings({
-      containerPort: repositoriesAndImages[0].port,
+      containerPort: GenBiStreamlitDockerImageAsset.port,
     });
 
     const fargateServiceStreamlit = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceStreamlit', {
@@ -171,7 +180,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     });
 
     const containerAPI = taskDefinitionAPI.addContainer('GenBiContainerAPI', {
-      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[2].dockerImageAsset),
+      image: ecs.ContainerImage.fromDockerImageAsset(GenBiAPIDockerImageAsset.dockerImageAsset),
       memoryLimitMiB: 512,
       cpu: 256,
       logging: new ecs.AwsLogDriver({
@@ -189,7 +198,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerAPI.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
 
     containerAPI.addPortMappings({
-      containerPort: repositoriesAndImages[2].port,
+      containerPort: GenBiAPIDockerImageAsset.port,
     });
 
     const fargateServiceAPI = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceAPI', {
@@ -201,15 +210,44 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     });
 
     // ======= 3. Frontend Service =======
+
+    // a hacky way of writing the .env file for the frontend before docker building. The frontend does not support runtime environment for now.
+    const fs = require('fs');
+    const envVars: { [key: string]: string } = {
+      VITE_TITLE: 'Guidance for Generative BI on Amazon Web Services',
+      VITE_LOGO: '/logo.png',
+      VITE_RIGHT_LOGO: '',
+      VITE_COGNITO_REGION: cdk.Aws.REGION,
+      VITE_COGNITO_USER_POOL_ID: props.cognitoUserPoolId,
+      VITE_COGNITO_USER_POOL_WEB_CLIENT_ID: props.cognitoUserPoolClientId,
+      VITE_COGNITO_IDENTITY_POOL_ID: '',
+      VITE_SQL_DISPLAY: 'yes',
+      VITE_BACKEND_URL: `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`,
+      VITE_WEBSOCKET_URL: `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`,
+      VITE_LOGIN_TYPE: 'Cognito'
+    };
+
+    let envFileContent = '';
+    for (const key in envVars) {
+      envFileContent += `${key}=${envVars[key]}\n`;
+    }
+
+    fs.writeFileSync(path.join(__dirname, '../../../../report-front-end/.env'), envFileContent);
+
+    const GenBiFrontendDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
+      directory: services[2].dockerfileDirectory, 
+      file: services[2].dockerfile, 
+    }), 'port': services[2].port};
+
     const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
       memoryLimitMiB: 512,
       cpu: 256,
       executionRole: taskExecutionRole,
       taskRole: taskRole
     });
-
+    
     const containerFrontend = taskDefinitionFrontend.addContainer('GenBiContainerFrontend', {
-      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[1].dockerImageAsset),
+      image: ecs.ContainerImage.fromDockerImageAsset(GenBiFrontendDockerImageAsset.dockerImageAsset),
       memoryLimitMiB: 512,
       cpu: 256,
       logging: new ecs.AwsLogDriver({
@@ -218,20 +256,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     });
 
     containerFrontend.addPortMappings({
-      containerPort: repositoriesAndImages[1].port,
-    });
-
-    containerFrontend.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION);
-    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId);
-    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
-    containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
-    containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
-    containerFrontend.addEnvironment('VITE_BACKEND_URL', `http://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
-    containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', 'ws://xxxxxx/qa/ws');
-    containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
-
-    containerFrontend.addPortMappings({
-      containerPort: repositoriesAndImages[2].port,
+      containerPort: GenBiFrontendDockerImageAsset.port,
     });
 
     const fargateServiceFrontend = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceFrontend', {
@@ -241,7 +266,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       assignPublicIp: true
     });
-    
+
     // Output the endpoint
     this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
     this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
