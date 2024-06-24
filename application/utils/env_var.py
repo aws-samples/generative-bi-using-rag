@@ -20,7 +20,7 @@ DYNAMODB_AWS_REGION = os.getenv('DYNAMODB_AWS_REGION')
 OPENSEARCH_REGION = os.getenv('AOS_AWS_REGION')
 
 AOS_HOST = os.getenv('AOS_HOST')
-AOS_PORT = int(os.getenv('AOS_PORT'))
+AOS_PORT = os.getenv('AOS_PORT')
 AOS_USER = os.getenv('AOS_USER')
 AOS_PASSWORD = os.getenv('AOS_PASSWORD')
 AOS_DOMAIN = os.getenv('AOS_DOMAIN')
