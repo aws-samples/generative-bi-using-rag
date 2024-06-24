@@ -45,7 +45,8 @@ export class AOSStack extends cdk.Stack {
 
     // Find subnets in different availability zones
     const subnets = this._vpc.selectSubnets({
-      subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      // subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      subnetType: ec2.SubnetType.PUBLIC,
     }).subnets;
 
     // if (subnets.length < 3) {
