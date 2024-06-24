@@ -20,7 +20,7 @@ DYNAMODB_AWS_REGION = os.getenv('DYNAMODB_AWS_REGION')
 OPENSEARCH_REGION = os.getenv('AOS_AWS_REGION')
 
 AOS_HOST = os.getenv('AOS_HOST')
-AOS_PORT = int(os.getenv('AOS_PORT'))
+AOS_PORT = os.getenv('AOS_PORT')
 AOS_USER = os.getenv('AOS_USER')
 AOS_PASSWORD = os.getenv('AOS_PASSWORD')
 AOS_DOMAIN = os.getenv('AOS_DOMAIN')
@@ -51,6 +51,7 @@ def get_opensearch_parameter():
         es_host_name = data.get('host')
         # cluster endpoint, for example: my-test-domain.us-east-1.es.amazonaws.com/
         # host = es_host_name + '/' if es_host_name[-1] != '/' else es_host_name
+        host = es_host_name
 
         sm_client = session.client(service_name='secretsmanager', region_name=AWS_DEFAULT_REGION)
         master_user = sm_client.get_secret_value(SecretId=OPENSEARCH_SECRETS_USERNAME_PASSWORD)['SecretString']
@@ -58,7 +59,7 @@ def get_opensearch_parameter():
         username = data.get('username')
         password = data.get('password')
         port = 443
-        return es_host_name, port, username, password
+        return host, port, username, password
     except ClientError as e:
         # For a list of exceptions thrown, see
         # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
