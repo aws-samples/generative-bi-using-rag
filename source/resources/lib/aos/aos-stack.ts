@@ -24,7 +24,7 @@ export class AOSStack extends cdk.Stack {
       description: 'Allow access to OpenSearch',
       allowAllOutbound: true
     });
-    const secretName = 'GenBIAOSSecret'; // Add the secret name here
+    const secretName = 'opensearch-master-user'; // Add the secret name here
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
       secretName: secretName,
       description: 'Templated secret used for OpenSearch master user password',
@@ -45,7 +45,7 @@ export class AOSStack extends cdk.Stack {
 
     // Find subnets in different availability zones
     const subnets = this._vpc.selectSubnets({
-      subnetType: ec2.SubnetType.PUBLIC,
+      subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
     }).subnets;
 
     // if (subnets.length < 3) {
@@ -82,12 +82,20 @@ export class AOSStack extends cdk.Stack {
         masterUserName: 'master-user',
         masterUserPassword: cdk.SecretValue.secretsManager(templatedSecret.secretArn, {
           jsonField: 'password'
-        }
-        ),
+        }),
       },
     });
-    this.endpoint = domain.domainEndpoint;
-        
+    this.endpoint = domain.domainEndpoint.toString();
+    
+    const hostSecretName = 'opensearch-host-url'; // Add the secret name here
+    const hostSecret = new secretsmanager.Secret(this, 'HostSecret', {
+      secretName: hostSecretName,
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({host: this.endpoint}),
+        generateStringKey: 'password', // Specify the key under which the secret will be stored
+      },
+    });
+
     new cdk.CfnOutput(this, 'AOSDomainEndpoint', {
       value: this.endpoint,
       description: 'The endpoint of the OpenSearch domain'

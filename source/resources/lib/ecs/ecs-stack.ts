@@ -8,46 +8,41 @@ import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import { UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 
 export class ECSStack extends cdk.Stack {
   _vpc;
-  public readonly endpoint: string;
-constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint: string }) {
+  public readonly streamlitEndpoint: string;
+  public readonly frontendEndpoint: string;
+  public readonly apiEndpoint: string;
+constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserPoolId: string} & { cognitoUserPoolClientId: string}) {
     super(scope, id, props);
     // Create a VPC
     this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
         isDefault: true,
     });
-      
-    // Dockerfile location
-    const dockerfileDirectory = path.join(__dirname, '../../../../application');
 
     // Get the AOS password secret
-    const aosPasswordSecret = secretsmanager.Secret.fromSecretNameV2(this, 'AOSPasswordSecret', 'aosPasswordSecret');
+    // const aosPasswordSecret = secretsmanager.Secret.fromSecretNameV2(this, 'AOSPasswordSecret', 'aosPasswordSecret');
 
     // Create ECR repositories and Docker image assets
     const services = [
-      { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501},
-      // { name: 'genbi-frontend', dockerfile: 'Dockerfile-b', port: 3000},
-      // { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000 },
+      { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501, dockerfileDirectory: path.join(__dirname, '../../../../application')},
+      { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 3000, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
+      { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000, dockerfileDirectory: path.join(__dirname, '../../../../application')},
     ];
 
     const repositoriesAndImages = services.map(service => {
-      const repository = new ecr.Repository(this, `${service.name}Repository`, {
-        repositoryName: `${service.name.toLowerCase()}-repository`,
-        removalPolicy: cdk.RemovalPolicy.DESTROY,  // only for demo purposes
-      });
-
       const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
-        directory: dockerfileDirectory, // Dockerfile location
+        directory: service.dockerfileDirectory, // Dockerfile location
         file: service.dockerfile, // Dockerfile filename
       });
 
-      return { repository, dockerImageAsset, port: service.port };
+      return { dockerImageAsset, port: service.port };
     });
 
     //  Create an ECS cluster
-    const cluster = new ecs.Cluster(this, 'NLQCluster', {
+    const cluster = new ecs.Cluster(this, 'GenBiCluster', {
       vpc: this._vpc,
     });
 
@@ -88,6 +83,18 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
     });
     taskRole.addToPolicy(dynamoDBAccessPolicy);
 
+    // Add secrets manager access policy
+    const opensearchHostUrlSecretAccessPolicy = new iam.PolicyStatement({
+      actions: [
+      "secretsmanager:GetSecretValue"
+      ],
+      resources: [
+      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
+      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
+      ]
+    });
+    taskRole.addToPolicy(opensearchHostUrlSecretAccessPolicy);
+
     // Add Bedrock access policy
     if (props.env?.region !== "cn-north-1" && props.env?.region !== "cn-northwest-1") {
       const bedrockAccessPolicy = new iam.PolicyStatement({
@@ -102,37 +109,157 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { aosEndpoint:
       taskRole.addToPolicy(bedrockAccessPolicy);
     } 
 
+    // Add Cognito all access policy
+    if (props.env?.region !== "cn-north-1" && props.env?.region !== "cn-northwest-1") {
+        const cognitoAccessPolicy = new iam.PolicyStatement({
+        actions: [
+        "cognito-identity:*",
+        "cognito-idp:*"
+        ],
+        resources: [
+        `arn:aws:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/*`,
+        `arn:aws:cognito-identity:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:identitypool/*`
+        ]
+      });
+      taskRole.addToPolicy(cognitoAccessPolicy);
+    } 
+
     // Create ECS services through Fargate
-    repositoriesAndImages.forEach(({ dockerImageAsset, port }, index) => {
-      const taskDefinition = new ecs.FargateTaskDefinition(this, `GenBiTaskDefinition${index + 1}`, {
-        memoryLimitMiB: 512,
-        cpu: 256,
-        executionRole: taskExecutionRole,
-        taskRole: taskRole
-      });
+    // ======= 1. Streamlit Service =======
+    const taskDefinitionStreamlit = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionStreamlit', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+      executionRole: taskExecutionRole,
+      taskRole: taskRole
+    });
 
-      const container = taskDefinition.addContainer(`GenBiContainer${index + 1}`, {
-        image: ecs.ContainerImage.fromDockerImageAsset(dockerImageAsset),
-        memoryLimitMiB: 512,
-        cpu: 256,
-      });
+    const containerStreamlit = taskDefinitionStreamlit.addContainer('GenBiContainerStreamlit', {
+      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[0].dockerImageAsset),
+      memoryLimitMiB: 512,
+      cpu: 256,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'GenBiStreamlit',
+      }),
+    });
 
-      // add environment variables
-      container.addEnvironment('AOS_HOST', props.aosEndpoint);
-      container.addEnvironment('AOS_PORT', '443');
-      container.addEnvironment('AOS_USER', 'master-user');
-      container.addEnvironment('AOS_PASSWORD', aosPasswordSecret.toString());
-      container.addPortMappings({
-        containerPort: port,
-      });
+    containerStreamlit.addEnvironment('OPENSEARCH_TYPE', 'service');
+    containerStreamlit.addEnvironment('AOS_INDEX', 'uba');
+    containerStreamlit.addEnvironment('AOS_INDEX_NER', 'uba_ner');
+    containerStreamlit.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+    containerStreamlit.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
+    containerStreamlit.addPortMappings({
+      containerPort: repositoriesAndImages[0].port,
+    });
 
-      const fargateService = new ecs_patterns.ApplicationLoadBalancedFargateService(this, `GenBiFargateService${index + 1}`, {
-        cluster: cluster,
-        taskDefinition: taskDefinition,
-        publicLoadBalancer: true,
-        taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-        assignPublicIp: true
-      });
+    const fargateServiceStreamlit = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceStreamlit', {
+      cluster: cluster,
+      taskDefinition: taskDefinitionStreamlit,
+      publicLoadBalancer: true,
+      // taskSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      assignPublicIp: true
+    });
+
+    // ======= 2. API Service =======
+    const taskDefinitionAPI = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionAPI', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+      executionRole: taskExecutionRole,
+      taskRole: taskRole
+    });
+
+    const containerAPI = taskDefinitionAPI.addContainer('GenBiContainerAPI', {
+      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[2].dockerImageAsset),
+      memoryLimitMiB: 512,
+      cpu: 256,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'GenBiAPI',
+      }),
+    });
+
+    containerAPI.addEnvironment('OPENSEARCH_TYPE', 'service');
+    containerAPI.addEnvironment('AOS_INDEX', 'uba');
+    containerAPI.addEnvironment('AOS_INDEX_NER', 'uba_ner');
+    containerAPI.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+    containerAPI.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
+    containerAPI.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
+    containerAPI.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
+    containerAPI.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
+
+    containerAPI.addPortMappings({
+      containerPort: repositoriesAndImages[2].port,
+    });
+
+    const fargateServiceAPI = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceAPI', {
+      cluster: cluster,
+      taskDefinition: taskDefinitionAPI,
+      publicLoadBalancer: true,
+      // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true
+    });
+
+    // ======= 3. Frontend Service =======
+    const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+      executionRole: taskExecutionRole,
+      taskRole: taskRole
+    });
+
+    const containerFrontend = taskDefinitionFrontend.addContainer('GenBiContainerFrontend', {
+      image: ecs.ContainerImage.fromDockerImageAsset(repositoriesAndImages[1].dockerImageAsset),
+      memoryLimitMiB: 512,
+      cpu: 256,
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'GenBiFrontend',
+      }),
+    });
+
+    containerFrontend.addPortMappings({
+      containerPort: repositoriesAndImages[1].port,
+    });
+
+    containerFrontend.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION);
+    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId);
+    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
+    containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
+    containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
+    containerFrontend.addEnvironment('VITE_BACKEND_URL', `http://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
+    containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', 'ws://xxxxxx/qa/ws');
+    containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
+
+    containerFrontend.addPortMappings({
+      containerPort: repositoriesAndImages[2].port,
+    });
+
+    const fargateServiceFrontend = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceFrontend', {
+      cluster: cluster,
+      taskDefinition: taskDefinitionFrontend,
+      publicLoadBalancer: true,
+      // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      assignPublicIp: true
+    });
+    
+    // Output the endpoint
+    this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
+    this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
+    this.apiEndpoint = fargateServiceAPI.loadBalancer.loadBalancerDnsName;
+
+    new cdk.CfnOutput(this, 'StreamlitEndpoint', {
+      value: this.streamlitEndpoint,
+      description: 'The endpoint of the Streamlit service'
+    });
+
+    new cdk.CfnOutput(this, 'FrontendEndpoint', {
+      value: this.frontendEndpoint,
+      description: 'The endpoint of the Frontend service'
+    });
+
+    new cdk.CfnOutput(this, 'APIEndpoint', {
+      value: this.apiEndpoint,
+      description: 'The endpoint of the API service'
     });
   }
 }

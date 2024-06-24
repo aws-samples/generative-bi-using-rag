@@ -34,7 +34,7 @@ export class RDSStack extends cdk.Stack {
             instanceType: ec2.InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
             vpc: this._vpc,
             vpcSubnets: {
-                subnetType: ec2.SubnetType.PUBLIC
+                subnetType: ec2.SubnetType.PRIVATE_ISOLATED
             },
             publiclyAccessible: true,
             databaseName: 'GenBIDB',
@@ -47,11 +47,3 @@ export class RDSStack extends cdk.Stack {
         });
     }
 }
-
-// const app = new cdk.App();
-// new RDSStack(app, 'RDSStack', {
-//   env: {
-//     account: process.env.CDK_DEFAULT_ACCOUNT,
-//     region: process.env.CDK_DEFAULT_REGION
-//   }
-// });
