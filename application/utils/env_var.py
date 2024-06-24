@@ -50,7 +50,8 @@ def get_opensearch_parameter():
         data = json.loads(master_user)
         es_host_name = data.get('host')
         # cluster endpoint, for example: my-test-domain.us-east-1.es.amazonaws.com/
-        host = es_host_name + '/' if es_host_name[-1] != '/' else es_host_name
+        # host = es_host_name + '/' if es_host_name[-1] != '/' else es_host_name
+        host = es_host_name
 
         sm_client = session.client(service_name='secretsmanager', region_name=AWS_DEFAULT_REGION)
         master_user = sm_client.get_secret_value(SecretId=OPENSEARCH_SECRETS_USERNAME_PASSWORD)['SecretString']
