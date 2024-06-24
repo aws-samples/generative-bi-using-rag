@@ -39,7 +39,7 @@ OPENSEARCH_SECRETS_URL_HOST = os.getenv('OPENSEARCH_SECRETS_URL_HOST', 'opensear
 
 OPENSEARCH_SECRETS_USERNAME_PASSWORD = os.getenv('OPENSEARCH_SECRETS_USERNAME_PASSWORD', 'opensearch-master-user')
 
-BEDROCK_SECRETS_AK_SK = os.getenv('BEDROCK_SECRETS_AK_SK')
+BEDROCK_SECRETS_AK_SK = os.getenv('BEDROCK_SECRETS_AK_SK', '')
 
 
 def get_opensearch_parameter():
@@ -78,12 +78,9 @@ def get_bedrock_parameter():
             secret_key = data.get('secret_access_key')
             bedrock_ak_sk_info['access_key_id'] = access_key
             bedrock_ak_sk_info['secret_access_key'] = secret_key
-            return bedrock_ak_sk_info
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        return bedrock_ak_sk_info
-
+        raise e
+    return bedrock_ak_sk_info
 
 if OPENSEARCH_TYPE == "service":
     opensearch_host, opensearch_port, opensearch_username, opensearch_password = get_opensearch_parameter()
