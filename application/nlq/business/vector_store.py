@@ -4,13 +4,20 @@ import boto3
 import json
 from nlq.data_access.opensearch import OpenSearchDao
 from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info
+from utils.env_var import bedrock_ak_sk_info
 
 logger = logging.getLogger(__name__)
 
 
 class VectorStore:
     opensearch_dao = OpenSearchDao(AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD)
-    bedrock_client = boto3.client("bedrock-runtime", region_name=BEDROCK_REGION)
+    if len(bedrock_ak_sk_info) == 0:
+        bedrock_client = boto3.client(service_name='bedrock-runtime', region_name=BEDROCK_REGION)
+    else:
+        bedrock_client = boto3.client(
+            service_name='bedrock-runtime', region_name=BEDROCK_REGION,
+            aws_access_key_id=bedrock_ak_sk_info['access_key_id'],
+            aws_secret_access_key=bedrock_ak_sk_info['secret_access_key'])
 
     @classmethod
     def get_all_samples(cls, profile_name):
