@@ -16,7 +16,7 @@ This is a comprehensive framework designed to enable Generative BI capabilities 
 
 A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
 
-![Screenshot](./assets/aws-architecture.png)
+![Screenshot](./assets/aws_architecture.png)
 
 [User Operation Manual](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C%E6%89%8B%E5%86%8C)
 
