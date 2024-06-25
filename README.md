@@ -23,8 +23,6 @@ A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with 
 7. [Cleanup](#cleanup)
 
 ## Overview
-For Deployment Guide, please refer to [CDK Deployment Guide](source/resources/README.md)
-
 This is a comprehensive framework designed to enable Generative BI capabilities on customized data sources (RDS/Redshift) hosted on AWS. It offers the following key features:
 - Text-to-SQL functionality for querying customized data sources using natural language.
 - User-friendly interface for adding, editing, and managing data sources, tables, and column descriptions.
@@ -36,7 +34,7 @@ This is a comprehensive framework designed to enable Generative BI capabilities 
 
 ### Cost
 
-As of May, 2024, the cost for running this Guidance with the default settings in the _us-west-2_ is approximately $476.74 per month for processing 2000 requests.
+As of May, 2024, the cost for running this Guidance with the default settings in the _us-west-2_ is approximately $1337.8 per month for processing 2000 requests.
 
 ### Sample Cost Table
 
@@ -44,10 +42,10 @@ The following table provides a sample cost breakdown for deploying this Guidance
 
 | AWS service  | Dimensions | Cost [USD] per Month |
 | ----------- | ------------ | ------------ |
-| Amazon ECS | 1 instance t3.large | $ XXX.XX |
-| Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 0.00 |
+| Amazon ECS | v0.75 CPU 5GB | $804.1 |
+| Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 14.04 |
 | Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 416.00 |
-| Amazon OpenSearch Service | 1 domain | $ XXX.XX |
+| Amazon OpenSearch Service | 1 domain with m5.large.search | $ 103.66 |
 
 ## Prerequisites
 
@@ -105,7 +103,7 @@ preauthorized:
 
 change the password 'XXXXXX' to hashed password
 
-Use the python code below to generate XXXXXX
+Use the python code below to generate XXXXXX. We need python 3.8 and up to run the code below:
 ```python
 from streamlit_authenticator.utilities.hasher import Hasher
 hashed_passwords = Hasher(['abc', 'def']).generate()
@@ -120,7 +118,7 @@ cd generative-bi-using-rag/source/resources
 ```
 Deploy the CDK stack, change the region to your own region if needed, for example, us-west-2, us-east-1, etc.:
 ```
-cdk deploy --context region=us-west-2 --require-approval never
+cdk deploy GenBiMainStack --context region=us-west-2 --require-approval never
 ```
 You will see the following when deployed succeeded
 ```
