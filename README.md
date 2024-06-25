@@ -36,7 +36,7 @@ This is a comprehensive framework designed to enable Generative BI capabilities 
 
 ### Cost
 
-As of May, 2024, the cost for running this Guidance with the default settings in the _us-west-2_ is approximately $476.74 per month for processing 2000 requests.
+As of May, 2024, the cost for running this Guidance with the default settings in the _us-west-2_ is approximately $1337.8 per month for processing 2000 requests.
 
 ### Sample Cost Table
 
@@ -44,10 +44,10 @@ The following table provides a sample cost breakdown for deploying this Guidance
 
 | AWS service  | Dimensions | Cost [USD] per Month |
 | ----------- | ------------ | ------------ |
-| Amazon ECS | 1 instance t3.large | $ XXX.XX |
-| Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 0.00 |
+| Amazon ECS | v0.75 CPU 5GB | $804.1 |
+| Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 14.04 |
 | Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 416.00 |
-| Amazon OpenSearch Service | 1 domain | $ XXX.XX |
+| Amazon OpenSearch Service | 1 domain | $ 103.66 |
 
 ## Prerequisites
 
@@ -105,7 +105,7 @@ preauthorized:
 
 change the password 'XXXXXX' to hashed password
 
-Use the python code below to generate XXXXXX
+Use the python code below to generate XXXXXX. We need python 3.8 and up to run the code below:
 ```python
 from streamlit_authenticator.utilities.hasher import Hasher
 hashed_passwords = Hasher(['abc', 'def']).generate()
