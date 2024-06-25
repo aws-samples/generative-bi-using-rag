@@ -25,6 +25,8 @@ export class AOSStack extends cdk.Stack {
       description: 'Allow access to OpenSearch',
       allowAllOutbound: true
     });
+    this._securityGroup.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
+
     const secretName = 'opensearch-master-user'; // Add the secret name here
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
       secretName: secretName,
@@ -46,13 +48,8 @@ export class AOSStack extends cdk.Stack {
 
     // Find subnets in different availability zones
     const subnets = this._vpc.selectSubnets({
-      // subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-      subnetType: ec2.SubnetType.PUBLIC,
+      subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
     }).subnets;
-
-    // if (subnets.length < 3) {
-    //   throw new Error('The VPC must have at least two public subnets in different availability zones.');
-    // }
 
     // Create the OpenSearch domain
     const domain = new opensearch.Domain(this, 'GenBiOpenSearchDomain', {
@@ -63,7 +60,7 @@ export class AOSStack extends cdk.Stack {
           effect: Effect.ALLOW,
           principals: [new AnyPrincipal()],
           actions: ["es:*"],
-          resources: [`arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/${scope.node.tryGetContext('domainName')}/*`]
+          resources: [`arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`]
       })]
       ,
       vpcSubnets: [
@@ -94,6 +91,7 @@ export class AOSStack extends cdk.Stack {
         }),
       },
     });
+    domain.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
     this.endpoint = domain.domainEndpoint.toString();
     
     const hostSecretName = 'opensearch-host-url'; // Add the secret name here
