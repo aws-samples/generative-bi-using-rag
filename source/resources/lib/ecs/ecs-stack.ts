@@ -165,7 +165,6 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionStreamlit,
       publicLoadBalancer: true,
-      taskSubnets: this._vpc.selectSubnets(),
       // taskSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       assignPublicIp: true
     });
@@ -204,7 +203,6 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionAPI,
       publicLoadBalancer: true,
-      taskSubnets: this._vpc.selectSubnets(),
       // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       assignPublicIp: true
     });
@@ -263,7 +261,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionFrontend,
       publicLoadBalancer: true,
-      taskSubnets: this._vpc.selectSubnets(),
+      // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       assignPublicIp: true
     });
 

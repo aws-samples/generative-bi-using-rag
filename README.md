@@ -23,8 +23,6 @@ A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with 
 7. [Cleanup](#cleanup)
 
 ## Overview
-For Deployment Guide, please refer to [CDK Deployment Guide](source/resources/README.md)
-
 This is a comprehensive framework designed to enable Generative BI capabilities on customized data sources (RDS/Redshift) hosted on AWS. It offers the following key features:
 - Text-to-SQL functionality for querying customized data sources using natural language.
 - User-friendly interface for adding, editing, and managing data sources, tables, and column descriptions.
@@ -47,7 +45,7 @@ The following table provides a sample cost breakdown for deploying this Guidance
 | Amazon ECS | v0.75 CPU 5GB | $804.1 |
 | Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 14.04 |
 | Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 416.00 |
-| Amazon OpenSearch Service | 1 domain | $ 103.66 |
+| Amazon OpenSearch Service | 1 domain with m5.large.search | $ 103.66 |
 
 ## Prerequisites
 
@@ -120,7 +118,7 @@ cd generative-bi-using-rag/source/resources
 ```
 Deploy the CDK stack, change the region to your own region if needed, for example, us-west-2, us-east-1, etc.:
 ```
-cdk deploy --context region=us-west-2 --require-approval never
+cdk deploy GenBiMainStack --context region=us-west-2 --require-approval never
 ```
 You will see the following when deployed succeeded
 ```
