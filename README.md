@@ -12,18 +12,15 @@ A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with 
 [Project Data Flowchart](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E9%A1%B9%E7%9B%AE%E6%B5%81%E7%A8%8B%E5%9B%BE)
 
 ## Table of Content
-1. [Overview](#overview-required)
+1. [Overview](#overview)
     - [Cost](#cost)
-2. [Prerequisites](#prerequisites-required)
-    - [Operating System](#operating-system-required)
-3. [Deployment Steps](#deployment-steps-required)
-4. [Deployment Validation](#deployment-validation-required)
-5. [Running the Guidance](#running-the-guidance-required)
-6. [Next Steps](#next-steps-required)
-7. [Cleanup](#cleanup-required)
-8. [Revisions](#revisions-optional)
-9. [Notices](#notices-optional)
-10. [Authors](#authors-optional)
+2. [Prerequisites](#prerequisites)
+    - [Operating System](#operating-system)
+3. [Deployment Steps](#deployment-steps)
+4. [Deployment Validation](#deployment-validation)
+5. [Running the Guidance](#running-the-guidance)
+6. [Next Steps](#next-steps)
+7. [Cleanup](#cleanup)
 
 ## Overview
 For Deployment Guide, please refer to [CDK Deployment Guide](source/resources/README.md)
@@ -47,10 +44,10 @@ The following table provides a sample cost breakdown for deploying this Guidance
 
 | AWS service  | Dimensions | Cost [USD] per Month |
 | ----------- | ------------ | ------------ |
-| Amazon ECS | 1 instance t3.large | $ 60.74 |
+| Amazon ECS | 1 instance t3.large | $ XXX.XX |
 | Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 0.00 |
 | Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 416.00 |
-| Amazon OpenSearch Service | 1 domain | $ 0.00 |
+| Amazon OpenSearch Service | 1 domain | $ XXX.XX |
 
 ## Prerequisites
 
