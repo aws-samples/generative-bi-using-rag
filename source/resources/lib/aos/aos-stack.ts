@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as opensearch from 'aws-cdk-lib/aws-opensearchservice';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 export class AOSStack extends cdk.Stack {
   _vpc;
@@ -58,6 +59,13 @@ export class AOSStack extends cdk.Stack {
       version: opensearch.EngineVersion.OPENSEARCH_2_9,
       vpc: this._vpc,
       securityGroups: [this._securityGroup],
+      accessPolicies: [new PolicyStatement({
+          effect: Effect.ALLOW,
+          principals: [new AnyPrincipal()],
+          actions: ["es:*"],
+          resources: [`arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/${scope.node.tryGetContext('domainName')}/*`]
+      })]
+      ,
       vpcSubnets: [
         { subnets: [subnets[0]] },
       ],      

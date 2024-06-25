@@ -48,5 +48,12 @@ Deploy the CDK stack:
 ```
 cdk deploy --context region=us-west-2 --require-approval never
 ```
+You will see the following when deployed succeeded
+```
+GenBiMainStack.AOSDomainEndpoint = XXXXX.us-west-2.es.amazonaws.com
+GenBiMainStack.APIEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+GenBiMainStack.FrontendEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+GenBiMainStack.StreamlitEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+```
 ### 4. Access the Streamlit Web UI
-After the CDK stack is deployed, wait around 40 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: http://<your-ec2-public-ip>
+After the CDK stack is deployed, wait around 40 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: https://<your-public-dns>
