@@ -23,21 +23,6 @@ export class MainStack extends cdk.Stack {
       description: "S3 Bucket for model & code assets",
       default: "not-set"
     });
-
-    // let _LlmStack;
-
-    // if (props.env?.region === "cn-north-1" || props.env?.region === "cn-northwest-1") {
-    //   _LlmStack = new LLMStack(this, 'llm-Stack', {
-    //     s3ModelAssets: s3ModelAssetsBucket.valueAsString,
-    //     embeddingModelPrefix: 'bge-m3',
-    //     embeddingModelVersion: '3ab7155aa9b89ac532b2f2efcc3f136766b91025',
-    //     sqlModelPrefix: 'sqlcoder-7b-2',
-    //     sqlModelVersion: '7e5b6f7981c0aa7d143f6bec6fa26625bdfcbe66',
-    //     llmModelPrefix: 'internlm2-chat-7b',
-    //     llmModelVersion: '54a594b0be43065e7b7674d0f236911cd7c465ab',
-    //     env: props.env || {},
-    //   });
-    // }
     
     // ======== Step 2. Define the AOSStack ========= 
     const _AosStack = new AOSStack(this, 'aos-Stack', {
@@ -66,10 +51,6 @@ export class MainStack extends cdk.Stack {
 
     _EcsStack.addDependency(_AosStack);
     _EcsStack.addDependency(_CognitoStack);
-
-    // if (_LlmStack) {
-    //   _EcsStack.addDependency(_LlmStack);
-    // }
 
     new cdk.CfnOutput(this, 'AOSDomainEndpoint', {
       value: aosEndpoint,

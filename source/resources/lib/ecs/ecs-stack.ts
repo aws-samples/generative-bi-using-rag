@@ -7,8 +7,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
-import { UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 
 export class ECSStack extends cdk.Stack {
   _vpc;
@@ -167,7 +165,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionStreamlit,
       publicLoadBalancer: true,
-      // taskSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      // taskSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       assignPublicIp: true
     });
 
