@@ -106,7 +106,7 @@ change the password 'XXXXXX' to hashed password
 Use the python code below to generate XXXXXX. We need python 3.8 and up to run the code below:
 ```python
 from streamlit_authenticator.utilities.hasher import Hasher
-hashed_passwords = Hasher(['abc', 'def']).generate()
+hashed_passwords = Hasher(['password123']).generate()
 ```
 
 ### 3. Deploy the CDK Stack
@@ -130,10 +130,10 @@ GenBiMainStack.StreamlitEndpoint = XXXXX.us-west-2.elb.amazonaws.com
 
 ## Running the Guidance 
 
-After the CDK stack is deployed, wait around 40 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: https://<your-public-dns>
+After the CDK stack is deployed, wait around 40 minutes for the initialization to complete. Then, open the Web UI in your browser: https://your-public-dns
 
 ## Cleanup 
 - Delete the CDK stack:
 ```
-cdk destroy
+cdk destroy GenBiMainStack
 ```
