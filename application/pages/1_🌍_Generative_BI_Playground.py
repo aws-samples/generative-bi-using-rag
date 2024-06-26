@@ -282,7 +282,7 @@ def main():
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         data_with_analyse = st.checkbox("Answer With Insights", False)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
-        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 3)
+        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 0)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
 
