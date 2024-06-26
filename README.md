@@ -5,11 +5,11 @@
 
 A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
 
-![Screenshot](./assets/aws-architecture.png)
+![Screenshot](./assets/aws_architecture.png)
 
-[User Operation Manual](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C%E6%89%8B%E5%86%8C)
+[User Operation Manual](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98%E6%93%8D%E4%BD%9C)
 
-[Project Data Flowchart](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E9%A1%B9%E7%9B%AE%E6%B5%81%E7%A8%8B%E5%9B%BE)
+[Project Data Flowchart](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E6%9E%B6%E6%9E%84%E5%9B%BE)
 
 ## Table of Content
 1. [Overview](#overview)
@@ -106,7 +106,7 @@ change the password 'XXXXXX' to hashed password
 Use the python code below to generate XXXXXX. We need python 3.8 and up to run the code below:
 ```python
 from streamlit_authenticator.utilities.hasher import Hasher
-hashed_passwords = Hasher(['abc', 'def']).generate()
+hashed_passwords = Hasher(['password123']).generate()
 ```
 
 ### 3. Deploy the CDK Stack
@@ -130,10 +130,10 @@ GenBiMainStack.StreamlitEndpoint = XXXXX.us-west-2.elb.amazonaws.com
 
 ## Running the Guidance 
 
-After the CDK stack is deployed, wait around 40 minutes for the initialization to complete. Then, open the Streamlit Web UI in your browser: https://<your-public-dns>
+After the CDK stack is deployed, wait around 40 minutes for the initialization to complete. Then, open the Web UI in your browser: https://your-public-dns
 
 ## Cleanup 
 - Delete the CDK stack:
 ```
-cdk destroy
+cdk destroy GenBiMainStack
 ```
