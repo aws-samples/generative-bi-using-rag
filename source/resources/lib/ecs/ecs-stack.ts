@@ -13,7 +13,7 @@ export class ECSStack extends cdk.Stack {
   public readonly streamlitEndpoint: string;
   public readonly frontendEndpoint: string;
   public readonly apiEndpoint: string;
-constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserPoolId: string} & { cognitoUserPoolClientId: string}) {
+constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserPoolId: string} & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string} & {OSHostSecretName: string}) {
     super(scope, id, props);
     // Create a VPC
     this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
@@ -157,6 +157,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
     containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
     containerStreamlit.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
+    containerStreamlit.addEnvironment('OPENSEARCH_SECRETS_URL_HOST', props.OSMasterUserSecretName)
+    containerStreamlit.addEnvironment('OPENSEARCH_SECRETS_USERNAME_PASSWORD', props.OSHostSecretName)
     containerStreamlit.addPortMappings({
       containerPort: GenBiStreamlitDockerImageAsset.port,
     });
@@ -194,6 +196,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerAPI.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
     containerAPI.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
     containerAPI.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
+    containerAPI.addEnvironment('OPENSEARCH_SECRETS_URL_HOST', props.OSMasterUserSecretName)
+    containerAPI.addEnvironment('OPENSEARCH_SECRETS_USERNAME_PASSWORD', props.OSHostSecretName)
 
     containerAPI.addPortMappings({
       containerPort: GenBiAPIDockerImageAsset.port,
