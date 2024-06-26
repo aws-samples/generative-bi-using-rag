@@ -157,8 +157,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
     containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
     containerStreamlit.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
-    containerStreamlit.addEnvironment('OPENSEARCH_SECRETS_URL_HOST', props.OSMasterUserSecretName)
-    containerStreamlit.addEnvironment('OPENSEARCH_SECRETS_USERNAME_PASSWORD', props.OSHostSecretName)
+    containerStreamlit.addEnvironment('OPENSEARCH_SECRETS_URL_HOST', props.OSHostSecretName)
+    containerStreamlit.addEnvironment('OPENSEARCH_SECRETS_USERNAME_PASSWORD', props.OSMasterUserSecretName)
     containerStreamlit.addPortMappings({
       containerPort: GenBiStreamlitDockerImageAsset.port,
     });
@@ -196,8 +196,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerAPI.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
     containerAPI.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
     containerAPI.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
-    containerAPI.addEnvironment('OPENSEARCH_SECRETS_URL_HOST', props.OSMasterUserSecretName)
-    containerAPI.addEnvironment('OPENSEARCH_SECRETS_USERNAME_PASSWORD', props.OSHostSecretName)
+    containerAPI.addEnvironment('OPENSEARCH_SECRETS_URL_HOST', props.OSHostSecretName)
+    containerAPI.addEnvironment('OPENSEARCH_SECRETS_USERNAME_PASSWORD', props.OSMasterUserSecretName)
 
     containerAPI.addPortMappings({
       containerPort: GenBiAPIDockerImageAsset.port,
