@@ -118,8 +118,9 @@ cd generative-bi-using-rag/source/resources
 ```
 Deploy the CDK stack, change the region to your own region if needed, for example, us-west-2, us-east-1, etc.:
 ```
+export AWS_DEFAULT_REGION=us-west-1
 cdk bootstrap
-cdk deploy GenBiMainStack --context region=us-west-2 --require-approval never
+cdk deploy GenBiMainStack --require-approval never
 ```
 You will see the following when deployed succeeded
 ```
