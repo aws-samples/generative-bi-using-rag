@@ -47,6 +47,8 @@ export class MainStack extends cdk.Stack {
       env: props.env,
       cognitoUserPoolId: _CognitoStack.userPoolId,
       cognitoUserPoolClientId: _CognitoStack.userPoolClientId,
+      OSMasterUserSecretName: _AosStack.OSMasterUserSecretName,
+      OSHostSecretName: _AosStack.OSHostSecretName,
     });
 
     _EcsStack.addDependency(_AosStack);

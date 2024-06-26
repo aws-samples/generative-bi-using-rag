@@ -4,11 +4,14 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as opensearch from 'aws-cdk-lib/aws-opensearchservice';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import * as crypto from 'crypto';
 
 export class AOSStack extends cdk.Stack {
   _vpc;
   _securityGroup;
   public readonly endpoint: string;
+  public readonly OSMasterUserSecretName: string;
+  public readonly OSHostSecretName: string;
 
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
@@ -27,9 +30,11 @@ export class AOSStack extends cdk.Stack {
     });
     this._securityGroup.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
 
-    const secretName = 'opensearch-master-user'; // Add the secret name here
+    const OSMasterUserSecretNamePrefix = 'opensearch-master-user'; // Add the secret name here
+    const guid = crypto.randomBytes(3).toString('hex');
+    this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${guid}`;
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
-      secretName: secretName,
+      secretName: this.OSMasterUserSecretName,
       description: 'Templated secret used for OpenSearch master user password',
       generateSecretString: {
       excludePunctuation: false,
@@ -94,9 +99,11 @@ export class AOSStack extends cdk.Stack {
     domain.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
     this.endpoint = domain.domainEndpoint.toString();
     
-    const hostSecretName = 'opensearch-host-url'; // Add the secret name here
+    const OSHostSecretNamePrefix = 'opensearch-host-url'; // Add the secret name here
+    this.OSHostSecretName = `${OSHostSecretNamePrefix}-${guid}`;
+
     const hostSecret = new secretsmanager.Secret(this, 'HostSecret', {
-      secretName: hostSecretName,
+      secretName: this.OSHostSecretName,
       generateSecretString: {
         secretStringTemplate: JSON.stringify({host: this.endpoint}),
         generateStringKey: 'password', // Specify the key under which the secret will be stored
