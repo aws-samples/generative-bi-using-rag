@@ -27,7 +27,9 @@ export class AOSStack extends cdk.Stack {
     });
     this._securityGroup.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
 
-    const secretName = 'opensearch-master-user'; // Add the secret name here
+    const secretNamePrefix = 'opensearch-master-user'; // Add the secret name here
+    const guid = cdk.Aws.STACK_ID.split('/').pop();
+    const secretName = `${secretNamePrefix}-${guid}`;
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
       secretName: secretName,
       description: 'Templated secret used for OpenSearch master user password',
@@ -94,7 +96,9 @@ export class AOSStack extends cdk.Stack {
     domain.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
     this.endpoint = domain.domainEndpoint.toString();
     
-    const hostSecretName = 'opensearch-host-url'; // Add the secret name here
+    const hostSecretNamePrefix = 'opensearch-host-url'; // Add the secret name here
+    const hostSecretName = `${hostSecretNamePrefix}-${guid}`;
+
     const hostSecret = new secretsmanager.Secret(this, 'HostSecret', {
       secretName: hostSecretName,
       generateSecretString: {
