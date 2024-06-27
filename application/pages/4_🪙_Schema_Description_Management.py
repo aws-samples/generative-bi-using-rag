@@ -12,9 +12,6 @@ def main():
     st.set_page_config(page_title="Schema Management", )
     make_sidebar()
 
-    # if 'profile_page_mode' not in st.session_state:
-    #     st.session_state['index_mgt_mode'] = 'default'
-
     with st.sidebar:
         st.title("Schema Management")
         current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),

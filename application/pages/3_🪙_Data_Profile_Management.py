@@ -111,7 +111,6 @@ def main():
             st.session_state.profile_page_mode = 'default'
 
     else:
-        # st.subheader("Data Profile Management")
         st.info('Please select connection in the left sidebar.')
 
 

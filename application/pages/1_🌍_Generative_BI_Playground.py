@@ -384,8 +384,7 @@ def main():
                     "intent": "normal_search",
                     "slot": []
                 }
-                # 通过标志位控制后续的逻辑
-                # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
+
                 if intent_ner_recognition_flag:
                     with st.status("Performing intent recognition...") as status_text:
                         intent_response = get_query_intent(model_type, search_box, prompt_map)
@@ -413,12 +412,10 @@ def main():
                 else:
                     search_intent_flag = True
 
-                # 主要的逻辑部分，调用LLM
                 if reject_intent_flag:
                     st.write("Your query statement is currently not supported by the system")
 
                 elif search_intent_flag:
-                    # 执行普通的查询，并可视化结果
                     normal_search_result = normal_text_search_streamlit(search_box, model_type,
                                                                         database_profile,
                                                                         entity_slot, opensearch_info,
@@ -456,11 +453,9 @@ def main():
                 else:
                     st.error("Intent recognition error")
 
-                # 前端结果显示agent cot任务拆分信息, normal_text_search 的显示，做了拆分，为了方便跟API逻辑一致
                 if search_intent_flag:
                     if normal_search_result.sql != "":
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
-                        # st.code(normal_search_result.sql, language="sql")
 
                         current_nlq_chain.set_generated_sql_response(normal_search_result.response)
 
@@ -478,7 +473,6 @@ def main():
                     with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
                         st.write(agent_search_result)
 
-                # 连接数据库，执行SQL, 记录历史记录并展示
                 if search_intent_flag:
                     with st.spinner('Executing query...'):
                         search_intent_result = get_sql_result_tool(
@@ -544,18 +538,16 @@ def main():
                         # do something here
                         pass
 
-                # 数据可视化展示
                 if visualize_results_flag and search_intent_flag:
                     current_search_sql_result = st.session_state.current_sql_result[selected_profile]
                     if current_search_sql_result is not None and len(current_search_sql_result) > 0:
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": current_search_sql_result, "type": "pandas"})
-                        # Reset change flag to False
+
                         do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
                     else:
                         st.markdown("No relevant data found")
 
-                # 生成推荐问题
                 if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
                     st.markdown('You might want to further ask:')
                     with st.spinner('Generating suggested questions...'):
@@ -576,7 +568,7 @@ def main():
                                             on_click=sample_question_clicked,
                                             args=[gen_sq_list[2]])
         else:
-            # st.error("Please enter a valid query.")
+
             if current_nlq_chain.is_visualization_config_changed():
                 if visualize_results_flag:
                     do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
