@@ -20,9 +20,6 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
         isDefault: true,
     });
 
-    // Get the AOS password secret
-    // const aosPasswordSecret = secretsmanager.Secret.fromSecretNameV2(this, 'AOSPasswordSecret', 'aosPasswordSecret');
-
     // Create ECR repositories and Docker image assets
     const services = [
       { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501, dockerfileDirectory: path.join(__dirname, '../../../../application')},
@@ -212,30 +209,6 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     });
 
     // ======= 3. Frontend Service =======
-
-    // a hacky way of writing the .env file for the frontend before docker building. The frontend does not support runtime environment for now.
-    const fs = require('fs');
-    const envVars: { [key: string]: string } = {
-      VITE_TITLE: 'Guidance for Generative BI on Amazon Web Services',
-      VITE_LOGO: '/logo.png',
-      VITE_RIGHT_LOGO: '',
-      VITE_COGNITO_REGION: cdk.Aws.REGION,
-      VITE_COGNITO_USER_POOL_ID: props.cognitoUserPoolId,
-      VITE_COGNITO_USER_POOL_WEB_CLIENT_ID: props.cognitoUserPoolClientId,
-      VITE_COGNITO_IDENTITY_POOL_ID: '',
-      VITE_SQL_DISPLAY: 'yes',
-      VITE_BACKEND_URL: `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`,
-      VITE_WEBSOCKET_URL: `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`,
-      VITE_LOGIN_TYPE: 'Cognito'
-    };
-
-    let envFileContent = '';
-    for (const key in envVars) {
-      envFileContent += `${key}=${envVars[key]}\n`;
-    }
-
-    fs.writeFileSync(path.join(__dirname, '../../../../report-front-end/.env'), envFileContent);
-
     const GenBiFrontendDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
       directory: services[2].dockerfileDirectory, 
       file: services[2].dockerfile, 
@@ -257,6 +230,18 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       }),
     });
 
+    containerFrontend.addEnvironment('VITE_TITLE', 'Guidance for Generative BI')
+    containerFrontend.addEnvironment('VITE_LOGO', '/logo.png');
+    containerFrontend.addEnvironment('VITE_RIGHT_LOGO', '');
+    containerFrontend.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION);
+    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId);
+    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
+    containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
+    containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
+    containerFrontend.addEnvironment('VITE_BACKEND_URL', `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
+    containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`);
+    containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
+
     containerFrontend.addPortMappings({
       containerPort: GenBiFrontendDockerImageAsset.port,
     });
@@ -269,24 +254,23 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       assignPublicIp: true
     });
 
-    // Output the endpoint
     this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
-    this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
     this.apiEndpoint = fargateServiceAPI.loadBalancer.loadBalancerDnsName;
+    this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
 
     new cdk.CfnOutput(this, 'StreamlitEndpoint', {
-      value: this.streamlitEndpoint,
+      value: fargateServiceStreamlit.loadBalancer.loadBalancerDnsName,
       description: 'The endpoint of the Streamlit service'
     });
 
-    new cdk.CfnOutput(this, 'FrontendEndpoint', {
-      value: this.frontendEndpoint,
-      description: 'The endpoint of the Frontend service'
+    new cdk.CfnOutput(this, 'APIEndpoint', {
+      value: fargateServiceAPI.loadBalancer.loadBalancerDnsName,
+      description: 'The endpoint of the API service'
     });
 
-    new cdk.CfnOutput(this, 'APIEndpoint', {
-      value: this.apiEndpoint,
-      description: 'The endpoint of the API service'
+    new cdk.CfnOutput(this, 'FrontendEndpoint', {
+      value: fargateServiceFrontend.loadBalancer.loadBalancerDnsName,
+      description: 'The endpoint of the Frontend service'
     });
   }
 }
