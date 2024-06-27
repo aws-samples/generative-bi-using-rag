@@ -1,11 +1,17 @@
 # Generative BI using RAG on AWS
 [中文文档](README_CN.md) | [日本語ドキュメント](README_JP.md)
 
+The deployment guide here is CDK only. For manual deployment, refer to [Manual Deployment Guide in Chinese](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)
+
 ## Introduction
 
 A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
 
 ![Screenshot](./assets/aws_architecture.png)
+*Reference Architecture on AWS*
+
+![Screenshot](./assets/logic.png)
+*Design Logic*
 
 [User Operation Manual](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98%E6%93%8D%E4%BD%9C)
 
