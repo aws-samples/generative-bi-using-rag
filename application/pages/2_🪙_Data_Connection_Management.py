@@ -112,8 +112,6 @@ def main():
             ConnectionManagement.delete_connection(connection_name)
             st.success(f"{connection_name} deleted successfully!")
             st.session_state.current_connection = None
-            # st.session_state.update_connection_mode = False
-            # st.experimental_rerun()  # Rerun the app to update the selectbox options and remove the selected option
 
         st.session_state.update_connection_mode = False
 
