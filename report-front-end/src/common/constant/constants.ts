@@ -15,14 +15,14 @@ export const DEFAULT_QUERY_CONFIG = {
 
 export const LOCALSTORAGE_KEY = "__GEN_BI_STORE_INFO__";
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL?.endsWith("/")
-  ? import.meta.env.VITE_BACKEND_URL
-  : import.meta.env.VITE_BACKEND_URL + "/";
+export const BACKEND_URL = process.env.VITE_BACKEND_URL?.endsWith("/")
+  ? process.env.VITE_BACKEND_URL
+  : process.env.VITE_BACKEND_URL + "/";
 
-export const APP_TITLE = import.meta.env.VITE_TITLE;
+export const APP_TITLE = process.env.VITE_TITLE;
 
-export const APP_LOGO = import.meta.env.VITE_LOGO || '';
+export const APP_LOGO = process.env.VITE_LOGO || '';
 
-export const APP_RIGHT_LOGO = import.meta.env.VITE_RIGHT_LOGO || '';
+export const APP_RIGHT_LOGO = process.env.VITE_RIGHT_LOGO || '';
 
-export const SQL_DISPLAY = import.meta.env.VITE_SQL_DISPLAY;
+export const SQL_DISPLAY = process.env.VITE_SQL_DISPLAY;
