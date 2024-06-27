@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import boto3
 from botocore.exceptions import ClientError
@@ -78,8 +79,10 @@ def get_bedrock_parameter():
             secret_key = data.get('secret_access_key')
             bedrock_ak_sk_info['access_key_id'] = access_key
             bedrock_ak_sk_info['secret_access_key'] = secret_key
+        else:
+            return bedrock_ak_sk_info
     except ClientError as e:
-        raise e
+        logging.error(e)
     return bedrock_ak_sk_info
 
 if OPENSEARCH_TYPE == "service":
