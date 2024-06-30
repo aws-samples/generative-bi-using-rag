@@ -1,6 +1,41 @@
-# 生成式BI演示应用
+# AWS上的生成式BI应用 
 
 ## 1、介绍
+
+
+这是一个在AWS上使用 Amazon Bedrock、Amazon OpenSearch 和 RAG 技术的生成式BI应用。
+
+
+
+- 系统架构图
+
+
+![img.png](./assets/aws_architecture.png)
+
+- 数据流程图
+
+![Screenshot](./assets/logic.png)
+
+
+[用户操作手册](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98%E6%93%8D%E4%BD%9C)
+
+[项目数据流程图](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E6%9E%B6%E6%9E%84%E5%9B%BE)
+
+
+## 目录
+
+1. [Overview](#overview)
+    - [Cost](#cost)
+2. [Prerequisites](#prerequisites)
+    - [Operating System](#operating-system)
+3. [Deployment Steps](#deployment-steps)
+4. [Deployment Validation](#deployment-validation)
+5. [Running the Guidance](#running-the-guidance)
+6. [Next Steps](#next-steps)
+7. [Cleanup](#cleanup)
+
+## 概述
+
 
 这是一个在AWS上针对自定义数据源(RDS/Redshift)启用生成式BI功能的框架。它提供以下关键特性:
 
@@ -12,74 +47,126 @@
 - 直观的问答界面,可深入了解底层的Text-to-SQL机制。
 - 简单的代理设计界面,可通过对话方式处理复杂查询。
 
-使用该框架,您可以利用自然语言处理和生成式人工智能的力量,无缝地与数据源进行交互,从而实现更高效的数据探索和分析。
 
-- 后台调试界面
 
-![index页面](./assets/streamlit_front.png)
+### 费用
 
-![数据查询](./assets/screenshot-genbi.png)
-
-- 用户终端界面
-
-![面向用户的界面.png](./assets/user_front_end_cn.png)
+截至2024年5月，在 us-west-2 区域使用默认设置运行这个 Guidance 的成本大约为每月$1337.8，处理2000个请求。
 
 
 
-- 系统架构图
+### 费用示例
+
+下表提供了在美国东部(弗吉尼亚北部)地区部署此 Guidance 时，使用默认参数一个月的样本成本明细。
 
 
-![img.png](./assets/aws_architecture.png)
+| AWS service  | Dimensions | Cost [USD] per Month |
+| ----------- | ------------ | ------------ |
+| Amazon ECS | v0.75 CPU 5GB | $804.1 |
+| Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 14.04 |
+| Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 416.00 |
+| Amazon OpenSearch Service | 1 domain with m5.large.search | $ 103.66 |
 
 
-## 2、部署指南以及用户操作指南
 
-本节主要包含以下内容
+### 前提条件
 
-- 调试界面以及API部署/系统管理员用户操作指南
+### 操作系统
 
-- 终端用户界面部署/终端用户操作指南
+CDK 经过优化，最适合在 **Amazon Linux 2023 AMI** 上启动。在其他操作系统上部署可能需要额外的步骤。
 
-### 2-1、调试界面部署以及操作指南
+### AWS 账户要求
 
-调试界面，主要针对系统管理员，主要的功能是进行系统配置，进行效果优化
+- VPC
+- IAM role with specific permissions
+- Amazon Bedrock
+- Amazon ECS
+- Amazon DynamoDB
+- Amazon Cognito
+- Amazon OpenSearch Service
+- Amazon Elastic Load Balancing
+- Amazon SageMaker (Optional, if you need customized models to be deployed)
+- Amazon Secrets Manager
 
-- 数据库连接配置
-  - MySQL
-  - Redshift
-  - PostgreSQL
-- 数据表说明配置
-- 创建不同的业务线数据集合
-- 提示词配置
-- 业务知识库配置
-- 更详细的Log信息
+### 支持的区域
 
-详细的信息，请查看下面的链接
+us-west-2, us-east-2, us-east-1, ap-south-1, ap-southeast-1, ap-southeast-2, ap-northeast-1, eu-central-1, eu-west-1, eu-west-3, 以及其他支持bedrock的区域
 
-[调试界面部署指南](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)
+## 部署步骤
 
-[调试界面操作指南](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98%E6%93%8D%E4%BD%9C)
+### 1. 准备 CDK 先决条件
+
+请按照 [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) 中的说明安装 CDK 工具包。确保您的环境有权限创建资源。
+
+### 2. Set a password for the GenBI Admin Web UI
+
+对于 GenBI 管理员 Web UI，默认密码为[empty]，需要为 GenBI 管理员 Web UI 设置密码，您可以修改如下文件
+
+```application/config_files/stauth_config.yaml```
+
+下面是一个示例
+
+```yaml
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: XXXXXX # To be replaced with hashed password
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: XXXXXX # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: random_signature_key # Must be string
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com
+```
+
+将密码'XXXXXX'改为哈希密码
+
+使用以下 Python 代码生成 XXXXXX。我们需要 Python 3.8 及以上版本来运行以下代码:
+
+```python
+from streamlit_authenticator.utilities.hasher import Hasher
+hashed_passwords = Hasher(['password123']).generate()
+```
+
+### 3. 部署CDK
+
+对于global区别，执行如下命令：
+
+```
+cd generative-bi-using-rag/source/resources
+```
+
+部署 CDK 堆栈，如果需要,请将区域更改为您自己的区域，例如 us-west-2、us-east-1 等:
+
+```
+export AWS_ACCOUNT_ID=XXXXXXXXXXXX
+export AWS_REGION=us-west-2
+cdk bootstrap
+cdk deploy GenBiMainStack --require-approval never
+```
+
+当部署成功时，您可以看到如下信息
+```
+GenBiMainStack.AOSDomainEndpoint = XXXXX.us-west-2.es.amazonaws.com
+GenBiMainStack.APIEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+GenBiMainStack.FrontendEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+GenBiMainStack.StreamlitEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+```
 
 
-### 2-2、终端用户界面部署以及操作指南
+## 运行Guidance
 
-终端用户界面，跟调试界面的区别是
+在部署 CDK 堆栈后,等待大约 40 分钟完成初始化。然后在浏览器中打开 Web UI: https://your-public-dns
 
-- 只能进行数据查询，无法进行数据配置
-- 更美观的终端界面
-- 更友好的交互体验
-
-详细的信息，请查看下面的链接
-
-[用户界面部署指南](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%BB%88%E7%AB%AF%E7%94%A8%E6%88%B7%E4%BD%BF%E7%94%A8%E7%95%8C%E9%9D%A2%E9%83%A8%E7%BD%B2)
-
-[用户界面操作指南](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%BB%88%E7%AB%AF%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C)
-
-
-## 3、Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## 4、License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
+## 清除
+- 删除CDK堆栈:
+```
+cdk destroy GenBiMainStack
+```

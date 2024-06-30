@@ -80,9 +80,9 @@ us-west-2, us-east-2, us-east-1, ap-south-1, ap-southeast-1, ap-southeast-2, ap-
 ### 1. Prepare CDK Pre-requisites
 Please follow the instructions in the [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) to install the CDK toolkit. Make sure your environment have the authorization to create the resources.
 
-### 2. Set a password for the Streamlit Web UI
+### 2. Set a password for the GenBI Admin Web UI
 
-The default password is [Empty] for Streamlit Web UI. If you need to set a password for the Streamlit Web UI, you can update the password in the
+The default password is [Empty] for GenBI Admin Web UI. If you need to set a password for the GenBI Admin Web UI, you can update the password in the
 ```application/config_files/stauth_config.yaml```
 
 for example 
