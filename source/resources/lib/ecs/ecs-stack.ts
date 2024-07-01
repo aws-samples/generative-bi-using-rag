@@ -75,7 +75,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       "es:ESHttpDelete"
       ],
       resources: [
-      `arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`
+      `arn:${this.partition}:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`
       ]
     });
     taskRole.addToPolicy(openSearchAccessPolicy);
@@ -89,7 +89,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       "dynamodb:Query"
       ],
       resources: [
-        `arn:aws:dynamodb:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:table/*`,
+        `arn:${this.partition}:dynamodb:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:table/*`,
       ]
     });
     taskRole.addToPolicy(dynamoDBAccessPolicy);
@@ -100,8 +100,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       "secretsmanager:GetSecretValue"
       ],
       resources: [
-      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
-      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
+      `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
+      `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
       ]
     });
     taskRole.addToPolicy(opensearchHostUrlSecretAccessPolicy);
@@ -114,7 +114,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
         "bedrock:InvokeModelWithResponseStream"
       ],
       resources: [
-        `arn:aws:bedrock:${cdk.Aws.REGION}::foundation-model/*`
+        `arn:${this.partition}:bedrock:${cdk.Aws.REGION}::foundation-model/*`
       ]
       });
       taskRole.addToPolicy(bedrockAccessPolicy);
@@ -128,8 +128,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
         "cognito-idp:*"
         ],
         resources: [
-        `arn:aws:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/*`,
-        `arn:aws:cognito-identity:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:identitypool/*`
+        `arn:${this.partition}:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/*`,
+        `arn:${this.partition}:cognito-identity:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:identitypool/*`
         ]
       });
       taskRole.addToPolicy(cognitoAccessPolicy);

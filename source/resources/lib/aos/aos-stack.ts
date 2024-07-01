@@ -59,7 +59,7 @@ export class AOSStack extends cdk.Stack {
           effect: Effect.ALLOW,
           principals: [new AnyPrincipal()],
           actions: ["es:*"],
-          resources: [`arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`]
+          resources: [`arn:${this.partition}:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`]
       })]
       ,
       vpcSubnets: [ {subnets:  subnets.slice(0, 2)}],

@@ -2,7 +2,7 @@ import { Link, SpaceBetween } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "@aws-amplify/ui-react";
 import { ChatBotHistoryItem, ChatInputState } from "./types";
-import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../../common/constant/constants";
+import { BACKEND_URL } from "../../common/constant/constants";
 import { useSelector } from "react-redux";
 import { UserState } from "../config-panel/types";
 import styles from "./chat.module.scss";
@@ -43,9 +43,11 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   }
 
   useEffect(() => {
-    const data_profile = DEFAULT_QUERY_CONFIG.selectedDataPro;
-    getRecommendQuestions(data_profile).then();
-  }, []);
+    const data_profile = userInfo.queryConfig.selectedDataPro;
+    if (data_profile) {
+      getRecommendQuestions(data_profile).then();
+    }
+  }, [userInfo.queryConfig.selectedDataPro]);
 
   const handleSendMessage = (question: string) => {
     // Call Fast API
