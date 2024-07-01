@@ -2,7 +2,7 @@ export const CHATBOT_NAME = "GenBI Chatbot";
 
 export const DEFAULT_QUERY_CONFIG = {
   selectedLLM: "anthropic.claude-3-sonnet-20240229-v1:0",
-  selectedDataPro: "shopping-demo",
+  selectedDataPro: "",
   intentChecked: true,
   complexChecked: true,
   answerInsightChecked: false,
