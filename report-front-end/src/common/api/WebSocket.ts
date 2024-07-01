@@ -8,7 +8,7 @@ export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>
 ) {
-  const socketUrl = process.env.VITE_WEBSOCKET_URL;
+  const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
   const {sendJsonMessage}
     // eslint-disable-next-line react-hooks/rules-of-hooks
     = useWebSocket(socketUrl, {

@@ -132,6 +132,7 @@ const ConfigPanel = () => {
     };
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
   };
+
   return (
     <HelpPanel header="Configuration">
       <SpaceBetween size="l">
