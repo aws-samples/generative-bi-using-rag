@@ -13,7 +13,7 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemake
     generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
     generate_query_rewrite_prompt
 
-from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION
+from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -473,7 +473,7 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
 def create_vector_embedding_with_bedrock(text, index_name):
     payload = {"inputText": f"{text}"}
     body = json.dumps(payload)
-    modelId = "amazon.titan-embed-text-v1"
+    modelId = BEDROCK_EMBEDDING_MODEL
     accept = "application/json"
     contentType = "application/json"
 
