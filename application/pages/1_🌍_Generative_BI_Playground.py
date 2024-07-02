@@ -288,9 +288,11 @@ def main():
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
-        if st.session_state.current_model_id != "":
-            if st.session_state.current_model_id in model_ids:
-                pass
+        if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
+            model_index = model_ids.index(st.session_state.current_model_id)
+            model_type = st.selectbox("Choose your model", model_ids, index=model_index)
+        else:
+            model_type = st.selectbox("Choose your model", model_ids)
 
         model_type = st.selectbox("Choose your model", model_ids)
 
