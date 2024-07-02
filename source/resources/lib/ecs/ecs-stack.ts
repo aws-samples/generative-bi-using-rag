@@ -9,16 +9,23 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 
 export class ECSStack extends cdk.Stack {
-  _vpc;
   public readonly streamlitEndpoint: string;
   public readonly frontendEndpoint: string;
   public readonly apiEndpoint: string;
-constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserPoolId: string} & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string} & {OSHostSecretName: string}) {
+constructor(scope: Construct, id: string, props: cdk.StackProps 
+  & { vpc: ec2.Vpc}
+  & { subnets: cdk.aws_ec2.ISubnet[] } & { cognitoUserPoolId: string} 
+  & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string} 
+  & {OSHostSecretName: string}) {
     super(scope, id, props);
-    // Create a VPC
-    this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
-        isDefault: true,
-    });
+
+    // 选择所有的 isolated 和 private with egress 子网
+    // const isolatedSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }).subnets;
+    // const privateSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets;
+
+    // 合并所有非公共子网
+    // const nonPublicSubnets = [...isolatedSubnets, ...privateSubnets];
+    // const subnets = this._vpc.selectSubnets().subnets;
 
     // Create ECR repositories and Docker image assets
     const services = [
@@ -47,7 +54,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     
     //  Create an ECS cluster
     const cluster = new ecs.Cluster(this, 'GenBiCluster', {
-      vpc: this._vpc,
+      vpc: props.vpc,
     });
 
     const taskExecutionRole = new iam.Role(this, 'TaskExecutionRole', {
@@ -164,8 +171,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionStreamlit,
       publicLoadBalancer: true,
-      // taskSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
-      assignPublicIp: true
+      taskSubnets: { subnets: props.subnets },
+      assignPublicIp: false
     });
 
     // ======= 2. API Service =======
@@ -204,8 +211,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionAPI,
       publicLoadBalancer: true,
-      // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      assignPublicIp: true
+      taskSubnets: { subnets: props.subnets },
+      assignPublicIp: false
     });
 
     // ======= 3. Frontend Service =======
@@ -251,7 +258,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       taskDefinition: taskDefinitionFrontend,
       publicLoadBalancer: true,
       // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      assignPublicIp: true
+      taskSubnets: { subnets: props.subnets },
+      assignPublicIp: false
     });
 
     this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
