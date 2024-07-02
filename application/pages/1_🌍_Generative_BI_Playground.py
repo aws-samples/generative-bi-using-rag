@@ -127,7 +127,8 @@ def recurrent_display(messages, i):
     return i
 
 
-def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info, selected_profile,
+def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info,
+                                 selected_profile,
                                  use_rag,
                                  model_provider=None):
     entity_slot_retrieve = []
@@ -241,6 +242,12 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if 'current_model_id' not in st.session_state:
+        st.session_state['current_model_id'] = ''
+
+    if 'config_data_with_analyse' not in st.session_state:
+        st.session_state['config_data_with_analyse'] = False
+
     if 'nlq_chain' not in st.session_state:
         st.session_state['nlq_chain'] = None
 
@@ -250,7 +257,8 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+                 'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
@@ -279,6 +287,10 @@ def main():
             if selected_profile not in st.session_state.messages:
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
+
+        if st.session_state.current_model_id != "":
+            if st.session_state.current_model_id in model_ids:
+                pass
 
         model_type = st.selectbox("Choose your model", model_ids)
 
