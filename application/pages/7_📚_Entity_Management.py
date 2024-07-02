@@ -27,7 +27,12 @@ def main():
 
     with st.sidebar:
         st.title("Entity Management")
-        current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
+        all_profiles_list = ProfileManagement.get_all_profiles()
+        if st.session_state.current_profile != "" and st.session_state.current_profile in all_profiles_list:
+            profile_index = all_profiles_list.index(st.session_state.current_profile)
+            current_profile = st.selectbox("My Data Profiles", all_profiles_list, index=profile_index)
+        else:
+            current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
                                        index=None,
                                        placeholder="Please select data profile...", key='current_profile_name')
 
