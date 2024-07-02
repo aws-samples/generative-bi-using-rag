@@ -4,9 +4,12 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
+COPY .env /frontend/.env
 
 FROM public.ecr.aws/docker/library/nginx:1.23-alpine
 COPY --from=builder /frontend/dist/ /usr/share/nginx/html/
+COPY --from=builder /frontend/.env /.env
+
 COPY docker-entry.sh /docker-entry.sh
 RUN chmod +x /docker-entry.sh
 
