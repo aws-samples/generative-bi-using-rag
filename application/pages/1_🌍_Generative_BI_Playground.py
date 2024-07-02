@@ -294,8 +294,6 @@ def main():
         else:
             model_type = st.selectbox("Choose your model", model_ids)
 
-        model_type = st.selectbox("Choose your model", model_ids)
-
         use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results_flag = st.checkbox("Visualize Results", True)
         intent_ner_recognition_flag = st.checkbox("Intent NER", True)
