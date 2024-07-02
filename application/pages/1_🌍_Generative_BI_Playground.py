@@ -363,10 +363,13 @@ def main():
                         database_profile['db_url'] = db_url
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
+                    prompt_map_flag = False
                     for key in prompt_map_dict:
                         if key not in prompt_map:
                             prompt_map[key] = prompt_map_dict[key]
-                    ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
+                            prompt_map_flag = True
+                    if prompt_map_flag:
+                        ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)
