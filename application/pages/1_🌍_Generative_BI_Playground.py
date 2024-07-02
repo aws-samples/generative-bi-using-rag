@@ -263,8 +263,15 @@ def main():
     with st.sidebar:
         st.title('Setting')
         # The default option can be the first one in the profiles dictionary, if exists
-
-        selected_profile = st.selectbox("Data Profile", list(st.session_state.get('profiles', {}).keys()))
+        session_state_list = list(st.session_state.get('profiles', {}).keys())
+        if st.session_state.current_profile != "":
+            if st.session_state.current_profile in session_state_list:
+                profile_index = session_state_list.index(st.session_state.current_profile)
+                selected_profile = st.selectbox("Data Profile", session_state_list, index=profile_index)
+            else:
+                selected_profile = st.selectbox("Data Profile", session_state_list)
+        else:
+            selected_profile = st.selectbox("Data Profile", session_state_list)
         if selected_profile != st.session_state.current_profile:
             # clear session state
             st.session_state.selected_sample = ''

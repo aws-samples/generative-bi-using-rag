@@ -9,7 +9,7 @@ class Question(BaseModel):
     visualize_results_flag: bool = True
     intent_ner_recognition_flag: bool = True
     agent_cot_flag: bool = True
-    profile_name: str = "shopping-demo"
+    profile_name: str
     explain_gen_process_flag: bool = True
     gen_suggested_question_flag: bool = False
     answer_with_insights: bool = False
