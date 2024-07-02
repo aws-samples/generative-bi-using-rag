@@ -145,7 +145,7 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
         index_name = opensearch_info['agent_index']
 
     if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-        records_with_embedding = create_vector_embedding_with_sagemaker(query, index_name=index_name)
+        records_with_embedding = create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING, query, index_name=index_name)
     else:
         records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
     retrieve_result = retrieve_results_from_opensearch(
