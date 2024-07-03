@@ -46,9 +46,9 @@ export class MainStack extends cdk.Stack {
     // });
 
     // ======== Step 4. Define Cognito =========
-    const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
-      env: props.env
-    });
+    // const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
+    //   env: props.env
+    // });
     
     // ======== Step 5. Define the ECS ========= 
     // pass the aosEndpoint and aosPassword to the ecs stack
@@ -56,14 +56,14 @@ export class MainStack extends cdk.Stack {
       env: props.env,
       vpc: _VpcStack.vpc,
       subnets: _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets,
-      cognitoUserPoolId: _CognitoStack.userPoolId,
-      cognitoUserPoolClientId: _CognitoStack.userPoolClientId,
+      cognitoUserPoolId: "",
+      cognitoUserPoolClientId: "",
       OSMasterUserSecretName: _AosStack.OSMasterUserSecretName,
       OSHostSecretName: _AosStack.OSHostSecretName,
     });
     _AosStack.addDependency(_VpcStack);
     _EcsStack.addDependency(_AosStack);
-    _EcsStack.addDependency(_CognitoStack);
+    // _EcsStack.addDependency(_CognitoStack);
     _EcsStack.addDependency(_VpcStack);
 
     new cdk.CfnOutput(this, 'AOSDomainEndpoint', {
@@ -85,10 +85,10 @@ export class MainStack extends cdk.Stack {
       value: _EcsStack.streamlitEndpoint,
       description: 'The endpoint of the Streamlit service'
     });
-    new cdk.CfnOutput(this, 'FrontendEndpoint', {
-      value: _EcsStack.frontendEndpoint,
-      description: 'The endpoint of the Frontend service'
-    });
+    // new cdk.CfnOutput(this, 'FrontendEndpoint', {
+    //   value: _EcsStack.frontendEndpoint,
+    //   description: 'The endpoint of the Frontend service'
+    // });
     new cdk.CfnOutput(this, 'APIEndpoint', {
       value: _EcsStack.apiEndpoint,
       description: 'The endpoint of the API service'

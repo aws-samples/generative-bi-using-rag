@@ -31,7 +31,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     const services = [
       { name: 'genbi-streamlit', dockerfile: 'Dockerfile', port: 8501, dockerfileDirectory: path.join(__dirname, '../../../../application')},
       { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000, dockerfileDirectory: path.join(__dirname, '../../../../application')},
-      { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 80, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
+      // { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 80, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
     ];
 
     // const repositoriesAndImages = services.map(service => {
@@ -220,55 +220,55 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     });
 
     // ======= 3. Frontend Service =======
-    const GenBiFrontendDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
-      directory: services[2].dockerfileDirectory, 
-      file: services[2].dockerfile, 
-    }), 'port': services[2].port};
+    // const GenBiFrontendDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
+    //   directory: services[2].dockerfileDirectory,
+    //   file: services[2].dockerfile,
+    // }), 'port': services[2].port};
+    //
+    // const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
+    //   memoryLimitMiB: 512,
+    //   cpu: 256,
+    //   executionRole: taskExecutionRole,
+    //   taskRole: taskRole
+    // });
+    //
+    // const containerFrontend = taskDefinitionFrontend.addContainer('GenBiContainerFrontend', {
+    //   image: ecs.ContainerImage.fromDockerImageAsset(GenBiFrontendDockerImageAsset.dockerImageAsset),
+    //   memoryLimitMiB: 512,
+    //   cpu: 256,
+    //   logging: new ecs.AwsLogDriver({
+    //     streamPrefix: 'GenBiFrontend',
+    //   }),
+    // });
 
-    const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
-      memoryLimitMiB: 512,
-      cpu: 256,
-      executionRole: taskExecutionRole,
-      taskRole: taskRole
-    });
-    
-    const containerFrontend = taskDefinitionFrontend.addContainer('GenBiContainerFrontend', {
-      image: ecs.ContainerImage.fromDockerImageAsset(GenBiFrontendDockerImageAsset.dockerImageAsset),
-      memoryLimitMiB: 512,
-      cpu: 256,
-      logging: new ecs.AwsLogDriver({
-        streamPrefix: 'GenBiFrontend',
-      }),
-    });
-
-    containerFrontend.addEnvironment('VITE_TITLE', 'Guidance for Generative BI')
-    containerFrontend.addEnvironment('VITE_LOGO', '/logo.png');
-    containerFrontend.addEnvironment('VITE_RIGHT_LOGO', '');
-    containerFrontend.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION);
-    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId);
-    containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
-    containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
-    containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
-    containerFrontend.addEnvironment('VITE_BACKEND_URL', `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
-    containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`);
-    containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
-
-    containerFrontend.addPortMappings({
-      containerPort: GenBiFrontendDockerImageAsset.port,
-    });
-
-    const fargateServiceFrontend = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceFrontend', {
-      cluster: cluster,
-      taskDefinition: taskDefinitionFrontend,
-      publicLoadBalancer: true,
-      // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      taskSubnets: { subnets: props.subnets },
-      assignPublicIp: false
-    });
+    // containerFrontend.addEnvironment('VITE_TITLE', 'Guidance for Generative BI')
+    // containerFrontend.addEnvironment('VITE_LOGO', '/logo.png');
+    // containerFrontend.addEnvironment('VITE_RIGHT_LOGO', '');
+    // containerFrontend.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION);
+    // containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId);
+    // containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
+    // containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
+    // containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
+    // containerFrontend.addEnvironment('VITE_BACKEND_URL', `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
+    // containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`);
+    // containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
+    //
+    // containerFrontend.addPortMappings({
+    //   containerPort: GenBiFrontendDockerImageAsset.port,
+    // });
+    //
+    // const fargateServiceFrontend = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'GenBiFargateServiceFrontend', {
+    //   cluster: cluster,
+    //   taskDefinition: taskDefinitionFrontend,
+    //   publicLoadBalancer: true,
+    //   // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+    //   taskSubnets: { subnets: props.subnets },
+    //   assignPublicIp: false
+    // });
 
     this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
     this.apiEndpoint = fargateServiceAPI.loadBalancer.loadBalancerDnsName;
-    this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
+    // this.frontendEndpoint = fargateServiceFrontend.loadBalancer.loadBalancerDnsName;
 
     new cdk.CfnOutput(this, 'StreamlitEndpoint', {
       value: fargateServiceStreamlit.loadBalancer.loadBalancerDnsName,
@@ -280,9 +280,9 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       description: 'The endpoint of the API service'
     });
 
-    new cdk.CfnOutput(this, 'FrontendEndpoint', {
-      value: fargateServiceFrontend.loadBalancer.loadBalancerDnsName,
-      description: 'The endpoint of the Frontend service'
-    });
+    // new cdk.CfnOutput(this, 'FrontendEndpoint', {
+    //   value: fargateServiceFrontend.loadBalancer.loadBalancerDnsName,
+    //   description: 'The endpoint of the Frontend service'
+    // });
   }
 }
