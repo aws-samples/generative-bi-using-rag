@@ -127,7 +127,8 @@ def recurrent_display(messages, i):
     return i
 
 
-def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info, selected_profile,
+def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info,
+                                 selected_profile,
                                  use_rag,
                                  model_provider=None):
     entity_slot_retrieve = []
@@ -241,6 +242,12 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if 'current_model_id' not in st.session_state:
+        st.session_state['current_model_id'] = ''
+
+    if 'config_data_with_analyse' not in st.session_state:
+        st.session_state['config_data_with_analyse'] = False
+
     if 'nlq_chain' not in st.session_state:
         st.session_state['nlq_chain'] = None
 
@@ -250,7 +257,8 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+                 'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
@@ -263,8 +271,15 @@ def main():
     with st.sidebar:
         st.title('Setting')
         # The default option can be the first one in the profiles dictionary, if exists
-
-        selected_profile = st.selectbox("Data Profile", list(st.session_state.get('profiles', {}).keys()))
+        session_state_list = list(st.session_state.get('profiles', {}).keys())
+        if st.session_state.current_profile != "":
+            if st.session_state.current_profile in session_state_list:
+                profile_index = session_state_list.index(st.session_state.current_profile)
+                selected_profile = st.selectbox("Data Profile", session_state_list, index=profile_index)
+            else:
+                selected_profile = st.selectbox("Data Profile", session_state_list)
+        else:
+            selected_profile = st.selectbox("Data Profile", session_state_list)
         if selected_profile != st.session_state.current_profile:
             # clear session state
             st.session_state.selected_sample = ''
@@ -273,7 +288,11 @@ def main():
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
-        model_type = st.selectbox("Choose your model", model_ids)
+        if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
+            model_index = model_ids.index(st.session_state.current_model_id)
+            model_type = st.selectbox("Choose your model", model_ids, index=model_index)
+        else:
+            model_type = st.selectbox("Choose your model", model_ids)
 
         use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results_flag = st.checkbox("Visualize Results", True)
@@ -363,10 +382,13 @@ def main():
                         database_profile['db_url'] = db_url
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
+                    prompt_map_flag = False
                     for key in prompt_map_dict:
                         if key not in prompt_map:
                             prompt_map[key] = prompt_map_dict[key]
-                    ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
+                            prompt_map_flag = True
+                    if prompt_map_flag:
+                        ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)

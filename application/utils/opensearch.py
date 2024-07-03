@@ -2,8 +2,8 @@ import boto3
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
 import logging
-from utils.llm import create_vector_embedding_with_bedrock
-from utils.env_var import opensearch_info
+from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
+from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING
 
 logger = logging.getLogger(__name__)
 
@@ -144,8 +144,10 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
     else:
         index_name = opensearch_info['agent_index']
 
-    records_with_embedding = create_vector_embedding_with_bedrock(
-        query, index_name=index_name)
+    if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
+        records_with_embedding = create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING, query, index_name=index_name)
+    else:
+        records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
     retrieve_result = retrieve_results_from_opensearch(
         index_name=index_name,
         region_name=opensearch_info['region'],
