@@ -7,7 +7,7 @@ RUN adduser --disabled-password --gecos '' appuser
 WORKDIR /app
 
 COPY requirements.txt /app/
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 COPY . /app/
 
