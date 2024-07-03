@@ -336,6 +336,10 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         else:
             if model_id.startswith('meta.llama3-70b'):
                 return response["generation"]
+            elif model_id.startswith('mistral.mixtral-8x7b') and SAGEMAKER_ENDPOINT_SQL is not None and SAGEMAKER_ENDPOINT_SQL != "":
+                response = json.loads(response)
+                response = response['generated_text']
+                return response
             else:
                 final_response = response.get("content")[0].get("text")
                 return final_response
