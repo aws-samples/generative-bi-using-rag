@@ -48,6 +48,11 @@ SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING', '')
 
 SAGEMAKER_ENDPOINT_SQL = os.getenv('SAGEMAKER_ENDPOINT_SQL', '')
 
+if SAGEMAKER_ENDPOINT_EMBEDDING == "":
+    if BEDROCK_EMBEDDING_MODEL is None or BEDROCK_EMBEDDING_MODEL == "":
+        BEDROCK_EMBEDDING_MODEL = "amazon.titan-embed-text-v1"
+        EMBEDDING_DIMENSION = 1536
+
 def get_opensearch_parameter():
     try:
         session = boto3.session.Session()
