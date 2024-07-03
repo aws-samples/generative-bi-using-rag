@@ -157,6 +157,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     containerStreamlit.addEnvironment('AOS_INDEX', 'uba');
     containerStreamlit.addEnvironment('AOS_INDEX_NER', 'uba_ner');
     containerStreamlit.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+    containerStreamlit.addEnvironment('EMBEDDING_DIMENSION', '1024');
     containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', 'mixtral-instruct-awq-g5-2-endpoint');
     containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_SQL', 'bge-m3-2024-07-02-03-20-48-638-endpoint');
     containerStreamlit.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
@@ -198,6 +199,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     containerAPI.addEnvironment('AOS_INDEX', 'uba');
     containerAPI.addEnvironment('AOS_INDEX_NER', 'uba_ner');
     containerAPI.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+    containerAPI.addEnvironment('EMBEDDING_DIMENSION', '1024');
     containerAPI.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', 'mixtral-instruct-awq-g5-2-endpoint');
     containerAPI.addEnvironment('SAGEMAKER_ENDPOINT_SQL', 'bge-m3-2024-07-02-03-20-48-638-endpoint');
     containerAPI.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
