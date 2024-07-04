@@ -109,7 +109,8 @@ def main():
 
         with batch_insert:
             if current_profile is not None:
-                uploaded_files = st.file_uploader("Choose CSV or Excel files and The Column need contain entity and comment", accept_multiple_files=True,
+                st.write("This page support CSV or Excel files batch insert entity samples. **The Column Name can need contain 'entity' and 'comment'**")
+                uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
                     progress_bar = st.progress(0)
@@ -124,7 +125,7 @@ def main():
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
                         progress_bar.progress((i + 1) / len(uploaded_files))
 
-                        st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file))
+                        st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
                     progress_bar.empty()
     else:
         st.info('Please select data profile in the left sidebar.')
