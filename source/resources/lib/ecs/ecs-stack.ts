@@ -260,7 +260,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
     containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
     containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
-    containerFrontend.addEnvironment('VITE_BACKEND_URL', `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
+    containerFrontend.addEnvironment('VITE_BACKEND_URL', `http://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
     containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`);
     containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
 
