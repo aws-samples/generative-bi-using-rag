@@ -5,7 +5,7 @@ credentials:
       failed_login_attempts: 0 # Will be managed automatically
       logged_in: False # Will be managed automatically
       name: AWS
-      password: # Set the password following instructions in README
+      password: $2b$12$NDQv5NLaWiVlNuzQYHwAo.tv.f.TuX1nbdoUZi44/Y3xv4I4QAfjy # Set the password following instructions in README
 cookie:
   expiry_days: 30
   key: some_signature_key # Must be string

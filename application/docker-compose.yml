@@ -1,7 +1,7 @@
 version: '3'
 services:
   opensearch-node1:
-    image: opensearchproject/opensearch:2.11.1
+    image: public.ecr.aws/opensearchproject/opensearch:2.11.1
     container_name: opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
@@ -25,7 +25,7 @@ services:
     networks:
       - opensearch-net
   opensearch-node2:
-    image: opensearchproject/opensearch:2.11.1
+    image: public.ecr.aws/opensearchproject/opensearch:2.11.1
     container_name: opensearch-node2
     environment:
       - cluster.name=opensearch-cluster
@@ -46,7 +46,7 @@ services:
     networks:
       - opensearch-net
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:2.11.1
+    image: public.ecr.aws/opensearchproject/opensearch-dashboards:2.11.1
     read_only: true
     container_name: opensearch-dashboards
     ports:
@@ -61,7 +61,7 @@ services:
     # 指定容器的名称
     container_name: nlq-mysql
     # 指定镜像和版本
-    image: mysql:8.0
+    image: public.ecr.aws/docker/library/mysql:8.0
     ports:
       - "3306:3306"
     restart: always

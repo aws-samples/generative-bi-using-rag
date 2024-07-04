@@ -1,5 +1,6 @@
 import time
 
+import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 import logging
@@ -14,6 +15,26 @@ def delete_sample(profile_name, id):
     VectorStore.delete_sample(profile_name, id)
     st.success(f'Sample {id} deleted.')
 
+def read_file(uploaded_file):
+    """
+    read upload csv file
+    :param uploaded_file:
+    :return:
+    """
+    file_type = uploaded_file.name.split('.')[-1].lower()
+    if file_type == 'csv':
+        uploaded_data = pd.read_csv(uploaded_file)
+    elif file_type in ['xls', 'xlsx']:
+        uploaded_data = pd.read_excel(uploaded_file)
+    else:
+        st.error(f"Unsupported file type: {file_type}")
+        return None
+    columns = list(uploaded_data.columns)
+    if "question" in columns and "sql" in columns:
+        return uploaded_data
+    else:
+        st.error(f"The columns need contains question and sql")
+        return None
 
 def main():
     load_dotenv()
@@ -24,13 +45,22 @@ def main():
     if 'profile_page_mode' not in st.session_state:
         st.session_state['index_mgt_mode'] = 'default'
 
+
+    if 'current_profile' not in st.session_state:
+        st.session_state['current_profile'] = ''
+
     with st.sidebar:
         st.title("Index Management")
-        current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
+        all_profiles_list = ProfileManagement.get_all_profiles()
+        if st.session_state.current_profile != "" and st.session_state.current_profile in all_profiles_list:
+            profile_index = all_profiles_list.index(st.session_state.current_profile)
+            current_profile = st.selectbox("My Data Profiles", all_profiles_list, index = profile_index)
+        else:
+            current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
                                        index=None,
                                        placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add, tab_search = st.tabs(['View Samples', 'Add New Sample', 'Sample Search'])
+    tab_view, tab_add, tab_search, batch_insert = st.tabs(['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
 
     if current_profile is not None:
         with tab_view:
@@ -69,6 +99,27 @@ def main():
                             st.code(sample_res)
                             st.button('Delete ' + sample['_id'], key=sample['_id'], on_click=delete_sample,
                                       args=[current_profile, sample['_id']])
+        with batch_insert:
+            if current_profile is not None:
+                st.write("This page support CSV or Excel files batch insert sql samples.")
+                st.write("**The Column Name need contain 'question' and 'sql'**")
+                uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
+                                              type=['csv', 'xls', 'xlsx'])
+                if uploaded_files:
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    for i, uploaded_file in enumerate(uploaded_files):
+                        status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
+                        each_upload_data = read_file(uploaded_file)
+                        if each_upload_data is not None:
+                            for index, item in each_upload_data.iterrows():
+                                question = str(item["question"])
+                                sql = str(item["sql"])
+                                VectorStore.add_sample(current_profile, question, sql)
+                        progress_bar.progress((i + 1) / len(uploaded_files))
+
+                        st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
+                    progress_bar.empty()
     else:
         st.info('Please select data profile in the left sidebar.')
         
