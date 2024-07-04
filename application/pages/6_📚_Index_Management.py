@@ -113,9 +113,9 @@ def main():
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
                             for index, item in each_upload_data.iterrows():
-                                entity = str(item["question"])
-                                comment = str(item["sql"])
-                                VectorStore.add_entity_sample(current_profile, entity, comment)
+                                question = str(item["question"])
+                                sql = str(item["sql"])
+                                VectorStore.add_sample(current_profile, question, sql)
                         progress_bar.progress((i + 1) / len(uploaded_files))
 
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
