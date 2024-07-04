@@ -24,6 +24,10 @@ def main():
     if 'profile_page_mode' not in st.session_state:
         st.session_state['index_mgt_mode'] = 'default'
 
+
+    if 'current_profile' not in st.session_state:
+        st.session_state['current_profile'] = ''
+
     with st.sidebar:
         st.title("Index Management")
         all_profiles_list = ProfileManagement.get_all_profiles()

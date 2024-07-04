@@ -14,6 +14,9 @@ def main():
     st.set_page_config(page_title="Prompt Management")
     make_sidebar()
 
+    if 'current_profile' not in st.session_state:
+        st.session_state['current_profile'] = ''
+
     with st.sidebar:
         st.title("Prompt Management")
         all_profiles_list = ProfileManagement.get_all_profiles()
