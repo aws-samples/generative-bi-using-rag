@@ -109,7 +109,8 @@ def main():
 
         with batch_insert:
             if current_profile is not None:
-                st.write("This page support CSV or Excel files batch insert entity samples. **The Column Name can need contain 'entity' and 'comment'**")
+                st.write("This page support CSV or Excel files batch insert entity samples.")
+                st.write("**The Column Name can need contain 'entity' and 'comment'**")
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
