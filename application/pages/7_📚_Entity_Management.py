@@ -119,13 +119,12 @@ def main():
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
                             for index, item in each_upload_data.iterrows():
-                                entity = item["entity"]
-                                comment = item["comment"]
-                                # VectorStore.add_entity_sample(current_profile, entity, comment)
-                                print(entity, comment)
+                                entity = str(item["entity"])
+                                comment = str(item["comment"])
+                                VectorStore.add_entity_sample(current_profile, entity, comment)
                         progress_bar.progress((i + 1) / len(uploaded_files))
 
-                    status_text.text("All data uploaded successfully!")
+                        st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file))
                     progress_bar.empty()
     else:
         st.info('Please select data profile in the left sidebar.')
