@@ -120,6 +120,21 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       taskRole.addToPolicy(bedrockAccessPolicy);
     } 
 
+    // Add SageMaker endpoint access policy
+    const sageMakerEndpointAccessPolicy = new iam.PolicyStatement({
+    actions: [
+        "sagemaker:InvokeEndpoint",
+        "sagemaker:DescribeEndpoint",
+        "sagemaker:ListEndpoints",
+        "sagemaker:"
+    ],
+    resources: [
+        `arn:${this.partition}:sagemaker:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:endpoint/*`
+        ]
+    });
+    taskRole.addToPolicy(sageMakerEndpointAccessPolicy);
+
+
     // Add Cognito all access policy
     if (props.env?.region !== "cn-north-1" && props.env?.region !== "cn-northwest-1") {
         const cognitoAccessPolicy = new iam.PolicyStatement({
