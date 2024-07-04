@@ -125,8 +125,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     actions: [
         "sagemaker:InvokeEndpoint",
         "sagemaker:DescribeEndpoint",
-        "sagemaker:ListEndpoints",
-        "sagemaker:"
+        "sagemaker:ListEndpoints"
     ],
     resources: [
         `arn:${this.partition}:sagemaker:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:endpoint/*`
