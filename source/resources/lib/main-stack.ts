@@ -3,7 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { AOSStack } from './aos/aos-stack';
-import { LLMStack } from './model/llm-stack';
+// import { LLMStack } from './model/llm-stack';
 import { ECSStack } from './ecs/ecs-stack';
 import { CognitoStack } from './cognito/cognito-stack';
 import { RDSStack } from './rds/rds-stack';
@@ -25,11 +25,11 @@ export class MainStack extends cdk.Stack {
     });
 
     // ======== Step 1. Define the LLMStack =========
-    const s3ModelAssetsBucket = new CfnParameter(this, "S3ModelAssetsBucket", {
-      type: "String",
-      description: "S3 Bucket for model & code assets",
-      default: "not-set"
-    });
+    // const s3ModelAssetsBucket = new CfnParameter(this, "S3ModelAssetsBucket", {
+    //   type: "String",
+    //   description: "S3 Bucket for model & code assets",
+    //   default: "not-set"
+    // });
     
     // ======== Step 2. Define the AOSStack ========= 
     const _AosStack = new AOSStack(this, 'aos-Stack', {
@@ -41,9 +41,15 @@ export class MainStack extends cdk.Stack {
     const aosEndpoint = _AosStack.endpoint;
 
     // ======== Step 3. Define the RDSStack =========
-    // const _RdsStack = new RDSStack(this, 'rds-Stack', {
-    //   env: props.env,
-    // });
+    if (_deployRds) {
+      const _RdsStack = new RDSStack(this, 'rds-Stack', {
+        env: props.env,
+      });
+      new cdk.CfnOutput(this, 'RDSEndpoint', {
+        value: _RdsStack.endpoint,
+        description: 'The endpoint of the RDS instance',
+      });
+    }
 
     // ======== Step 4. Define Cognito =========
     const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
@@ -70,16 +76,6 @@ export class MainStack extends cdk.Stack {
       value: aosEndpoint,
       description: 'The endpoint of the OpenSearch domain'
     });
-    
-    if (_deployRds) {
-      const _RdsStack = new RDSStack(this, 'rds-Stack', {
-        env: props.env,
-      });
-      new cdk.CfnOutput(this, 'RDSEndpoint', {
-        value: _RdsStack.endpoint,
-        description: 'The endpoint of the RDS instance',
-      });
-    }
     
     new cdk.CfnOutput(this, 'StreamlitEndpoint', {
       value: _EcsStack.streamlitEndpoint,
