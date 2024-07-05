@@ -1,13 +1,17 @@
+import { useCollection } from "@cloudscape-design/collection-hooks";
 import {
   BarChart,
+  Box,
   ColumnLayout,
   Container,
   ExpandableSection,
   LineChart,
+  Pagination,
   PieChart,
   SpaceBetween,
   Table,
-  TextContent
+  TextContent,
+  TextFilter
 } from "@cloudscape-design/components";
 import {
   ChatBotAnswerItem,
@@ -148,11 +152,7 @@ function SQLResultPanel(props: SQLResultProps) {
             variant="footer"
             defaultExpanded
             headerText="Table">
-            <Table
-              columnDefinitions={headers}
-              items={content}
-              variant="embedded"
-            />
+            <DataTable distributions={content} header={headers} />
           </ExpandableSection> : null
         }
         {props.result.data_show_type !== "table" && sql_data.length > 0 ?
@@ -240,6 +240,52 @@ function SQLResultPanel(props: SQLResultProps) {
   );
 }
 
+const DataTable = (
+  props: {
+    distributions: [],
+    header: []
+  }) => {
+
+  const {items, actions, collectionProps, filterProps, paginationProps, filteredItemsCount} = useCollection(
+    props.distributions,
+    {
+      pagination: {pageSize: 10},
+      sorting: {},
+      filtering: {
+        noMatch: (
+          <Box textAlign="center" color="inherit">
+            <b>No matches</b>
+            <Box color="inherit" margin={{top: "xxs", bottom: "s"}}>
+              No results match your query
+            </Box>
+            <Button onClick={() => actions.setFiltering("")}>Clear filter</Button>
+          </Box>
+        )
+      }
+    }
+  );
+
+  function filterCounter(count: number | undefined) {
+    return `${count} ${count === 1 ? "match" : "matches"}`;
+  }
+
+  return (
+    <Table
+      {...collectionProps}
+      variant="embedded"
+      columnDefinitions={props.header}
+      items={items}
+      pagination={<Pagination {...paginationProps} />}
+      filter={
+        <TextFilter
+          {...filterProps}
+          countText={filterCounter(filteredItemsCount)}
+          filteringPlaceholder="Search"
+        />
+      }
+    />
+  );
+}
 
 export interface IntentSearchProps {
   message: ChatBotAnswerItem;
