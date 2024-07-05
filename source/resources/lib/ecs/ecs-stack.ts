@@ -19,11 +19,9 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
   & {OSHostSecretName: string}) {
     super(scope, id, props);
 
-    // 选择所有的 isolated 和 private with egress 子网
     // const isolatedSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }).subnets;
     // const privateSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets;
 
-    // 合并所有非公共子网
     // const nonPublicSubnets = [...isolatedSubnets, ...privateSubnets];
     // const subnets = this._vpc.selectSubnets().subnets;
 
@@ -33,14 +31,6 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000, dockerfileDirectory: path.join(__dirname, '../../../../application')},
       { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 80, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
     ];
-
-    // const repositoriesAndImages = services.map(service => {
-    //   const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
-    //     directory: service.dockerfileDirectory, // Dockerfile location
-    //     file: service.dockerfile, // Dockerfile filename
-    //   });
-    //   return { dockerImageAsset, port: service.port };
-    // });
 
     const GenBiStreamlitDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiStreamlitDockerImage', {
         directory: services[0].dockerfileDirectory, 
@@ -186,7 +176,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       taskDefinition: taskDefinitionStreamlit,
       publicLoadBalancer: true,
       taskSubnets: { subnets: props.subnets },
-      assignPublicIp: false
+      assignPublicIp: true
     });
 
     // ======= 2. API Service =======
@@ -226,7 +216,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       taskDefinition: taskDefinitionAPI,
       publicLoadBalancer: true,
       taskSubnets: { subnets: props.subnets },
-      assignPublicIp: false
+      assignPublicIp: true
     });
 
     // ======= 3. Frontend Service =======
@@ -273,7 +263,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       publicLoadBalancer: true,
       // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       taskSubnets: { subnets: props.subnets },
-      assignPublicIp: false
+      assignPublicIp: true
     });
 
     this.streamlitEndpoint = fargateServiceStreamlit.loadBalancer.loadBalancerDnsName;
