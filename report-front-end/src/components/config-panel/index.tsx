@@ -10,9 +10,9 @@ import {
 import { SetStateAction, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { BACKEND_URL } from "../../common/constant/constants";
-import { ActionType, UserState } from "./types";
 import { alertMsg } from "../../common/helpers/tools";
 import "./style.scss";
+import { ActionType, UserState } from "../../common/helpers/types";
 
 const ConfigPanel = () => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
