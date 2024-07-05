@@ -1,7 +1,8 @@
 # Generative BI using RAG on AWS
 [中文文档](README_CN.md) | [日本語ドキュメント](README_JP.md)
 
-The deployment guide here is CDK only. For manual deployment, refer to [Manual Deployment Guide in Chinese](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)
+The deployment guide here is CDK only. For manual deployment or detailed guide, refer to [Manual Deployment Guide in Chinese](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)
+![Screenshot](./assets/interface.png)
 
 ## Introduction
 
