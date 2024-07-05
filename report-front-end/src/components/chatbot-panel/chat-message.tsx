@@ -104,7 +104,9 @@ function ChartPanel(props: ChartTypeProps) {
         detailPopoverContent={(datum) => [
           {key: pieHeader[1], value: datum.value}
         ]}
+        fitHeight={true}
         hideFilter
+        hideLegend
       />
     );
   } else {
@@ -249,7 +251,7 @@ const DataTable = (
   const {items, actions, collectionProps, filterProps, paginationProps, filteredItemsCount} = useCollection(
     props.distributions,
     {
-      pagination: {pageSize: 10},
+      pagination: {pageSize: 5},
       sorting: {},
       filtering: {
         noMatch: (

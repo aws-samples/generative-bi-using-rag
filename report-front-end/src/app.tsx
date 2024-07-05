@@ -5,8 +5,8 @@ import { BrowserRouter } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useDispatch } from "react-redux";
-import { ActionType, UserState } from "./components/config-panel/types";
 import { DEFAULT_QUERY_CONFIG } from "./common/constant/constants";
+import { ActionType, UserState } from "./common/helpers/types";
 
 function App() {
 
