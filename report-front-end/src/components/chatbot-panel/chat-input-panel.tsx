@@ -120,13 +120,15 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               setTextValue((state) => ({...state, value: e.target.value}))
             }
             onKeyDown={(e) => {
-              if (e.shiftKey && e.key == "Enter") {
-                e.preventDefault();
-                handleSendMessage();
+              if (e.key == "Enter" && !e.shiftKey) {
+                if (!e.nativeEvent.isComposing && e.locale !== "zh-CN") {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
               }
             }}
             value={state.value}
-            placeholder={"Send a message... (ENTER to start a new line, and Shift + ENTER to generate a response)"}
+            placeholder={"Send a message... (Shift + ENTER to start a new line, and ENTER to generate a response)"}
           />
           <SpaceBetween size={'xs'} direction={'horizontal'}>
             <Button
