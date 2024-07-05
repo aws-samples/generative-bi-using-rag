@@ -41,15 +41,6 @@ def main():
                 st.caption(f'Table description: {table_desc}')
                 tbl_annotation = st.text_input('Table annotation', table_anno)
 
-                st.caption('''CREATE TABLE employees (
-    id INT AUTO_INCREMENT PRIMARY KEY, # Unique identifier for each employee
-    name VARCHAR(100) NOT NULL, # Employee name
-    position VARCHAR(50) NOT NULL, # Job position, 2 possible values: 'Engineer', 'Manager'
-    salary DECIMAL(10, 2)  # Salary in USD, e.g., 1000.00
-    date VARCHAR(10) NOT NULL, # Date of joining the company, format 'YYYY-MM-DD'
-    ...
-);
-''')
                 # if column_anno is not None:
                 #     col_annotation_text = column_anno
                 # else:
@@ -76,8 +67,15 @@ def main():
                 #             col_annotation_text += '  annotation: \n'
                 
                 # col_annotation = st.text_area('Column annotation', col_annotation_text, height=500)
-                col_annotation = st.text_area('Column annotation', table_ddl, height=400)
-
+                col_annotation = st.text_area('Column annotation', table_ddl, height=400, help='''e.g. CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY, # Unique identifier for each employee
+    name VARCHAR(100) NOT NULL, # Employee name
+    position VARCHAR(50) NOT NULL, # Job position, 2 possible values: 'Engineer', 'Manager'
+    salary DECIMAL(10, 2)  # Salary in USD, e.g., 1000.00
+    date VARCHAR(10) NOT NULL, # Date of joining the company, format 'YYYY-MM-DD'
+    ...
+);
+''')
                 if st.button('Save', type='primary'):
                     origin_tables_info = profile_detail.tables_info
                     origin_table_info = origin_tables_info[selected_table]
