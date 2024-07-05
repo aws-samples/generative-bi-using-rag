@@ -51,7 +51,6 @@ const ConfigPanel = () => {
         return;
       }
       const result = await response.json();
-      console.log(result);
       if (!result || !result.data_profiles || !result.bedrock_model_ids) {
         alertMsg("LLM Option Error", "error");
         return;
@@ -197,7 +196,7 @@ const ConfigPanel = () => {
                 setTemperature(Number(detail.value));
               }}
               controlId="temperature-input"
-              step={0.01}
+              step={0.1}
             />
           </div>
           <div className="flex-wrapper">
@@ -207,7 +206,7 @@ const ConfigPanel = () => {
                 value={temperature}
                 max={1}
                 min={0}
-                step={0.01}
+                step={0.1}
                 valueFormatter={(e) => e.toFixed(2)}
               />
             </div>
@@ -221,13 +220,13 @@ const ConfigPanel = () => {
               inputMode="numeric"
               value={topP.toString()}
               onChange={({ detail }) => {
-                if (Number(detail.value) > 0.999 || Number(detail.value) < 0) {
+                if (Number(detail.value) > 1 || Number(detail.value) < 0) {
                   return;
                 }
                 setTopP(Number(detail.value));
               }}
               controlId="topp-input"
-              step={0.001}
+              step={0.1}
             />
           </div>
           <div className="flex-wrapper">
@@ -235,9 +234,9 @@ const ConfigPanel = () => {
               <Slider
                 onChange={({ detail }) => setTopP(detail.value)}
                 value={topP}
-                max={0.999}
+                max={1}
                 min={0}
-                step={0.001}
+                step={0.1}
                 valueFormatter={(e) => e.toFixed(3)}
               />
             </div>
