@@ -15,7 +15,7 @@ def get_authenticator():
         config['credentials'],
         config['cookie']['name'],
         config['cookie']['key'],
-        config['cookie']['expiry_days'],
+        float(config['cookie']['expiry_days']),
         config['pre-authorized']
     )
 
