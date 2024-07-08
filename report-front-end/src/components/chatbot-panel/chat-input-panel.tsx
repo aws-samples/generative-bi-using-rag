@@ -17,9 +17,7 @@ import {
   ChatInputState,
 } from "./types";
 import styles from "./chat.module.scss";
-import { queryWithWS } from "../../common/api/WebSocket";
-import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { UserState } from "../../common/helpers/types";
+import CustomQuestions from "./custom-questions";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
