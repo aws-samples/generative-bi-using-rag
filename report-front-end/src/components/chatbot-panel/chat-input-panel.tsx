@@ -51,14 +51,16 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       setMessageHistory: props.setMessageHistory,
     }).then();*/
 
-    // Call WebSocket API
-    queryWithWS({
-      query: state.value,
-      configuration: userState.queryConfig,
-      sendMessage: props.sendMessage,
-      setMessageHistory: props.setMessageHistory,
-      userId: userState.userInfo.userId
-    });
+    if (state.value !== "") {
+      // Call WebSocket API
+      queryWithWS({
+        query: state.value,
+        configuration: userState.queryConfig,
+        sendMessage: props.sendMessage,
+        setMessageHistory: props.setMessageHistory,
+        userId: userState.userInfo.userId
+      });
+    }
   };
 
   const handleSetting = () => {
