@@ -12,6 +12,7 @@ import { ActionType, LLMConfigState, UserState } from "../../common/helpers/type
 export default function Chat(
   props: {
     setToolsHide: Dispatch<SetStateAction<boolean>>;
+    toolsHide: boolean;
   }) {
 
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
@@ -85,6 +86,7 @@ export default function Chat(
       <div className={styles.input_container}>
         <ChatInputPanel
           setToolsHide={props.setToolsHide}
+          toolsHide={props.toolsHide}
           setLoading={setLoading}
           messageHistory={messageHistory}
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}

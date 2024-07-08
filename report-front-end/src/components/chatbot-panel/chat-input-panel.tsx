@@ -1,13 +1,23 @@
-import { Button, Container, Icon, SpaceBetween, } from "@cloudscape-design/components";
-import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState, } from "react";
-import TextareaAutosize from "react-textarea-autosize";
-import { ChatBotHistoryItem, ChatBotMessageItem, ChatInputState, } from "./types";
-import CustomQuestions from "./custom-questions";
+import { Button, Container, SpaceBetween } from "@cloudscape-design/components";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { useSelector } from "react-redux";
-import styles from "./chat.module.scss";
-import { queryWithWS } from "../../common/api/WebSocket";
+import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { queryWithWS } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
+import {
+  ChatBotHistoryItem,
+  ChatBotMessageItem,
+  ChatInputState,
+} from "./types";
+import styles from "./chat.module.scss";
+import CustomQuestions from "./custom-questions";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
@@ -16,6 +26,7 @@ export interface ChatInputPanelProps {
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendMessage: SendJsonMessage;
+  toolsHide: boolean;
 }
 
 export abstract class ChatScrollState {
@@ -26,36 +37,39 @@ export abstract class ChatScrollState {
 
 export default function ChatInputPanel(props: ChatInputPanelProps) {
   const [state, setTextValue] = useState<ChatInputState>({
-    value: ""
+    value: "",
   });
   const userState = useSelector<UserState>((state) => state) as UserState;
 
   const handleSendMessage = () => {
-    setTextValue({value: ""});
+    setTextValue({ value: "" });
     // Call Fast API
-/*    query({
+    /*    query({
       query: state.value,
       setLoading: props.setLoading,
       configuration: userState.queryConfig,
       setMessageHistory: props.setMessageHistory,
     }).then();*/
 
-    // Call WebSocket API
-    queryWithWS({
-      query: state.value,
-      configuration: userState.queryConfig,
-      sendMessage: props.sendMessage,
-      setMessageHistory: props.setMessageHistory,
-      userId: userState.userInfo.userId
-    });
+    if (state.value !== "") {
+      // Call WebSocket API
+      queryWithWS({
+        query: state.value,
+        configuration: userState.queryConfig,
+        sendMessage: props.sendMessage,
+        setMessageHistory: props.setMessageHistory,
+        userId: userState.userInfo.userId
+      });
+    }
   };
 
   const handleSetting = () => {
-    props.setToolsHide(false);
+    props.setToolsHide((prev) => !prev);
   };
 
   const handleClear = () => {
-    props.setMessageHistory([]);
+    const bool = window.confirm("Are you sure to clear the chat history?");
+    if (bool) props.setMessageHistory([]);
   };
 
   useEffect(() => {
@@ -68,8 +82,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       const isScrollToTheEnd =
         Math.abs(
           window.innerHeight +
-          window.scrollY -
-          document.documentElement.scrollHeight
+            window.scrollY -
+            document.documentElement.scrollHeight
         ) <= 10;
 
       ChatScrollState.userHasScrolled = !isScrollToTheEnd;
@@ -99,7 +113,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
   return (
     <Container className={styles.input_area_container}>
-      <SpaceBetween size={'s'}>
+      <SpaceBetween size="s">
         <CustomQuestions
           setTextValue={setTextValue}
           setLoading={props.setLoading}
@@ -107,9 +121,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           sendMessage={props.sendMessage}
         ></CustomQuestions>
         <div className={styles.input_textarea_container}>
-          <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
+          {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
             <Icon name="microphone" variant="disabled"/>
-          </SpaceBetween>
+          </SpaceBetween> */}
           <TextareaAutosize
             className={styles.input_textarea}
             maxRows={6}
@@ -117,7 +131,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             spellCheck={true}
             autoFocus
             onChange={(e) =>
-              setTextValue((state) => ({...state, value: e.target.value}))
+              setTextValue((state) => ({ ...state, value: e.target.value }))
             }
             onKeyDown={(e) => {
               if (e.key == "Enter" && !e.shiftKey) {
@@ -128,29 +142,26 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               }
             }}
             value={state.value}
-            placeholder={"Send a message... (Shift + ENTER to start a new line, and ENTER to generate a response)"}
+            placeholder={"Press ⇧ + Enter to start a new line"}
           />
-          <SpaceBetween size={'xs'} direction={'horizontal'}>
-            <Button
-              disabled={state.value.length === 0}
-              onClick={handleSendMessage}
-              iconAlign="left"
-              iconName="status-positive"
-              variant="primary">
-              Send
-            </Button>
-            <Button
-              iconName="remove"
-              variant="icon"
-              onClick={handleClear}
-            >
-            </Button>
-            <Button
-              iconName="settings"
-              variant="icon"
-              onClick={handleSetting}>
-            </Button>
-          </SpaceBetween>
+          <div className={styles.input_buttons}>
+            <SpaceBetween size="s" direction="horizontal">
+              <Button
+                disabled={state.value.length === 0}
+                onClick={handleSendMessage}
+                // iconName='status-positive'
+                variant="primary"
+              >
+                Send
+              </Button>
+              <Button iconName="remove" onClick={handleClear}></Button>
+              <Button
+                iconName="settings"
+                variant={props.toolsHide ? "normal" : "primary"}
+                onClick={handleSetting}
+              ></Button>
+            </SpaceBetween>
+          </div>
         </div>
       </SpaceBetween>
     </Container>
