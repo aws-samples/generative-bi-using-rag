@@ -9,7 +9,6 @@ import { DEFAULT_QUERY_CONFIG } from "./common/constant/constants";
 import { ActionType, UserState } from "./common/helpers/types";
 
 function App() {
-
   const [user, setUser] = useState<any>(null);
 
   const dispatch = useDispatch();
@@ -21,12 +20,12 @@ function App() {
     })();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     const loginUser: UserState = {
       userId: user?.attributes?.sub || "",
       email: user?.attributes?.email || "",
       displayName: user?.attributes?.displayName || "",
-      loginExpiration: + new Date() + 18000000,
+      loginExpiration: +new Date() + 18000000,
       queryConfig: DEFAULT_QUERY_CONFIG,
     };
     dispatch({ type: ActionType.Update, state: loginUser });
