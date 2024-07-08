@@ -101,71 +101,96 @@ prompt_map_dict = {
 }
 
 query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-You are a data query bot.
+You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+<guideline>
+- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
+- The output language will be consistent with the language of the question.
+</guideline>
 """
 
 query_rewrite_system_prompt_dict['llama3-70b-instruct-0'] = """
-You are a data query bot.
+You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+<guideline>
+- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
+- The output language will be consistent with the language of the question.
+</guideline>
 """
 
 query_rewrite_system_prompt_dict['haiku-20240307v1-0'] = """
-You are a data query bot.
+You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+<guideline>
+- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
+- The output language will be consistent with the language of the question.
+</guideline>
 """
 
 query_rewrite_system_prompt_dict['sonnet-20240229v1-0'] = """
-You are a data query bot.
+You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+<guideline>
+- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
+- The output language will be consistent with the language of the question.
+</guideline>
 """
 
 query_rewrite_system_prompt_dict['sonnet-3-5-20240620v1-0'] = """
-You are a data query bot.
+You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+<guideline>
+- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
+- The output language will be consistent with the language of the question.
+</guideline>
 """
 
 
 
 query_rewrite_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-
+Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
 Chat History:
 {chat_history}
 Follow Up Input: {question}
-Standalone question:
+The rewrite question is :
+
 """
 
 query_rewrite_user_prompt_dict['llama3-70b-instruct-0'] = """
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-
+Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
 Chat History:
 {chat_history}
 Follow Up Input: {question}
-Standalone question:
+The rewrite question is :
+
 """
 
 query_rewrite_user_prompt_dict['haiku-20240307v1-0'] = """
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-
+Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
 Chat History:
 {chat_history}
 Follow Up Input: {question}
-Standalone question:
+The rewrite question is :
+
 """
 
 query_rewrite_user_prompt_dict['sonnet-20240229v1-0'] = """
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-
+Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
 Chat History:
 {chat_history}
 Follow Up Input: {question}
-Standalone question:
+The rewrite question is :
+
 """
 
 
 query_rewrite_user_prompt_dict['sonnet-3-5-20240620v1-0'] = """
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-
+Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
 Chat History:
 {chat_history}
 Follow Up Input: {question}
-Standalone question:
+The rewrite question is :
+
 """
 
 intent_system_prompt_dict['mixtral-8x7b-instruct-0'] = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
