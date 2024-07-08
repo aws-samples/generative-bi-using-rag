@@ -29,8 +29,8 @@ import { addUserFeedback } from "../../common/api/API";
 import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constant/constants";
 import styles from "./chat.module.scss";
 import { useSelector } from "react-redux";
-import { UserState } from "../config-panel/types";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { UserState } from "../../common/helpers/types";
 
 export interface ChartTypeProps {
   data_show_type: string;
