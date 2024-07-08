@@ -13,17 +13,34 @@ export interface CommonAlertProps {
 }
 
 export enum ActionType {
-  Update = "Update",
   Delete = "Delete",
+  UpdateUserInfo = "UpdateUserInfo",
   UpdateConfig = "UpdateConfig",
 }
 
 export type UserState = {
+  userInfo: UserInfo,
+  queryConfig: LLMConfigState;
+};
+
+export type UserInfo = {
   userId: string;
   displayName: string;
-  email: string;
   loginExpiration: number;
-  queryConfig: any;
+  isLogin: boolean;
+};
+
+export type LLMConfigState = {
+  selectedLLM: string,
+  selectedDataPro: string,
+  intentChecked: boolean,
+  complexChecked: boolean,
+  answerInsightChecked: boolean,
+  modelSuggestChecked: boolean,
+  temperature: number,
+  topP: number,
+  topK: number,
+  maxLength: number,
 };
 
 export type UserAction = { type: ActionType; state?: any };
