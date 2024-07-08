@@ -1,12 +1,9 @@
 import { createStore } from "redux";
-import { DEFAULT_QUERY_CONFIG, LOCALSTORAGE_KEY } from "../constant/constants";
+import { DEFAULT_QUERY_CONFIG, DEFAULT_USER_INFO, LOCALSTORAGE_KEY } from "../constant/constants";
 import { ActionType, UserAction, UserState } from "./types";
 
 const defaultUserState: UserState = {
-  userId: "",
-  displayName: "",
-  email: "@amazon.com",
-  loginExpiration: +new Date() + 6000,
+  userInfo : DEFAULT_USER_INFO,
   queryConfig: DEFAULT_QUERY_CONFIG,
 };
 
@@ -18,23 +15,18 @@ const initialState = localStorageData || defaultUserState;
 
 const userReducer = (state = initialState, action: UserAction) => {
   switch (action.type) {
-    case ActionType.Update:
-      localStorage.setItem(
-        LOCALSTORAGE_KEY,
-        JSON.stringify({ ...action.state })
-      );
-      return { ...action.state };
     case ActionType.Delete:
       localStorage.setItem(LOCALSTORAGE_KEY, "");
       return null;
+    case ActionType.UpdateUserInfo:
+      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify({ ...state, userInfo: action.state }));
+      return { ...state, userInfo: action.state };
     case ActionType.UpdateConfig:
-      if (localStorage.getItem(LOCALSTORAGE_KEY)) {
-        const userInfo = JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || "");
-        userInfo.queryConfig = action.state.queryConfig;
-        localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify({ ...userInfo }));
-      }
-      return { ...action.state };
+      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify({ ...state, queryConfig: action.state }));
+      return { ...state, queryConfig: action.state };
     default:
+      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify({ ...state }));
+      console.log("initial state: ", { ...state });
       return { ...state };
   }
 };
