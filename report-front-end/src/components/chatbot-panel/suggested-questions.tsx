@@ -3,9 +3,9 @@ import { Dispatch, SetStateAction } from "react";
 import { ChatBotHistoryItem } from "./types";
 import styles from "./chat.module.scss";
 import { useSelector } from "react-redux";
-import { UserState } from "../config-panel/types";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { UserState } from "../../common/helpers/types";
 
 export interface SuggestedQuestionsProps {
   questions: string[];
@@ -16,23 +16,23 @@ export interface SuggestedQuestionsProps {
 
 export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
 
-  const userInfo = useSelector<UserState>((state) => state) as UserState;
+  const userState = useSelector<UserState>((state) => state) as UserState;
 
   const handleSendMessage = (question: string) => {
     /*query({
       query: question,
       setLoading: props.setLoading,
-      configuration: userInfo.queryConfig,
+      configuration: userState.queryConfig,
       setMessageHistory: props.setMessageHistory
     }).then();*/
 
     // Call WebSocket API
     queryWithWS({
       query: question,
-      configuration: userInfo.queryConfig,
+      configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
-      userId: userInfo.userId
+      userId: userState.userInfo.userId
     });
   };
 

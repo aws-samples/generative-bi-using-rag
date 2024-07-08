@@ -39,7 +39,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   const [state, setTextValue] = useState<ChatInputState>({
     value: "",
   });
-  const userInfo = useSelector<UserState>((state) => state) as UserState;
+  const userState = useSelector<UserState>((state) => state) as UserState;
 
   const handleSendMessage = () => {
     setTextValue({ value: "" });
@@ -47,17 +47,17 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     /*    query({
       query: state.value,
       setLoading: props.setLoading,
-      configuration: userInfo.queryConfig,
+      configuration: userState.queryConfig,
       setMessageHistory: props.setMessageHistory,
     }).then();*/
 
     // Call WebSocket API
     queryWithWS({
       query: state.value,
-      configuration: userInfo.queryConfig,
+      configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
-      userId: userInfo.userId,
+      userId: userState.userInfo.userId
     });
   };
 
