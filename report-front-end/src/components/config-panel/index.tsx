@@ -1,4 +1,5 @@
 import {
+  Button,
   FormField,
   HelpPanel,
   Input,
@@ -7,14 +8,18 @@ import {
   SpaceBetween,
   Toggle,
 } from "@cloudscape-design/components";
-import { SetStateAction, useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { BACKEND_URL } from "../../common/constant/constants";
 import { alertMsg } from "../../common/helpers/tools";
 import "./style.scss";
 import { ActionType, UserState } from "../../common/helpers/types";
 
-const ConfigPanel = () => {
+const ConfigPanel = (
+  props: {
+    setToolsHide: Dispatch<SetStateAction<boolean>>;
+  }
+) => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
   const dispatch = useDispatch();
   const [intentChecked, setIntentChecked] = useState(true);
@@ -74,6 +79,11 @@ const ConfigPanel = () => {
       console.error("getSelectData Error", error);
     }
   };
+
+  const onSave = () => {
+    props.setToolsHide(true);
+    alertMsg("Configuration saved", "success");
+  }
 
   useEffect(() => {
     updateCache(
@@ -300,6 +310,14 @@ const ConfigPanel = () => {
             </div>
           </div>
         </FormField>
+
+        <Button
+          variant="primary"
+          className='button'
+          onClick={onSave}
+        >
+          Save
+        </Button>
       </SpaceBetween>
     </HelpPanel>
   );
