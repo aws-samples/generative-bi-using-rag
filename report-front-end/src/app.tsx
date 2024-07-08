@@ -5,8 +5,9 @@ import { BrowserRouter } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useDispatch } from "react-redux";
-import { ActionType, UserInfo } from "./common/helpers/types";
+import { ActionType, UserState } from "./common/helpers/types";
 import AlertMsg from "./components/alert-msg";
+import { DEFAULT_QUERY_CONFIG } from "./common/constant/constants";
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -20,12 +21,13 @@ function App() {
     })();
   }, []);
 
-    useEffect(() => {
-    const loginUser: UserInfo = {
+  useEffect(() => {
+    const loginUser: UserState = {
       userId: user?.attributes?.sub || "",
-      displayName: user?.attributes?.displayName || user?.attributes?.email || "",
-      loginExpiration: + new Date() + 18000000,
-      isLogin: true
+      email: user?.attributes?.email || "",
+      displayName: user?.attributes?.displayName || "",
+      loginExpiration: +new Date() + 18000000,
+      queryConfig: DEFAULT_QUERY_CONFIG,
     };
     dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
   }, [user]);
