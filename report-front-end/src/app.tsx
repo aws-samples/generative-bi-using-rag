@@ -7,6 +7,7 @@ import { Auth } from "aws-amplify";
 import { useDispatch } from "react-redux";
 import { DEFAULT_QUERY_CONFIG } from "./common/constant/constants";
 import { ActionType, UserState } from "./common/helpers/types";
+import AlertMsg from "./components/alert-msg";
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -34,6 +35,7 @@ function App() {
   return (
     <div style={{ height: "100%" }}>
       <BrowserRouter>
+        <AlertMsg />
         <CustomTopNavigation />
         <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
         <div>
