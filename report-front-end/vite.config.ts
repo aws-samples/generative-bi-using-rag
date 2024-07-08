@@ -7,6 +7,7 @@ import path from 'path';
 // Load .env file
 const envPath = path.resolve(__dirname, '.env');
 if (fs.existsSync(envPath)) {
+  dotenv.config({ path: `${envPath}.local` });
   dotenv.config({ path: envPath });
 }
 
