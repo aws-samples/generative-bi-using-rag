@@ -13,6 +13,16 @@ import {
   TextContent,
   TextFilter
 } from "@cloudscape-design/components";
+import Button from "@cloudscape-design/components/button";
+import { Dispatch, SetStateAction, useState } from "react";
+import { useSelector } from "react-redux";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { addUserFeedback } from "../../common/api/API";
+import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constant/constants";
+import { UserState } from "../../common/helpers/types";
+import styles from "./chat.module.scss";
+import SuggestedQuestions from "./suggested-questions";
 import {
   ChatBotAnswerItem,
   ChatBotHistoryItem,
@@ -382,11 +392,11 @@ export interface ChatMessageProps {
 
 export default function ChatMessage(props: ChatMessageProps) {
   return (
-    <SpaceBetween size={'m'}>
+    <SpaceBetween size='xs'>
       {props.message.type === ChatBotMessageType.Human && (
-        <TextContent className={styles.question}>
-          <h3>{props.message.content.toString()}</h3>
-        </TextContent>
+        <div className={styles.question}>
+          <p>{props.message.content.toString()}</p>
+        </div>
       )}
       {props.message.type === ChatBotMessageType.AI && (
         <AIChatMessage

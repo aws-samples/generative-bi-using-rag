@@ -9,7 +9,6 @@ import { ActionType, UserInfo } from "./common/helpers/types";
 import AlertMsg from "./components/alert-msg";
 
 function App() {
-
   const [user, setUser] = useState<any>(null);
 
   const dispatch = useDispatch();
@@ -21,7 +20,7 @@ function App() {
     })();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     const loginUser: UserInfo = {
       userId: user?.attributes?.sub || "",
       displayName: user?.attributes?.displayName || user?.attributes?.email || "",
