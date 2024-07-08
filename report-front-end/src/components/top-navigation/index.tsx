@@ -5,8 +5,13 @@ import {
 // import { Mode } from '@cloudscape-design/global-styles'
 import { Auth } from "aws-amplify";
 import { useEffect, useState } from "react";
-import { APP_RIGHT_LOGO, APP_TITLE } from "../../common/constant/constants";
 // import { Storage } from '../../common/helpers/storage'
+import {
+  APP_LOGO,
+  APP_RIGHT_LOGO,
+  APP_TITLE,
+  CHATBOT_NAME,
+} from "../../common/constant/constants";
 import "./style.scss";
 
 export default function CustomTopNavigation() {
@@ -59,6 +64,12 @@ export default function CustomTopNavigation() {
         identity={{
           href: "/",
           title: APP_TITLE,
+          logo: APP_LOGO
+            ? {
+                src: APP_LOGO,
+                alt: { CHATBOT_NAME } + " Logo",
+              }
+            : undefined,
         }}
         utilities={[
           // {
