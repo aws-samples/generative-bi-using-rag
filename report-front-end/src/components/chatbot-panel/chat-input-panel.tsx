@@ -11,13 +11,15 @@ import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
-import styles from "./chat.module.scss";
-import CustomQuestions from "./custom-questions";
 import {
   ChatBotHistoryItem,
   ChatBotMessageItem,
   ChatInputState,
 } from "./types";
+import styles from "./chat.module.scss";
+import { queryWithWS } from "../../common/api/WebSocket";
+import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { UserState } from "../../common/helpers/types";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
@@ -39,7 +41,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   const [state, setTextValue] = useState<ChatInputState>({
     value: "",
   });
-  const userInfo = useSelector<UserState>((state) => state) as UserState;
+  const userState = useSelector<UserState>((state) => state) as UserState;
 
   const handleSendMessage = () => {
     setTextValue({ value: "" });
@@ -47,17 +49,17 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     /*    query({
       query: state.value,
       setLoading: props.setLoading,
-      configuration: userInfo.queryConfig,
+      configuration: userState.queryConfig,
       setMessageHistory: props.setMessageHistory,
     }).then();*/
 
     // Call WebSocket API
     queryWithWS({
       query: state.value,
-      configuration: userInfo.queryConfig,
+      configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
-      userId: userInfo.userId,
+      userId: userState.userInfo.userId
     });
   };
 

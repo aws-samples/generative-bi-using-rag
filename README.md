@@ -1,7 +1,8 @@
 # Generative BI using RAG on AWS
 [中文文档](README_CN.md) | [日本語ドキュメント](README_JP.md)
 
-The deployment guide here is CDK only. For manual deployment, refer to [Manual Deployment Guide in Chinese](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)
+The deployment guide here is CDK only. For manual deployment or detailed guide, refer to [Manual Deployment Guide in Chinese](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)
+![Screenshot](./assets/interface.png)
 
 ## Introduction
 
@@ -80,9 +81,9 @@ us-west-2, us-east-2, us-east-1, ap-south-1, ap-southeast-1, ap-southeast-2, ap-
 ### 1. Prepare CDK Pre-requisites
 Please follow the instructions in the [CDK Workshop](https://cdkworkshop.com/15-prerequisites.html) to install the CDK toolkit. Make sure your environment have the authorization to create the resources.
 
-### 2. Set a password for the Streamlit Web UI
+### 2. Set a password for the GenBI Admin Web UI
 
-The default password is [Empty] for Streamlit Web UI. If you need to set a password for the Streamlit Web UI, you can update the password in the
+The default password is [Empty] for GenBI Admin Web UI. If you need to set a password for the GenBI Admin Web UI, you can update the password in the
 ```application/config_files/stauth_config.yaml```
 
 for example 

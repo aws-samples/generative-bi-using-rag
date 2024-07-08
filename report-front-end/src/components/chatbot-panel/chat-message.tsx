@@ -31,6 +31,16 @@ import {
   FeedBackType,
   SQLSearchResult
 } from "./types";
+import Button from "@cloudscape-design/components/button";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import SuggestedQuestions from "./suggested-questions";
+import { Dispatch, SetStateAction, useState } from "react";
+import { addUserFeedback } from "../../common/api/API";
+import { DEFAULT_QUERY_CONFIG, SQL_DISPLAY } from "../../common/constant/constants";
+import styles from "./chat.module.scss";
+import { useSelector } from "react-redux";
+import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { UserState } from "../../common/helpers/types";
 
 export interface ChartTypeProps {
   data_show_type: string;

@@ -22,6 +22,9 @@ def main():
     if 'profile_page_mode' not in st.session_state:
         st.session_state['profile_page_mode'] = 'default'
 
+    if 'current_profile' not in st.session_state:
+        st.session_state['current_profile'] = ''
+
     with st.sidebar:
         st.title("Data Profile Management")
         st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
@@ -111,7 +114,6 @@ def main():
             st.session_state.profile_page_mode = 'default'
 
     else:
-        # st.subheader("Data Profile Management")
         st.info('Please select connection in the left sidebar.')
 
 

@@ -1,19 +1,13 @@
-FROM python:3.10-slim
+FROM public.ecr.aws/docker/library/python:3.10-slim
 
 WORKDIR /app
 
 RUN adduser --disabled-password --gecos '' appuser
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    software-properties-common \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 COPY requirements.txt /app/
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 COPY . /app/
 

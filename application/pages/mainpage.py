@@ -31,6 +31,6 @@ if not opensearch_index_init:
     st.info("The OpenSearch Index is Error, Please Create OpenSearch Index First!!!")
 else:
     current_profile = "entity_insert_test"
-    entity = "环比"
-    comment = "环比增长率是指本期和上期相比较的增长率，计算公式为：环比增长率 =（本期数－上期数）/ 上期数 ×100%"
+    entity = "Month on month ratio"
+    comment = "The month on month growth rate refers to the growth rate compared to the previous period, and the calculation formula is: month on month growth rate=(current period number - previous period number)/previous period number x 100%"
     VectorStore.add_entity_sample(current_profile, entity, comment)

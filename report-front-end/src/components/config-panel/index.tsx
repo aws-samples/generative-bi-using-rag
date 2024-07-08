@@ -1,4 +1,5 @@
 import {
+  Button,
   FormField,
   HelpPanel,
   Input,
@@ -7,73 +8,83 @@ import {
   SpaceBetween,
   Toggle,
 } from "@cloudscape-design/components";
-import { SetStateAction, useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { BACKEND_URL } from "../../common/constant/constants";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { alertMsg } from "../../common/helpers/tools";
 import "./style.scss";
-import { ActionType, UserState } from "../../common/helpers/types";
+import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
+import { getSelectData } from "../../common/api/API";
 
-const ConfigPanel = () => {
-  const userInfo = useSelector<UserState>((state) => state) as UserState;
+const ConfigPanel = (
+  props: {
+    setToolsHide: Dispatch<SetStateAction<boolean>>;
+  }
+) => {
+
   const dispatch = useDispatch();
-  const [intentChecked, setIntentChecked] = useState(true);
-  const [complexChecked, setComplexChecked] = useState(true);
-  const [answerInsightChecked, setAnswerInsightChecked] = useState(false);
-  const [contextWindow, setContextWindow] = useState(false);
-  const [modelSuggestChecked, setModelSuggestChecked] = useState(false);
-  const [temperature, setTemperature] = useState(0.01);
-  const [topP, setTopP] = useState(0.999);
-  const [topK, setTopK] = useState(250);
-  const [maxLength, setMaxLength] = useState(2048);
+  const userState = useSelector<UserState>((state) => state) as UserState;
+
+  const [intentChecked, setIntentChecked] = useState(userState.queryConfig.intentChecked);
+  const [complexChecked, setComplexChecked] = useState(userState.queryConfig.complexChecked);
+  const [answerInsightChecked, setAnswerInsightChecked] = useState(userState.queryConfig.answerInsightChecked);
+  const [contextWindow, setContextWindow] = useState(userState.queryConfig.complexChecked);
+  const [modelSuggestChecked, setModelSuggestChecked] = useState(userState.queryConfig.modelSuggestChecked);
+  const [temperature, setTemperature] = useState(userState.queryConfig.temperature);
+  const [topP, setTopP] = useState(userState.queryConfig.topP);
+  const [topK, setTopK] = useState(userState.queryConfig.topK);
+  const [maxLength, setMaxLength] = useState(userState.queryConfig.maxLength);
   const [llmOptions, setLLMOptions] = useState([] as any[]);
   const [dataProOptions, setDataProOptions] = useState([] as any[]);
   const [selectedLLM, setSelectedLLM] = useState({
-    label: "",
-    value: "",
+    label: userState.queryConfig.selectedLLM,
+    value: userState.queryConfig.selectedLLM,
   } as any);
   const [selectedDataPro, setSelectedDataPro] = useState({
-    label: "",
-    value: "",
+    label: userState.queryConfig.selectedDataPro,
+    value: userState.queryConfig.selectedDataPro,
   } as any);
 
   useEffect(() => {
-    getSelectData().then();
-  }, []);
-
-  const getSelectData = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}qa/option`, {
-        method: "GET",
-      });
-      if (!response.ok) {
-        alertMsg("LLM Option Error", "error");
-        return;
-      }
-      const result = await response.json();
-      if (!result || !result.data_profiles || !result.bedrock_model_ids) {
-        alertMsg("LLM Option Error", "error");
-        return;
-      }
+    getSelectData().then(response => {
       const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
         [];
-      result.data_profiles.forEach((item: any) => {
+      response.data_profiles.forEach((item: any) => {
         tempDataPro.push({ label: item, value: item });
       });
       setDataProOptions(tempDataPro);
-      setSelectedDataPro(tempDataPro[0]);
+      if (!userState.queryConfig?.selectedDataPro) {
+        setSelectedDataPro(tempDataPro[0]);
+      }
 
       const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
-      result.bedrock_model_ids.forEach((item: any) => {
+      response.bedrock_model_ids.forEach((item: any) => {
         tempLLM.push({ label: item, value: item });
       });
 
       setLLMOptions(tempLLM);
-      setSelectedLLM(tempLLM[0]);
-    } catch (error) {
-      console.error("getSelectData Error", error);
-    }
-  };
+      if (!userState.queryConfig?.selectedLLM) {
+        setSelectedLLM(tempLLM[0]);
+      }
+    });
+  }, []);
+
+  const onSave = () => {
+    const configInfo: LLMConfigState = {
+      selectedLLM: selectedLLM ? selectedLLM.value : "",
+      selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
+      intentChecked,
+      complexChecked,
+      answerInsightChecked,
+      modelSuggestChecked,
+      temperature,
+      topP,
+      topK,
+      maxLength,
+    };
+    dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+    props.setToolsHide(true);
+    alertMsg("Configuration saved", "success");
+  }
 
   useEffect(() => {
     updateCache(
@@ -114,20 +125,17 @@ const ConfigPanel = () => {
     topK: number,
     maxLength: number
   ) => {
-    const configInfo: UserState = {
-      ...userInfo,
-      queryConfig: {
-        selectedLLM: selectedLLM ? selectedLLM.value : "",
-        selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
-        intentChecked,
-        complexChecked,
-        answerInsightChecked,
-        modelSuggestChecked,
-        temperature,
-        topP,
-        topK,
-        maxLength,
-      },
+    const configInfo: LLMConfigState = {
+      selectedLLM: selectedLLM ? selectedLLM.value : "",
+      selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
+      intentChecked,
+      complexChecked,
+      answerInsightChecked,
+      modelSuggestChecked,
+      temperature,
+      topP,
+      topK,
+      maxLength,
     };
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
   };
@@ -207,7 +215,7 @@ const ConfigPanel = () => {
                 max={1}
                 min={0}
                 step={0.1}
-                valueFormatter={(e) => e.toFixed(2)}
+                valueFormatter={(e) => e.toFixed(1)}
               />
             </div>
           </div>
@@ -226,7 +234,7 @@ const ConfigPanel = () => {
                 setTopP(Number(detail.value));
               }}
               controlId="topp-input"
-              step={0.1}
+              step={0.001}
             />
           </div>
           <div className="flex-wrapper">
@@ -236,7 +244,7 @@ const ConfigPanel = () => {
                 value={topP}
                 max={1}
                 min={0}
-                step={0.1}
+                step={0.001}
                 valueFormatter={(e) => e.toFixed(3)}
               />
             </div>
@@ -279,7 +287,7 @@ const ConfigPanel = () => {
               inputMode="numeric"
               value={maxLength.toString()}
               onChange={({ detail }) => {
-                if (Number(detail.value) > 8192 || Number(detail.value) < 1) {
+                if (Number(detail.value) > 2048 || Number(detail.value) < 1) {
                   return;
                 }
                 setMaxLength(Number(detail.value));
@@ -293,13 +301,21 @@ const ConfigPanel = () => {
               <Slider
                 onChange={({ detail }) => setMaxLength(detail.value)}
                 value={maxLength}
-                max={8192}
+                max={2048}
                 min={1}
                 step={1}
               />
             </div>
           </div>
         </FormField>
+
+        <Button
+          variant="primary"
+          className='button'
+          onClick={onSave}
+        >
+          Save
+        </Button>
       </SpaceBetween>
     </HelpPanel>
   );

@@ -127,7 +127,8 @@ def recurrent_display(messages, i):
     return i
 
 
-def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info, selected_profile,
+def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info,
+                                 selected_profile,
                                  use_rag,
                                  model_provider=None):
     entity_slot_retrieve = []
@@ -241,6 +242,12 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if 'current_model_id' not in st.session_state:
+        st.session_state['current_model_id'] = ''
+
+    if 'config_data_with_analyse' not in st.session_state:
+        st.session_state['config_data_with_analyse'] = False
+
     if 'nlq_chain' not in st.session_state:
         st.session_state['nlq_chain'] = None
 
@@ -250,7 +257,8 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'anthropic.claude-3-opus-20240229-v1:0',
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+                 'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
 
@@ -263,8 +271,15 @@ def main():
     with st.sidebar:
         st.title('Setting')
         # The default option can be the first one in the profiles dictionary, if exists
-
-        selected_profile = st.selectbox("Data Profile", list(st.session_state.get('profiles', {}).keys()))
+        session_state_list = list(st.session_state.get('profiles', {}).keys())
+        if st.session_state.current_profile != "":
+            if st.session_state.current_profile in session_state_list:
+                profile_index = session_state_list.index(st.session_state.current_profile)
+                selected_profile = st.selectbox("Data Profile", session_state_list, index=profile_index)
+            else:
+                selected_profile = st.selectbox("Data Profile", session_state_list)
+        else:
+            selected_profile = st.selectbox("Data Profile", session_state_list)
         if selected_profile != st.session_state.current_profile:
             # clear session state
             st.session_state.selected_sample = ''
@@ -273,7 +288,11 @@ def main():
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
-        model_type = st.selectbox("Choose your model", model_ids)
+        if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
+            model_index = model_ids.index(st.session_state.current_model_id)
+            model_type = st.selectbox("Choose your model", model_ids, index=model_index)
+        else:
+            model_type = st.selectbox("Choose your model", model_ids)
 
         use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
         visualize_results_flag = st.checkbox("Visualize Results", True)
@@ -363,10 +382,13 @@ def main():
                         database_profile['db_url'] = db_url
                         database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
                     prompt_map = database_profile['prompt_map']
+                    prompt_map_flag = False
                     for key in prompt_map_dict:
                         if key not in prompt_map:
                             prompt_map[key] = prompt_map_dict[key]
-                    ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
+                            prompt_map_flag = True
+                    if prompt_map_flag:
+                        ProfileManagement.update_table_prompt_map(selected_profile, prompt_map)
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)
@@ -384,8 +406,7 @@ def main():
                     "intent": "normal_search",
                     "slot": []
                 }
-                # 通过标志位控制后续的逻辑
-                # 主要的意图有4个, 拒绝, 查询, 思维链, 知识问答
+
                 if intent_ner_recognition_flag:
                     with st.status("Performing intent recognition...") as status_text:
                         intent_response = get_query_intent(model_type, search_box, prompt_map)
@@ -413,12 +434,10 @@ def main():
                 else:
                     search_intent_flag = True
 
-                # 主要的逻辑部分，调用LLM
                 if reject_intent_flag:
                     st.write("Your query statement is currently not supported by the system")
 
                 elif search_intent_flag:
-                    # 执行普通的查询，并可视化结果
                     normal_search_result = normal_text_search_streamlit(search_box, model_type,
                                                                         database_profile,
                                                                         entity_slot, opensearch_info,
@@ -456,11 +475,9 @@ def main():
                 else:
                     st.error("Intent recognition error")
 
-                # 前端结果显示agent cot任务拆分信息, normal_text_search 的显示，做了拆分，为了方便跟API逻辑一致
                 if search_intent_flag:
                     if normal_search_result.sql != "":
                         current_nlq_chain.set_generated_sql(normal_search_result.sql)
-                        # st.code(normal_search_result.sql, language="sql")
 
                         current_nlq_chain.set_generated_sql_response(normal_search_result.response)
 
@@ -478,7 +495,6 @@ def main():
                     with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
                         st.write(agent_search_result)
 
-                # 连接数据库，执行SQL, 记录历史记录并展示
                 if search_intent_flag:
                     with st.spinner('Executing query...'):
                         search_intent_result = get_sql_result_tool(
@@ -544,18 +560,16 @@ def main():
                         # do something here
                         pass
 
-                # 数据可视化展示
                 if visualize_results_flag and search_intent_flag:
                     current_search_sql_result = st.session_state.current_sql_result[selected_profile]
                     if current_search_sql_result is not None and len(current_search_sql_result) > 0:
                         st.session_state.messages[selected_profile].append(
                             {"role": "assistant", "content": current_search_sql_result, "type": "pandas"})
-                        # Reset change flag to False
+
                         do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
                     else:
                         st.markdown("No relevant data found")
 
-                # 生成推荐问题
                 if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
                     st.markdown('You might want to further ask:')
                     with st.spinner('Generating suggested questions...'):
@@ -576,7 +590,7 @@ def main():
                                             on_click=sample_question_clicked,
                                             args=[gen_sq_list[2]])
         else:
-            # st.error("Please enter a valid query.")
+
             if current_nlq_chain.is_visualization_config_changed():
                 if visualize_results_flag:
                     do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])

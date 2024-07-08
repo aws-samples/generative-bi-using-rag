@@ -1,10 +1,13 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
 import ChatInputPanel from "./chat-input-panel";
 import { Box, SpaceBetween, Spinner, StatusIndicator } from "@cloudscape-design/components";
 import ChatMessage from "./chat-message";
 import styles from "./chat.module.scss";
 import { createWssClient } from "../../common/api/WebSocket";
+import { getSelectData } from "../../common/api/API";
+import { useDispatch, useSelector } from "react-redux";
+import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
 
 export default function Chat(
   props: {
@@ -17,6 +20,24 @@ export default function Chat(
   const [loading, setLoading] = useState<boolean>(false);
 
   const sendJsonMessage = createWssClient(setStatusMessage, setMessageHistory);
+
+  const dispatch = useDispatch();
+  const userState = useSelector<UserState>((state) => state) as UserState;
+
+  useEffect(() => {
+    if (!userState.queryConfig.selectedLLM || !userState.queryConfig.selectedDataPro) {
+      getSelectData().then(response => {
+        if (response) {
+          const configInfo: LLMConfigState = {
+            ...userState.queryConfig,
+            selectedLLM: response['bedrock_model_ids'][0],
+            selectedDataPro: response['data_profiles'][0],
+          };
+          dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+        }
+      });
+    }
+  }, [userState.queryConfig]);
 
   return (
     <div className={styles.chat_container}>

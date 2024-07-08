@@ -7,24 +7,17 @@ import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import * as crypto from 'crypto';
 
 export class AOSStack extends cdk.Stack {
-  _vpc;
   _securityGroup;
   public readonly endpoint: string;
   public readonly OSMasterUserSecretName: string;
   public readonly OSHostSecretName: string;
 
-  constructor(scope: Construct, id: string, props: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: cdk.StackProps & {vpc: ec2.Vpc} & { subnets: cdk.aws_ec2.ISubnet[] }) {
     super(scope, id, props);
-
-    this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
-      isDefault: true,
-    });
-    // Lookup a VPC
-    // this._vpc = props.vpc;
 
     // Create a Security Group for OpenSearch
     this._securityGroup = new ec2.SecurityGroup(this, 'GenBIOpenSearchSG', {
-      vpc: this._vpc,
+      vpc: props.vpc,
       description: 'Allow access to OpenSearch',
       allowAllOutbound: true
     });
@@ -52,37 +45,43 @@ export class AOSStack extends cdk.Stack {
     this._securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'Allow HTTPS access');
 
     // Find subnets in different availability zones
-    const subnets = this._vpc.selectSubnets({
-      subnetType: ec2.SubnetType.PUBLIC,
+    const subnets = props.vpc.selectSubnets({
+      subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
     }).subnets;
+    // const subnets = this._vpc.selectSubnets().subnets;
 
     // Create the OpenSearch domain
     const domain = new opensearch.Domain(this, 'GenBiOpenSearchDomain', {
       version: opensearch.EngineVersion.OPENSEARCH_2_9,
-      vpc: this._vpc,
+      vpc: props.vpc,
       securityGroups: [this._securityGroup],
       accessPolicies: [new PolicyStatement({
           effect: Effect.ALLOW,
           principals: [new AnyPrincipal()],
           actions: ["es:*"],
-          resources: [`arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`]
+          resources: [`arn:${this.partition}:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`]
       })]
       ,
-      vpcSubnets: [
-        { subnets: [subnets[0]] },
-      ],      
-      // vpcSubnets: SubnetSelection(one_per_az=True, subnet_type=aws_ec2.SubnetType.PUBLIC),
+      vpcSubnets: [ {subnets:  subnets.slice(0, 2)}],
+      // vpcSubnets: [
+      //   { subnets: [subnets[0]] },
+      // ],      
       capacity: {
-        dataNodes: 1,
+        dataNodes: 2,
         dataNodeInstanceType: 'm5.large.search',
         multiAzWithStandbyEnabled: false
       },
+      // capacity: {
+      //   dataNodes: 1,
+      //   dataNodeInstanceType: 'm5.large.search',
+      //   multiAzWithStandbyEnabled: false
+      // },
       ebs: {
         volumeType: ec2.EbsDeviceVolumeType.GP3,
         volumeSize: 20,
       },
       zoneAwareness: {
-        enabled: false
+        availabilityZoneCount: 2
       },
       nodeToNodeEncryption: true,
       encryptionAtRest: {

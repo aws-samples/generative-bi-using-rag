@@ -9,16 +9,21 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 
 export class ECSStack extends cdk.Stack {
-  _vpc;
   public readonly streamlitEndpoint: string;
   public readonly frontendEndpoint: string;
   public readonly apiEndpoint: string;
-constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserPoolId: string} & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string} & {OSHostSecretName: string}) {
+constructor(scope: Construct, id: string, props: cdk.StackProps 
+  & { vpc: ec2.Vpc}
+  & { subnets: cdk.aws_ec2.ISubnet[] } & { cognitoUserPoolId: string} 
+  & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string} 
+  & {OSHostSecretName: string}) {
     super(scope, id, props);
-    // Create a VPC
-    this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
-        isDefault: true,
-    });
+
+    // const isolatedSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }).subnets;
+    // const privateSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets;
+
+    // const nonPublicSubnets = [...isolatedSubnets, ...privateSubnets];
+    // const subnets = this._vpc.selectSubnets().subnets;
 
     // Create ECR repositories and Docker image assets
     const services = [
@@ -26,14 +31,6 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       { name: 'genbi-api', dockerfile: 'Dockerfile-api', port: 8000, dockerfileDirectory: path.join(__dirname, '../../../../application')},
       { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 80, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
     ];
-
-    // const repositoriesAndImages = services.map(service => {
-    //   const dockerImageAsset = new DockerImageAsset(this, `${service.name}DockerImage`, {
-    //     directory: service.dockerfileDirectory, // Dockerfile location
-    //     file: service.dockerfile, // Dockerfile filename
-    //   });
-    //   return { dockerImageAsset, port: service.port };
-    // });
 
     const GenBiStreamlitDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiStreamlitDockerImage', {
         directory: services[0].dockerfileDirectory, 
@@ -47,7 +44,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     
     //  Create an ECS cluster
     const cluster = new ecs.Cluster(this, 'GenBiCluster', {
-      vpc: this._vpc,
+      vpc: props.vpc,
     });
 
     const taskExecutionRole = new iam.Role(this, 'TaskExecutionRole', {
@@ -68,7 +65,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       "es:ESHttpDelete"
       ],
       resources: [
-      `arn:aws:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`
+      `arn:${this.partition}:es:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:domain/*`
       ]
     });
     taskRole.addToPolicy(openSearchAccessPolicy);
@@ -82,7 +79,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       "dynamodb:Query"
       ],
       resources: [
-        `arn:aws:dynamodb:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:table/*`,
+        `arn:${this.partition}:dynamodb:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:table/*`,
       ]
     });
     taskRole.addToPolicy(dynamoDBAccessPolicy);
@@ -93,8 +90,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       "secretsmanager:GetSecretValue"
       ],
       resources: [
-      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
-      `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
+      `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
+      `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
       ]
     });
     taskRole.addToPolicy(opensearchHostUrlSecretAccessPolicy);
@@ -107,11 +104,25 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
         "bedrock:InvokeModelWithResponseStream"
       ],
       resources: [
-        `arn:aws:bedrock:${cdk.Aws.REGION}::foundation-model/*`
+        `arn:${this.partition}:bedrock:${cdk.Aws.REGION}::foundation-model/*`
       ]
       });
       taskRole.addToPolicy(bedrockAccessPolicy);
     } 
+
+    // Add SageMaker endpoint access policy
+    const sageMakerEndpointAccessPolicy = new iam.PolicyStatement({
+    actions: [
+        "sagemaker:InvokeEndpoint",
+        "sagemaker:DescribeEndpoint",
+        "sagemaker:ListEndpoints"
+    ],
+    resources: [
+        `arn:${this.partition}:sagemaker:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:endpoint/*`
+        ]
+    });
+    taskRole.addToPolicy(sageMakerEndpointAccessPolicy);
+
 
     // Add Cognito all access policy
     if (props.env?.region !== "cn-north-1" && props.env?.region !== "cn-northwest-1") {
@@ -121,8 +132,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
         "cognito-idp:*"
         ],
         resources: [
-        `arn:aws:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/*`,
-        `arn:aws:cognito-identity:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:identitypool/*`
+        `arn:${this.partition}:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/*`,
+        `arn:${this.partition}:cognito-identity:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:identitypool/*`
         ]
       });
       taskRole.addToPolicy(cognitoAccessPolicy);
@@ -164,7 +175,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionStreamlit,
       publicLoadBalancer: true,
-      // taskSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      taskSubnets: { subnets: props.subnets },
       assignPublicIp: true
     });
 
@@ -204,7 +215,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       cluster: cluster,
       taskDefinition: taskDefinitionAPI,
       publicLoadBalancer: true,
-      // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      taskSubnets: { subnets: props.subnets },
       assignPublicIp: true
     });
 
@@ -238,7 +249,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
     containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);
     containerFrontend.addEnvironment('VITE_COGNITO_IDENTITY_POOL_ID', '');
     containerFrontend.addEnvironment('VITE_SQL_DISPLAY', 'yes');
-    containerFrontend.addEnvironment('VITE_BACKEND_URL', `https://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
+    containerFrontend.addEnvironment('VITE_BACKEND_URL', `http://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/`);
     containerFrontend.addEnvironment('VITE_WEBSOCKET_URL', `ws://${fargateServiceAPI.loadBalancer.loadBalancerDnsName}/qa/ws`);
     containerFrontend.addEnvironment('VITE_LOGIN_TYPE', 'Cognito');
 
@@ -251,6 +262,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps & { cognitoUserP
       taskDefinition: taskDefinitionFrontend,
       publicLoadBalancer: true,
       // taskSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      taskSubnets: { subnets: props.subnets },
       assignPublicIp: true
     });
 
