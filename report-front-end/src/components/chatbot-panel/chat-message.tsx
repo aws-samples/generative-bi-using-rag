@@ -31,6 +31,7 @@ import {
   FeedBackType,
   SQLSearchResult
 } from "./types";
+import ExpandableSectionWithDivider from "./ExpandableSectionWithDivider";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -148,17 +149,18 @@ function SQLResultPanel(props: SQLResultProps) {
   }
   return (
     <div>
-      <SpaceBetween size={'s'}>
+      <SpaceBetween size="xxl">
         {sql_data.length > 0 ?
-          <ExpandableSection
+          <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
             headerText="Table">
             <DataTable distributions={content} header={headers} />
-          </ExpandableSection> : null
+          </ExpandableSectionWithDivider> : null
         }
+
         {props.result.data_show_type !== "table" && sql_data.length > 0 ?
-          <ExpandableSection
+          <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
             headerText="Chart">
@@ -166,10 +168,11 @@ function SQLResultPanel(props: SQLResultProps) {
               data_show_type={props.result.data_show_type}
               sql_data={props.result.sql_data}
             />
-          </ExpandableSection> : null
+          </ExpandableSectionWithDivider> : null
         }
+
         {props.result.data_show_type === "table" && sql_data_chart.length > 0 ?
-          <ExpandableSection
+          <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
             headerText="Chart">
@@ -177,18 +180,22 @@ function SQLResultPanel(props: SQLResultProps) {
               data_show_type={sql_data_chart[0].chart_type}
               sql_data={sql_data_chart[0].chart_data}
             />
-          </ExpandableSection> : null
+          </ExpandableSectionWithDivider> : null
         }
+
         {props.result?.data_analyse ?
-          <ExpandableSection
+          <ExpandableSectionWithDivider
+            withDivider={SQL_DISPLAY === 'yes'}
             variant="footer"
             defaultExpanded
             headerText="Answer with insights">
             <div
               style={{whiteSpace: "pre-line"}}>{props.result.data_analyse}</div>
-          </ExpandableSection> : null}
+          </ExpandableSectionWithDivider> : null}
+
         {SQL_DISPLAY === 'yes' && (
-          <ExpandableSection
+          <ExpandableSectionWithDivider
+            withDivider={false}
             variant="footer"
             headerText="SQL">
             <SpaceBetween size={'s'}>
@@ -235,7 +242,7 @@ function SQLResultPanel(props: SQLResultProps) {
                 </Button>
               </ColumnLayout>
             </SpaceBetween>
-          </ExpandableSection>)
+          </ExpandableSectionWithDivider>)
         }
       </SpaceBetween>
     </div>
