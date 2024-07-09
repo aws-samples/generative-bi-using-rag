@@ -312,6 +312,7 @@ const ConfigPanel = (
         <Button
           variant="primary"
           className='button'
+          iconName="status-positive"
           onClick={onSave}
         >
           Save
