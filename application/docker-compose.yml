@@ -97,8 +97,8 @@ services:
   front-end:
     container_name: react-front-end
     build:
-      context: .
-      dockerfile: ../report-front-end/Dockerfile
+      context: ../report-front-end
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "80:80" 
