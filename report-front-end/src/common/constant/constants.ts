@@ -28,8 +28,12 @@ export const BACKEND_URL = process.env.VITE_BACKEND_URL?.endsWith("/")
 
 export const APP_TITLE = process.env.VITE_TITLE;
 
-export const APP_LOGO = process.env.VITE_LOGO || '';
+export const APP_LOGO = process.env.VITE_LOGO || "";
 
-export const APP_RIGHT_LOGO = process.env.VITE_RIGHT_LOGO || '';
+export const APP_RIGHT_LOGO = process.env.VITE_RIGHT_LOGO || "";
 
 export const SQL_DISPLAY = process.env.VITE_SQL_DISPLAY;
+
+// TODO: decide whether to add an env var for this style switch?
+// https://cloudscape.design/patterns/general/density-settings/
+export const COMPACT_STYLE = true;
