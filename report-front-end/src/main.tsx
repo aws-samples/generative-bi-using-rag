@@ -6,6 +6,7 @@ import "@cloudscape-design/global-styles/index.css";
 import { Provider } from "react-redux";
 import userReduxStore from "./common/helpers/store";
 import AppConfigured from "./pages/login-page";
+import { applyDensity, Density } from "@cloudscape-design/global-styles";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -13,6 +14,9 @@ const root = ReactDOM.createRoot(
 
 const theme = Storage.getTheme();
 Storage.applyTheme(theme);
+// TODO: decide whether to add an env var for this style switch?
+const useCompactStyle = true;
+applyDensity(useCompactStyle ? Density.Compact : Density.Comfortable);
 
 root.render(
   <React.StrictMode>
