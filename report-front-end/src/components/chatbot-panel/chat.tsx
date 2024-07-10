@@ -1,21 +1,30 @@
+import {
+  Box,
+  SpaceBetween,
+  Spinner,
+  StatusIndicator,
+} from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
+import { useDispatch, useSelector } from "react-redux";
+import { getSelectData } from "../../common/api/API";
+import { createWssClient } from "../../common/api/WebSocket";
+import {
+  ActionType,
+  LLMConfigState,
+  UserState,
+} from "../../common/helpers/types";
 import ChatInputPanel from "./chat-input-panel";
-import { Box, SpaceBetween, Spinner, StatusIndicator } from "@cloudscape-design/components";
 import ChatMessage from "./chat-message";
 import styles from "./chat.module.scss";
-import { createWssClient } from "../../common/api/WebSocket";
-import { getSelectData } from "../../common/api/API";
-import { useDispatch, useSelector } from "react-redux";
-import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
+import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
 
-export default function Chat(
-  props: {
-    setToolsHide: Dispatch<SetStateAction<boolean>>;
-    toolsHide: boolean;
-  }) {
-
-  const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>([]);
+export default function Chat(props: {
+  setToolsHide: Dispatch<SetStateAction<boolean>>;
+  toolsHide: boolean;
+}) {
+  const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
+    []
+  );
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -25,13 +34,16 @@ export default function Chat(
   const userState = useSelector<UserState>((state) => state) as UserState;
 
   useEffect(() => {
-    if (!userState.queryConfig.selectedLLM || !userState.queryConfig.selectedDataPro) {
-      getSelectData().then(response => {
+    if (
+      !userState.queryConfig.selectedLLM ||
+      !userState.queryConfig.selectedDataPro
+    ) {
+      getSelectData().then((response) => {
         if (response) {
           const configInfo: LLMConfigState = {
             ...userState.queryConfig,
-            selectedLLM: response['bedrock_model_ids'][0],
-            selectedDataPro: response['data_profiles'][0],
+            selectedLLM: response["bedrock_model_ids"][0],
+            selectedDataPro: response["data_profiles"][0],
           };
           dispatch({ type: ActionType.UpdateConfig, state: configInfo });
         }
@@ -41,47 +53,61 @@ export default function Chat(
 
   return (
     <div className={styles.chat_container}>
-      <SpaceBetween size={'xxl'}>
+      <SpaceBetween size="xxs">
         {messageHistory.map((message, idx) => {
-            return (
-              <div key={idx}>
-                <ChatMessage
-                  key={idx}
-                  message={message}
-                  setLoading={setLoading}
-                  setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
-                  sendMessage={sendJsonMessage}
-                />
-              </div>
-            );
-          }
+          return (
+            <div key={idx}>
+              <ChatMessage
+                key={idx}
+                message={message}
+                setLoading={setLoading}
+                setMessageHistory={(
+                  history: SetStateAction<ChatBotHistoryItem[]>
+                ) => setMessageHistory(history)}
+                sendMessage={sendJsonMessage}
+              />
+            </div>
+          );
+        })}
+        {statusMessage.length === 0 ? null : (
+          <div className={styles.status_container}>
+            <SpaceBetween size="xxs">
+              {statusMessage.map((message, idx) => {
+                const displayMessage =
+                  idx % 2 === 1
+                    ? true
+                    : idx === statusMessage.length - 1
+                    ? true
+                    : false;
+                return displayMessage ? (
+                  <StatusIndicator
+                    key={idx}
+                    type={
+                      message.content.status === "end"
+                        ? "success"
+                        : "in-progress"
+                    }
+                  >
+                    {message.content.text}
+                  </StatusIndicator>
+                ) : null;
+              })}
+            </SpaceBetween>
+          </div>
         )}
-        <div className={styles.status_container}>
-          <SpaceBetween size={'xxs'}>
-            {statusMessage.map((message, idx) => {
-              return (
-                <StatusIndicator
-                  key={idx}
-                  type={message.content.status === "end" ? "success" : "in-progress"}>
-                  {message.content.text}
-                </StatusIndicator>
-              );
-            })
-            }
-          </SpaceBetween>
-        </div>
+
         {loading && (
           <div>
             <Box float="left">
-              <Spinner/>
+              <Spinner />
             </Box>
           </div>
         )}
       </SpaceBetween>
       <div className={styles.welcome_text}>
-        {messageHistory.length === 0 && statusMessage.length === 0 && !loading && (
-          <center>{'GenBI Chatbot'}</center>
-        )}
+        {messageHistory.length === 0 &&
+          statusMessage.length === 0 &&
+          !loading && <center>{"GenBI Chatbot"}</center>}
       </div>
       <div className={styles.input_container}>
         <ChatInputPanel
@@ -89,8 +115,12 @@ export default function Chat(
           toolsHide={props.toolsHide}
           setLoading={setLoading}
           messageHistory={messageHistory}
-          setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) => setMessageHistory(history)}
-          setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) => setStatusMessage(message)}
+          setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
+            setMessageHistory(history)
+          }
+          setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
+            setStatusMessage(message)
+          }
           sendMessage={sendJsonMessage}
         />
       </div>
