@@ -36,6 +36,7 @@ export type LLMConfigState = {
   intentChecked: boolean,
   complexChecked: boolean,
   answerInsightChecked: boolean,
+  contextWindow: boolean,
   modelSuggestChecked: boolean,
   temperature: number,
   topP: number,

@@ -13,6 +13,7 @@ export const DEFAULT_QUERY_CONFIG = {
   intentChecked: true,
   complexChecked: true,
   answerInsightChecked: false,
+  contextWindow: false,
   modelSuggestChecked: false,
   temperature: 0.1,
   topP: 1,
