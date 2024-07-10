@@ -27,8 +27,13 @@
 }
 
 .status_container {
-  max-width: 400px;
-  margin-left: 20px;
+  // max-width: 400px;
+  // margin-left: 20px;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 0 10px rgb(190, 190, 190);
+  border: none;
+  padding: 20px;
+  margin-bottom: 60px;
 }
 
 .sql_container {
@@ -88,6 +93,7 @@
   border-radius: 0 0 18px 18px !important;
   box-shadow: 0 0 10px rgb(190, 190, 190);
   border: none !important;
+  margin-bottom: 60px;
 }
 
 .input_textarea_container {

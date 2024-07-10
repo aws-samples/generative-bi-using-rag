@@ -29,7 +29,7 @@ export default function Chat(props: {
   const [loading, setLoading] = useState<boolean>(false);
 
   const sendJsonMessage = createWssClient(setStatusMessage, setMessageHistory);
-
+  console.log({ statusMessage });
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
 
@@ -69,22 +69,33 @@ export default function Chat(props: {
             </div>
           );
         })}
-        <div className={styles.status_container}>
-          <SpaceBetween size={"xxs"}>
-            {statusMessage.map((message, idx) => {
-              return (
-                <StatusIndicator
-                  key={idx}
-                  type={
-                    message.content.status === "end" ? "success" : "in-progress"
-                  }
-                >
-                  {message.content.text}
-                </StatusIndicator>
-              );
-            })}
-          </SpaceBetween>
-        </div>
+        {statusMessage.length === 0 ? null : (
+          <div className={styles.status_container}>
+            <SpaceBetween size="xxs">
+              {statusMessage.map((message, idx) => {
+                const displayMessage =
+                  idx % 2 === 1
+                    ? true
+                    : idx === statusMessage.length - 1
+                    ? true
+                    : false;
+                return displayMessage ? (
+                  <StatusIndicator
+                    key={idx}
+                    type={
+                      message.content.status === "end"
+                        ? "success"
+                        : "in-progress"
+                    }
+                  >
+                    {message.content.text}
+                  </StatusIndicator>
+                ) : null;
+              })}
+            </SpaceBetween>
+          </div>
+        )}
+
         {loading && (
           <div>
             <Box float="left">

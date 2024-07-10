@@ -135,6 +135,9 @@ export interface SQLResultProps {
   result: SQLSearchResult;
 }
 
+/**
+ * The display panel of Table, Chart, SQL etc.
+ */
 function SQLResultPanel(props: SQLResultProps) {
   const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
   const userInfo = useSelector<UserState>((state) => state) as UserState;
