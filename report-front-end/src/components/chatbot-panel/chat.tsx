@@ -53,7 +53,7 @@ export default function Chat(props: {
 
   return (
     <div className={styles.chat_container}>
-      <SpaceBetween size={"xxl"}>
+      <SpaceBetween size="xxs">
         {messageHistory.map((message, idx) => {
           return (
             <div key={idx}>
