@@ -29,7 +29,7 @@ export default function Chat(props: {
   const [loading, setLoading] = useState<boolean>(false);
 
   const sendJsonMessage = createWssClient(setStatusMessage, setMessageHistory);
-  console.log({ statusMessage });
+
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
 
