@@ -1,6 +1,8 @@
+import { Divider } from "@aws-amplify/ui-react";
 import {
   Button,
   FormField,
+  Grid,
   HelpPanel,
   Input,
   Select,
@@ -10,26 +12,39 @@ import {
 } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { alertMsg } from "../../common/helpers/tools";
-import "./style.scss";
-import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
 import { getSelectData } from "../../common/api/API";
+import { alertMsg } from "../../common/helpers/tools";
+import {
+  ActionType,
+  LLMConfigState,
+  UserState,
+} from "../../common/helpers/types";
+import "./style.scss";
 
-const ConfigPanel = (
-  props: {
-    setToolsHide: Dispatch<SetStateAction<boolean>>;
-  }
-) => {
-
+const ConfigPanel = (props: {
+  setToolsHide: Dispatch<SetStateAction<boolean>>;
+}) => {
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
 
-  const [intentChecked, setIntentChecked] = useState(userState.queryConfig.intentChecked);
-  const [complexChecked, setComplexChecked] = useState(userState.queryConfig.complexChecked);
-  const [answerInsightChecked, setAnswerInsightChecked] = useState(userState.queryConfig.answerInsightChecked);
-  const [contextWindow, setContextWindow] = useState(userState.queryConfig.complexChecked);
-  const [modelSuggestChecked, setModelSuggestChecked] = useState(userState.queryConfig.modelSuggestChecked);
-  const [temperature, setTemperature] = useState(userState.queryConfig.temperature);
+  const [intentChecked, setIntentChecked] = useState(
+    userState.queryConfig.intentChecked
+  );
+  const [complexChecked, setComplexChecked] = useState(
+    userState.queryConfig.complexChecked
+  );
+  const [answerInsightChecked, setAnswerInsightChecked] = useState(
+    userState.queryConfig.answerInsightChecked
+  );
+  const [contextWindow, setContextWindow] = useState(
+    userState.queryConfig.complexChecked
+  );
+  const [modelSuggestChecked, setModelSuggestChecked] = useState(
+    userState.queryConfig.modelSuggestChecked
+  );
+  const [temperature, setTemperature] = useState(
+    userState.queryConfig.temperature
+  );
   const [topP, setTopP] = useState(userState.queryConfig.topP);
   const [topK, setTopK] = useState(userState.queryConfig.topK);
   const [maxLength, setMaxLength] = useState(userState.queryConfig.maxLength);
@@ -45,7 +60,7 @@ const ConfigPanel = (
   } as any);
 
   useEffect(() => {
-    getSelectData().then(response => {
+    getSelectData().then((response) => {
       const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
         [];
       response.data_profiles.forEach((item: any) => {
@@ -84,7 +99,7 @@ const ConfigPanel = (
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
     props.setToolsHide(true);
     alertMsg("Configuration saved", "success");
-  }
+  };
 
   useEffect(() => {
     updateCache(
@@ -142,178 +157,214 @@ const ConfigPanel = (
 
   return (
     <HelpPanel header="Configuration">
-      <SpaceBetween size="l">
-        <FormField label="LLM" description="Select a large language model">
-          <Select
-            options={llmOptions}
-            selectedOption={selectedLLM}
-            onChange={({ detail }) => setSelectedLLM(detail.selectedOption)}
-          ></Select>
-        </FormField>
-        <FormField
-          label="Data Profile"
-          description="Select a profile/workspace"
-        >
-          <Select
-            options={dataProOptions}
-            selectedOption={selectedDataPro}
-            onChange={({ detail }) => setSelectedDataPro(detail.selectedOption)}
-          ></Select>
-        </FormField>
-        <Toggle
-          onChange={({ detail }) => setIntentChecked(detail.checked)}
-          checked={intentChecked}
-        >
-          Query Intention Recognition and Entity Recognition
-        </Toggle>
-        <Toggle
-          onChange={({ detail }) => setComplexChecked(detail.checked)}
-          checked={complexChecked}
-        >
-          Complex business Query Chain-of-Thought
-        </Toggle>
-        <Toggle
-          onChange={({ detail }) => setModelSuggestChecked(detail.checked)}
-          checked={modelSuggestChecked}
-        >
-          Model suggestion Query
-        </Toggle>
-        <Toggle
-          onChange={({ detail }) => setAnswerInsightChecked(detail.checked)}
-          checked={answerInsightChecked}
-        >
-          Answer with Insights
-        </Toggle>
-        <Toggle
-          onChange={({ detail }) => setContextWindow(detail.checked)}
-          checked={contextWindow}
-        >
-          Context window
-        </Toggle>
+      <SpaceBetween size="xs">
+        <SpaceBetween size="m">
+          <FormField label="Large Language Model">
+            <Select
+              options={llmOptions}
+              selectedOption={selectedLLM}
+              onChange={({ detail }) => setSelectedLLM(detail.selectedOption)}
+            ></Select>
+          </FormField>
+          <FormField label="Data Profile/Workspace">
+            <Select
+              options={dataProOptions}
+              selectedOption={selectedDataPro}
+              onChange={({ detail }) =>
+                setSelectedDataPro(detail.selectedOption)
+              }
+            ></Select>
+          </FormField>
+        </SpaceBetween>
 
-        <FormField label="Temperature">
-          <div className="input-wrapper">
-            <Input
-              type="number"
-              inputMode="decimal"
-              value={temperature.toString()}
-              onChange={({ detail }) => {
-                if (Number(detail.value) > 1 || Number(detail.value) < 0) {
-                  return;
-                }
-                setTemperature(Number(detail.value));
-              }}
-              controlId="temperature-input"
-              step={0.1}
-            />
-          </div>
-          <div className="flex-wrapper">
-            <div className="slider-wrapper">
-              <Slider
-                onChange={({ detail }) => setTemperature(detail.value)}
-                value={temperature}
-                max={1}
-                min={0}
-                step={0.1}
-                valueFormatter={(e) => e.toFixed(1)}
-              />
-            </div>
-          </div>
-        </FormField>
+        <Divider label="Query Configuration" />
 
-        <FormField label="Top P">
-          <div className="input-wrapper">
-            <Input
-              type="number"
-              inputMode="numeric"
-              value={topP.toString()}
-              onChange={({ detail }) => {
-                if (Number(detail.value) > 1 || Number(detail.value) < 0) {
-                  return;
-                }
-                setTopP(Number(detail.value));
-              }}
-              controlId="topp-input"
-              step={0.001}
-            />
-          </div>
-          <div className="flex-wrapper">
-            <div className="slider-wrapper">
-              <Slider
-                onChange={({ detail }) => setTopP(detail.value)}
-                value={topP}
-                max={1}
-                min={0}
-                step={0.001}
-                valueFormatter={(e) => e.toFixed(3)}
-              />
-            </div>
-          </div>
-        </FormField>
+        <SpaceBetween size="s">
+          <Toggle
+            onChange={({ detail }) => setIntentChecked(detail.checked)}
+            checked={intentChecked}
+          >
+            Query Intention Recognition and Entity Recognition
+          </Toggle>
+          <Toggle
+            onChange={({ detail }) => setComplexChecked(detail.checked)}
+            checked={complexChecked}
+          >
+            Complex business Query Chain-of-Thought
+          </Toggle>
+          <Toggle
+            onChange={({ detail }) => setModelSuggestChecked(detail.checked)}
+            checked={modelSuggestChecked}
+          >
+            Model suggestion Query
+          </Toggle>
+          <Toggle
+            onChange={({ detail }) => setAnswerInsightChecked(detail.checked)}
+            checked={answerInsightChecked}
+          >
+            Answer with Insights
+          </Toggle>
+          <Toggle
+            onChange={({ detail }) => setContextWindow(detail.checked)}
+            checked={contextWindow}
+          >
+            Context window
+          </Toggle>
+        </SpaceBetween>
 
-        <FormField label="Top K">
-          <div className="input-wrapper">
-            <Input
-              type="number"
-              inputMode="numeric"
-              value={topK.toString()}
-              onChange={({ detail }) => {
-                if (Number(detail.value) > 500 || Number(detail.value) < 0) {
-                  return;
-                }
-                setTopK(Number(detail.value));
-              }}
-              controlId="topk-input"
-              step={1}
-            />
-          </div>
-          <div className="flex-wrapper">
-            <div className="slider-wrapper">
-              <Slider
-                onChange={({ detail }) => setTopK(detail.value)}
-                value={topK}
-                max={500}
-                min={0}
-                step={1}
-              />
-            </div>
-          </div>
-        </FormField>
+        <Divider label="Model Configuration" />
 
-        <FormField label="Maximum Length">
-          <div className="input-wrapper">
-            <Input
-              type="number"
-              inputMode="numeric"
-              value={maxLength.toString()}
-              onChange={({ detail }) => {
-                if (Number(detail.value) > 2048 || Number(detail.value) < 1) {
-                  return;
-                }
-                setMaxLength(Number(detail.value));
-              }}
-              controlId="maxlength-input"
-              step={1}
-            />
-          </div>
-          <div className="flex-wrapper">
-            <div className="slider-wrapper">
-              <Slider
-                onChange={({ detail }) => setMaxLength(detail.value)}
-                value={maxLength}
-                max={2048}
-                min={1}
-                step={1}
-              />
-            </div>
-          </div>
-        </FormField>
+        <SpaceBetween size="xxxs">
+          <Grid
+            gridDefinition={[
+              { colspan: { default: 6, xxs: 12 } },
+              { colspan: { default: 1, xxs: 0 } },
+              { colspan: { default: 5, xxs: 12 } },
+            ]}
+          >
+            <FormField label="Temperature">
+              <div className="input-wrapper">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={temperature.toString()}
+                  onChange={({ detail }) => {
+                    if (Number(detail.value) > 1 || Number(detail.value) < 0) {
+                      return;
+                    }
+                    setTemperature(Number(detail.value));
+                  }}
+                  controlId="temperature-input"
+                  step={0.1}
+                />
+              </div>
+              <div className="flex-wrapper">
+                <div className="slider-wrapper">
+                  <Slider
+                    onChange={({ detail }) => setTemperature(detail.value)}
+                    value={temperature}
+                    max={1}
+                    min={0}
+                    step={0.1}
+                    valueFormatter={(e) => e.toFixed(1)}
+                  />
+                </div>
+              </div>
+            </FormField>
+
+            <VerticalDivider />
+
+            <FormField label="Top P">
+              <div className="input-wrapper">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={topP.toString()}
+                  onChange={({ detail }) => {
+                    if (Number(detail.value) > 1 || Number(detail.value) < 0) {
+                      return;
+                    }
+                    setTopP(Number(detail.value));
+                  }}
+                  controlId="topp-input"
+                  step={0.001}
+                />
+              </div>
+              <div className="flex-wrapper">
+                <div className="slider-wrapper">
+                  <Slider
+                    onChange={({ detail }) => setTopP(detail.value)}
+                    value={topP}
+                    max={1}
+                    min={0}
+                    step={0.001}
+                    valueFormatter={(e) => e.toFixed(3)}
+                  />
+                </div>
+              </div>
+            </FormField>
+          </Grid>
+
+          <Grid
+            gridDefinition={[
+              { colspan: { default: 6, xxs: 12 } },
+              { colspan: { default: 1, xxs: 0 } },
+              { colspan: { default: 5, xxs: 12 } },
+            ]}
+          >
+            <FormField label="Max Length">
+              <div className="input-wrapper">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={maxLength.toString()}
+                  onChange={({ detail }) => {
+                    if (
+                      Number(detail.value) > 2048 ||
+                      Number(detail.value) < 1
+                    ) {
+                      return;
+                    }
+                    setMaxLength(Number(detail.value));
+                  }}
+                  controlId="maxlength-input"
+                  step={1}
+                />
+              </div>
+              <div className="flex-wrapper">
+                <div className="slider-wrapper">
+                  <Slider
+                    onChange={({ detail }) => setMaxLength(detail.value)}
+                    value={maxLength}
+                    max={2048}
+                    min={1}
+                    step={1}
+                  />
+                </div>
+              </div>
+            </FormField>
+
+            <VerticalDivider />
+
+            <FormField label="Top K">
+              <div className="input-wrapper">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={topK.toString()}
+                  onChange={({ detail }) => {
+                    if (
+                      Number(detail.value) > 500 ||
+                      Number(detail.value) < 0
+                    ) {
+                      return;
+                    }
+                    setTopK(Number(detail.value));
+                  }}
+                  controlId="topk-input"
+                  step={1}
+                />
+              </div>
+              <div className="flex-wrapper">
+                <div className="slider-wrapper">
+                  <Slider
+                    onChange={({ detail }) => setTopK(detail.value)}
+                    value={topK}
+                    max={500}
+                    min={0}
+                    step={1}
+                  />
+                </div>
+              </div>
+            </FormField>
+          </Grid>
+        </SpaceBetween>
 
         <Button
           variant="primary"
-          className='button'
           iconName="status-positive"
           onClick={onSave}
+          className="save-button"
         >
           Save
         </Button>
@@ -322,3 +373,16 @@ const ConfigPanel = (
   );
 };
 export default ConfigPanel;
+
+function VerticalDivider() {
+  return (
+    <div
+      style={{
+        borderLeft: "1px solid silver",
+        width: "1px",
+        height: "80%",
+        margin: "0 auto",
+      }}
+    />
+  );
+}2
