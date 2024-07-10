@@ -14,3 +14,4 @@ sqlparse~=0.4.2
 debugpy
 pandas==2.0.3
 openpyxl
+starrocks
