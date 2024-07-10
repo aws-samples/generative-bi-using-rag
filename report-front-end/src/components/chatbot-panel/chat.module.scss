@@ -166,20 +166,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-content: stretch;
-  grid-gap: 15px;
+  grid-gap: 8px 10px;
 }
 
 .button {
   border: 1px dotted #ccc !important;
   font-weight: 300 !important;
-  border-radius: 8px !important;
-  padding: 6px;
+  border-radius: 10px !important;
+  padding: 4px 12px !important;
   background-color: white;
   color: gray !important;
   &:hover {
     background-color: #f4f4f4;
     box-shadow: 0 0 4px 1px #cdcdcdb3 inset;
-    transform: scale(1.01);
+    transform: scale(0.99);
   }
   &:focus {
     outline: none;
