@@ -37,7 +37,7 @@ const ConfigPanel = (props: {
     userState.queryConfig.answerInsightChecked
   );
   const [contextWindow, setContextWindow] = useState(
-    userState.queryConfig.complexChecked
+    userState.queryConfig.contextWindow
   );
   const [modelSuggestChecked, setModelSuggestChecked] = useState(
     userState.queryConfig.modelSuggestChecked
@@ -90,6 +90,7 @@ const ConfigPanel = (props: {
       intentChecked,
       complexChecked,
       answerInsightChecked,
+      contextWindow,
       modelSuggestChecked,
       temperature,
       topP,
@@ -146,6 +147,7 @@ const ConfigPanel = (props: {
       intentChecked,
       complexChecked,
       answerInsightChecked,
+      contextWindow,
       modelSuggestChecked,
       temperature,
       topP,
