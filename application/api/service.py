@@ -240,14 +240,13 @@ def ask(question: Question) -> Answer:
         split_strings = generated_sq.split("[generate]")
         generate_suggested_question_list = [s.strip() for s in split_strings if s.strip()]
 
-    # 连接数据库，执行SQL, 记录历史记录并展示
     if search_intent_flag:
         if normal_search_result.sql != "":
             current_nlq_chain.set_generated_sql(normal_search_result.sql)
-            sql_search_result.sql = normal_search_result.sql
+            sql_search_result.sql = normal_search_result.sql.strip()
             current_nlq_chain.set_generated_sql_response(normal_search_result.response)
             if explain_gen_process_flag:
-                sql_search_result.sql_gen_process = current_nlq_chain.get_generated_sql_explain()
+                sql_search_result.sql_gen_process = current_nlq_chain.get_generated_sql_explain().strip()
         else:
             sql_search_result.sql = "-1"
 
@@ -484,10 +483,10 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     if search_intent_flag:
         if normal_search_result.sql != "":
             current_nlq_chain.set_generated_sql(normal_search_result.sql)
-            sql_search_result.sql = normal_search_result.sql
+            sql_search_result.sql = normal_search_result.sql.strip()
             current_nlq_chain.set_generated_sql_response(normal_search_result.response)
             if explain_gen_process_flag:
-                sql_search_result.sql_gen_process = current_nlq_chain.get_generated_sql_explain()
+                sql_search_result.sql_gen_process = current_nlq_chain.get_generated_sql_explain().strip()
         else:
             sql_search_result.sql = "-1"
 
