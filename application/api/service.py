@@ -29,10 +29,10 @@ from fastapi import WebSocket
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-all_profiles = ProfileManagement.get_all_profiles_with_info()
 
 
 def get_option() -> Option:
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
     option = Option(
         data_profiles=all_profiles.keys(),
         bedrock_model_ids=BEDROCK_MODEL_IDS,
@@ -62,6 +62,7 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
     logger.info('try to get generated sql from LLM')
 
     entity_slot_retrieve = []
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
     database_profile = all_profiles[question.profile_name]
     if question.intent_ner_recognition:
         intent_response = get_query_intent(question.bedrock_model_id, question.keywords, database_profile['prompt_map'])
@@ -627,6 +628,7 @@ def explain_with_response_stream(current_nlq_chain: NLQChain) -> dict:
 
 
 def get_executed_result(current_nlq_chain: NLQChain) -> str:
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
     sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[current_nlq_chain.profile])
     final_sql_query_result = sql_query_result.to_markdown()
     return final_sql_query_result
