@@ -31,7 +31,8 @@
     "redux": "^5.0.1",
     "regenerator-runtime": "^0.14.0",
     "remark-gfm": "^4.0.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "umi-request": "^1.4.0"
   },
   "devDependencies": {
     "@types/luxon": "^3.3.2",

@@ -29,7 +29,7 @@ export default function Chat(props: {
       !userState.queryConfig.selectedLLM ||
       !userState.queryConfig.selectedDataPro
     ) {
-      getSelectData().then((response) => {
+      getSelectData().then((response: any) => {
         if (response) {
           if (!userState.queryConfig.selectedLLM && response["bedrock_model_ids"]) {
             const configInfo: LLMConfigState = {

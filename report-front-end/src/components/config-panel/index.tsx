@@ -60,25 +60,31 @@ const ConfigPanel = (props: {
   } as any);
 
   useEffect(() => {
-    getSelectData().then((response) => {
-      const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
-        [];
-      response.data_profiles.forEach((item: any) => {
-        tempDataPro.push({ label: item, value: item });
-      });
-      setDataProOptions(tempDataPro);
-      if (!userState.queryConfig?.selectedDataPro) {
-        setSelectedDataPro(tempDataPro[0]);
-      }
+    getSelectData().then((response: any) => {
+      if (response) {
+        if (response["data_profiles"]) {
+          const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
+            [];
+          response["data_profiles"].forEach((item: any) => {
+            tempDataPro.push({ label: item, value: item });
+          });
+          setDataProOptions(tempDataPro);
+          if (!userState.queryConfig?.selectedDataPro) {
+            setSelectedDataPro(tempDataPro[0]);
+          }
+        }
 
-      const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
-      response.bedrock_model_ids.forEach((item: any) => {
-        tempLLM.push({ label: item, value: item });
-      });
+        if (response["bedrock_model_ids"]) {
+          const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
+          response["bedrock_model_ids"].forEach((item: any) => {
+            tempLLM.push({ label: item, value: item });
+          });
 
-      setLLMOptions(tempLLM);
-      if (!userState.queryConfig?.selectedLLM) {
-        setSelectedLLM(tempLLM[0]);
+          setLLMOptions(tempLLM);
+          if (!userState.queryConfig?.selectedLLM) {
+            setSelectedLLM(tempLLM[0]);
+          }
+        }
       }
     });
   }, []);

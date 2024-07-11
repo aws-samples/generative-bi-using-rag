@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Authenticator, defaultDarkModeOverride, ThemeProvider, } from "@aws-amplify/ui-react";
+import { defaultDarkModeOverride, ThemeProvider } from "@aws-amplify/ui-react";
 import App from "../../app";
 import { Amplify } from "aws-amplify";
 import { Storage } from "../../common/helpers/storage";
@@ -29,7 +29,7 @@ export default function AppConfigured() {
         ) {
           const newValue =
             document.documentElement.style.getPropertyValue(
-              "--app-color-scheme"
+              "--app-color-scheme",
             );
 
           const mode = newValue === "dark" ? Mode.Dark : Mode.Light;
@@ -58,9 +58,7 @@ export default function AppConfigured() {
       }}
       colorMode={theme === Mode.Dark ? "dark" : "light"}
     >
-      <Authenticator signUpAttributes={['email']}>
-        <App />
-      </Authenticator>
+      <App />
     </ThemeProvider>
   );
 }

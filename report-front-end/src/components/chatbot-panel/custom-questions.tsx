@@ -8,6 +8,7 @@ import styles from "./chat.module.scss";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
+import request from "umi-request";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
@@ -24,19 +25,15 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   const userState = useSelector<UserState>((state) => state) as UserState;
 
   const getRecommendQuestions = async (data_profile: string) => {
-    const url = `${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`;
-    console.log(url);
     try {
-      const response = await fetch(url, {
-        method: "GET",
+      request.get(`${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`, {
+        timeout: 3000,
+      }).then((response: any) => {
+        if (response) {
+          const custom_question = response['custom_question'];
+          setQuestions(custom_question);
+        }
       });
-      if (!response.ok) {
-        console.error("getCustomQuestions Error", response);
-        return;
-      }
-      const result = await response.json();
-      const custom_question = result['custom_question'];
-      setQuestions(custom_question);
     } catch (error) {
       console.error("getCustomQuestions Error", error);
     }
