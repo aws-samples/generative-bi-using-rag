@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from utils.prompt import SUGGESTED_QUESTION_PROMPT_CLAUDE3
 import boto3
 import logging
+import os
 from botocore.exceptions import ClientError
 from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
