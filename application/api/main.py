@@ -41,12 +41,14 @@ def ask(question: Question):
 @router.post("/user_feedback")
 def user_feedback(input_data: FeedBackInput):
     feedback_type = input_data.feedback_type
+    user_id = input_data.user_id
+    session_id = input_data.session_id
     if feedback_type == "upvote":
-        upvote_res = service.user_feedback_upvote(input_data.data_profiles, input_data.query,
+        upvote_res = service.user_feedback_upvote(input_data.data_profiles, user_id, session_id, input_data.query,
                                                   input_data.query_intent, input_data.query_answer)
         return upvote_res
     else:
-        downvote_res = service.user_feedback_downvote(input_data.data_profiles, input_data.query,
+        downvote_res = service.user_feedback_downvote(input_data.data_profiles, user_id, session_id, input_data.query,
                                                       input_data.query_intent, input_data.query_answer)
         return downvote_res
 

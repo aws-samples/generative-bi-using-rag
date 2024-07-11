@@ -29,10 +29,10 @@ from fastapi import WebSocket
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-all_profiles = ProfileManagement.get_all_profiles_with_info()
 
 
 def get_option() -> Option:
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
     option = Option(
         data_profiles=all_profiles.keys(),
         bedrock_model_ids=BEDROCK_MODEL_IDS,
@@ -62,6 +62,7 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
     logger.info('try to get generated sql from LLM')
 
     entity_slot_retrieve = []
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
     database_profile = all_profiles[question.profile_name]
     if question.intent_ner_recognition:
         intent_response = get_query_intent(question.bedrock_model_id, question.keywords, database_profile['prompt_map'])
@@ -111,6 +112,8 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
 def ask(question: Question) -> Answer:
     logger.debug(question)
     verify_parameters(question)
+    user_id = question.user_id
+    session_id =question.session_id
 
     intent_ner_recognition_flag = question.intent_ner_recognition_flag
     agent_cot_flag = question.agent_cot_flag
@@ -193,7 +196,7 @@ def ask(question: Question) -> Answer:
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[])
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql="", query=search_box,
                                           intent="reject_search", log_info="", time_str=current_time)
         return answer
     elif search_intent_flag:
@@ -210,7 +213,7 @@ def ask(question: Question) -> Answer:
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[])
 
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql="", query=search_box,
                                           intent="knowledge_search",
                                           log_info=knowledge_search_result.knowledge_response,
                                           time_str=current_time)
@@ -272,7 +275,7 @@ def ask(question: Question) -> Answer:
                 sql_search_result.data_show_type = model_select_type
 
         log_info = str(search_intent_result["error_info"]) + ";" + sql_search_result.data_analyse
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql,
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql=sql_search_result.sql,
                                           query=search_box,
                                           intent="normal_search",
                                           log_info=log_info,
@@ -318,7 +321,7 @@ def ask(question: Question) -> Answer:
             else:
                 log_info = agent_search_result[i]["query"] + "The SQL error Info: "
             log_id = generate_log_id()
-            LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=each_task_res["sql"],
+            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql=each_task_res["sql"],
                                               query=search_box + "; The sub task is " + agent_search_result[i]["query"],
                                               intent="agent_search",
                                               log_info=log_info,
@@ -340,6 +343,7 @@ def ask(question: Question) -> Answer:
 async def ask_websocket(websocket: WebSocket, question : Question):
     logger.info(question)
     session_id = question.session_id
+    user_id = question.user_id
 
     intent_ner_recognition_flag = question.intent_ner_recognition_flag
     agent_cot_flag = question.agent_cot_flag
@@ -424,7 +428,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[])
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql="", query=search_box,
                                           intent="reject_search", log_info="", time_str=current_time)
         return answer
     elif search_intent_flag:
@@ -441,7 +445,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[])
 
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql="", query=search_box,
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql="", query=search_box,
                                           intent="knowledge_search",
                                           log_info=knowledge_search_result.knowledge_response,
                                           time_str=current_time)
@@ -511,7 +515,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
                 sql_search_result.data_show_type = model_select_type
 
         log_info = str(search_intent_result["error_info"]) + ";" + sql_search_result.data_analyse
-        LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=sql_search_result.sql,
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql=sql_search_result.sql,
                                           query=search_box,
                                           intent="normal_search",
                                           log_info=log_info,
@@ -557,7 +561,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
             else:
                 log_info = agent_search_result[i]["query"] + "The SQL error Info: "
             log_id = generate_log_id()
-            LogManagement.add_log_to_database(log_id=log_id, profile_name=selected_profile, sql=each_task_res["sql"],
+            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=selected_profile, sql=each_task_res["sql"],
                                               query=search_box + "; The sub task is " + agent_search_result[i]["query"],
                                               intent="agent_search",
                                               log_info=log_info,
@@ -576,7 +580,7 @@ async def ask_websocket(websocket: WebSocket, question : Question):
         return answer
 
 
-def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, query_answer):
+def user_feedback_upvote(data_profiles: str, user_id : str, session_id : str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
             VectorStore.add_sample(data_profiles, query, query_answer)
@@ -588,12 +592,12 @@ def user_feedback_upvote(data_profiles: str, query: str, query_intent: str, quer
         return False
 
 
-def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, query_answer):
+def user_feedback_downvote(data_profiles: str, user_id : str, session_id : str, query: str, query_intent: str, query_answer):
     try:
         if query_intent == "normal_search":
             log_id = generate_log_id()
             current_time = get_current_time()
-            LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=data_profiles,
                                               sql=query_answer, query=query,
                                               intent="normal_search_user_downvote",
                                               log_info="",
@@ -601,7 +605,7 @@ def user_feedback_downvote(data_profiles: str, query: str, query_intent: str, qu
         elif query_intent == "agent_search":
             log_id = generate_log_id()
             current_time = get_current_time()
-            LogManagement.add_log_to_database(log_id=log_id, profile_name=data_profiles,
+            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id= session_id, profile_name=data_profiles,
                                               sql=query_answer, query=query,
                                               intent="agent_search_user_downvote",
                                               log_info="",
@@ -624,6 +628,7 @@ def explain_with_response_stream(current_nlq_chain: NLQChain) -> dict:
 
 
 def get_executed_result(current_nlq_chain: NLQChain) -> str:
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
     sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[current_nlq_chain.profile])
     final_sql_query_result = sql_query_result.to_markdown()
     return final_sql_query_result
