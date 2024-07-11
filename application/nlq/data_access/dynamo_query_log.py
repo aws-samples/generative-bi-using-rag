@@ -114,5 +114,5 @@ class DynamoQueryLogDao:
         self.table.put_item(Item=entity.to_dict())
 
     def add_log(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str):
-        entity = DynamoQueryLogEntity(log_id, user_id, session_id, profile_name, sql, query, intent, log_info, time_str)
+        entity = DynamoQueryLogEntity(log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str)
         self.add(entity)
