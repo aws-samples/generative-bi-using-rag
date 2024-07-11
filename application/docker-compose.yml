@@ -101,7 +101,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "80:80" 
+      - "3000:80" 
     expose:
       - "80"
     networks:
