@@ -21,7 +21,6 @@ RUN if [ "$AWS_REGION" = "cn-north-1" ] || [ "$AWS_REGION" = "cn-northwest-1" ];
         pip3 install -r requirements.txt; \
     fi
 
-
 COPY . /app/
 
 # set streamlit config via env vars
