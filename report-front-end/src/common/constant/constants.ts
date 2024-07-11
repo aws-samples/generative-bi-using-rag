@@ -35,6 +35,5 @@ export const APP_RIGHT_LOGO = process.env.VITE_RIGHT_LOGO || "";
 
 export const SQL_DISPLAY = process.env.VITE_SQL_DISPLAY;
 
-// TODO: decide whether to add an env var for this style switch?
 // https://cloudscape.design/patterns/general/density-settings/
-export const COMPACT_STYLE = true;
+export const APP_STYLE_DEFAULT_COMPACT = true;

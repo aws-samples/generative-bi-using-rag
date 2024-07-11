@@ -3,15 +3,16 @@ import {
   TopNavigation,
 } from "@cloudscape-design/components";
 // import { Mode } from '@cloudscape-design/global-styles'
+import { Density } from "@cloudscape-design/global-styles";
 import { Auth } from "aws-amplify";
 import { useEffect, useState } from "react";
-// import { Storage } from '../../common/helpers/storage'
 import {
   APP_LOGO,
   APP_RIGHT_LOGO,
   APP_TITLE,
   CHATBOT_NAME,
 } from "../../common/constant/constants";
+import { Storage } from "../../common/helpers/storage";
 import "./style.scss";
 
 export default function CustomTopNavigation() {
@@ -52,6 +53,10 @@ export default function CustomTopNavigation() {
     }
   };
 
+  const [isCompact, setIsCompact] = useState<boolean>(
+    Storage.getDensity() === Density.Compact
+  );
+
   return (
     <div
       style={{ zIndex: 1002, top: 0, left: 0, right: 0, position: "fixed" }}
@@ -77,6 +82,20 @@ export default function CustomTopNavigation() {
           //   text: theme === Mode.Dark ? 'Light Mode' : 'Dark Mode',
           //   onClick: onChangeThemeClick,
           // },
+          {
+            type: "button",
+            iconName: isCompact ? "view-full" : "zoom-to-fit",
+            text: isCompact ? "Compact" : "Comfortable",
+            ariaLabel: "SpacingSwitch",
+            onClick: () => {
+              setIsCompact((prev) => {
+                Storage.applyDensity(
+                  !prev ? Density.Compact : Density.Comfortable
+                );
+                return !prev;
+              });
+            },
+          },
           {
             type: "menu-dropdown",
             text: userName,

@@ -1,8 +1,15 @@
-import { applyMode, Mode } from "@cloudscape-design/global-styles";
+import {
+  applyDensity,
+  applyMode,
+  Density,
+  Mode,
+} from "@cloudscape-design/global-styles";
 import { NavigationPanelState } from "../types";
+import { APP_STYLE_DEFAULT_COMPACT } from "../constant/constants";
 
 const PREFIX = "genai-chatbot";
 const THEME_STORAGE_NAME = `${PREFIX}-theme`;
+const DENSITY_STORAGE_NAME = `${PREFIX}-density`;
 const NAVIGATION_PANEL_STATE_STORAGE_NAME = `${PREFIX}-navigation-panel-state`;
 
 export abstract class Storage {
@@ -21,6 +28,20 @@ export abstract class Storage {
     );
 
     return theme;
+  }
+
+  static getDensity(): Density {
+    let density = localStorage.getItem(DENSITY_STORAGE_NAME) as Density | null;
+    if (!density) {
+      density = APP_STYLE_DEFAULT_COMPACT
+        ? Density.Compact
+        : Density.Comfortable;
+    }
+    return density;
+  }
+  static applyDensity(density: Density) {
+    localStorage.setItem(DENSITY_STORAGE_NAME, density);
+    applyDensity(density);
   }
 
   static getNavigationPanelState(): NavigationPanelState {
@@ -48,5 +69,4 @@ export abstract class Storage {
 
     return newState;
   }
-
 }
