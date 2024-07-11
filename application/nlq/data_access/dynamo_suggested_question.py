@@ -26,7 +26,7 @@ class SuggestedQuestionEntity:
 class SuggestedQuestionDao:
     
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb')
+        self.dynamodb = boto3.resource('dynamodb', region_name=os.getenv("DYNAMODB_AWS_REGION"))
         self.table_name = table_name_prefix + PROFILE_QUESTION_TABLE_NAME
         if not self.exists():
             self.create_table()
