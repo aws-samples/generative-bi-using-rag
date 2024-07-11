@@ -5,11 +5,10 @@ import { BrowserRouter } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useDispatch } from "react-redux";
-import { DEFAULT_QUERY_CONFIG } from "./common/constant/constants";
-import { ActionType, UserState } from "./common/helpers/types";
+import { ActionType, UserInfo } from "./common/helpers/types";
+import AlertMsg from "./components/alert-msg";
 
 function App() {
-
   const [user, setUser] = useState<any>(null);
 
   const dispatch = useDispatch();
@@ -21,20 +20,20 @@ function App() {
     })();
   }, []);
 
-    useEffect(() => {
-    const loginUser: UserState = {
+  useEffect(() => {
+    const loginUser: UserInfo = {
       userId: user?.attributes?.sub || "",
-      email: user?.attributes?.email || "",
-      displayName: user?.attributes?.displayName || "",
+      displayName: user?.attributes?.displayName || user?.attributes?.email || "",
       loginExpiration: + new Date() + 18000000,
-      queryConfig: DEFAULT_QUERY_CONFIG,
+      isLogin: true
     };
-    dispatch({ type: ActionType.Update, state: loginUser });
+    dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
   }, [user]);
 
   return (
     <div style={{ height: "100%" }}>
       <BrowserRouter>
+        <AlertMsg />
         <CustomTopNavigation />
         <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
         <div>

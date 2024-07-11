@@ -94,6 +94,18 @@ services:
       - ./deployment:/app/deployment
     networks:
       - opensearch-net
+  front-end:
+    container_name: react-front-end
+    build:
+      context: ../report-front-end
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:80" 
+    expose:
+      - "80"
+    networks:
+      - opensearch-net
   api:
     container_name: nlq-api
     build:

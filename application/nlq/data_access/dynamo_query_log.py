@@ -12,9 +12,11 @@ DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION')
 
 
 class DynamoQueryLogEntity:
-    def __init__(self, log_id, profile_name, sql, query, intent, log_info, time_str):
+    def __init__(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str):
         self.log_id = log_id
         self.profile_name = profile_name
+        self.user_id = user_id
+        self.session_id = session_id
         self.sql = sql
         self.query = query
         self.intent = intent
@@ -26,6 +28,8 @@ class DynamoQueryLogEntity:
         return {
             'log_id': self.log_id,
             'profile_name': self.profile_name,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
             'sql': self.sql,
             'query': self.query,
             'intent': self.intent,
@@ -104,11 +108,11 @@ class DynamoQueryLogDao:
         try:
             self.table.put_item(Item=entity.to_dict())
         except Exception as e:
-            logger.error("add log entity is error {}",e)
+            logger.error("add log entity is error {}", e)
 
     def update(self, entity):
         self.table.put_item(Item=entity.to_dict())
 
-    def add_log(self, log_id, profile_name, sql, query, intent, log_info, time_str):
-        entity = DynamoQueryLogEntity(log_id, profile_name, sql, query, intent, log_info, time_str)
+    def add_log(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str):
+        entity = DynamoQueryLogEntity(log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str)
         self.add(entity)

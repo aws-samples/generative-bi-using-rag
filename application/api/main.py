@@ -41,12 +41,14 @@ def ask(question: Question):
 @router.post("/user_feedback")
 def user_feedback(input_data: FeedBackInput):
     feedback_type = input_data.feedback_type
+    user_id = input_data.user_id
+    session_id = input_data.session_id
     if feedback_type == "upvote":
-        upvote_res = service.user_feedback_upvote(input_data.data_profiles, input_data.query,
+        upvote_res = service.user_feedback_upvote(input_data.data_profiles, user_id, session_id, input_data.query,
                                                   input_data.query_intent, input_data.query_answer)
         return upvote_res
     else:
-        downvote_res = service.user_feedback_downvote(input_data.data_profiles, input_data.query,
+        downvote_res = service.user_feedback_downvote(input_data.data_profiles, user_id, session_id, input_data.query,
                                                       input_data.query_intent, input_data.query_answer)
         return downvote_res
 
@@ -63,28 +65,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 session_id = question.session_id
                 ask_result = await ask_websocket(websocket, question)
                 logger.info(ask_result)
-
-
-            #     current_nlq_chain = service.get_nlq_chain(question)
-            #     if question.use_rag:
-            #         examples = service.get_example(current_nlq_chain)
-            #         await response_websocket(websocket, session_id, "Examples:\n```json\n")
-            #         await response_websocket(websocket, session_id, str(examples))
-            #         await response_websocket(websocket, session_id, "\n```\n")
-            #     response = service.ask_with_response_stream(question, current_nlq_chain)
-            #     if os.getenv('SAGEMAKER_ENDPOINT_SQL', ''):
-            #         await response_sagemaker_sql(websocket, session_id, response, current_nlq_chain)
-            #         await response_websocket(websocket, session_id, "\n")
-            #         explain_response = service.explain_with_response_stream(current_nlq_chain)
-            #         await response_sagemaker_explain(websocket, session_id, explain_response)
-            #     else:
-            #         await response_bedrock(websocket, session_id, response, current_nlq_chain)
-            #
-            #     if question.query_result:
-            #         final_sql_query_result = service.get_executed_result(current_nlq_chain)
-            #         await response_websocket(websocket, session_id, "\n\nQuery result:  \n")
-            #         await response_websocket(websocket, session_id, final_sql_query_result)
-            #         await response_websocket(websocket, session_id, "\n")
                 await response_websocket(websocket, session_id, ask_result.dict(), ContentEnum.END)
             except Exception:
                 msg = traceback.format_exc()

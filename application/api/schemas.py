@@ -39,6 +39,8 @@ class FeedBackInput(BaseModel):
     query: str
     query_intent: str
     query_answer: str
+    session_id: str = "-1"
+    user_id: str = "admin"
 
 
 class Option(BaseModel):

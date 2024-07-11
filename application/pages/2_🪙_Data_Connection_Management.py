@@ -12,6 +12,7 @@ db_type_mapping = {
     'mysql': 'MySQL',
     'postgresql': 'PostgreSQL',
     'redshift': 'Redshift',
+    'starrocks': 'StarRocks',
 }
 
 

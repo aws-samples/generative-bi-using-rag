@@ -14,3 +14,5 @@ langchain~=0.1.11
 langchain-core~=0.1.30
 sqlparse~=0.4.2
 pandas==2.0.3
+openpyxl
+starrocks==1.0.6

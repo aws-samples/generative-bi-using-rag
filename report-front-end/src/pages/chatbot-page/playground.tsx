@@ -8,8 +8,8 @@ export default function Playground() {
 
   return (
     <BaseAppLayout
-      info={<ConfigPanel />}
-      content={<Chat setToolsHide={setToolsHide}/>}
+      info={<ConfigPanel setToolsHide={setToolsHide} />}
+      content={<Chat toolsHide={toolsHide} setToolsHide={setToolsHide}/>}
       toolsHide={toolsHide}
       setToolsHide={setToolsHide}
     />
