@@ -7,7 +7,7 @@ credentials:
       name: AWS
       password: $2b$12$NDQv5NLaWiVlNuzQYHwAo.tv.f.TuX1nbdoUZi44/Y3xv4I4QAfjy # Set the password following instructions in README
 cookie:
-  expiry_days: 30
+  expiry_days: 2
   key: some_signature_key # Must be string
   name: some_cookie_name
 pre-authorized:

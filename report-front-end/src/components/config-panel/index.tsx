@@ -1,9 +1,9 @@
 import { Divider } from "@aws-amplify/ui-react";
 import {
   Button,
+  Drawer,
   FormField,
   Grid,
-  HelpPanel,
   Input,
   Select,
   Slider,
@@ -158,8 +158,8 @@ const ConfigPanel = (props: {
   };
 
   return (
-    <HelpPanel header="Configuration">
-      <SpaceBetween size="xs">
+    <Drawer header="Configurations">
+      <SpaceBetween size="xxl">
         <SpaceBetween size="m">
           <FormField label="Large Language Model">
             <Select
@@ -216,7 +216,7 @@ const ConfigPanel = (props: {
 
         <Divider label="Model Configuration" />
 
-        <SpaceBetween size="xxxs">
+        <SpaceBetween size="xs">
           <Grid
             gridDefinition={[
               { colspan: { default: 6, xxs: 12 } },
@@ -362,16 +362,11 @@ const ConfigPanel = (props: {
           </Grid>
         </SpaceBetween>
 
-        <Button
-          variant="primary"
-          iconName="status-positive"
-          onClick={onSave}
-          className="save-button"
-        >
+        <Button variant="primary" iconName="status-positive" onClick={onSave}>
           Save
         </Button>
       </SpaceBetween>
-    </HelpPanel>
+    </Drawer>
   );
 };
 export default ConfigPanel;
@@ -387,4 +382,5 @@ function VerticalDivider() {
       }}
     />
   );
-}2
+}
+2;

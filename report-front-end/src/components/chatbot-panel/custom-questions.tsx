@@ -57,7 +57,7 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
       configuration: userState.queryConfig,
       setMessageHistory: props.setMessageHistory
     }).then();*/
-
+    setShowMoreQuestions(true)
     // Call WebSocket API
     queryWithWS({
       query: question,

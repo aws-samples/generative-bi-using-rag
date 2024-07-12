@@ -1,18 +1,9 @@
-import {
-  Box,
-  SpaceBetween,
-  Spinner,
-  StatusIndicator,
-} from "@cloudscape-design/components";
+import { Box, SpaceBetween, Spinner, StatusIndicator } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getSelectData } from "../../common/api/API";
 import { createWssClient } from "../../common/api/WebSocket";
-import {
-  ActionType,
-  LLMConfigState,
-  UserState,
-} from "../../common/helpers/types";
+import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
 import ChatInputPanel from "./chat-input-panel";
 import ChatMessage from "./chat-message";
 import styles from "./chat.module.scss";
@@ -23,7 +14,7 @@ export default function Chat(props: {
   toolsHide: boolean;
 }) {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
-    []
+    [],
   );
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -40,12 +31,19 @@ export default function Chat(props: {
     ) {
       getSelectData().then((response) => {
         if (response) {
-          const configInfo: LLMConfigState = {
-            ...userState.queryConfig,
-            selectedLLM: response["bedrock_model_ids"][0],
-            selectedDataPro: response["data_profiles"][0],
-          };
-          dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+          if (!userState.queryConfig.selectedLLM && response["bedrock_model_ids"]) {
+            const configInfo: LLMConfigState = {
+              ...userState.queryConfig,
+              selectedLLM: response["bedrock_model_ids"].length > 0 ? response["bedrock_model_ids"][0] : userState.queryConfig.selectedLLM,
+            };
+            dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+          } else if (!userState.queryConfig.selectedDataPro && response["data_profiles"]) {
+            const configInfo: LLMConfigState = {
+              ...userState.queryConfig,
+              selectedDataPro: response["data_profiles"].length > 0 ? response["data_profiles"][0] : userState.queryConfig.selectedDataPro,
+            };
+            dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+          }
         }
       });
     }
@@ -62,7 +60,7 @@ export default function Chat(props: {
                 message={message}
                 setLoading={setLoading}
                 setMessageHistory={(
-                  history: SetStateAction<ChatBotHistoryItem[]>
+                  history: SetStateAction<ChatBotHistoryItem[]>,
                 ) => setMessageHistory(history)}
                 sendMessage={sendJsonMessage}
               />
@@ -76,9 +74,7 @@ export default function Chat(props: {
                 const displayMessage =
                   idx % 2 === 1
                     ? true
-                    : idx === statusMessage.length - 1
-                    ? true
-                    : false;
+                    : idx === statusMessage.length - 1;
                 return displayMessage ? (
                   <StatusIndicator
                     key={idx}
