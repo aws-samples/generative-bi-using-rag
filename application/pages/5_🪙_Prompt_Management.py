@@ -36,10 +36,6 @@ def main():
             prompt_type_selected_table = st.selectbox("Prompt Type", prompt_map.keys(), index=None,
                                                       format_func=lambda x: prompt_map[x].get('title'),
                                                       placeholder="Please select a prompt type")
-
-            profile_detail = ProfileManagement.get_profile_by_name(current_profile)
-            prompt_map = profile_detail.prompt_map
-
             if prompt_type_selected_table is not None:
                 single_type_prompt_map = prompt_map.get(prompt_type_selected_table)
                 system_prompt = single_type_prompt_map.get('system_prompt')
@@ -48,6 +44,8 @@ def main():
                                                     placeholder="Please select a model")
 
                 if model_selected_table is not None:
+                    profile_detail = ProfileManagement.get_profile_by_name(current_profile)
+                    prompt_map = profile_detail.prompt_map
                     system_prompt_input = st.text_area('System Prompt', system_prompt[model_selected_table], height=300)
                     user_prompt_input = st.text_area('User Prompt', user_prompt[model_selected_table], height=500)
 
