@@ -39,13 +39,15 @@ def main():
             if prompt_type_selected_table is not None:
                 single_type_prompt_map = prompt_map.get(prompt_type_selected_table)
                 system_prompt = single_type_prompt_map.get('system_prompt')
-                user_prompt = single_type_prompt_map.get('user_prompt')
                 model_selected_table = st.selectbox("LLM Model", system_prompt.keys(), index=None,
                                                     placeholder="Please select a model")
 
                 if model_selected_table is not None:
                     profile_detail = ProfileManagement.get_profile_by_name(current_profile)
                     prompt_map = profile_detail.prompt_map
+                    single_type_prompt_map = prompt_map.get(prompt_type_selected_table)
+                    system_prompt = single_type_prompt_map.get('system_prompt')
+                    user_prompt = single_type_prompt_map.get('user_prompt')
                     system_prompt_input = st.text_area('System Prompt', system_prompt[model_selected_table], height=300)
                     user_prompt_input = st.text_area('User Prompt', user_prompt[model_selected_table], height=500)
 
