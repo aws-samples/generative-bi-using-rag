@@ -17,7 +17,7 @@ const rds = config.rds
 
 const cdkConfig = {
     env: devEnv,
-    deployRds: rds.deployRds
+    deployRds: rds.deploy
 };
 
 new MainStack(app, 'GenBiMainStack', cdkConfig); // Pass deployRDS flag to MainStack constructor
