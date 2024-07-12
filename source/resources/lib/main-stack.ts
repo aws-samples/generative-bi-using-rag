@@ -31,12 +31,28 @@ export class MainStack extends cdk.Stack {
     //   default: "not-set"
     // });
     
-    // ======== Step 2. Define the AOSStack ========= 
+    // ======== Step 2. Define the AOSStack =========
+    const selectedSubnets = _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS });
+
     const _AosStack = new AOSStack(this, 'aos-Stack', {
       env: props.env,
       vpc: _VpcStack.vpc,
-      subnets: _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets,
+      subnets: selectedSubnets.subnets,
     });
+
+    // 打印选择的私有子网信息
+    console.log('Selected PRIVATE_WITH_EGRESS subnets:');
+    selectedSubnets.subnets.forEach((subnet, index) => {
+      console.log(`Subnet ${index + 1}:`);
+      console.log(`  ID: ${subnet.subnetId}`);
+      console.log(`  Availability Zone: ${subnet.availabilityZone}`);
+      console.log(`  CIDR: ${subnet.ipv4CidrBlock}`);
+    });
+
+    // 打印选择的子网数量
+    console.log(`Total number of selected subnets: ${selectedSubnets.subnets.length}`);
+
+
 
     const aosEndpoint = _AosStack.endpoint;
 
