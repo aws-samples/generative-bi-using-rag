@@ -4,7 +4,7 @@ import request from "umi-request";
 
 // handling error in response interceptor
 request.interceptors.response.use(response => {
-  if (response.status === 403) {
+  if (response.status === 401) {
     const patchEvent = new CustomEvent("unauthorized", {
       detail: {},
     });

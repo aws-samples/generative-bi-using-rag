@@ -8,7 +8,7 @@ export default function ErrorPage() {
       <Alert
         statusIconAriaLabel="Error"
         type="error"
-        header="Not authorized">
+        header="Unauthorized">
       </Alert>
     </div>
   );
