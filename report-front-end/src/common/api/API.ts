@@ -16,7 +16,7 @@ request.interceptors.response.use(response => {
 export async function getSelectData() {
   try {
     return await request.get(`${BACKEND_URL}qa/option`, {
-      timeout: 3000
+      timeout: 5000
     });
   } catch (error) {
     console.error("getSelectData Error", error);
@@ -26,7 +26,7 @@ export async function getSelectData() {
 export async function addUserFeedback(feedbackData: FeedBackItem) {
   try {
     return await request.post(`${BACKEND_URL}qa/user_feedback`, {
-      timeout: 3000,
+      timeout: 5000,
       headers: {
         "Content-Type": "application/json",
       },

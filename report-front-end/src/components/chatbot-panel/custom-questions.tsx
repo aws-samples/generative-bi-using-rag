@@ -27,7 +27,7 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   const getRecommendQuestions = async (data_profile: string) => {
     try {
       request.get(`${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`, {
-        timeout: 3000,
+        timeout: 5000,
       }).then((response: any) => {
         if (response) {
           const custom_question = response['custom_question'];
