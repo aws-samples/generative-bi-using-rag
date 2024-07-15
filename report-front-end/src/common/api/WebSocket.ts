@@ -3,6 +3,7 @@ import { DEFAULT_QUERY_CONFIG } from "../constant/constants";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
+import cookie from 'react-cookies';
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
@@ -21,6 +22,13 @@ export function createWssClient(
   const handleWebSocketMessage = (message: MessageEvent) => {
     console.log(message.data);
     const messageJson = JSON.parse(message.data);
+    if (messageJson.content["X-Status-Code"] === 401) {
+      const patchEvent = new CustomEvent("unauthorized", {
+        detail: {},
+      });
+      window.dispatchEvent(patchEvent);
+      return;
+    }
     if (messageJson.content_type === "state") {
       setStatusMessage((historyMessage) =>
         [...historyMessage, messageJson]);
@@ -52,6 +60,7 @@ export function queryWithWS(props: {
       content: props.query
     }];
   });
+  const jwtToken = cookie.load("jwtToken");
   const param = {
     query: props.query,
     bedrock_model_id: props.configuration.selectedLLM || DEFAULT_QUERY_CONFIG.selectedLLM,
@@ -69,7 +78,8 @@ export function queryWithWS(props: {
     temperature: props.configuration.temperature,
     context_window: 3,
     session_id: "-1",
-    user_id: props.userId
+    user_id: props.userId,
+    jwtToken: jwtToken
   };
   props.sendMessage(param);
 }
