@@ -63,7 +63,7 @@ export class MainStack extends cdk.Stack {
       const _RdsStack = new RDSStack(this, 'rds-Stack', {
         env: props.env,
         subnets: rdsSubnets,
-        vpcId : _VpcStack.vpc.vpcId
+        vpc : _VpcStack.vpc
       });
       new cdk.CfnOutput(this, 'RDSEndpoint', {
         value: _RdsStack.endpoint,

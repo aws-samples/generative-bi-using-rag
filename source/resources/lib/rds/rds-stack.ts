@@ -7,15 +7,14 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 interface RDSStackProps extends cdk.StackProps {
   subnets?: ec2.SubnetSelection;
-  vpcId?: string;
+  vpc:ec2.IVpc;
 }
 // add rds stack
 export class RDSStack extends cdk.Stack {
     public readonly endpoint: string;
-    constructor(scope: Construct, id: string,  props?: RDSStackProps) {
+    constructor(scope: Construct, id: string,  props: RDSStackProps) {
         super(scope, id, props);
-        const vpc = props?.vpcId  ? ec2.Vpc.fromLookup(this, "VPC", { vpcId: props.vpcId }) : ec2.Vpc.fromLookup(this, "VPC", { isDefault: true });
-        
+
         const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
             description: 'Templated secret used for RDS password',
             generateSecretString: {
@@ -32,8 +31,8 @@ export class RDSStack extends cdk.Stack {
         const database = new rds.DatabaseInstance(this, 'Database', {
             engine: rds.DatabaseInstanceEngine.mysql({ version: rds.MysqlEngineVersion.VER_8_0 }),
             instanceType: ec2.InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
-            vpc: vpc,
-            vpcSubnets: props?.subnets || { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
+            vpc: props.vpc,
+            vpcSubnets: props.subnets || { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
             publiclyAccessible: false,
             databaseName: 'GenBIDB',
             credentials: rds.Credentials.fromSecret(templatedSecret),
