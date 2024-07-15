@@ -55,6 +55,7 @@ def user_feedback(input_data: FeedBackInput):
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    print('---WEB SOCKET---', vars(websocket))
     await websocket.accept()
     try:
         while True:
