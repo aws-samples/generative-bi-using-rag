@@ -11,8 +11,8 @@
     "endpoint_name" : ""
   },
   "opensearch": {
-    "sql_index" : "genbi_sql_index",
-    "ner_index" : "genbi_ner_index",
-    "cot_index" : "genbi_cot_index"
+    "sql_index" : "ubs",
+    "ner_index" : "uba_ner",
+    "cot_index" : "uba_agent"
   }
 }
