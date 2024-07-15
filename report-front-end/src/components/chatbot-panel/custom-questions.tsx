@@ -2,13 +2,12 @@ import { Link, SpaceBetween } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "@aws-amplify/ui-react";
 import { ChatBotHistoryItem, ChatInputState } from "./types";
-import { BACKEND_URL } from "../../common/constant/constants";
 import { useSelector } from "react-redux";
 import styles from "./chat.module.scss";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
-import request from "umi-request";
+import { getRecommendQuestions } from "../../common/api/API";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
@@ -24,25 +23,10 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
 
   const userState = useSelector<UserState>((state) => state) as UserState;
 
-  const getRecommendQuestions = async (data_profile: string) => {
-    try {
-      request.get(`${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`, {
-        timeout: 5000,
-      }).then((response: any) => {
-        if (response) {
-          const custom_question = response['custom_question'];
-          setQuestions(custom_question);
-        }
-      });
-    } catch (error) {
-      console.error("getCustomQuestions Error", error);
-    }
-  }
-
   useEffect(() => {
     const data_profile = userState.queryConfig?.selectedDataPro;
     if (data_profile) {
-      getRecommendQuestions(data_profile).then();
+      getRecommendQuestions(data_profile, setQuestions).then();
     }
   }, [userState.queryConfig?.selectedDataPro]);
 
