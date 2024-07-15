@@ -13,7 +13,8 @@ class RelationDatabase():
         'mysql': 'mysql+pymysql',
         'postgresql': 'postgresql+psycopg2',
         'redshift': 'postgresql+psycopg2',
-        'starrocks': 'starrocks'
+        'starrocks': 'starrocks',
+        'clickhouse': 'clickhouse',
         # Add more mappings here for other databases
     }
 
@@ -42,43 +43,20 @@ class RelationDatabase():
 
     @classmethod
     def get_all_schema_names_by_connection(cls, connection: ConnectConfigEntity):
-        schemas = []
-        if connection.db_type == 'postgresql':
-            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
-                                    connection.db_port, connection.db_name)
-            engine = db.create_engine(db_url)
-            # with engine.connect() as conn:
-            #     query = text("""
-            #         SELECT nspname AS schema_name
-            #         FROM pg_catalog.pg_namespace
-            #         WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' AND nspname <> 'public'
-            #         AND has_schema_privilege(nspname, 'USAGE');
-            #     """)
-            #
-            #     # Executing the query
-            #     result = conn.execute(query)
-            #     schemas = [row['schema_name'] for row in result.mappings()]
-            #     print(schemas)
-            inspector = sqlalchemy.inspect(engine)
+        db_type = connection.db_type
+        db_url = cls.get_db_url(db_type, connection.db_user, connection.db_pwd, connection.db_host, connection.db_port,
+                                connection.db_name)
+        engine = db.create_engine(db_url)
+        inspector = inspect(engine)
+
+        if db_type == 'postgresql':
+            schemas = [schema for schema in inspector.get_schema_names() if
+                       schema not in ('pg_catalog', 'information_schema', 'public')]
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse'):
             schemas = inspector.get_schema_names()
-        elif connection.db_type == 'redshift':
-            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
-                                    connection.db_port, connection.db_name)
-            engine = db.create_engine(db_url)
-            inspector = inspect(engine)
-            schemas = inspector.get_schema_names()
-        elif connection.db_type == 'mysql':
-            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
-                                    connection.db_port, connection.db_name)
-            engine = db.create_engine(db_url)
-            database_connect = sqlalchemy.inspect(engine)
-            schemas = database_connect.get_schema_names()
-        elif connection.db_type == 'starrocks':
-            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
-                                    connection.db_port, connection.db_name)
-            engine = db.create_engine(db_url)
-            database_connect = sqlalchemy.inspect(engine)
-            schemas = database_connect.get_schema_names()
+        else:
+            raise ValueError("Unsupported database type")
+
         return schemas
 
     @classmethod

@@ -17,3 +17,4 @@ pandas==2.0.3
 openpyxl
 starrocks==1.0.6
 openai==1.35.13
+clickhouse-sqlalchemy==0.2.6

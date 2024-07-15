@@ -23,6 +23,11 @@ question.When generating SQL, do not add double quotes or single quotes around t
 Never query for all columns from a table.""".format(top_k=TOP_K)
 
 
+CLICKHOUSE_DIALECT_PROMPT_CLAUDE3="""
+You are a data analysis expert and proficient in Clickhouse. Given an input question, first create a syntactically correct Clickhouse SQL query to run, then look at the results of the query and return the answer to the input 
+question.When generating SQL, do not add double quotes or single quotes around table names. Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per Clickhouse SQL. 
+Never query for all columns from a table.""".format(top_k=TOP_K)
+
 AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3 = """You are a Amazon Redshift expert. Given an input question, first create a syntactically correct Redshift query to run, then look at the results of the query and return the answer to the input 
 question.When generating SQL, do not add double quotes or single quotes around table names. Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per MySQL. 
 Never query for all columns from a table.""".format(top_k=TOP_K)

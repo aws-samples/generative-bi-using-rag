@@ -13,6 +13,7 @@ db_type_mapping = {
     'postgresql': 'PostgreSQL',
     'redshift': 'Redshift',
     'starrocks': 'StarRocks',
+    'clickhouse': 'Clickhouse',
 }
 
 
