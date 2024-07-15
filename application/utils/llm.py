@@ -1,7 +1,7 @@
 import json
 import boto3
 from botocore.config import Config
-
+from openai import OpenAI
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 import os
@@ -102,6 +102,40 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
             return response_body
     except Exception as e:
         logger.error("Couldn't invoke LLama 70B")
+        logger.error(e)
+
+
+def invoke_self_hosted_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream=False):
+    try:
+        client = OpenAI(
+            api_key=os.environ.get("DATA_ANALYSIS_API_KEY"),
+            base_url=os.environ.get("DATA_ANALYSIS_API_URL"),
+        )
+        response = client.chat.completions.create(
+            model=model_id,  # your model endpoint ID
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            stream=with_response_stream,
+            max_tokens=max_tokens
+        )
+        if with_response_stream:
+            # for chunk in response.result:
+            #     print(chunk.choices[0].message.content)
+            # 暂不支持streaming
+            return response
+        else:
+            # return response.choices[0].message.content
+            return {
+                'content': [
+                    {
+                        'text': response.choices[0].message.content
+                    }
+                ]
+            }
+    except Exception as e:
+        logger.error("Couldn't invoke self-hosted model")
         logger.error(e)
 
 
@@ -261,6 +295,9 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
             response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('meta.llama3-70b'):
             response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
+        else:
+            if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
+                response = invoke_self_hosted_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
         if with_response_stream:
             return response
         else:
@@ -344,6 +381,8 @@ def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=
 def data_analyse_tool(model_id, prompt_map, search_box, sql_data, search_type):
     try:
         max_tokens = 2048
+        if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
+            model_id = os.getenv("DATA_ANALYSIS_MODEL_ID")
         if search_type == "agent":
             user_prompt, system_prompt = generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data)
         else:
@@ -423,6 +462,8 @@ def select_data_visualization_type(model_id, search_box, search_data, prompt_map
         "format_data": []
     }
     try:
+        if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
+            model_id = os.getenv("DATA_ANALYSIS_MODEL_ID")
         user_prompt, system_prompt = generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id)
         max_tokens = 2048
         final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)

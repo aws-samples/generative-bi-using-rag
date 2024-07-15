@@ -1,3 +1,5 @@
+import os
+
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, STARROCKS_DIALECT_PROMPT_CLAUDE3
 from utils.prompts import guidance_prompt
@@ -1832,6 +1834,89 @@ You are a data analysis expert and proficient in {dialect}.
 system_prompt_dict['sonnet-3-5-20240620v1-0'] = """
 You are a data analysis expert and proficient in {dialect}.
 """
+
+
+if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
+    support_model_ids_map[os.getenv("DATA_ANALYSIS_MODEL_ID")] = os.getenv("DATA_ANALYSIS_MODEL_NAME")
+
+    data_summary_system_prompt_dict[os.getenv("DATA_ANALYSIS_MODEL_NAME")] = """
+    You are a data analysis expert in the retail industry
+    """
+    data_summary_user_prompt_dict[os.getenv("DATA_ANALYSIS_MODEL_NAME")] = """
+    Your task is to analyze the given data and describe it in natural language. 
+
+    <instructions>
+    - Transforming data into natural language, including all key data as much as possible
+    - Just need the final result of the data, no need to output the previous analysis process
+    </instructions>
+
+    The user question is：{question}
+
+    The data is：{data}
+    """
+
+    data_visualization_system_prompt_dict[os.getenv("DATA_ANALYSIS_MODEL_NAME")] = """
+    You are a data analysis and visualization expert proficient in Python
+    """
+
+    data_visualization_user_prompt_dict[os.getenv("DATA_ANALYSIS_MODEL_NAME")] = """
+    You are a data analysis expert, and now you need to choose the appropriate visualization format based on the user's questions and data.
+    There are four display types in total: table, bar, pie, and line. The output format is in JSON format.
+    The fields are as follows:
+    show_type: The type of display
+    data: The specific data
+
+    <instructions>
+    - The format of format_data is a nested structure of a list, with the first element being the column name.
+    - If there are more than 3 column queries, show_type is table
+    - If there are two columns, show_type needs to be selected from the appropriate types of table, bar, pie, and line based on the data situation
+    - If show_type is bar, pie, or line, where the first column is the x-axis and the second column is the y-axis.
+    - If show_type is table, The number of columns format_data can exceed 2
+    - only output json format， no other comments
+    </instructions>
+
+    <example>
+
+    question is : How many male and female users have completed the purchase
+
+    The example data is: [['num_users', 'gender'], [ 1906, 'F'], [1788, 'M']]
+
+    the answer is :
+
+    ```json
+
+    {{
+        "show_type" : "pie",
+        "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+    }}
+    ```
+    <example>
+
+    The user question is :  {question}
+    The data is : {data}
+    """
+    agent_analyse_system_prompt_dict[os.getenv("DATA_ANALYSIS_MODEL_NAME")] = """
+    You are a data analysis expert in the retail industry
+    """
+
+    agent_analyse_user_prompt_dict[os.getenv("DATA_ANALYSIS_MODEL_NAME")] = """
+    As a professional data analyst, you are now asked a question by a user, and you need to analyze the data provided.
+
+    <instructions>
+    - Analyze the data based on the provided data, without creating non-existent data. It is crucial to only analyze the provided data.
+    - Perform relevant correlation analysis on the relationships between the data.
+    - There is no need to expose the specific SQL fields.
+    - The data related to the user's question is in a JSON result, which has been broken down into multiple sub-questions, including the sub-questions, queries, SQL, and data_result.
+    </instructions>
+
+
+    The user question is：{question}
+
+    The data related to the question is：{data}
+
+    """
+
+
 
 class SystemPromptMapper:
     def __init__(self):
