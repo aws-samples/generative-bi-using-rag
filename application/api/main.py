@@ -70,7 +70,14 @@ async def websocket_endpoint(websocket: WebSocket):
                 question_json = json.loads(data)
 
                 jwt_token = question_json.get('jwtToken', None)
+                if jwt_token:
+                    del question_json['jwtToken']
+
                 print('---JWT TOKEN---', jwt_token)
+
+                question = Question(**question_json)
+                session_id = question.session_id
+
                 if jwt_token:
                     response = requests.post(validate_url, data=jwt_token)
                     if response.status_code != 200 :
@@ -81,8 +88,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         payload = json.loads(response.text)
                         if payload['data']:
                             msg = json.loads(payload['msg'])
-                            question = Question(**question_json)
-                            session_id = question.session_id
                             ask_result = await ask_websocket(websocket, question)
                             logger.info(ask_result)
                             answer = ask_result.dict()
