@@ -32,25 +32,25 @@ export class MainStack extends cdk.Stack {
     // });
     
     // ======== Step 2. Define the AOSStack =========
-    const selectedSubnets = _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS });
+    const aosSubnets = _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS });
 
     const _AosStack = new AOSStack(this, 'aos-Stack', {
       env: props.env,
       vpc: _VpcStack.vpc,
-      subnets: selectedSubnets.subnets,
+      subnets: aosSubnets.subnets,
     });
 
-    // 打印选择的私有子网信息
-    console.log('Selected PRIVATE_WITH_EGRESS subnets:');
-    selectedSubnets.subnets.forEach((subnet, index) => {
+    // print AOS subnet Info
+    console.log('AOS subnets Info:');
+    aosSubnets.subnets.forEach((subnet, index) => {
       console.log(`Subnet ${index + 1}:`);
       console.log(`  ID: ${subnet.subnetId}`);
       console.log(`  Availability Zone: ${subnet.availabilityZone}`);
       console.log(`  CIDR: ${subnet.ipv4CidrBlock}`);
     });
 
-    // 打印选择的子网数量
-    console.log(`Total number of selected subnets: ${selectedSubnets.subnets.length}`);
+    // print AOS subnet length
+    console.log(`Total number of AOS subnets: ${aosSubnets.subnets.length}`);
 
 
 
@@ -78,10 +78,24 @@ export class MainStack extends cdk.Stack {
     
     // ======== Step 5. Define the ECS ========= 
     // pass the aosEndpoint and aosPassword to the ecs stack
+    const ecsSubnets =  _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS });
+
+        // print AOS subnet Info
+    console.log('ECS subnets Info:');
+    ecsSubnets.subnets.forEach((subnet, index) => {
+      console.log(`Subnet ${index + 1}:`);
+      console.log(`  ID: ${subnet.subnetId}`);
+      console.log(`  Availability Zone: ${subnet.availabilityZone}`);
+      console.log(`  CIDR: ${subnet.ipv4CidrBlock}`);
+    });
+
+    // print AOS subnet length
+    console.log(`Total number of ECS subnets: ${ecsSubnets.subnets.length}`);
+
     const _EcsStack = new ECSStack(this, 'ecs-Stack', {
       env: props.env,
       vpc: _VpcStack.vpc,
-      subnets: _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets,
+      subnets: ecsSubnets.subnets,
       cognitoUserPoolId: _CognitoStack.userPoolId,
       cognitoUserPoolClientId: _CognitoStack.userPoolClientId,
       OSMasterUserSecretName: _AosStack.OSMasterUserSecretName,
