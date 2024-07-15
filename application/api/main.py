@@ -1,6 +1,6 @@
 import json
 import traceback
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 import logging
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum
@@ -8,6 +8,11 @@ from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
+
+from fastapi.responses import Response
+import requests
+import base64
+
 
 from .service import ask_websocket
 
@@ -52,6 +57,7 @@ def user_feedback(input_data: FeedBackInput):
                                                       input_data.query_intent, input_data.query_answer)
         return downvote_res
 
+validate_url = 'https://apimarket-test.shinho.net.cn/dops-temp/token/validate'
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -62,11 +68,36 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             try:
                 question_json = json.loads(data)
-                question = Question(**question_json)
-                session_id = question.session_id
-                ask_result = await ask_websocket(websocket, question)
-                logger.info(ask_result)
-                await response_websocket(websocket, session_id, ask_result.dict(), ContentEnum.END)
+
+                jwt_token = question_json.get('jwtToken', None)
+                print('---JWT TOKEN---', jwt_token)
+                if jwt_token:
+                    response = requests.post(validate_url, data=jwt_token)
+                    if response.status_code != 200 :
+                        answer = {}
+                        answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+                        await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                    else:
+                        payload = json.loads(response.text)
+                        if payload['data']:
+                            msg = json.loads(payload['msg'])
+                            question = Question(**question_json)
+                            session_id = question.session_id
+                            ask_result = await ask_websocket(websocket, question)
+                            logger.info(ask_result)
+                            answer = ask_result.dict()
+                            answer['X-Status-Code'] = 200
+                            answer['X-User-Id'] = base64.b64encode(msg['userId'].encode('utf-8')).decode('utf-8')
+                            answer['X-User-Name'] = base64.b64encode(msg['userName'].encode('utf-8')).decode('utf-8')
+                            await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                        else:
+                            answer = {}
+                            answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+                            await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                else:
+                    answer = {}
+                    answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+                    await response_websocket(websocket, session_id, answer, ContentEnum.END)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)
