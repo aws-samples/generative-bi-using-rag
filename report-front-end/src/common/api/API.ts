@@ -1,5 +1,4 @@
 import { FeedBackItem } from "../../components/chatbot-panel/types";
-import { BACKEND_URL } from "../constant/constants";
 import axios from "axios";
 import { Dispatch, SetStateAction } from "react";
 
@@ -22,7 +21,7 @@ instance.interceptors.response.use(
 );
 
 export async function getRecommendQuestions(data_profile: string, setQuestions: Dispatch<SetStateAction<string[]>>) {
-  instance.get(`${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`, {
+  instance.get(`/api/qa/get_custom_question?data_profile=${data_profile}`, {
     timeout: 5000,
   }).then((response: any) => {
     if (response) {
@@ -38,7 +37,7 @@ export async function getRecommendQuestions(data_profile: string, setQuestions: 
 
 export async function getSelectData() {
   try {
-    return await instance.get(`${BACKEND_URL}qa/option`, {
+    return await instance.get(`/api/qa/option`, {
       timeout: 5000,
     });
   } catch (error) {
@@ -48,7 +47,7 @@ export async function getSelectData() {
 
 export async function addUserFeedback(feedbackData: FeedBackItem) {
   try {
-    return await instance.post(`${BACKEND_URL}qa/user_feedback`, {
+    return await instance.post(`/api/qa/user_feedback`, {
       timeout: 5000,
       headers: {
         "Content-Type": "application/json",
