@@ -58,8 +58,11 @@ export class MainStack extends cdk.Stack {
 
     // ======== Step 3. Define the RDSStack =========
     if (_deployRds) {
+      const rdsSubnets = _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_ISOLATED });
+
       const _RdsStack = new RDSStack(this, 'rds-Stack', {
         env: props.env,
+        subnets: rdsSubnets.subnets
       });
       new cdk.CfnOutput(this, 'RDSEndpoint', {
         value: _RdsStack.endpoint,

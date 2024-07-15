@@ -9,9 +9,8 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 export class RDSStack extends cdk.Stack {
     _vpc;
     public readonly endpoint: string;
-    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    constructor(scope: Construct, id: string, props?: cdk.StackProps & { subnets: cdk.aws_ec2.ISubnet[] }) {
         super(scope, id, props);
-        
         this._vpc = ec2.Vpc.fromLookup(this, "VPC", {
             isDefault: true,
         });
@@ -34,9 +33,9 @@ export class RDSStack extends cdk.Stack {
             instanceType: ec2.InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
             vpc: this._vpc,
             vpcSubnets: {
-                subnetType: ec2.SubnetType.PRIVATE_ISOLATED
+                subnetType: props?.subnets
             },
-            publiclyAccessible: true,
+            publiclyAccessible: false,
             databaseName: 'GenBIDB',
             credentials: rds.Credentials.fromSecret(templatedSecret),
         });
