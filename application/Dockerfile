@@ -7,7 +7,19 @@ RUN adduser --disabled-password --gecos '' appuser
 WORKDIR /app
 
 COPY requirements.txt /app/
-RUN pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+#ARG AWS_REGION=us-east-1
+ENV AWS_REGION=${AWS_REGION}
+
+# Print the AWS_REGION for verification
+RUN echo "Current AWS Region: $AWS_REGION"
+
+# Install dependencies using the appropriate PyPI source based on AWS region
+RUN if [ "$AWS_REGION" = "cn-north-1" ] || [ "$AWS_REGION" = "cn-northwest-1" ]; then \
+        pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple; \
+    else \
+        pip3 install -r requirements.txt; \
+    fi
 
 COPY . /app/
 
