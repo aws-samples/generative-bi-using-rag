@@ -11,7 +11,7 @@
     "endpoint_name" : ""
   },
   "opensearch": {
-    "sql_index" : "ubs",
+    "sql_index" : "uba",
     "ner_index" : "uba_ner",
     "cot_index" : "uba_agent"
   }
