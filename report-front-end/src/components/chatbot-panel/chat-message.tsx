@@ -33,6 +33,7 @@ import {
   FeedBackType,
   SQLSearchResult,
 } from "./types";
+import { Global } from "../../common/constant/global";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -241,7 +242,7 @@ function SQLResultPanel(props: SQLResultProps) {
                   onClick={() => {
                     const feedbackData = {
                       feedback_type: FeedBackType.UPVOTE,
-                      data_profiles: userInfo.queryConfig.selectedDataPro,
+                      data_profiles: Global.profile ? Global.profile : userInfo.queryConfig.selectedDataPro,
                       query: props.query,
                       query_intent: props.intent,
                       query_answer: props.result.sql,

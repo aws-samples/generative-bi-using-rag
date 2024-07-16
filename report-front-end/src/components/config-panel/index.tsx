@@ -20,6 +20,7 @@ import {
   UserState,
 } from "../../common/helpers/types";
 import "./style.scss";
+import { Global } from "../../common/constant/global";
 
 const ConfigPanel = (props: {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
@@ -62,7 +63,13 @@ const ConfigPanel = (props: {
   useEffect(() => {
     getSelectData().then((response: any) => {
       if (response) {
-        if (response["data_profiles"]) {
+        if (Global.profile) {
+          const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
+            [];
+          tempDataPro.push({ label: Global.profile, value: Global.profile });
+          setDataProOptions(tempDataPro);
+          setSelectedDataPro(tempDataPro[0]);
+        } else if (response["data_profiles"]) {
           const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
             [];
           response["data_profiles"].forEach((item: any) => {

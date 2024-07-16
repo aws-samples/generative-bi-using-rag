@@ -8,6 +8,7 @@ import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
 import { getRecommendQuestions } from "../../common/api/API";
+import { Global } from "../../common/constant/global";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
@@ -24,7 +25,7 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   const userState = useSelector<UserState>((state) => state) as UserState;
 
   useEffect(() => {
-    const data_profile = userState.queryConfig?.selectedDataPro;
+    const data_profile = Global.profile ? Global.profile : userState.queryConfig?.selectedDataPro;
     if (data_profile) {
       getRecommendQuestions(data_profile, setQuestions).then();
     }

@@ -4,6 +4,7 @@ import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
 import cookie from 'react-cookies';
+import { Global } from "../constant/global";
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
@@ -68,7 +69,7 @@ export function queryWithWS(props: {
     visualize_results_flag: true,
     intent_ner_recognition_flag: props.configuration.intentChecked,
     agent_cot_flag: props.configuration.complexChecked,
-    profile_name: props.configuration.selectedDataPro || DEFAULT_QUERY_CONFIG.selectedDataPro,
+    profile_name: Global.profile ? Global.profile : props.configuration.selectedDataPro || DEFAULT_QUERY_CONFIG.selectedDataPro,
     explain_gen_process_flag: true,
     gen_suggested_question_flag: props.configuration.modelSuggestChecked,
     answer_with_insights: props.configuration.answerInsightChecked || DEFAULT_QUERY_CONFIG.answerInsightChecked,
