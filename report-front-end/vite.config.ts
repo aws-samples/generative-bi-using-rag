@@ -36,7 +36,7 @@ export default ({ mode }) => {
       react(),
     ],
     server: {
-      port: 3000,
+      port: 80,
       proxy: {
         "/api": {
           target: env.VITE_BACKEND_URL,
