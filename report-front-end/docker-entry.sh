@@ -8,6 +8,8 @@ VITE_COGNITO_USER_POOL_ID
 VITE_BACKEND_URL
 VITE_WEBSOCKET_URL"
 
+envsubst '$VITE_BACKEND_URL' < /etc/nginx/conf.d/nginx.template > /etc/nginx/conf.d/default.conf
+
 # Iterate through .js files in /usr/share/nginx/html and replace variables
 find "/usr/share/nginx/html" -type f -name "*.js" | while read -r file; do
     for var in $vars; do

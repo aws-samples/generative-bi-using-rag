@@ -9,6 +9,7 @@ COPY .env /frontend/.env
 FROM public.ecr.aws/docker/library/nginx:1.23-alpine
 COPY --from=builder /frontend/dist/ /usr/share/nginx/html/
 COPY --from=builder /frontend/.env /.env
+COPY ./nginx.template /etc/nginx/conf.d
 
 COPY docker-entry.sh /docker-entry.sh
 RUN chmod +x /docker-entry.sh
