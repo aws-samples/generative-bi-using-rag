@@ -31,19 +31,39 @@ export class MainStack extends cdk.Stack {
     //   default: "not-set"
     // });
     
-    // ======== Step 2. Define the AOSStack ========= 
+    // ======== Step 2. Define the AOSStack =========
+    const aosSubnets = _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS });
+
     const _AosStack = new AOSStack(this, 'aos-Stack', {
       env: props.env,
       vpc: _VpcStack.vpc,
-      subnets: _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets,
+      subnets: aosSubnets.subnets,
     });
+
+    // print AOS subnet Info
+    console.log('AOS subnets Info:');
+    aosSubnets.subnets.forEach((subnet, index) => {
+      console.log(`Subnet ${index + 1}:`);
+      console.log(`  ID: ${subnet.subnetId}`);
+      console.log(`  Availability Zone: ${subnet.availabilityZone}`);
+      console.log(`  CIDR: ${subnet.ipv4CidrBlock}`);
+    });
+
+    // print AOS subnet length
+    console.log(`Total number of AOS subnets: ${aosSubnets.subnets.length}`);
+
+
 
     const aosEndpoint = _AosStack.endpoint;
 
     // ======== Step 3. Define the RDSStack =========
     if (_deployRds) {
+      const rdsSubnets = _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS   });
+
       const _RdsStack = new RDSStack(this, 'rds-Stack', {
         env: props.env,
+        subnets: rdsSubnets,
+        vpc : _VpcStack.vpc
       });
       new cdk.CfnOutput(this, 'RDSEndpoint', {
         value: _RdsStack.endpoint,
@@ -58,10 +78,24 @@ export class MainStack extends cdk.Stack {
     
     // ======== Step 5. Define the ECS ========= 
     // pass the aosEndpoint and aosPassword to the ecs stack
+    const ecsSubnets =  _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS });
+
+        // print AOS subnet Info
+    console.log('ECS subnets Info:');
+    ecsSubnets.subnets.forEach((subnet, index) => {
+      console.log(`Subnet ${index + 1}:`);
+      console.log(`  ID: ${subnet.subnetId}`);
+      console.log(`  Availability Zone: ${subnet.availabilityZone}`);
+      console.log(`  CIDR: ${subnet.ipv4CidrBlock}`);
+    });
+
+    // print AOS subnet length
+    console.log(`Total number of ECS subnets: ${ecsSubnets.subnets.length}`);
+
     const _EcsStack = new ECSStack(this, 'ecs-Stack', {
       env: props.env,
       vpc: _VpcStack.vpc,
-      subnets: _VpcStack.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnets,
+      subnets: ecsSubnets.subnets,
       cognitoUserPoolId: _CognitoStack.userPoolId,
       cognitoUserPoolClientId: _CognitoStack.userPoolClientId,
       OSMasterUserSecretName: _AosStack.OSMasterUserSecretName,
