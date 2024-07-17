@@ -90,5 +90,6 @@ export function queryWithWS(props: {
     user_id: props.userId || "",
     dlunifiedtoken: jwtToken
   };
+  console.log("param: ", param);
   props.sendMessage(param);
 }
