@@ -29,6 +29,7 @@ def main():
                                        placeholder="Please select data profile...", key='current_profile_name')
 
     if current_profile is not None:
+        st.session_state['current_profile'] = current_profile
         profile_detail = ProfileManagement.get_profile_by_name(current_profile)
 
         prompt_map = profile_detail.prompt_map
