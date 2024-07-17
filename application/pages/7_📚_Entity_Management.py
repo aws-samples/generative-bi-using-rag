@@ -127,9 +127,9 @@ def main():
                                 comment = str(item.comment)
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
                                 progress_bar.progress((i + 1) / len(each_upload_data), text=progress_text)
-
+                            progress_bar.empty()
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
-                        progress_bar.empty()
+
     else:
         st.info('Please select data profile in the left sidebar.')
 
