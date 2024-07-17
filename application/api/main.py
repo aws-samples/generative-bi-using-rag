@@ -66,24 +66,23 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            question_json = json.loads(data)
+            question = Question(**question_json)
+            session_id = question.session_id
+            user_id = base64.b64decode(question.user_id).decode('utf-8')
             try:
-                question_json = json.loads(data)
-
                 jwt_token = question_json.get('dlunifiedtoken', None)
                 if jwt_token:
                     del question_json['dlunifiedtoken']
 
                 print('---JWT TOKEN---', jwt_token)
 
-                question = Question(**question_json)
-                session_id = question.session_id
-
                 if jwt_token:
                     response = requests.post(validate_url, data=jwt_token)
                     if response.status_code != 200 :
                         answer = {}
                         answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                        await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                        await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                     else:
                         payload = json.loads(response.text)
                         if payload['data']:
@@ -94,19 +93,19 @@ async def websocket_endpoint(websocket: WebSocket):
                             answer['X-Status-Code'] = 200
                             answer['X-User-Id'] = base64.b64encode(msg['userId'].encode('utf-8')).decode('utf-8')
                             answer['X-User-Name'] = base64.b64encode(msg['userName'].encode('utf-8')).decode('utf-8')
-                            await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                            await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                         else:
                             answer = {}
                             answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                            await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                            await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                 else:
                     answer = {}
                     answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                    await response_websocket(websocket, session_id, answer, ContentEnum.END)
+                    await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)
-                await response_websocket(websocket, session_id, msg, ContentEnum.EXCEPTION)
+                await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
 
