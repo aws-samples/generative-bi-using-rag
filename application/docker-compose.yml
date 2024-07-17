@@ -100,6 +100,8 @@ services:
       context: ../report-front-end
       dockerfile: Dockerfile
     restart: always
+    env_file:
+      - ../report-front-end/.env
     ports:
       - "3000:80" 
     expose:
