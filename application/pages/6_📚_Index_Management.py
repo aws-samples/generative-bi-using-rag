@@ -63,6 +63,7 @@ def main():
     tab_view, tab_add, tab_search, batch_insert = st.tabs(['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
 
     if current_profile is not None:
+        st.session_state['current_profile'] = current_profile
         with tab_view:
             if current_profile is not None:
                 st.write("The display page can show a maximum of 5000 pieces of data")
