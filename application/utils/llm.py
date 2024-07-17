@@ -434,6 +434,7 @@ def select_data_visualization_type(model_id, search_box, search_data, prompt_map
 
 
 def data_visualization(model_id, search_box, search_data, prompt_map):
+    search_data = search_data.fillna("")
     columns = list(search_data.columns)
     data_list = search_data.values.tolist()
     all_columns_data = [columns] + data_list
