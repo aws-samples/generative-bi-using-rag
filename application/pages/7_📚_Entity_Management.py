@@ -33,7 +33,7 @@ def read_file(uploaded_file):
         return None
     columns = list(uploaded_data.columns)
     if "entity" in columns and "comment" in columns:
-        return uploaded_data
+        return uploaded_data[["entity", "comment"]]
     else:
         st.error(f"The columns need contains entity and comment")
         return None
@@ -121,9 +121,9 @@ def main():
                         status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
-                            for index, item in each_upload_data.iterrows():
-                                entity = str(item["entity"])
-                                comment = str(item["comment"])
+                            for item in each_upload_data.itertuples():
+                                entity = str(item.entity)
+                                comment = str(item.comment)
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
                         progress_bar.progress((i + 1) / len(uploaded_files))
 
