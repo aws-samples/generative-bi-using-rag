@@ -256,8 +256,8 @@ def ask(question: Question) -> Answer:
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
+                search_intent_result["data"] = search_intent_result["data"].fillna("")
                 if answer_with_insights:
-                    search_intent_result["data"] = search_intent_result["data"].fillna("")
                     search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                      search_intent_result["data"].to_json(
                                                                          orient='records', force_ascii=False), "query")
