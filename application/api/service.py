@@ -502,6 +502,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
+                search_intent_result["data"] = search_intent_result["data"].fillna("")
                 if answer_with_insights:
                     await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
                                              "start")
