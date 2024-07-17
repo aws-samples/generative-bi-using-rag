@@ -25,6 +25,10 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if 'current_profile_name' not in st.session_state:
+        st.session_state['current_profile_name'] = ''
+
+
     with st.sidebar:
         st.title("Data Profile Management")
         all_profiles_list = ProfileManagement.get_all_profiles()
@@ -35,7 +39,10 @@ def main():
             current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
                                        index=None,
                                        placeholder="Please select data profile...", key='current_profile_name')
-        if st.session_state.current_profile_name:
+
+        if current_profile is not None:
+            st.session_state.current_profile = current_profile
+            st.session_state.current_profile_name = current_profile
             st.session_state.profile_page_mode = 'update'
 
         st.button('Create new profile...', on_click=new_profile_clicked)
