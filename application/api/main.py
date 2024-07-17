@@ -82,7 +82,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     if response.status_code != 200 :
                         answer = {}
                         answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                        await response_websocket(websocket, session_id, answer, ContentEnum.END, user_id)
+                        await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                     else:
                         payload = json.loads(response.text)
                         if payload['data']:
@@ -93,19 +93,19 @@ async def websocket_endpoint(websocket: WebSocket):
                             answer['X-Status-Code'] = 200
                             answer['X-User-Id'] = base64.b64encode(msg['userId'].encode('utf-8')).decode('utf-8')
                             answer['X-User-Name'] = base64.b64encode(msg['userName'].encode('utf-8')).decode('utf-8')
-                            await response_websocket(websocket, session_id, answer, ContentEnum.END, user_id)
+                            await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                         else:
                             answer = {}
                             answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                            await response_websocket(websocket, session_id, answer, ContentEnum.END, user_id)
+                            await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                 else:
                     answer = {}
                     answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                    await response_websocket(websocket, session_id, answer, ContentEnum.END, user_id)
+                    await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)
-                await response_websocket(websocket, session_id, msg, ContentEnum.EXCEPTION, user_id)
+                await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
 
