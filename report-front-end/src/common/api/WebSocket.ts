@@ -86,8 +86,8 @@ export function queryWithWS(props: {
     max_tokens: props.configuration.maxLength,
     temperature: props.configuration.temperature,
     context_window: 3,
-    session_id: "-1",
-    user_id: props.userId,
+    session_id: Global.sessionId,
+    user_id: props.userId || "",
     dlunifiedtoken: jwtToken
   };
   props.sendMessage(param);
