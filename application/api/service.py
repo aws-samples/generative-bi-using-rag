@@ -356,7 +356,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     session_id = question.session_id
     user_id = question.user_id
 
-    user_id = base64.b64decode(base64.b64encode(user_id.encode('utf-8')).decode('utf-8')).decode('utf-8')
+    user_id = base64.b64decode(user_id).decode('utf-8')
 
     intent_ner_recognition_flag = question.intent_ner_recognition_flag
     agent_cot_flag = question.agent_cot_flag
