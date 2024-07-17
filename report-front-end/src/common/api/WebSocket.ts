@@ -61,7 +61,7 @@ export function queryWithWS(props: {
       content: props.query
     }];
   });
-  const jwtToken = cookie.load("jwtToken");
+  const jwtToken = cookie.load("dlunifiedtoken") || "";
   const param = {
     query: props.query,
     bedrock_model_id: props.configuration.selectedLLM || DEFAULT_QUERY_CONFIG.selectedLLM,
@@ -80,7 +80,7 @@ export function queryWithWS(props: {
     context_window: 3,
     session_id: "-1",
     user_id: props.userId,
-    jwtToken: jwtToken
+    dlunifiedtoken: jwtToken
   };
   props.sendMessage(param);
 }

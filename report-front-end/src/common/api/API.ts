@@ -9,13 +9,15 @@ instance.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    if (error.response.status === 401) {
-      const patchEvent = new CustomEvent("unauthorized", {
-        detail: {},
-      });
-      window.dispatchEvent(patchEvent);
-    } else {
-      return Promise.reject(error);
+    if (error.response && error.response.status) {
+      if (error.response.status === 401) {
+        const patchEvent = new CustomEvent("unauthorized", {
+          detail: {},
+        });
+        window.dispatchEvent(patchEvent);
+      } else {
+        return Promise.reject(error);
+      }
     }
   },
 );
