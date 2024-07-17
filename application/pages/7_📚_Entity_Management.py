@@ -115,20 +115,21 @@ def main():
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
                     for i, uploaded_file in enumerate(uploaded_files):
+                        status_text = st.empty()
                         status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
+                            progress_bar = st.progress(0)
+                            progress_text = "batch insert {} entity  in progress. Please wait.".format(uploaded_file.name)
                             for item in each_upload_data.itertuples():
                                 entity = str(item.entity)
                                 comment = str(item.comment)
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
-                        progress_bar.progress((i + 1) / len(uploaded_files))
+                                progress_bar.progress((i + 1) / len(each_upload_data), text=progress_text)
 
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
-                    progress_bar.empty()
+                        progress_bar.empty()
     else:
         st.info('Please select data profile in the left sidebar.')
 
