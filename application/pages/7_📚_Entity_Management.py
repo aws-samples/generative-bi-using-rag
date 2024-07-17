@@ -120,13 +120,15 @@ def main():
                         status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
+                            total_rows = len(each_upload_data)
                             progress_bar = st.progress(0)
                             progress_text = "batch insert {} entity  in progress. Please wait.".format(uploaded_file.name)
-                            for item in each_upload_data.itertuples():
+                            for j, item in enumerate(each_upload_data.itertuples(), 1):
                                 entity = str(item.entity)
                                 comment = str(item.comment)
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
-                                progress_bar.progress((i + 1) / len(each_upload_data), text=progress_text)
+                                progress = (j * 1.0) / total_rows
+                                progress_bar.progress(progress, text=progress_text)
                             progress_bar.empty()
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
 
