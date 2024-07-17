@@ -257,6 +257,7 @@ def ask(question: Question) -> Answer:
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
                 if answer_with_insights:
+                    search_intent_result["data"] = search_intent_result["data"].fillna("")
                     search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                      search_intent_result["data"].to_json(
                                                                          orient='records', force_ascii=False), "query")
