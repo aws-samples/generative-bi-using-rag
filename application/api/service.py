@@ -409,9 +409,9 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     entity_slot = []
 
     if intent_ner_recognition_flag:
-        await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start")
+        await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start", user_id)
         intent_response = get_query_intent(model_type, search_box, prompt_map)
-        await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "end")
+        await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "end", user_id)
         intent = intent_response.get("intent", "normal_search")
         entity_slot = intent_response.get("slot", [])
         if intent == "reject_search":
@@ -445,7 +445,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         normal_search_result = await normal_text_search_websocket(websocket, session_id, search_box, model_type,
                                                                   database_profile,
                                                                   entity_slot, opensearch_info,
-                                                                  selected_profile, use_rag_flag)
+                                                                  selected_profile, use_rag_flag, user_id)
     elif knowledge_search_flag:
         response = knowledge_search(search_box=search_box, model_id=model_type, prompt_map=prompt_map)
 
@@ -491,12 +491,12 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         else:
             sql_search_result.sql = "-1"
 
-        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "start")
+        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "start", user_id)
 
         search_intent_result = get_sql_result_tool(database_profile,
                                                    current_nlq_chain.get_generated_sql())
 
-        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "end")
+        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "end", user_id)
 
         if search_intent_result["status_code"] == 500:
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
@@ -505,13 +505,13 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                 search_intent_result["data"] = search_intent_result["data"].fillna("")
                 if answer_with_insights:
                     await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
-                                             "start")
+                                             "start", user_id)
                     search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
                                                                      search_intent_result["data"].to_json(
                                                                          orient='records', force_ascii=False), "query")
 
                     await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
-                                             "end")
+                                             "end", user_id)
 
                     sql_search_result.data_analyse = search_intent_analyse_result
 
@@ -661,7 +661,7 @@ def get_executed_result(current_nlq_chain: NLQChain) -> str:
 
 
 async def normal_text_search_websocket(websocket: WebSocket, session_id: str, search_box, model_type, database_profile,
-                                       entity_slot, opensearch_info, selected_profile, use_rag,
+                                       entity_slot, opensearch_info, selected_profile, use_rag,user_id,
                                        model_provider=None):
     entity_slot_retrieve = []
     retrieve_result = []
@@ -677,21 +677,21 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
             database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
 
         if len(entity_slot) > 0 and use_rag:
-            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start")
+            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start", user_id)
             for each_entity in entity_slot:
                 entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
                                                           selected_profile, 1, 0.7)
                 if len(entity_retrieve) > 0:
                     entity_slot_retrieve.extend(entity_retrieve)
-            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "end")
+            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "end", user_id)
 
         if use_rag:
-            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start")
+            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start", user_id)
             retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
                                                       selected_profile, 3, 0.5)
-            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end")
+            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end", user_id)
 
-        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start")
+        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start", user_id)
 
         response = text_to_sql(database_profile['tables_info'],
                                database_profile['hints'],
@@ -703,7 +703,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
                                dialect=database_profile['db_type'],
                                model_provider=model_provider)
         logger.info(f'{response=}')
-        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end")
+        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
         sql = get_generated_sql(response)
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
