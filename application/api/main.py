@@ -69,9 +69,9 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 question_json = json.loads(data)
 
-                jwt_token = question_json.get('jwtToken', None)
+                jwt_token = question_json.get('dlunifiedtoken', None)
                 if jwt_token:
-                    del question_json['jwtToken']
+                    del question_json['dlunifiedtoken']
 
                 print('---JWT TOKEN---', jwt_token)
 

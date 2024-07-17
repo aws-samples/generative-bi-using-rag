@@ -26,7 +26,7 @@ validate_url = 'https://apimarket-test.shinho.net.cn/dops-temp/token/validate'
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     print('---HTTP REQUEST---', vars(request), request.cookies)
-    jwt_token = request.cookies.get('jwtToken', None)
+    jwt_token = request.cookies.get('dlunifiedtoken', None)
     print('---JWT TOKEN---', jwt_token)
     if jwt_token:
         response = requests.post(validate_url, data=jwt_token)
