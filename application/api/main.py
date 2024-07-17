@@ -66,11 +66,11 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 ask_result = await ask_websocket(websocket, question)
                 logger.info(ask_result)
-                await response_websocket(websocket, session_id, ask_result.dict(), ContentEnum.END, user_id)
+                await response_websocket(websocket=websocket, session_id=session_id, content=ask_result.dict(), content_type=ContentEnum.END, user_id=user_id)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)
-                await response_websocket(websocket, session_id, msg, ContentEnum.EXCEPTION, user_id)
+                await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
 
