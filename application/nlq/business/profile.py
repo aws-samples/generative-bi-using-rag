@@ -41,7 +41,9 @@ class ProfileManagement:
 
     @classmethod
     def update_profile(cls, profile_name, conn_name, schemas, tables, comment, tables_info):
-        entity = ProfileConfigEntity(profile_name, conn_name, schemas, tables, comment, tables_info)
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        prompt_map = all_profiles[profile_name]["prompt_map"]
+        entity = ProfileConfigEntity(profile_name, conn_name, schemas, tables, comment, tables_info, prompt_map)
         cls.profile_config_dao.update(entity)
         logger.info(f"Profile {profile_name} updated")
 

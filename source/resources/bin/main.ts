@@ -8,6 +8,8 @@ const devEnv = {
     region: process.env.CDK_DEFAULT_REGION,
 };
 
+declare const __dirname: string;
+
 const configPath = path.join(__dirname, '..', 'cdk-config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
