@@ -14,7 +14,7 @@ public readonly publicSubnets: ec2.ISubnet[];
 constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
     // Create a VPC
-    const vpc = new ec2.Vpc(this, 'MyVpc', {
+    const vpc = new ec2.Vpc(this, 'GenBIVpc', {
         maxAzs: 3, // Default is all AZs in the region
         subnetConfiguration: [
           {
