@@ -31,7 +31,7 @@ def read_file(uploaded_file):
         return None
     columns = list(uploaded_data.columns)
     if "question" in columns and "sql" in columns:
-        return uploaded_data
+        return uploaded_data[["question", "sql"]]
     else:
         st.error(f"The columns need contains question and sql")
         return None
@@ -107,20 +107,23 @@ def main():
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
                     for i, uploaded_file in enumerate(uploaded_files):
+                        status_text = st.empty()
                         status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
-                            for index, item in each_upload_data.iterrows():
-                                question = str(item["question"])
-                                sql = str(item["sql"])
-                                VectorStore.add_sample(current_profile, question, sql)
-                        progress_bar.progress((i + 1) / len(uploaded_files))
-
+                            total_rows = len(each_upload_data)
+                            progress_bar = st.progress(0)
+                            progress_text = "batch insert {} entity  in progress. Please wait.".format(
+                                uploaded_file.name)
+                            for j, item in enumerate(each_upload_data.itertuples(), 1):
+                                entity = str(item.question)
+                                comment = str(item.sql)
+                                VectorStore.add_entity_sample(current_profile, entity, comment)
+                                progress = (j * 1.0) / total_rows
+                                progress_bar.progress(progress, text=progress_text)
+                            progress_bar.empty()
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
-                    progress_bar.empty()
     else:
         st.info('Please select data profile in the left sidebar.')
         
