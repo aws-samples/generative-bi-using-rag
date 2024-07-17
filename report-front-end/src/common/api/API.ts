@@ -6,6 +6,15 @@ const instance = axios.create();
 
 instance.interceptors.response.use(
   (response) => {
+    if (response.headers && response.headers["X-User-Id"]) {
+      const patchEvent = new CustomEvent("authorized", {
+        detail: {
+          userId: response.headers["X-User-Id"],
+          userName: response.headers["X-User-Name"],
+        },
+      });
+      window.dispatchEvent(patchEvent);
+    }
     return response.data;
   },
   (error) => {

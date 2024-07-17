@@ -5,6 +5,8 @@ import Chat from "../../components/chatbot-panel/chat";
 import ErrorPage from "../error-page";
 import { useLocation } from "react-router-dom";
 import { Global } from "../../common/constant/global";
+import { ActionType, UserInfo, UserState } from "../../common/helpers/types";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Playground() {
   const [toolsHide, setToolsHide] = useState(true);
@@ -14,14 +16,31 @@ export default function Playground() {
   const params = new URLSearchParams(search);
   Global.profile = params.get("profile") || "";
 
+  const dispatch = useDispatch();
+  const userState = useSelector<UserState>((state) => state) as UserState;
+
   const showErrorPage = (isAuthentication: boolean) => {
     setAuthentication(isAuthentication);
   };
 
+  const updateUserInfo = (event: Event) => {
+    const e = event as CustomEvent;
+    if (e.detail) {
+      const userInfo: UserInfo = {
+        ...userState.userInfo,
+        userId: e.detail.userId,
+        displayName: e.detail.userName,
+      };
+      dispatch({ type: ActionType.UpdateUserInfo, state: userInfo });
+    }
+  };
+
   useEffect(() => {
     window.addEventListener("unauthorized", () => showErrorPage(false));
+    window.addEventListener("authorized", (event) => updateUserInfo(event));
     return () => {
       window.removeEventListener("unauthorized", () => showErrorPage(false));
+      window.removeEventListener("authorized", (event) => updateUserInfo(event));
     };
   }, []);
 
