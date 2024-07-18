@@ -403,7 +403,7 @@ def main():
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)
-                query_rewrite_result = {"original_problem": search_box}
+                query_rewrite_result = {"intent" : "original_problem", "query" :search_box}
                 if context_window > 0:
                     with st.status("Query Context Understanding") as status_text:
                         context_window_select = context_window * 2
@@ -420,7 +420,9 @@ def main():
                         st.write(search_box)
                     status_text.update(label=f"Query Context Rewrite Completed", state="complete", expanded=False)
 
-                if "ask_in_reply" in query_rewrite_result:
+                query_rewrite_intent = query_rewrite_result.get("intent")
+                if "ask_in_reply" == query_rewrite_intent:
+                    st.write(query_rewrite_result.get("query"))
                     st.session_state.ask_replay = True
 
                 if not st.session_state.ask_replay:
