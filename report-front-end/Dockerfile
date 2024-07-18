@@ -4,6 +4,8 @@ COPY package*.json ./
 
 ARG AWS_REGION
 
+RUN echo "Current AWS Region: $AWS_REGION"
+
 RUN if [ "$AWS_REGION" = "cn-north-1" ] || [ "$AWS_REGION" = "cn-northwest-1" ]; then \
         npm config set registry https://registry.npmmirror.com && \
         npm install; \

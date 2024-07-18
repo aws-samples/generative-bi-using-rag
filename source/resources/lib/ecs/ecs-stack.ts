@@ -231,6 +231,9 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     const GenBiFrontendDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
       directory: services[2].dockerfileDirectory,
       file: services[2].dockerfile,
+      buildArgs : {
+        AWS_REGION: awsRegion, // Pass the AWS region as a build argument
+      }
     }), 'port': services[2].port};
 
     const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
