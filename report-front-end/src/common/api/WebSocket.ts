@@ -30,13 +30,15 @@ export function createWssClient(
       window.dispatchEvent(patchEvent);
       return;
     } else if (messageJson.content["X-Status-Code"] === 200) {
-      const patchEvent = new CustomEvent("authorized", {
-        detail: {
-          userId: messageJson.content["X-User-Id"],
-          userName: messageJson.content["X-User-Name"],
-        },
-      });
-      window.dispatchEvent(patchEvent);
+      if (messageJson.content["X-User-Id"]) {
+        const patchEvent = new CustomEvent("authorized", {
+          detail: {
+            userId: messageJson.content["X-User-Id"],
+            userName: messageJson.content["X-User-Name"],
+          },
+        });
+        window.dispatchEvent(patchEvent);
+      }
     }
     if (messageJson.content_type === "state") {
       setStatusMessage((historyMessage) =>
@@ -90,5 +92,6 @@ export function queryWithWS(props: {
     user_id: props.userId || "",
     dlunifiedtoken: jwtToken
   };
+  console.log("param: ", param);
   props.sendMessage(param);
 }
