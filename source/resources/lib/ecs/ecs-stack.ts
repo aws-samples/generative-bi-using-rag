@@ -12,10 +12,10 @@ export class ECSStack extends cdk.Stack {
   public readonly streamlitEndpoint: string;
   public readonly frontendEndpoint: string;
   public readonly apiEndpoint: string;
-constructor(scope: Construct, id: string, props: cdk.StackProps 
+constructor(scope: Construct, id: string, props: cdk.StackProps
   & { vpc: ec2.Vpc}
-  & { subnets: cdk.aws_ec2.ISubnet[] } & { cognitoUserPoolId: string} 
-  & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string} 
+  & { subnets: cdk.aws_ec2.ISubnet[] } & { cognitoUserPoolId: string}
+  & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string}
   & {OSHostSecretName: string}) {
     super(scope, id, props);
 
@@ -32,16 +32,24 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       { name: 'genbi-frontend', dockerfile: 'Dockerfile', port: 80, dockerfileDirectory: path.join(__dirname, '../../../../report-front-end')},
     ];
 
+    const awsRegion = props.env?.region as string;
+
     const GenBiStreamlitDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiStreamlitDockerImage', {
-        directory: services[0].dockerfileDirectory, 
-        file: services[0].dockerfile, 
+        directory: services[0].dockerfileDirectory,
+        file: services[0].dockerfile,
+            buildArgs: {
+          AWS_REGION: awsRegion, // Pass the AWS region as a build argument
+        },
       }), 'port': services[0].port};
-          
+
     const GenBiAPIDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiAPIDockerImage', {
-      directory: services[1].dockerfileDirectory, 
-      file: services[1].dockerfile, 
+      directory: services[1].dockerfileDirectory,
+      file: services[1].dockerfile,
+            buildArgs : {
+          AWS_REGION: awsRegion, // Pass the AWS region as a build argument
+        }
     }), 'port': services[1].port};
-    
+
     //  Create an ECS cluster
     const cluster = new ecs.Cluster(this, 'GenBiCluster', {
       vpc: props.vpc,
@@ -108,7 +116,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       ]
       });
       taskRole.addToPolicy(bedrockAccessPolicy);
-    } 
+    }
 
     // Add SageMaker endpoint access policy
     const sageMakerEndpointAccessPolicy = new iam.PolicyStatement({
@@ -137,7 +145,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
         ]
       });
       taskRole.addToPolicy(cognitoAccessPolicy);
-    } 
+    }
 
     // Create ECS services through Fargate
     // ======= 1. Streamlit Service =======
@@ -221,8 +229,8 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
 
     // ======= 3. Frontend Service =======
     const GenBiFrontendDockerImageAsset = {'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
-      directory: services[2].dockerfileDirectory, 
-      file: services[2].dockerfile, 
+      directory: services[2].dockerfileDirectory,
+      file: services[2].dockerfile,
     }), 'port': services[2].port};
 
     const taskDefinitionFrontend = new ecs.FargateTaskDefinition(this, 'GenBiTaskDefinitionFrontend', {
@@ -231,7 +239,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
       executionRole: taskExecutionRole,
       taskRole: taskRole
     });
-    
+
     const containerFrontend = taskDefinitionFrontend.addContainer('GenBiContainerFrontend', {
       image: ecs.ContainerImage.fromDockerImageAsset(GenBiFrontendDockerImageAsset.dockerImageAsset),
       memoryLimitMiB: 512,
