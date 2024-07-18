@@ -58,12 +58,11 @@ export async function getSelectData() {
 
 export async function addUserFeedback(feedbackData: FeedBackItem) {
   try {
-    return await instance.post(`/api/qa/user_feedback`, {
+    return await instance.post(`/api/qa/user_feedback`, JSON.stringify(feedbackData), {
       timeout: 5000,
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(feedbackData),
     });
   } catch (error) {
     console.error("Query error, ", error);
