@@ -381,10 +381,8 @@ def get_query_intent(model_id, search_box, prompt_map):
 
 
 def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
-    query_rewrite = {"query_rewrite": search_box}
-    history_query = ""
-    for item in chat_history:
-        history_query = history_query + "user : " + item + "\n"
+    query_rewrite = {"original_problem": search_box}
+    history_query = "\n".join(chat_history)
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
         if intent_endpoint:
@@ -399,8 +397,9 @@ def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
             user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
             max_tokens = 2048
             final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+            query_rewrite_result = json_parse.parse(final_response)
             logger.info(f'{final_response=}')
-            return final_response
+            return query_rewrite_result
     except Exception as e:
         logger.error("get_query_rewrite is error:{}".format(e))
         return query_rewrite
