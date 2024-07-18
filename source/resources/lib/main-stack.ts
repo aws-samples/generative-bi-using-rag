@@ -71,9 +71,9 @@ export class MainStack extends cdk.Stack {
         }
 
         // ======== Step 4. Define Cognito =========
-        const isChinaRegion = env?.region === "cn-north-1" || env?.region === "cn-northwest-1";
+        const isChinaRegion = props.env?.region === "cn-north-1" || props.env?.region === "cn-northwest-1";
 
-        let cognitoStack: CognitoStack | undefined;
+        let _CognitoStack: CognitoStack | undefined;
         if (!isChinaRegion) {
             const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
                 env: props.env
@@ -114,8 +114,8 @@ export class MainStack extends cdk.Stack {
 
         _AosStack.addDependency(_VpcStack);
         _EcsStack.addDependency(_AosStack);
-        if (cognitoStack) {
-            ecsStack.addDependency(cognitoStack);
+        if (_CognitoStack) {
+            _EcsStack.addDependency(_CognitoStack);
         }
         _EcsStack.addDependency(_VpcStack);
 
