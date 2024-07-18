@@ -118,6 +118,11 @@ class VectorStore:
         return embedding
 
     @classmethod
+    def create_vector_embedding_with_sagemaker(cls):
+        # to do
+        pass
+
+    @classmethod
     def delete_sample(cls, profile_name, doc_id):
         logger.info(f'delete sample question id: {doc_id} from profile {profile_name}')
         ret = cls.opensearch_dao.delete_sample(opensearch_info['sql_index'], profile_name, doc_id)

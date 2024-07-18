@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY requirements.txt /app/
 
-#ARG AWS_REGION=us-east-1
+ARG AWS_REGION
 ENV AWS_REGION=${AWS_REGION}
 
 # Print the AWS_REGION for verification
