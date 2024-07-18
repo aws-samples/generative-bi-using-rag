@@ -1,23 +1,26 @@
 import { useEffect, useState } from "react";
 import { Authenticator, defaultDarkModeOverride, ThemeProvider, } from "@aws-amplify/ui-react";
-import App from "../../app";
+import App from "../../../app";
 import { Amplify } from "aws-amplify";
-import { Storage } from "../../common/helpers/storage";
+import { Storage } from "../../../common/helpers/storage";
 import { Mode } from "@cloudscape-design/global-styles";
 import "@aws-amplify/ui-react/styles.css";
 import { awsConfig } from "./aws-config";
+import { COGNITO, LOGIN_TYPE } from "../../../common/constant/constants";
 
 export default function AppConfigured() {
   const [theme, setTheme] = useState(Storage.getTheme());
 
   useEffect(() => {
-    (async () => {
-      try {
-        Amplify.configure(awsConfig);
-      } catch (e) {
-        console.error(e);
-      }
-    })();
+    if (LOGIN_TYPE === COGNITO) {
+      (async () => {
+        try {
+          Amplify.configure(awsConfig);
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+    }
   }, []);
 
   useEffect(() => {

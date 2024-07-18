@@ -25,7 +25,6 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
 
   const getRecommendQuestions = async (data_profile: string) => {
     const url = `${BACKEND_URL}qa/get_custom_question?data_profile=${data_profile}`;
-    console.log(url);
     try {
       const response = await fetch(url, {
         method: "GET",
