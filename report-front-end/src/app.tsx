@@ -27,7 +27,7 @@ function App() {
       })();
     } else {
       const loginUser: UserInfo = {
-        userId: "",
+        userId: "none",
         displayName: "",
         loginExpiration: 0,
         isLogin: true

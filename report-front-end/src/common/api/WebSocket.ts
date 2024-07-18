@@ -3,6 +3,7 @@ import { DEFAULT_QUERY_CONFIG } from "../constant/constants";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
+import { Global } from "../constant/global";
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
@@ -68,8 +69,9 @@ export function queryWithWS(props: {
     max_tokens: props.configuration.maxLength,
     temperature: props.configuration.temperature,
     context_window: 3,
-    session_id: "-1",
+    session_id: Global.sessionId,
     user_id: props.userId
   };
+  console.log("param: ", param)
   props.sendMessage(param);
 }
