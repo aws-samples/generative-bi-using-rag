@@ -3,8 +3,10 @@ import os
 import boto3
 import json
 from nlq.data_access.opensearch import OpenSearchDao
-from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info
+from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info, \
+    SAGEMAKER_ENDPOINT_EMBEDDING
 from utils.env_var import bedrock_ak_sk_info
+from utils.llm import invoke_model_sagemaker_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,10 @@ class VectorStore:
     @classmethod
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
-        embedding = cls.create_vector_embedding_with_bedrock(question)
+        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
+            embedding = cls.create_vector_embedding_with_sagemaker(question)
+        else:
+            embedding = cls.create_vector_embedding_with_bedrock(question)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
@@ -83,7 +88,10 @@ class VectorStore:
     @classmethod
     def add_entity_sample(cls, profile_name, entity, comment):
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
-        embedding = cls.create_vector_embedding_with_bedrock(entity)
+        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
+            embedding = cls.create_vector_embedding_with_sagemaker(entity)
+        else:
+            embedding = cls.create_vector_embedding_with_bedrock(entity)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['ner_index'], embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
@@ -93,7 +101,10 @@ class VectorStore:
     @classmethod
     def add_agent_cot_sample(cls, profile_name, entity, comment):
         logger.info(f'add agent sample query: {entity} to profile {profile_name}')
-        embedding = cls.create_vector_embedding_with_bedrock(entity)
+        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
+            embedding = cls.create_vector_embedding_with_sagemaker(entity)
+        else:
+            embedding = cls.create_vector_embedding_with_bedrock(entity)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['agent_index'], embedding)
         if has_same_sample:
             logger.info(f'delete agent sample sample query: {entity} to profile {profile_name}')
@@ -118,9 +129,17 @@ class VectorStore:
         return embedding
 
     @classmethod
-    def create_vector_embedding_with_sagemaker(cls):
-        # to do
-        pass
+    def create_vector_embedding_with_sagemaker(cls, text):
+        try:
+            model_kwargs = {}
+            model_kwargs["batch_size"] = 12
+            model_kwargs["max_length"] = 512
+            model_kwargs["return_type"] = "dense"
+            body = json.dumps({"inputs": [text], **model_kwargs})
+            embeddings = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body)
+            return embeddings
+        except Exception as e:
+            logger.error(f'create_vector_embedding_with_sagemaker is error {e}')
 
     @classmethod
     def delete_sample(cls, profile_name, doc_id):
