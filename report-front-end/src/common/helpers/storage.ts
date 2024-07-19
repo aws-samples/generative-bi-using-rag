@@ -8,7 +8,7 @@ import { NavigationPanelState } from "../types";
 import { APP_STYLE_DEFAULT_COMPACT } from "../constant/constants";
 
 const PREFIX = "genai-chatbot";
-const THEME_STORAGE_NAME = `${PREFIX}-theme`;
+const THEME_STORAGE_NAME = `${PREFIX}-themes`;
 const DENSITY_STORAGE_NAME = `${PREFIX}-density`;
 const NAVIGATION_PANEL_STATE_STORAGE_NAME = `${PREFIX}-navigation-panel-state`;
 

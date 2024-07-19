@@ -235,6 +235,9 @@ function SQLResultPanel(props: SQLResultProps) {
               <ColumnLayout columns={2}>
                 <Button
                   fullWidth
+                  variant={
+                    selectedIcon === 1 ? "primary" : undefined
+                  }
                   iconName={
                     selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"
                   }
@@ -246,14 +249,16 @@ function SQLResultPanel(props: SQLResultProps) {
                       query_intent: props.intent,
                       query_answer: props.result.sql,
                     };
-                    handleFeedback(feedbackData);
-                    setSelectedIcon(1);
+                    handleFeedback(feedbackData, setSelectedIcon);
                   }}
                 >
                   Upvote
                 </Button>
                 <Button
                   fullWidth
+                  variant={
+                    selectedIcon === 0 ? "primary" : undefined
+                  }
                   iconName={
                     selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"
                   }
@@ -265,8 +270,7 @@ function SQLResultPanel(props: SQLResultProps) {
                       query_intent: props.intent,
                       query_answer: props.result.sql,
                     };
-                    handleFeedback(feedbackData);
-                    setSelectedIcon(0);
+                    handleFeedback(feedbackData, setSelectedIcon);
                   }}
                 >
                   Downvote
@@ -440,6 +444,13 @@ export default function ChatMessage(props: ChatMessageProps) {
   );
 }
 
-const handleFeedback = (feedbackData: FeedBackItem) => {
-  addUserFeedback(feedbackData).then();
+const handleFeedback = (feedbackData: FeedBackItem, setSelectedIcon: Dispatch<SetStateAction<1 | 0 | null>>) => {
+  addUserFeedback(feedbackData).then(
+    response => {
+      if (feedbackData.feedback_type === "upvote") {
+        setSelectedIcon(response ? 1 : null);
+      } else if (feedbackData.feedback_type === "downvote") {
+        setSelectedIcon(response ? 0 : null);
+      }
+    });
 };
