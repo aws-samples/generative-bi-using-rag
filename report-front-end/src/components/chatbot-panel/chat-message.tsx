@@ -4,9 +4,9 @@ import {
   Box,
   ColumnLayout,
   Container,
-  ExpandableSection,
+  ExpandableSection, Header,
   Icon,
-  LineChart,
+  LineChart, Modal,
   Pagination,
   PieChart,
   SpaceBetween,
@@ -164,6 +164,7 @@ function SQLResultPanel(props: SQLResultProps) {
       return Object.fromEntries(map);
     });
   }
+
   return (
     <div>
       <SpaceBetween size="xxl">
@@ -284,6 +285,16 @@ function SQLResultPanel(props: SQLResultProps) {
   );
 }
 
+const AllDataModalTable = (props: { distributions: []; header: [] }) => {
+  return (
+    <Table
+      variant="embedded"
+      columnDefinitions={props.header}
+      items={props.distributions}
+    />
+  );
+};
+
 const DataTable = (props: { distributions: []; header: [] }) => {
   const {
     items,
@@ -312,21 +323,57 @@ const DataTable = (props: { distributions: []; header: [] }) => {
     return `${count} ${count === 1 ? "match" : "matches"}`;
   }
 
+  const [visible, setVisible] = useState(false);
+
   return (
-    <Table
-      {...collectionProps}
-      variant="embedded"
-      columnDefinitions={props.header}
-      items={items}
-      pagination={<Pagination {...paginationProps} />}
-      filter={
-        <TextFilter
-          {...filterProps}
-          countText={filterCounter(filteredItemsCount)}
-          filteringPlaceholder="Search"
+    <>
+      <Table
+        {...collectionProps}
+        variant="embedded"
+        columnDefinitions={props.header}
+        header={
+          <Header
+            actions={
+              <Button
+                variant="primary"
+                onClick={() => setVisible(true)}
+              >
+                Open
+              </Button>
+            }
+          >
+          </Header>
+        }
+        items={items}
+        pagination={<Pagination {...paginationProps} />}
+        filter={
+          <TextFilter
+            {...filterProps}
+            countText={filterCounter(filteredItemsCount)}
+            filteringPlaceholder="Search"
+          />
+        }
+      />
+      <Modal
+        onDismiss={() => setVisible(false)}
+        visible={visible}
+        header="Table"
+        footer={
+          <Box float="right">
+            <Button
+              variant="primary"
+              onClick={() => setVisible(false)}
+            >
+              Close</Button>
+          </Box>
+        }
+      >
+        <AllDataModalTable
+          distributions={props.distributions}
+          header={props.header}
         />
-      }
-    />
+      </Modal>
+    </>
   );
 };
 
