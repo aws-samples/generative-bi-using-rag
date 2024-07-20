@@ -55,21 +55,6 @@ export class MainStack extends cdk.Stack {
 
         const aosEndpoint = _AosStack.endpoint;
 
-        // ======== Step 3. Define the RDSStack =========
-        if (_deployRds) {
-            const rdsSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
-
-            const _RdsStack = new RDSStack(this, 'rds-Stack', {
-                env: props.env,
-                subnets: rdsSubnets,
-                vpc: _VpcStack.vpc
-            });
-            new cdk.CfnOutput(this, 'RDSEndpoint', {
-                value: _RdsStack.endpoint,
-                description: 'The endpoint of the RDS instance',
-            });
-        }
-
         // ======== Step 4. Define Cognito =========
         const isChinaRegion = props.env?.region === "cn-north-1" || props.env?.region === "cn-northwest-1";
 
@@ -112,13 +97,33 @@ export class MainStack extends cdk.Stack {
             })
         ;
 
-
         _AosStack.addDependency(_VpcStack);
         _EcsStack.addDependency(_AosStack);
         if (_CognitoStack) {
             _EcsStack.addDependency(_CognitoStack);
         }
         _EcsStack.addDependency(_VpcStack);
+
+        // ======== Step 3. Define the RDSStack =========
+        if (_deployRds) {
+            const rdsSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
+
+            const _RdsStack = new RDSStack(this, 'rds-Stack', {
+                env: props.env,
+                subnets: rdsSubnets,
+                vpc: _VpcStack.vpc
+            });
+
+            _RdsStack.rdsSecurityGroup.addIngressRule(
+                 _EcsStack.ecsSecurityGroup,
+                ec2.Port.tcp(3306),
+                'Allow inbound traffic from ECS on port 3306'
+            );
+            new cdk.CfnOutput(this, 'RDSEndpoint', {
+                value: _RdsStack.endpoint,
+                description: 'The endpoint of the RDS instance',
+            });
+        }
 
         new cdk.CfnOutput(this, 'AOSDomainEndpoint', {
             value: aosEndpoint,
