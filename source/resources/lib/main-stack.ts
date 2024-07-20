@@ -102,6 +102,7 @@ export class MainStack extends cdk.Stack {
                 env: props.env,
                 vpc: _VpcStack.vpc,
                 subnets: ecsSubnets.subnets,
+                authenticationType: _CognitoStack ? "Cognito" : "None",
                 cognitoUserPoolId: _CognitoStack?.userPoolId ?? "",
                 cognitoUserPoolClientId: _CognitoStack?.userPoolClientId ?? "",
                 OSMasterUserSecretName:
