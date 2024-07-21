@@ -114,11 +114,13 @@ export class MainStack extends cdk.Stack {
                 vpc: _VpcStack.vpc
             });
 
-            _RdsStack.rdsSecurityGroup.addIngressRule(
-                 _EcsStack.ecsSecurityGroup,
-                ec2.Port.tcp(3306),
-                'Allow inbound traffic from ECS on port 3306'
-            );
+            if (_RdsStack.rdsSecurityGroup && _EcsStack.ecsSecurityGroup) {
+                _RdsStack.rdsSecurityGroup.addIngressRule(
+                    _EcsStack.ecsSecurityGroup,
+                    ec2.Port.tcp(3306),
+                    'Allow inbound traffic from ECS on port 3306'
+                );
+            }
             new cdk.CfnOutput(this, 'RDSEndpoint', {
                 value: _RdsStack.endpoint,
                 description: 'The endpoint of the RDS instance',
