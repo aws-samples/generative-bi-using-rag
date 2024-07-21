@@ -8,18 +8,23 @@ import {DockerImageAsset} from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 
+interface ECSStackProps extends cdk.StackProps {
+  vpc: ec2.Vpc;
+  subnets: ec2.ISubnet[];
+  cognitoUserPoolId: string;
+  authenticationType: string;
+  cognitoUserPoolClientId: string;
+  OSMasterUserSecretName: string;
+  OSHostSecretName: string;
+}
+
 export class ECSStack extends cdk.Stack {
     public readonly streamlitEndpoint: string;
     public readonly frontendEndpoint: string;
     public readonly apiEndpoint: string;
     public readonly ecsSecurityGroup: ec2.SecurityGroup;
 
-    constructor(scope: Construct, id: string, props: cdk.StackProps
-        & { vpc: ec2.Vpc }
-        & { subnets: cdk.aws_ec2.ISubnet[] } & { cognitoUserPoolId: string }
-        & { authenticationType: string }
-        & { cognitoUserPoolClientId: string } & { OSMasterUserSecretName: string }
-        & { OSHostSecretName: string }) {
+    constructor(scope: Construct, id: string, props: ECSStackProps) {
         super(scope, id, props);
 
         // const isolatedSubnets = this._vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }).subnets;
