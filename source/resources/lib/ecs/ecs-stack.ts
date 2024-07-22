@@ -196,6 +196,8 @@ export class ECSStack extends cdk.Stack {
         containerStreamlit.addEnvironment('AOS_INDEX', 'uba');
         containerStreamlit.addEnvironment('AOS_INDEX_NER', 'uba_ner');
         containerStreamlit.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+        // containerStreamlit.addEnvironment('SAGEMAKER_EMBEDDING_REGION', cdk.Aws.REGION);
+        // containerStreamlit.addEnvironment('SAGEMAKER_SQL_REGION', cdk.Aws.REGION);
         containerStreamlit.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
         containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
         containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
@@ -242,6 +244,8 @@ export class ECSStack extends cdk.Stack {
         containerAPI.addEnvironment('AOS_INDEX', 'uba');
         containerAPI.addEnvironment('AOS_INDEX_NER', 'uba_ner');
         containerAPI.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
+        // containerAPI.addEnvironment('SAGEMAKER_EMBEDDING_REGION', cdk.Aws.REGION);
+        // containerAPI.addEnvironment('SAGEMAKER_SQL_REGION', cdk.Aws.REGION);
         containerAPI.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
         containerAPI.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
         containerAPI.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
