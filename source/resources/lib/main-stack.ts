@@ -114,6 +114,8 @@ export class MainStack extends cdk.Stack {
                 vpc: _VpcStack.vpc
             });
 
+            _RdsStack.addDependency(_EcsStack);
+
             if (_RdsStack.rdsSecurityGroup && _EcsStack.ecsSecurityGroup) {
                 _RdsStack.rdsSecurityGroup.addIngressRule(
                     _EcsStack.ecsSecurityGroup,
