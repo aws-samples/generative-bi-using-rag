@@ -15,6 +15,7 @@ export class ECSStack extends cdk.Stack {
 constructor(scope: Construct, id: string, props: cdk.StackProps
   & { vpc: ec2.Vpc}
   & { subnets: cdk.aws_ec2.ISubnet[] } & { cognitoUserPoolId: string}
+  & { authenticationType: string}
   & { cognitoUserPoolClientId: string} & {OSMasterUserSecretName: string}
   & {OSHostSecretName: string}) {
     super(scope, id, props);
@@ -255,6 +256,7 @@ constructor(scope: Construct, id: string, props: cdk.StackProps
     containerFrontend.addEnvironment('VITE_TITLE', 'Guidance for Generative BI')
     containerFrontend.addEnvironment('VITE_LOGO', '/logo.png');
     containerFrontend.addEnvironment('VITE_RIGHT_LOGO', '');
+    containerFrontend.addEnvironment('VITE_LOGIN_TYPE', props.authenticationType);
     containerFrontend.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION);
     containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId);
     containerFrontend.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId);

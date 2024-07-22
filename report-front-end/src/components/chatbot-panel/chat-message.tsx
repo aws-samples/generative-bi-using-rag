@@ -4,9 +4,9 @@ import {
   Box,
   ColumnLayout,
   Container,
-  ExpandableSection,
+  ExpandableSection, Header,
   Icon,
-  LineChart,
+  LineChart, Modal,
   Pagination,
   PieChart,
   SpaceBetween,
@@ -164,6 +164,7 @@ function SQLResultPanel(props: SQLResultProps) {
       return Object.fromEntries(map);
     });
   }
+
   return (
     <div>
       <SpaceBetween size="xxl">
@@ -235,6 +236,9 @@ function SQLResultPanel(props: SQLResultProps) {
               <ColumnLayout columns={2}>
                 <Button
                   fullWidth
+                  variant={
+                    selectedIcon === 1 ? "primary" : undefined
+                  }
                   iconName={
                     selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"
                   }
@@ -246,14 +250,16 @@ function SQLResultPanel(props: SQLResultProps) {
                       query_intent: props.intent,
                       query_answer: props.result.sql,
                     };
-                    handleFeedback(feedbackData);
-                    setSelectedIcon(1);
+                    handleFeedback(feedbackData, setSelectedIcon);
                   }}
                 >
                   Upvote
                 </Button>
                 <Button
                   fullWidth
+                  variant={
+                    selectedIcon === 0 ? "primary" : undefined
+                  }
                   iconName={
                     selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"
                   }
@@ -265,8 +271,7 @@ function SQLResultPanel(props: SQLResultProps) {
                       query_intent: props.intent,
                       query_answer: props.result.sql,
                     };
-                    handleFeedback(feedbackData);
-                    setSelectedIcon(0);
+                    handleFeedback(feedbackData, setSelectedIcon);
                   }}
                 >
                   Downvote
@@ -279,6 +284,16 @@ function SQLResultPanel(props: SQLResultProps) {
     </div>
   );
 }
+
+const AllDataModalTable = (props: { distributions: []; header: [] }) => {
+  return (
+    <Table
+      variant="embedded"
+      columnDefinitions={props.header}
+      items={props.distributions}
+    />
+  );
+};
 
 const DataTable = (props: { distributions: []; header: [] }) => {
   const {
@@ -308,21 +323,57 @@ const DataTable = (props: { distributions: []; header: [] }) => {
     return `${count} ${count === 1 ? "match" : "matches"}`;
   }
 
+  const [visible, setVisible] = useState(false);
+
   return (
-    <Table
-      {...collectionProps}
-      variant="embedded"
-      columnDefinitions={props.header}
-      items={items}
-      pagination={<Pagination {...paginationProps} />}
-      filter={
-        <TextFilter
-          {...filterProps}
-          countText={filterCounter(filteredItemsCount)}
-          filteringPlaceholder="Search"
+    <>
+      <Table
+        {...collectionProps}
+        variant="embedded"
+        columnDefinitions={props.header}
+        header={
+          <Header
+            actions={
+              <Button
+                variant="primary"
+                onClick={() => setVisible(true)}
+              >
+                Open
+              </Button>
+            }
+          >
+          </Header>
+        }
+        items={items}
+        pagination={<Pagination {...paginationProps} />}
+        filter={
+          <TextFilter
+            {...filterProps}
+            countText={filterCounter(filteredItemsCount)}
+            filteringPlaceholder="Search"
+          />
+        }
+      />
+      <Modal
+        onDismiss={() => setVisible(false)}
+        visible={visible}
+        header="Table"
+        footer={
+          <Box float="right">
+            <Button
+              variant="primary"
+              onClick={() => setVisible(false)}
+            >
+              Close</Button>
+          </Box>
+        }
+      >
+        <AllDataModalTable
+          distributions={props.distributions}
+          header={props.header}
         />
-      }
-    />
+      </Modal>
+    </>
   );
 };
 
@@ -440,6 +491,13 @@ export default function ChatMessage(props: ChatMessageProps) {
   );
 }
 
-const handleFeedback = (feedbackData: FeedBackItem) => {
-  addUserFeedback(feedbackData).then();
+const handleFeedback = (feedbackData: FeedBackItem, setSelectedIcon: Dispatch<SetStateAction<1 | 0 | null>>) => {
+  addUserFeedback(feedbackData).then(
+    response => {
+      if (feedbackData.feedback_type === "upvote") {
+        setSelectedIcon(response ? 1 : null);
+      } else if (feedbackData.feedback_type === "downvote") {
+        setSelectedIcon(response ? 0 : null);
+      }
+    });
 };

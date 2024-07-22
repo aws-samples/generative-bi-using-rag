@@ -116,6 +116,7 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
     }
     const result = await response.json();
     console.log("AddUserFeedback: ", result);
+    return result;
   } catch (err) {
     console.error('Query error, ', err);
   }

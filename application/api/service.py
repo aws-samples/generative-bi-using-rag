@@ -142,6 +142,8 @@ def ask(question: Question) -> Answer:
     log_info = ""
 
     all_profiles = ProfileManagement.get_all_profiles_with_info()
+    if selected_profile not in all_profiles:
+        raise BizException(ErrorEnum.PROFILE_NOT_FOUND)
     database_profile = all_profiles[selected_profile]
 
     current_nlq_chain = NLQChain(selected_profile)
