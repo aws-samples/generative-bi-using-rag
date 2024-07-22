@@ -72,6 +72,6 @@ export function queryWithWS(props: {
     session_id: Global.sessionId,
     user_id: props.userId
   };
-  console.log("param: ", param)
+  console.log("param: ", param);
   props.sendMessage(param);
 }
