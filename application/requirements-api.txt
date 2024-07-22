@@ -16,3 +16,4 @@ sqlparse~=0.4.2
 pandas==2.0.3
 openpyxl
 starrocks==1.0.6
+clickhouse-sqlalchemy==0.2.6
