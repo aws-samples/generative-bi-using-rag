@@ -287,6 +287,12 @@ def main():
             if selected_profile not in st.session_state.messages:
                 st.session_state.messages[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
+        else:
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
+            st.session_state.nlq_chain = NLQChain(selected_profile)
 
         if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
             model_index = model_ids.index(st.session_state.current_model_id)
