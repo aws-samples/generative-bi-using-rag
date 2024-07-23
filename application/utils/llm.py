@@ -16,7 +16,7 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemake
     generate_query_rewrite_prompt
 
 from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL, SAGEMAKER_EMBEDDING_REGION, \
-    SAGEMAKER_SQL_REGION, SAGEMAKER_ENDPOINT_EMBEDDING
+    SAGEMAKER_SQL_REGION, SAGEMAKER_ENDPOINT_EMBEDDING, SAGEMAKER_ENDPOINT_SQL
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -331,8 +331,8 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         if model_id.startswith('anthropic.claude-3'):
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('mistral.mixtral-8x7b'):
-            if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-                response = invoke_mixtral_8x7b_sagemaker(model_id, system_prompt, messages, max_tokens, with_response_stream)
+            if SAGEMAKER_ENDPOINT_SQL is not None and SAGEMAKER_ENDPOINT_SQL != "":
+                response = invoke_mixtral_8x7b_sagemaker(SAGEMAKER_ENDPOINT_SQL, system_prompt, messages, max_tokens, with_response_stream)
             else:
                 response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('meta.llama3-70b'):
@@ -343,7 +343,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
             if model_id.startswith('meta.llama3-70b'):
                 return response["generation"]
             elif model_id.startswith('mistral.mixtral'):
-                if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
+                if SAGEMAKER_ENDPOINT_SQL is not None and SAGEMAKER_ENDPOINT_SQL != "":
                     response = json.loads(response)
                     response = response['generated_text']
                     response = response.replace("\\", "")
