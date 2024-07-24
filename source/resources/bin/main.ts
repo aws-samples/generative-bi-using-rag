@@ -17,9 +17,21 @@ const app = new cdk.App();
 
 const rds = config.rds
 
+const embedding = config.embedding
+
+const opensearch = config.opensearch
+
+const vpc = config.vpc
+
 const cdkConfig = {
     env: devEnv,
-    deployRds: rds.deploy
+    deployRds: rds.deploy,
+    bedrock_embedding_name: embedding.bedrock_embedding_name,
+    embedding_dimension: embedding.embedding_dimension,
+    opensearch_sql_index : opensearch.sql_index,
+    opensearch_ner_index : opensearch.ner_index,
+    opensearch_cot_index : opensearch.cot_index,
+    vpc_id : vpc.id
 };
 
 new MainStack(app, 'GenBiMainStack', cdkConfig); // Pass deployRDS flag to MainStack constructor

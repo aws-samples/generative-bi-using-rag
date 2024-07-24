@@ -65,7 +65,8 @@ def get_user_history(selected_profile: str):
     history_list = st.session_state.query_rewrite_history[selected_profile]
     history_query = []
     for messages in history_list:
-        history_query.append(messages["role"] + ":" + messages["content"])
+        if messages["content"] is not None:
+            history_query.append(messages["role"] + ":" + messages["content"])
     return history_query
 
 
@@ -289,6 +290,12 @@ def main():
             # clear session state
             st.session_state.selected_sample = ''
             st.session_state.current_profile = selected_profile
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
+            st.session_state.nlq_chain = NLQChain(selected_profile)
+        else:
             if selected_profile not in st.session_state.messages:
                 st.session_state.messages[selected_profile] = []
             if selected_profile not in st.session_state.query_rewrite_history:

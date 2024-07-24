@@ -12,10 +12,11 @@ interface RDSStackProps extends cdk.StackProps {
 // add rds stack
 export class RDSStack extends cdk.Stack {
     public readonly endpoint: string;
+    public readonly rdsSecurityGroup: ec2.SecurityGroup;
     constructor(scope: Construct, id: string,  props: RDSStackProps) {
         super(scope, id, props);
 
-        const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
+        const templatedSecret = new secretsmanager.Secret(this, 'GenBIRDSTemplatedSecret', {
             description: 'Templated secret used for RDS password',
             generateSecretString: {
               excludePunctuation: true,
