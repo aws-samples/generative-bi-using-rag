@@ -138,12 +138,12 @@ def invoke_mixtral_8x7b_sagemaker(model_id, system_prompt, messages, max_tokens,
             model_type="LLM",
             with_response_stream=with_response_stream
         )
-        return response['generated_text']
+        response = str(response, 'utf-8')
+        return response
 
     except Exception as e:
         logger.error("Couldn't invoke Mixtral 8x7B on SageMaker")
         logger.error(e)
-        raise
 
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
     """
