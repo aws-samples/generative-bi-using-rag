@@ -65,7 +65,8 @@ def get_user_history(selected_profile: str):
     history_list = st.session_state.query_rewrite_history[selected_profile]
     history_query = []
     for messages in history_list:
-        history_query.append(messages["role"] + ":" + messages["content"])
+        if messages["content"] is not None:
+            history_query.append(messages["role"] + ":" + messages["content"])
     return history_query
 
 

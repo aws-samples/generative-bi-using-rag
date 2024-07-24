@@ -46,19 +46,5 @@ export class VPCStack extends cdk.Stack {
                 value: subnet.subnetId,
             });
         });
-
-        // Output NatGatewayId  ID
-        new cdk.CfnOutput(this, 'NatGatewayId', {
-            value: this.vpc.natGateways[0].gatewayId,
-        });
-
-        // Output RouteTable ID
-        new cdk.CfnOutput(this, 'PublicRouteTableId', {
-            value: this.vpc.publicSubnets[0].routeTable.routeTableId,
-        });
-
-        new cdk.CfnOutput(this, 'PrivateRouteTableId', {
-            value: this.vpc.privateSubnets[0].routeTable.routeTableId,
-        });
     }
 }

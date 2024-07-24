@@ -16,7 +16,7 @@ export class RDSStack extends cdk.Stack {
     constructor(scope: Construct, id: string,  props: RDSStackProps) {
         super(scope, id, props);
 
-        const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
+        const templatedSecret = new secretsmanager.Secret(this, 'GenBIRDSTemplatedSecret', {
             description: 'Templated secret used for RDS password',
             generateSecretString: {
               excludePunctuation: true,

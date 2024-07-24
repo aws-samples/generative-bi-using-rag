@@ -9,8 +9,10 @@
     "bedrock_embedding_name": "amazon.titan-embed-text-v1",
     "embedding_dimension": 1536
   },
-  "segamaker": {
-    "endpoint_name" : ""
+  "sagemaker": {
+    "segamaker_endpoint_embedding" : "",
+    "segamaker_endpoint_sql" : "",
+    "embedding_dimension": ""
   },
   "opensearch": {
     "sql_index" : "uba",
