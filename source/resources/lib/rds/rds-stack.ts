@@ -12,6 +12,7 @@ interface RDSStackProps extends cdk.StackProps {
 // add rds stack
 export class RDSStack extends cdk.Stack {
     public readonly endpoint: string;
+    public readonly rdsSecurityGroup: ec2.SecurityGroup;
     constructor(scope: Construct, id: string,  props: RDSStackProps) {
         super(scope, id, props);
 
