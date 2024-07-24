@@ -5,8 +5,6 @@ from botocore.config import Config
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 import os
-import sagemaker
-from sagemaker import Model, image_uris, serializers, deserializers
 import logging
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemaker_intent_prompt, \
