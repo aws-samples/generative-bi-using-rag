@@ -105,12 +105,12 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
         logger.error(e)
 
 
-def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
+def invoke_mistral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
     """
-    Invokes the Mixtral 8c7B model to run an inference using the input
+    Invokes the Mistral 8c7B model to run an inference using the input
     provided in the request body.
 
-    :param prompt: The prompt that you want Mixtral to complete.
+    :param prompt: The prompt that you want Mistral to complete.
     :return: List of inference responses from the model.
     """
 
@@ -135,7 +135,7 @@ def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_resp
             response_body['content'] = response_body['outputs']
             return response_body
     except Exception as e:
-        logger.error("Couldn't invoke Mixtral 8x7B")
+        logger.error("Couldn't invoke Mistral 8x7B")
         logger.error(e)
         raise
 
@@ -257,8 +257,8 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
     try:
         if model_id.startswith('anthropic.claude-3'):
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
-        elif model_id.startswith('mistral.mixtral-8x7b'):
-            response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
+        elif model_id.startswith('mistral.mistral-8x7b'):
+            response = invoke_mistral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('meta.llama3-70b'):
             response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
         if with_response_stream:
