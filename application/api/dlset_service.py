@@ -9,22 +9,15 @@ import os
 
 from fastapi import WebSocket
 from nlq.business.connection import ConnectionManagement
-from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.log_store import LogManagement
-from utils.apis import get_sql_result_tool
-from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
-from utils.domain import SearchTextSqlResult, SearchTextJsonResult
-from utils.llm import get_query_intent, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization, text_to_json, get_query_rewrite
+from utils.domain import SearchTextJsonResult
+from utils.llm import get_query_intent, knowledge_search, \
+    generate_suggested_question, text_to_json, get_query_rewrite
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
-from utils.text_search import agent_text_search
-from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_json, \
-    get_generated_think
-from .schemas import SupersetAnswer, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity, DlsetQuestion, JSONSearchResult
-from utils.constant import ACTIVE_PROMPT_NAME
+from utils.tool import generate_log_id, get_current_time, get_generated_json, get_generated_think
+from .schemas import SupersetAnswer, AgentSearchResult, KnowledgeSearchResult, DlsetQuestion, JSONSearchResult
 from .enum import ContentEnum
 import sqlalchemy as db
 
