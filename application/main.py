@@ -3,12 +3,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, Response
 from api.exception_handler import biz_exception
 from api.main import router
+from api.chart import router as dlset_router
 from fastapi.middleware.cors import CORSMiddleware
 from api import service
 from api.schemas import Option
-import requests
 import json
 import base64
+
+from utils.validate import validate_token
 
 app = FastAPI(title='GenBI')
 
@@ -21,16 +23,20 @@ app.add_middleware(
     allow_headers=['*'],  # 允许所有请求头
 )
 
-validate_url = 'https://apimarket-test.shinho.net.cn/dops-temp/token/validate'
+EXEMPT_PATHS = ["/info"]
+
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
+    # 检查请求路径是否在免拦截列表中
+    if request.url.path in EXEMPT_PATHS:
+        return await call_next(request)
     print('---HTTP REQUEST---', vars(request), request.cookies)
     jwt_token = request.cookies.get('dlunifiedtoken', None)
     print('---JWT TOKEN---', jwt_token)
     if jwt_token:
-        response = requests.post(validate_url, data=jwt_token)
-        if response.status_code != 200 :
+        response = validate_token(jwt_token)
+        if response.status_code != 200:
             return Response(status_code=status.HTTP_401_UNAUTHORIZED)
         else:
             payload = json.loads(response.text)
@@ -49,6 +55,7 @@ async def add_process_time_header(request: Request, call_next):
 biz_exception(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(router)
+app.include_router(dlset_router)
 
 # changed from "/" to "/test" to avoid health check fails in ECS
 @app.get("/test", status_code=status.HTTP_302_FOUND)
@@ -56,7 +63,7 @@ def index():
     return RedirectResponse("static/WebSocket.html")
 
 # health check
-@app.get("/")
+@app.get("/info")
 def health():
     return {"status": "ok"}
 

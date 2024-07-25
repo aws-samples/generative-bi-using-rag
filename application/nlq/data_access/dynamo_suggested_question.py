@@ -4,9 +4,10 @@ import boto3
 import logging
 import os
 from botocore.exceptions import ClientError
-from utils.constant import PROFILE_QUESTION_TABLE_NAME, ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
+from utils.constant import ACTIVE_PROMPT_NAME, DEFAULT_PROMPT_NAME
 
 logger = logging.getLogger(__name__)
+PROFILE_QUESTION_TABLE_NAME = os.getenv("DYNAMODB_SUGGESTED_QUESTION_TABLE_NAME", "NlqSuggestedQuestion")
 
 class SuggestedQuestionEntity:
 
@@ -25,7 +26,7 @@ class SuggestedQuestionEntity:
         return base_props
 
 class SuggestedQuestionDao:
-    
+
     def __init__(self, table_name_prefix=''):
         self.dynamodb = boto3.resource('dynamodb', region_name=os.getenv("DYNAMODB_AWS_REGION"))
         self.table_name = table_name_prefix + PROFILE_QUESTION_TABLE_NAME
@@ -76,7 +77,7 @@ class SuggestedQuestionDao:
                 },
             )
             self.table.wait_until_exists()
-            
+
             # Add default prompt
             current_time = datetime.now(timezone.utc)
             formatted_time = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")

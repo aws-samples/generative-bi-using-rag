@@ -17,6 +17,24 @@ def get_generated_sql(generated_sql_response):
     return sql
 
 
+def get_generated_json(generated_json_response):
+    try:
+        return generated_json_response.split("<json>")[1].split("</json>")[0]
+    except IndexError:
+        logger.error("No SQL found in the LLM's response")
+        logger.error(generated_json_response)
+    return ""
+
+
+def get_generated_think(generated_json_response):
+    try:
+        return generated_json_response.split("<think>")[1].split("</think>")[0]
+    except IndexError:
+        logger.error("No SQL found in the LLM's response")
+        logger.error(generated_json_response)
+    return ""
+
+
 def generate_log_id():
     timestamp = int(time.time() * 1000000)
     random_part = random.randint(0, 9999)

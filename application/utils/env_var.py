@@ -42,9 +42,13 @@ OPENSEARCH_SECRETS_USERNAME_PASSWORD = os.getenv('OPENSEARCH_SECRETS_USERNAME_PA
 
 BEDROCK_SECRETS_AK_SK = os.getenv('BEDROCK_SECRETS_AK_SK', '')
 
+BEDROCK_AWS_ACCESS_KEY_ID = os.getenv('BEDROCK_AWS_ACCESS_KEY_ID', '')
+BEDROCK_AWS_SECRET_ACCESS_KEY = os.getenv('BEDROCK_AWS_SECRET_ACCESS_KEY', '')
+
 BEDROCK_EMBEDDING_MODEL = os.getenv('BEDROCK_EMBEDDING_MODEL', '')
 
 SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING', '')
+
 
 def get_opensearch_parameter():
     try:
@@ -83,10 +87,13 @@ def get_bedrock_parameter():
             bedrock_ak_sk_info['access_key_id'] = access_key
             bedrock_ak_sk_info['secret_access_key'] = secret_key
         else:
+            bedrock_ak_sk_info['access_key_id'] = BEDROCK_AWS_ACCESS_KEY_ID
+            bedrock_ak_sk_info['secret_access_key'] = BEDROCK_AWS_SECRET_ACCESS_KEY
             return bedrock_ak_sk_info
     except ClientError as e:
         logging.error(e)
     return bedrock_ak_sk_info
+
 
 if OPENSEARCH_TYPE == "service":
     opensearch_host, opensearch_port, opensearch_username, opensearch_password = get_opensearch_parameter()

@@ -22,6 +22,28 @@ class Question(BaseModel):
     user_id: str = "admin"
 
 
+class DlsetQuestion(BaseModel):
+    #  与 table_name 相同
+    profile_name: str
+    table_id: int
+    query: str
+    user_id: str = "admin"
+    session_id: str = "-1"
+    token: str
+    with_history: bool = False
+    bedrock_model_id: str = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    use_rag_flag: bool = True
+    visualize_results_flag: bool = True
+    intent_ner_recognition_flag: bool = True
+    agent_cot_flag: bool = True
+    gen_suggested_question_flag: bool = False
+    top_k: float = 250
+    top_p: float = 0.9
+    max_tokens: int = 2048
+    temperature: float = 0.01
+    context_window: int = 3
+
+
 class Example(BaseModel):
     score: float
     question: str
@@ -66,6 +88,11 @@ class SQLSearchResult(BaseModel):
     sql_data_chart: list[ChartEntity]
 
 
+class JSONSearchResult(BaseModel):
+    json: str
+    think_process: str
+
+
 class TaskSQLSearchResult(BaseModel):
     sub_task_query: str
     sql_search_result: SQLSearchResult
@@ -85,5 +112,14 @@ class Answer(BaseModel):
     query_intent: str
     knowledge_search_result: KnowledgeSearchResult
     sql_search_result: SQLSearchResult
+    agent_search_result: AgentSearchResult
+    suggested_question: list[str]
+
+
+class SupersetAnswer(BaseModel):
+    query: str
+    query_intent: str
+    knowledge_search_result: KnowledgeSearchResult
+    json_search_result: JSONSearchResult
     agent_search_result: AgentSearchResult
     suggested_question: list[str]
