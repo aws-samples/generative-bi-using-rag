@@ -53,6 +53,10 @@ suggest_question_user_prompt_dict = {}
 query_rewrite_system_prompt_dict = {}
 query_rewrite_user_prompt_dict = {}
 
+# superset chart prompt
+superset_chart_system_prompt_dict = {}
+superset_chart_user_prompt_dict = {}
+
 # general map used for prompt management and DynamoDB storage
 prompt_map_dict = {
     'query_rewrite': {
@@ -99,7 +103,13 @@ prompt_map_dict = {
         'title': 'Suggest Question Prompt',
         'system_prompt': suggest_question_system_prompt_dict,
         'user_prompt': suggest_question_user_prompt_dict
+    },
+    'superset_chart': {
+        'title': 'Superset Chart Prompt',
+        'system_prompt': superset_chart_system_prompt_dict,
+        'user_prompt': superset_chart_user_prompt_dict
     }
+
 }
 
 query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
@@ -1917,6 +1927,566 @@ if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
     """
 
 
+superset_chart_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+You are an expert in Apache Superset and data analysis. Your task is to generate the parameters for saving a chart using all the relevant information provided. You possess the following professional skills and experience, including but not limited to the following areas:
+
+1. Apache Superset
+    1. Proficient in creating complex data visualizations and dashboards using Superset.
+    2. Experienced in Superset frontend capabilities, with extensive experience in related technology stacks (React, Vue.js, D3.js, etc.).
+    3. Proficient in Superset backend capabilities, with extensive experience in related technology stacks (Flask, Jinja2, etc.).
+    4. Skilled in using Apache Superset and its plugin development, with a deep understanding of chart logic and data visualization principles.
+2. Data Analysis
+    1. Proficient in various database engines and SQL syntax.
+    2. Expert in SQL syntax, capable of writing efficient and complex SQL queries, and able to quickly translate problems into efficient and executable SQL.
+    3. Proficient in various chart types (such as bar charts, line charts, pie charts, scatter plots, etc.) and their logic and application scenarios.
+"""
+
+superset_chart_system_prompt_dict['haiku-20240307v1-0'] = """
+You are an expert in Apache Superset and data analysis. Your task is to generate the parameters for saving a chart using all the relevant information provided. You possess the following professional skills and experience, including but not limited to the following areas:
+
+1. Apache Superset
+    1. Proficient in creating complex data visualizations and dashboards using Superset.
+    2. Experienced in Superset frontend capabilities, with extensive experience in related technology stacks (React, Vue.js, D3.js, etc.).
+    3. Proficient in Superset backend capabilities, with extensive experience in related technology stacks (Flask, Jinja2, etc.).
+    4. Skilled in using Apache Superset and its plugin development, with a deep understanding of chart logic and data visualization principles.
+2. Data Analysis
+    1. Proficient in various database engines and SQL syntax.
+    2. Expert in SQL syntax, capable of writing efficient and complex SQL queries, and able to quickly translate problems into efficient and executable SQL.
+    3. Proficient in various chart types (such as bar charts, line charts, pie charts, scatter plots, etc.) and their logic and application scenarios.
+"""
+
+superset_chart_system_prompt_dict['sonnet-20240229v1-0'] = """
+You are an expert in Apache Superset and data analysis. Your task is to generate the parameters for saving a chart using all the relevant information provided. You possess the following professional skills and experience, including but not limited to the following areas:
+
+1. Apache Superset
+    1. Proficient in creating complex data visualizations and dashboards using Superset.
+    2. Experienced in Superset frontend capabilities, with extensive experience in related technology stacks (React, Vue.js, D3.js, etc.).
+    3. Proficient in Superset backend capabilities, with extensive experience in related technology stacks (Flask, Jinja2, etc.).
+    4. Skilled in using Apache Superset and its plugin development, with a deep understanding of chart logic and data visualization principles.
+2. Data Analysis
+    1. Proficient in various database engines and SQL syntax.
+    2. Expert in SQL syntax, capable of writing efficient and complex SQL queries, and able to quickly translate problems into efficient and executable SQL.
+    3. Proficient in various chart types (such as bar charts, line charts, pie charts, scatter plots, etc.) and their logic and application scenarios.
+"""
+
+superset_chart_system_prompt_dict['llama3-70b-instruct-0'] = """
+You are an expert in Apache Superset and data analysis. Your task is to generate the parameters for saving a chart using all the relevant information provided. You possess the following professional skills and experience, including but not limited to the following areas:
+
+1. Apache Superset
+    1. Proficient in creating complex data visualizations and dashboards using Superset.
+    2. Experienced in Superset frontend capabilities, with extensive experience in related technology stacks (React, Vue.js, D3.js, etc.).
+    3. Proficient in Superset backend capabilities, with extensive experience in related technology stacks (Flask, Jinja2, etc.).
+    4. Skilled in using Apache Superset and its plugin development, with a deep understanding of chart logic and data visualization principles.
+2. Data Analysis
+    1. Proficient in various database engines and SQL syntax.
+    2. Expert in SQL syntax, capable of writing efficient and complex SQL queries, and able to quickly translate problems into efficient and executable SQL.
+    3. Proficient in various chart types (such as bar charts, line charts, pie charts, scatter plots, etc.) and their logic and application scenarios.
+"""
+
+superset_chart_system_prompt_dict['sonnet-3-5-20240620v1-0'] = """
+You are an expert in Apache Superset and data analysis. Your task is to generate the parameters for saving a chart using all the relevant information provided. You possess the following professional skills and experience, including but not limited to the following areas:
+
+1. Apache Superset
+    1. Proficient in creating complex data visualizations and dashboards using Superset.
+    2. Experienced in Superset frontend capabilities, with extensive experience in related technology stacks (React, Vue.js, D3.js, etc.).
+    3. Proficient in Superset backend capabilities, with extensive experience in related technology stacks (Flask, Jinja2, etc.).
+    4. Skilled in using Apache Superset and its plugin development, with a deep understanding of chart logic and data visualization principles.
+2. Data Analysis
+    1. Proficient in various database engines and SQL syntax.
+    2. Expert in SQL syntax, capable of writing efficient and complex SQL queries, and able to quickly translate problems into efficient and executable SQL.
+    3. Proficient in various chart types (such as bar charts, line charts, pie charts, scatter plots, etc.) and their logic and application scenarios.
+"""
+
+superset_chart_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+Assume a database with the following tables and columns exists:
+<table_schema>
+Given the following database schema, Note that the database engine we use here is {database_engine}, Please follow {database_engine} syntax.
+{sql_schema}
+
+Here is the information related to the data set registered in superset:
+{dataset_schema}
+</table_schema>
+
+Here are some examples of generated JSON using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate JSON.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+- datasource: superset中数据集唯一标识符, 通常是 `table_id__table` 的形式，例如 `1__table`。 
+- query_mode: 查询模式, 枚举值：
+  - `aggregate`: 聚合查询
+  - `raw`: 明细查询
+- viz_type: 图表类型,常见图表类型的枚举值, 可视化类型需要根据用户问题进行推断, 默认可设置为table格式
+   - `table`: 表格
+   - `bar`: 柱状图
+   - `line`: 折线图
+   - `pie`: 饼图
+   - `area`: 面积图
+   - `scatter`: 散点图
+   - `heatmap`: 热力图
+   - `box_plot`: 箱线图
+   - `big_number`: 大数字
+   - `big_number_total`: 总大数字
+   - `bubble`: 气泡图
+   - bullet`: 子弹图
+- granularity_sqla: 时间粒度列. 数据时间粒度列，用于时间过滤，通常选择数据集中主时间列
+- time_range: 时间范围. 时间范围，用于时间过滤。这个参数通常设置"No filter"，我们利用adhoc_filters参数来实现时间过滤
+- groupby: 分组字段. 用于分组，通常是维度字段。例如["country", "product_category"]列表格式
+- metrics: 指标列. 指标列，用于计算图表数据，通常选择数据集中有意义的列。
+  - aggregate: 聚合函数。 枚举值：SUM, AVG, COUNT, MAX, MIN, COUNT_DISTINCT
+  - column: 用到指标列名。格式为字典类型 包括 column_name: 字段名，verbose_name: 中文名
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - SIMPLE: 简单表达式
+      - SQL: 自定义 SQL 表达式
+  - label: 指标别名，按照用户问题的要求，给指标列起一个别名。
+  - sqlExpression: 自定义SQL表达式。用于复杂指标计算，例如 SUM(sales_amount) * 0.96, 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- adhoc_filters: 过滤条件，用于临时过滤图表数据，通常用于时间范围过滤。格式为列表类型，每个元素为字典类型，包括列名、过滤条件、过滤条件值。
+  - clause: 过滤条件类型。
+    - 过滤子句的枚举值 WHERE/HAVING：
+        - WHERE: 用于常规过滤条件
+        - HAVING: 用于聚合后的过滤条件
+  - comparator: 过滤值, 过滤条件的比较值。当
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - `SIMPLE`: 简单表达式
+      - `SQL`: 自定义 SQL 表达式
+  - operator: 过滤条件的比较符.与operatorId对应
+  - operatorId: 过滤条件的比较符ID，下面是operatorId与operator对应关系
+    - EQUALS: ==
+    - NOT_EQUALS: !=
+    - LESS_THAN:  <
+    - GREATER_THAN: >
+    - LESS_THAN_OR_EQUALS: <=
+    - GREATER_THAN_OR_EQUALS: >=
+    - IN: IN
+    - NOT_IN: NOT IN
+    - LIKE: LIKE
+    - ILIKE: ILIKE
+    - IS_NOT_NULL: IS NOT NULL
+    - IS_NULL: IS NULL
+  - subject: 过滤条件的列名
+  - sqlExpression: 自定义SQL表达式。用于复杂过滤条件计算，例如 date_column > '2021-01-01', 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- all_columns: 当query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。
+- row_limit: 行限制. 图表数据行限制，用于分页。
+- order_by_cols: 排序列, 仅作用于query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。 例如 ["[\"cal_day_id\", true]"], list中的元素为字符串格式的列表, 子列表第一个元素为列名, 第二个元素为布尔值, true表示升序, false表示降序
+- order_desc: 排序顺序. 图表数据排序顺序，用于指标排序。 true 降序，false 升序。
+- other_params: 其他参数. 可按照提供的示例格式填写默认即可。
+</guidelines> 
+
+Think about the json question before continuing. Put your analysis process in Chinese in the <think></think> tags. If it's not about writing json statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your JSON in <json></json> tags.
+
+The question is : {question}
+"""
+
+superset_chart_user_prompt_dict['haiku-20240307v1-0'] = """
+Assume a database with the following tables and columns exists:
+<table_schema>
+Given the following database schema, Note that the database engine we use here is {database_engine}, Please follow {database_engine} syntax.
+{sql_schema}
+
+Here is the information related to the data set registered in superset:
+{dataset_schema}
+</table_schema>
+
+Here are some examples of generated JSON using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate JSON.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+- datasource: superset中数据集唯一标识符, 通常是 `table_id__table` 的形式，例如 `1__table`。 
+- query_mode: 查询模式, 枚举值：
+  - `aggregate`: 聚合查询
+  - `raw`: 明细查询
+- viz_type: 图表类型,常见图表类型的枚举值, 可视化类型需要根据用户问题进行推断, 默认可设置为table格式
+   - `table`: 表格
+   - `bar`: 柱状图
+   - `line`: 折线图
+   - `pie`: 饼图
+   - `area`: 面积图
+   - `scatter`: 散点图
+   - `heatmap`: 热力图
+   - `box_plot`: 箱线图
+   - `big_number`: 大数字
+   - `big_number_total`: 总大数字
+   - `bubble`: 气泡图
+   - bullet`: 子弹图
+- granularity_sqla: 时间粒度列. 数据时间粒度列，用于时间过滤，通常选择数据集中主时间列
+- time_range: 时间范围. 时间范围，用于时间过滤。这个参数通常设置"No filter"，我们利用adhoc_filters参数来实现时间过滤
+- groupby: 分组字段. 用于分组，通常是维度字段。例如["country", "product_category"]列表格式
+- metrics: 指标列. 指标列，用于计算图表数据，通常选择数据集中有意义的列。
+  - aggregate: 聚合函数。 枚举值：SUM, AVG, COUNT, MAX, MIN, COUNT_DISTINCT
+  - column: 用到指标列名。格式为字典类型 包括 column_name: 字段名，verbose_name: 中文名
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - SIMPLE: 简单表达式
+      - SQL: 自定义 SQL 表达式
+  - label: 指标别名，按照用户问题的要求，给指标列起一个别名。
+  - sqlExpression: 自定义SQL表达式。用于复杂指标计算，例如 SUM(sales_amount) * 0.96, 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- adhoc_filters: 过滤条件，用于临时过滤图表数据，通常用于时间范围过滤。格式为列表类型，每个元素为字典类型，包括列名、过滤条件、过滤条件值。
+  - clause: 过滤条件类型。
+    - 过滤子句的枚举值 WHERE/HAVING：
+        - WHERE: 用于常规过滤条件
+        - HAVING: 用于聚合后的过滤条件
+  - comparator: 过滤值, 过滤条件的比较值。当
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - `SIMPLE`: 简单表达式
+      - `SQL`: 自定义 SQL 表达式
+  - operator: 过滤条件的比较符.与operatorId对应
+  - operatorId: 过滤条件的比较符ID，下面是operatorId与operator对应关系
+    - EQUALS: ==
+    - NOT_EQUALS: !=
+    - LESS_THAN:  <
+    - GREATER_THAN: >
+    - LESS_THAN_OR_EQUALS: <=
+    - GREATER_THAN_OR_EQUALS: >=
+    - IN: IN
+    - NOT_IN: NOT IN
+    - LIKE: LIKE
+    - ILIKE: ILIKE
+    - IS_NOT_NULL: IS NOT NULL
+    - IS_NULL: IS NULL
+  - subject: 过滤条件的列名
+  - sqlExpression: 自定义SQL表达式。用于复杂过滤条件计算，例如 date_column > '2021-01-01', 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- all_columns: 当query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。
+- row_limit: 行限制. 图表数据行限制，用于分页。
+- order_by_cols: 排序列, 仅作用于query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。 例如 ["[\"cal_day_id\", true]"], list中的元素为字符串格式的列表, 子列表第一个元素为列名, 第二个元素为布尔值, true表示升序, false表示降序
+- order_desc: 排序顺序. 图表数据排序顺序，用于指标排序。 true 降序，false 升序。
+- other_params: 其他参数. 可按照提供的示例格式填写默认即可。
+</guidelines> 
+
+Think about the json question before continuing. Put your analysis process in Chinese in the <think></think> tags. If it's not about writing json statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your JSON in <json></json> tags.
+
+The question is : {question}
+"""
+
+superset_chart_user_prompt_dict['sonnet-20240229v1-0'] = """
+Assume a database with the following tables and columns exists:
+<table_schema>
+Given the following database schema, Note that the database engine we use here is {database_engine}, Please follow {database_engine} syntax.
+{sql_schema}
+
+Here is the information related to the data set registered in superset:
+{dataset_schema}
+</table_schema>
+
+Here are some examples of generated JSON using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate JSON.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+- datasource: superset中数据集唯一标识符, 通常是 `table_id__table` 的形式，例如 `1__table`。 
+- query_mode: 查询模式, 枚举值：
+  - `aggregate`: 聚合查询
+  - `raw`: 明细查询
+- viz_type: 图表类型,常见图表类型的枚举值, 可视化类型需要根据用户问题进行推断, 默认可设置为table格式
+   - `table`: 表格
+   - `bar`: 柱状图
+   - `line`: 折线图
+   - `pie`: 饼图
+   - `area`: 面积图
+   - `scatter`: 散点图
+   - `heatmap`: 热力图
+   - `box_plot`: 箱线图
+   - `big_number`: 大数字
+   - `big_number_total`: 总大数字
+   - `bubble`: 气泡图
+   - bullet`: 子弹图
+- granularity_sqla: 时间粒度列. 数据时间粒度列，用于时间过滤，通常选择数据集中主时间列
+- time_range: 时间范围. 时间范围，用于时间过滤。这个参数通常设置"No filter"，我们利用adhoc_filters参数来实现时间过滤
+- groupby: 分组字段. 用于分组，通常是维度字段。例如["country", "product_category"]列表格式
+- metrics: 指标列. 指标列，用于计算图表数据，通常选择数据集中有意义的列。
+  - aggregate: 聚合函数。 枚举值：SUM, AVG, COUNT, MAX, MIN, COUNT_DISTINCT
+  - column: 用到指标列名。格式为字典类型 包括 column_name: 字段名，verbose_name: 中文名
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - SIMPLE: 简单表达式
+      - SQL: 自定义 SQL 表达式
+  - label: 指标别名，按照用户问题的要求，给指标列起一个别名。
+  - sqlExpression: 自定义SQL表达式。用于复杂指标计算，例如 SUM(sales_amount) * 0.96, 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- adhoc_filters: 过滤条件，用于临时过滤图表数据，通常用于时间范围过滤。格式为列表类型，每个元素为字典类型，包括列名、过滤条件、过滤条件值。
+  - clause: 过滤条件类型。
+    - 过滤子句的枚举值 WHERE/HAVING：
+        - WHERE: 用于常规过滤条件
+        - HAVING: 用于聚合后的过滤条件
+  - comparator: 过滤值, 过滤条件的比较值。当
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - `SIMPLE`: 简单表达式
+      - `SQL`: 自定义 SQL 表达式
+  - operator: 过滤条件的比较符.与operatorId对应
+  - operatorId: 过滤条件的比较符ID，下面是operatorId与operator对应关系
+    - EQUALS: ==
+    - NOT_EQUALS: !=
+    - LESS_THAN:  <
+    - GREATER_THAN: >
+    - LESS_THAN_OR_EQUALS: <=
+    - GREATER_THAN_OR_EQUALS: >=
+    - IN: IN
+    - NOT_IN: NOT IN
+    - LIKE: LIKE
+    - ILIKE: ILIKE
+    - IS_NOT_NULL: IS NOT NULL
+    - IS_NULL: IS NULL
+  - subject: 过滤条件的列名
+  - sqlExpression: 自定义SQL表达式。用于复杂过滤条件计算，例如 date_column > '2021-01-01', 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- all_columns: 当query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。
+- row_limit: 行限制. 图表数据行限制，用于分页。
+- order_by_cols: 排序列, 仅作用于query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。 例如 ["[\"cal_day_id\", true]"], list中的元素为字符串格式的列表, 子列表第一个元素为列名, 第二个元素为布尔值, true表示升序, false表示降序
+- order_desc: 排序顺序. 图表数据排序顺序，用于指标排序。 true 降序，false 升序。
+- other_params: 其他参数. 可按照提供的示例格式填写默认即可。
+</guidelines> 
+
+Think about the json question before continuing. Put your analysis process in Chinese in the <think></think> tags. If it's not about writing json statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your JSON in <json></json> tags.
+
+The question is : {question}
+"""
+
+superset_chart_user_prompt_dict['llama3-70b-instruct-0'] = """
+Assume a database with the following tables and columns exists:
+<table_schema>
+Given the following database schema, Note that the database engine we use here is {database_engine}, Please follow {database_engine} syntax.
+{sql_schema}
+
+Here is the information related to the data set registered in superset:
+{dataset_schema}
+</table_schema>
+
+Here are some examples of generated JSON using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate JSON.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+- datasource: superset中数据集唯一标识符, 通常是 `table_id__table` 的形式，例如 `1__table`。 
+- query_mode: 查询模式, 枚举值：
+  - `aggregate`: 聚合查询
+  - `raw`: 明细查询
+- viz_type: 图表类型,常见图表类型的枚举值, 可视化类型需要根据用户问题进行推断, 默认可设置为table格式
+   - `table`: 表格
+   - `bar`: 柱状图
+   - `line`: 折线图
+   - `pie`: 饼图
+   - `area`: 面积图
+   - `scatter`: 散点图
+   - `heatmap`: 热力图
+   - `box_plot`: 箱线图
+   - `big_number`: 大数字
+   - `big_number_total`: 总大数字
+   - `bubble`: 气泡图
+   - bullet`: 子弹图
+- granularity_sqla: 时间粒度列. 数据时间粒度列，用于时间过滤，通常选择数据集中主时间列
+- time_range: 时间范围. 时间范围，用于时间过滤。这个参数通常设置"No filter"，我们利用adhoc_filters参数来实现时间过滤
+- groupby: 分组字段. 用于分组，通常是维度字段。例如["country", "product_category"]列表格式
+- metrics: 指标列. 指标列，用于计算图表数据，通常选择数据集中有意义的列。
+  - aggregate: 聚合函数。 枚举值：SUM, AVG, COUNT, MAX, MIN, COUNT_DISTINCT
+  - column: 用到指标列名。格式为字典类型 包括 column_name: 字段名，verbose_name: 中文名
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - SIMPLE: 简单表达式
+      - SQL: 自定义 SQL 表达式
+  - label: 指标别名，按照用户问题的要求，给指标列起一个别名。
+  - sqlExpression: 自定义SQL表达式。用于复杂指标计算，例如 SUM(sales_amount) * 0.96, 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- adhoc_filters: 过滤条件，用于临时过滤图表数据，通常用于时间范围过滤。格式为列表类型，每个元素为字典类型，包括列名、过滤条件、过滤条件值。
+  - clause: 过滤条件类型。
+    - 过滤子句的枚举值 WHERE/HAVING：
+        - WHERE: 用于常规过滤条件
+        - HAVING: 用于聚合后的过滤条件
+  - comparator: 过滤值, 过滤条件的比较值。当
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - `SIMPLE`: 简单表达式
+      - `SQL`: 自定义 SQL 表达式
+  - operator: 过滤条件的比较符.与operatorId对应
+  - operatorId: 过滤条件的比较符ID，下面是operatorId与operator对应关系
+    - EQUALS: ==
+    - NOT_EQUALS: !=
+    - LESS_THAN:  <
+    - GREATER_THAN: >
+    - LESS_THAN_OR_EQUALS: <=
+    - GREATER_THAN_OR_EQUALS: >=
+    - IN: IN
+    - NOT_IN: NOT IN
+    - LIKE: LIKE
+    - ILIKE: ILIKE
+    - IS_NOT_NULL: IS NOT NULL
+    - IS_NULL: IS NULL
+  - subject: 过滤条件的列名
+  - sqlExpression: 自定义SQL表达式。用于复杂过滤条件计算，例如 date_column > '2021-01-01', 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- all_columns: 当query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。
+- row_limit: 行限制. 图表数据行限制，用于分页。
+- order_by_cols: 排序列, 仅作用于query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。 例如 ["[\"cal_day_id\", true]"], list中的元素为字符串格式的列表, 子列表第一个元素为列名, 第二个元素为布尔值, true表示升序, false表示降序
+- order_desc: 排序顺序. 图表数据排序顺序，用于指标排序。 true 降序，false 升序。
+- other_params: 其他参数. 可按照提供的示例格式填写默认即可。
+</guidelines> 
+
+Think about the json question before continuing. Put your analysis process in Chinese in the <think></think> tags. If it's not about writing json statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your JSON in <json></json> tags.
+
+The question is : {question}
+"""
+
+superset_chart_user_prompt_dict['sonnet-3-5-20240620v1-0'] = """
+Assume a database with the following tables and columns exists:
+<table_schema>
+Given the following database schema, Note that the database engine we use here is {database_engine}, Please follow {database_engine} syntax.
+{sql_schema}
+
+Here is the information related to the data set registered in superset:
+{dataset_schema}
+</table_schema>
+
+Here are some examples of generated JSON using natural language.
+
+<examples>
+
+{examples}
+
+</examples> 
+
+Here are some ner info to help generate JSON.
+
+<ner_info>
+
+{ner_info}
+
+</ner_info> 
+
+You ALWAYS follow these guidelines when writing your response:
+
+<guidelines>
+- datasource: superset中数据集唯一标识符, 通常是 `table_id__table` 的形式，例如 `1__table`。 
+- query_mode: 查询模式, 枚举值：
+  - `aggregate`: 聚合查询
+  - `raw`: 明细查询
+- viz_type: 图表类型,常见图表类型的枚举值, 可视化类型需要根据用户问题进行推断, 默认可设置为table格式
+   - `table`: 表格
+   - `bar`: 柱状图
+   - `line`: 折线图
+   - `pie`: 饼图
+   - `area`: 面积图
+   - `scatter`: 散点图
+   - `heatmap`: 热力图
+   - `box_plot`: 箱线图
+   - `big_number`: 大数字
+   - `big_number_total`: 总大数字
+   - `bubble`: 气泡图
+   - bullet`: 子弹图
+- granularity_sqla: 时间粒度列. 数据时间粒度列，用于时间过滤，通常选择数据集中主时间列
+- time_range: 时间范围. 时间范围，用于时间过滤。这个参数通常设置"No filter"，我们利用adhoc_filters参数来实现时间过滤
+- groupby: 分组字段. 用于分组，通常是维度字段。例如["country", "product_category"]列表格式
+- metrics: 指标列. 指标列，用于计算图表数据，通常选择数据集中有意义的列。
+  - aggregate: 聚合函数。 枚举值：SUM, AVG, COUNT, MAX, MIN, COUNT_DISTINCT
+  - column: 用到指标列名。格式为字典类型 包括 column_name: 字段名，verbose_name: 中文名
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - SIMPLE: 简单表达式
+      - SQL: 自定义 SQL 表达式
+  - label: 指标别名，按照用户问题的要求，给指标列起一个别名。
+  - sqlExpression: 自定义SQL表达式。用于复杂指标计算，例如 SUM(sales_amount) * 0.96, 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- adhoc_filters: 过滤条件，用于临时过滤图表数据，通常用于时间范围过滤。格式为列表类型，每个元素为字典类型，包括列名、过滤条件、过滤条件值。
+  - clause: 过滤条件类型。
+    - 过滤子句的枚举值 WHERE/HAVING：
+        - WHERE: 用于常规过滤条件
+        - HAVING: 用于聚合后的过滤条件
+  - comparator: 过滤值, 过滤条件的比较值。当
+  - expressionType: 表达式类型。枚举值：SIMPLE, SQL
+    - 表达式类型的枚举值：
+      - `SIMPLE`: 简单表达式
+      - `SQL`: 自定义 SQL 表达式
+  - operator: 过滤条件的比较符.与operatorId对应
+  - operatorId: 过滤条件的比较符ID，下面是operatorId与operator对应关系
+    - EQUALS: ==
+    - NOT_EQUALS: !=
+    - LESS_THAN:  <
+    - GREATER_THAN: >
+    - LESS_THAN_OR_EQUALS: <=
+    - GREATER_THAN_OR_EQUALS: >=
+    - IN: IN
+    - NOT_IN: NOT IN
+    - LIKE: LIKE
+    - ILIKE: ILIKE
+    - IS_NOT_NULL: IS NOT NULL
+    - IS_NULL: IS NULL
+  - subject: 过滤条件的列名
+  - sqlExpression: 自定义SQL表达式。用于复杂过滤条件计算，例如 date_column > '2021-01-01', 当expressionType为SQL时，该参数必填，SIMPLE时该参数为null。
+- all_columns: 当query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。
+- row_limit: 行限制. 图表数据行限制，用于分页。
+- order_by_cols: 排序列, 仅作用于query_mode为raw明细查询时, 参数为非空列名列表。 aggregate查询时该参数为空列表。 例如 ["[\"cal_day_id\", true]"], list中的元素为字符串格式的列表, 子列表第一个元素为列名, 第二个元素为布尔值, true表示升序, false表示降序
+- order_desc: 排序顺序. 图表数据排序顺序，用于指标排序。 true 降序，false 升序。
+- other_params: 其他参数. 可按照提供的示例格式填写默认即可。
+</guidelines> 
+
+Think about the json question before continuing.Put your analysis process in Chinese in the <think></think> tags. If it's not about writing json statements, say 'Sorry, please ask something relating to querying tables'.
+
+Think about your answer first before you respond. Put your JSON in <json></json> tags.
+
+The question is : {question}
+"""
+
 
 class SystemPromptMapper:
     def __init__(self):
@@ -2027,6 +2597,43 @@ def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, n
 
     user_prompt = user_prompt.format(dialect_prompt=dialect_prompt, sql_schema=table_prompt,
                                      sql_guidance=guidance_prompt, examples=example_sql_prompt,
+                                     ner_info=example_ner_prompt, question=search_box)
+
+    return user_prompt, system_prompt
+
+
+def generate_llm_superset_prompt(dataset_schema, ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None,
+                        dialect='mysql'):
+    long_string = ""
+    for table_name, table_data in ddl.items():
+        ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
+        long_string += "{}: {}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
+            "description"])
+        long_string += ddl_string
+        long_string += "\n \n"
+    logger.info(f'{dialect=}')
+    example_sql_prompt = ""
+    example_ner_prompt = ""
+    if sql_examples:
+        for item in sql_examples:
+            example_sql_prompt += "Q: " + item['_source']['text'] + "\n"
+            example_sql_prompt += "A: ```sql\n" + item['_source']['sql'] + "```\n"
+
+    if ner_example:
+        for item in ner_example:
+            example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
+            example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
+
+    name = support_model_ids_map[model_id]
+    system_prompt = prompt_map.get('superset_chart', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('superset_chart', {}).get('user_prompt', {}).get(name)
+    if long_string == '':
+        table_prompt = table_prompt_mapper.get_variable(name)
+    else:
+        table_prompt = long_string
+
+    user_prompt = user_prompt.format(database_engine=dialect, sql_schema=table_prompt, dataset_schema=dataset_schema,
+                                     examples=example_sql_prompt,
                                      ner_info=example_ner_prompt, question=search_box)
 
     return user_prompt, system_prompt

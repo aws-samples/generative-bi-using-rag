@@ -10,7 +10,7 @@ from utils.prompts.generate_prompt import prompt_map_dict
 logger = logging.getLogger(__name__)
 
 # DynamoDB table name
-PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'
+PROFILE_CONFIG_TABLE_NAME = os.getenv("DYNAMODB_PROFILE_CONFIG_TABLE_NAME", "NlqProfileConfig")
 DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION')
 
 class ProfileConfigEntity:

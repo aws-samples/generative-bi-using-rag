@@ -1,7 +1,7 @@
 FROM public.ecr.aws/docker/library/node:18.17.0 AS builder
 WORKDIR /frontend
 COPY package*.json ./
-RUN npm install
+RUN npm install  --registry=https://registry.npmmirror.com
 COPY . .
 RUN npm run build
 COPY .env /frontend/.env

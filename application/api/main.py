@@ -1,8 +1,11 @@
 import json
 import traceback
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from typing import Optional
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, HTTPException, Cookie
 import logging
 from nlq.business.profile import ProfileManagement
+from utils.validate import validate_token, get_current_user
 from .enum import ContentEnum
 from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput
 from . import service
@@ -57,11 +60,15 @@ def user_feedback(input_data: FeedBackInput):
                                                       input_data.query_intent, input_data.query_answer)
         return downvote_res
 
-validate_url = 'https://apimarket-test.shinho.net.cn/dops-temp/token/validate'
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, dlunifiedtoken: Optional[str] = Cookie(None)):
     print('---WEB SOCKET---', vars(websocket))
+    try:
+        get_current_user(dlunifiedtoken)
+    except HTTPException as e:
+        await websocket.close(code=1008, reason=e.detail)  # 关闭连接，代码1008表示违反策略
+        return
     await websocket.accept()
     try:
         while True:
@@ -78,8 +85,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 print('---JWT TOKEN---', jwt_token)
 
                 if jwt_token:
-                    response = requests.post(validate_url, data=jwt_token)
-                    if response.status_code != 200 :
+                    response = validate_token(jwt_token)
+                    if response.status_code != 200:
                         answer = {}
                         answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
                         await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)

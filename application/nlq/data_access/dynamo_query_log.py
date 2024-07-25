@@ -2,17 +2,18 @@ import logging
 import os
 
 import boto3
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
 # DynamoDB table name
-QUERY_LOG_TABLE_NAME = 'NlqQueryLogging'
+QUERY_LOG_TABLE_NAME = os.getenv("DYNAMODB_QUERY_LOG_TABLE_NAME", "NlqQueryLogging")
 DYNAMODB_AWS_REGION = os.environ.get('DYNAMODB_AWS_REGION')
 
 
 class DynamoQueryLogEntity:
-    def __init__(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str):
+    def __init__(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str, log_type='sql'):
         self.log_id = log_id
         self.profile_name = profile_name
         self.user_id = user_id
@@ -22,6 +23,7 @@ class DynamoQueryLogEntity:
         self.intent = intent
         self.log_info = log_info
         self.time_str = time_str
+        self.log_type = log_type
 
     def to_dict(self):
         """Convert to DynamoDB item format"""
@@ -34,7 +36,8 @@ class DynamoQueryLogEntity:
             'query': self.query,
             'intent': self.intent,
             'log_info': self.log_info,
-            'time_str': self.time_str
+            'time_str': self.time_str,
+            'log_type': self.log_type
         }
 
 
@@ -80,12 +83,12 @@ class DynamoQueryLogDao:
             self.table = self.dynamodb.create_table(
                 TableName=self.table_name,
                 KeySchema=[
-                    {"AttributeName": "log_id", "KeyType": "HASH"},  # Partition key
-                    # {"AttributeName": "title", "KeyType": "RANGE"},  # Sort key
+                    {"AttributeName": "profile_name", "KeyType": "HASH"},  # Partition key
+                    {"AttributeName": "log_id", "KeyType": "RANGE"},  # Sort key
                 ],
                 AttributeDefinitions=[
+                    {"AttributeName": "profile_name", "AttributeType": "S"},
                     {"AttributeName": "log_id", "AttributeType": "S"},
-                    # {"AttributeName": "conn_name", "AttributeType": "S"},
                 ],
                 ProvisionedThroughput={
                     "ReadCapacityUnits": 2,
@@ -113,6 +116,15 @@ class DynamoQueryLogDao:
     def update(self, entity):
         self.table.put_item(Item=entity.to_dict())
 
-    def add_log(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str):
-        entity = DynamoQueryLogEntity(log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str)
+    def add_log(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str, log_type='sql'):
+        entity = DynamoQueryLogEntity(log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str, log_type)
         self.add(entity)
+
+    def get_logs(self, profile_name, user_id, session_id, size=3, log_type='sql'):
+        response = self.table.query(
+            KeyConditionExpression=Key('profile_name').eq(profile_name),
+            FilterExpression=Attr('session_id').eq(session_id) & Attr('user_id').eq(user_id) & Attr('log_type').eq(log_type),
+            ScanIndexForward=True,  # 按升序排序
+            Limit=size
+        )
+        return response.get('Items', [])

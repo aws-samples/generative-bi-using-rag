@@ -15,7 +15,7 @@ from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.domain import SearchTextSqlResult
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization
+    generate_suggested_question, data_visualization, get_query_rewrite
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
@@ -383,6 +383,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     current_time = get_current_time()
     log_info = ""
 
+    context_windows = question.context_window
+
     all_profiles = ProfileManagement.get_all_profiles_with_info()
     database_profile = all_profiles[selected_profile]
 
@@ -410,6 +412,16 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     prompt_map = database_profile['prompt_map']
 
     entity_slot = []
+
+    if context_windows > 0:
+        user_query_history = []
+        user_history_questions = LogManagement.query_log_dao.get_logs(profile_name=selected_profile, user_id=user_id,
+                                                                      session_id=session_id, size=context_windows,
+                                                                      log_type='sql')
+        for each_history_question in user_history_questions:
+            user_query_history.append(each_history_question['query'])
+        new_search_box = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+        search_box = new_search_box
 
     if intent_ner_recognition_flag:
         await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start", user_id)
