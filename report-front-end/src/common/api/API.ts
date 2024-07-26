@@ -69,7 +69,7 @@ export async function query(props: {
       return;
     }
     const result = await response.json();
-    console.log(result);
+    console.log("response: ", result);
     props.setLoading(false);
     props.setMessageHistory((history: ChatBotHistoryItem[]) => {
       return [...history, {
