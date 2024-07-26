@@ -13,14 +13,16 @@ export function createWssClient(
   const {sendJsonMessage}
     // eslint-disable-next-line react-hooks/rules-of-hooks
     = useWebSocket(socketUrl, {
-    onOpen: () => console.log('opened'),
+    onOpen: () => console.log('websocket connection opened'),
+    onClose: () => console.error('websocket connection closed'),
+    onError: () => console.error('websocket connection error'),
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: () => true,
     onMessage: (message) => handleWebSocketMessage(message)
   });
 
   const handleWebSocketMessage = (message: MessageEvent) => {
-    console.log(message.data);
+    console.log("Received WebSocketMessage: ", message.data);
     const messageJson = JSON.parse(message.data);
     if (messageJson.content_type === "state") {
       setStatusMessage((historyMessage) =>
@@ -72,6 +74,6 @@ export function queryWithWS(props: {
     session_id: Global.sessionId,
     user_id: props.userId
   };
-  console.log("param: ", param);
+  console.log("query param: ", param);
   props.sendMessage(param);
 }
