@@ -75,7 +75,7 @@ export class MainStack extends cdk.Stack {
 
         let _CognitoStack: CognitoStack | undefined;
         if (!isChinaRegion) {
-            const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
+            _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
                 env: props.env
             });
         }
