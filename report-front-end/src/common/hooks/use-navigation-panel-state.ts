@@ -11,7 +11,6 @@ export function useNavigationPanelState(): [
   );
 
   const onChange = (state: Partial<NavigationPanelState>) => {
-    console.log(state);
     setCurrentState(Storage.setNavigationPanelState(state));
   };
 
