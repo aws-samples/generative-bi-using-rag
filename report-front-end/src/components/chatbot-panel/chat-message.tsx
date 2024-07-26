@@ -4,9 +4,11 @@ import {
   Box,
   ColumnLayout,
   Container,
-  ExpandableSection, Header,
+  ExpandableSection,
+  Header,
   Icon,
-  LineChart, Modal,
+  LineChart,
+  Modal,
   Pagination,
   PieChart,
   SpaceBetween,
@@ -340,8 +342,8 @@ const DataTable = (props: { distributions: []; header: [] }) => {
               >
                 Open
               </Button>
-            }
-          >
+            }>
+            <TextContent><strong>{"Total Number (" + props.distributions.length + ")"}</strong></TextContent>
           </Header>
         }
         items={items}
@@ -353,11 +355,30 @@ const DataTable = (props: { distributions: []; header: [] }) => {
             filteringPlaceholder="Search"
           />
         }
+/*        preferences={
+          <CollectionPreferences
+            title="Preferences"
+            confirmLabel="Confirm"
+            cancelLabel="Cancel"
+            preferences={{
+              pageSize: 5,
+            }}
+            pageSizePreference={{
+              title: "Page size",
+              options: [
+                { value: 5, label: "5 resources" },
+                { value: 10, label: "10 resources" },
+                { value: 20, label: "20 resources" },
+                { value: 30, label: "30 resources" }
+              ]
+            }}
+          />
+        }*/
       />
       <Modal
         onDismiss={() => setVisible(false)}
         visible={visible}
-        header="Table"
+        header={"Table (" + props.distributions.length + ")"}
         footer={
           <Box float="right">
             <Button

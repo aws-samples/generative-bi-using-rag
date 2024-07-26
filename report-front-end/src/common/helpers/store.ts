@@ -26,7 +26,6 @@ const userReducer = (state = initialState, action: UserAction) => {
       return { ...state, queryConfig: action.state };
     default:
       localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify({ ...state }));
-      console.log("initial state: ", { ...state });
       return { ...state };
   }
 };
