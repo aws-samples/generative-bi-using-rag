@@ -13,9 +13,9 @@ export function createWssClient(
   const {sendJsonMessage}
     // eslint-disable-next-line react-hooks/rules-of-hooks
     = useWebSocket(socketUrl, {
-    onOpen: () => console.log('websocket connection opened'),
-    onClose: () => console.error('websocket connection closed'),
-    onError: () => console.error('websocket connection error'),
+    onOpen: (openMessage) => console.log('websocket connection opened, ', openMessage),
+    onClose: (closeMessage) => console.error('websocket connection closed, ', closeMessage),
+    onError: (errorMessage) => console.error('websocket connection error, ', errorMessage),
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: () => true,
     onMessage: (message) => handleWebSocketMessage(message)
@@ -74,6 +74,6 @@ export function queryWithWS(props: {
     session_id: Global.sessionId,
     user_id: props.userId
   };
-  console.log("query param: ", param);
+  console.log("Send WebSocketMessage: ", param);
   props.sendMessage(param);
 }
