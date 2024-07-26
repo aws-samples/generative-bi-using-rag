@@ -11,9 +11,11 @@ from utils.env_var import opensearch_info
 
 logger = logging.getLogger(__name__)
 
+
 def delete_sample(profile_name, id):
     VectorStore.delete_sample(profile_name, id)
     st.success(f'Sample {id} deleted.')
+
 
 def read_file(uploaded_file):
     """
@@ -36,6 +38,7 @@ def read_file(uploaded_file):
         st.error(f"The columns need contains question and sql")
         return None
 
+
 def main():
     load_dotenv()
     logger.info('start index management')
@@ -45,7 +48,6 @@ def main():
     if 'profile_page_mode' not in st.session_state:
         st.session_state['index_mgt_mode'] = 'default'
 
-
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
@@ -54,13 +56,14 @@ def main():
         all_profiles_list = ProfileManagement.get_all_profiles()
         if st.session_state.current_profile != "" and st.session_state.current_profile in all_profiles_list:
             profile_index = all_profiles_list.index(st.session_state.current_profile)
-            current_profile = st.selectbox("My Data Profiles", all_profiles_list, index = profile_index)
+            current_profile = st.selectbox("My Data Profiles", all_profiles_list, index=profile_index)
         else:
             current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
-                                       index=None,
-                                       placeholder="Please select data profile...", key='current_profile_name')
+                                           index=None,
+                                           placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add, tab_search, batch_insert = st.tabs(['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
+    tab_view, tab_add, tab_search, batch_insert = st.tabs(
+        ['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
 
     if current_profile is not None:
         st.session_state['current_profile'] = current_profile
@@ -70,7 +73,8 @@ def main():
                 for sample in VectorStore.get_all_samples(current_profile):
                     with st.expander(sample['text']):
                         st.code(sample['sql'])
-                        st.button('Delete ' + sample['id'], on_click=delete_sample, args=[current_profile, sample['id']])
+                        st.button('Delete ' + sample['id'], on_click=delete_sample,
+                                  args=[current_profile, sample['id']])
 
         with tab_add:
             if current_profile is not None:
@@ -91,7 +95,8 @@ def main():
                 retrieve_number = st.slider("Question Retrieve Number", 0, 100, 10)
                 if st.button('Search', type='primary'):
                     if len(entity_search) > 0:
-                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, opensearch_info['sql_index'],
+                        search_sample_result = VectorStore.search_sample(current_profile, retrieve_number,
+                                                                         opensearch_info['sql_index'],
                                                                          entity_search)
                         for sample in search_sample_result:
                             sample_res = {'Score': sample['_score'],
@@ -126,7 +131,7 @@ def main():
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
     else:
         st.info('Please select data profile in the left sidebar.')
-        
+
 
 if __name__ == '__main__':
     main()
