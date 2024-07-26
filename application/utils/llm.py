@@ -570,14 +570,15 @@ def create_vector_embedding_with_bedrock(text, index_name):
 
 
 def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
-    model_kwargs = {}
-    model_kwargs["batch_size"] = 12
-    model_kwargs["max_length"] = 512
-    model_kwargs["return_type"] = "dense"
-    body = json.dumps({"inputs": [text], **model_kwargs})
+    body = json.dumps(
+        {
+            "inputs": text,
+            "is_query": True
+        }
+    )
     response = invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="embedding")
-    embeddings = response["sentence_embeddings"]
-    return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
+    embeddings = response[0]
+    return {"_index": index_name, "text": text, "vector_field": embeddings}
 
 
 def generate_suggested_question(prompt_map, search_box, model_id=None):

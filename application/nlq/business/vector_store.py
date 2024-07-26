@@ -131,12 +131,13 @@ class VectorStore:
     @classmethod
     def create_vector_embedding_with_sagemaker(cls, text):
         try:
-            model_kwargs = {}
-            model_kwargs["batch_size"] = 12
-            model_kwargs["max_length"] = 512
-            model_kwargs["return_type"] = "dense"
-            body = json.dumps({"inputs": [text], **model_kwargs})
-            embeddings = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body)
+            body = json.dumps(
+                {
+                    "inputs": text,
+                    "is_query": True
+                }
+            )
+            embeddings = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body, model_type="embedding")
             return embeddings
         except Exception as e:
             logger.error(f'create_vector_embedding_with_sagemaker is error {e}')
