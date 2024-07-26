@@ -137,7 +137,8 @@ class VectorStore:
                     "is_query": True
                 }
             )
-            embeddings = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body, model_type="embedding")
+            response = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body, model_type="embedding")
+            embeddings = response[0]
             return embeddings
         except Exception as e:
             logger.error(f'create_vector_embedding_with_sagemaker is error {e}')
