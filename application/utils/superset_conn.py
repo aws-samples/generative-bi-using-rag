@@ -5,7 +5,6 @@ import jwt
 import requests
 from retrying import retry
 from nlq.business.connection import ConnectionManagement
-from utils.globals import g
 
 
 def create_admin_token():
@@ -56,6 +55,7 @@ def import_superset_conn(db_types: list):
 
 @retry(stop_max_attempt_number=3, wait_fixed=1000)
 def get_superset_rlf(table_name: str, schema: str, database_id: int):
+    from utils.globals import g
     payload = json.dumps({
         "table_name": table_name,
         "schema": schema,
