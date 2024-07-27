@@ -186,7 +186,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
                                    dialect=database_profile['db_type'],
                                    model_provider=model_provider)
 
-            sql = get_generated_sql(response)
+            sql = get_generated_sql(database_profile['tables_info'], response)
 
             st.code(sql, language="sql")
 

@@ -14,8 +14,8 @@ class ConnectionManagement:
         return [conn.conn_name for conn in cls.connection_config_dao.get_db_list()]
 
     @classmethod
-    def add_connection(cls, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment):
-        cls.connection_config_dao.add_url_db(conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment)
+    def add_connection(cls, db_id, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment):
+        cls.connection_config_dao.add_url_db(db_id, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment)
         logger.info(f"Connection {conn_name} added")
 
     @classmethod
@@ -23,8 +23,8 @@ class ConnectionManagement:
         return cls.connection_config_dao.get_by_name(conn_name)
 
     @classmethod
-    def update_connection(cls, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment):
-        cls.connection_config_dao.update_db_info(conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name,
+    def update_connection(cls, db_id, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment):
+        cls.connection_config_dao.update_db_info(db_id, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name,
                                                  comment)
         logger.info(f"Connection {conn_name} updated")
 

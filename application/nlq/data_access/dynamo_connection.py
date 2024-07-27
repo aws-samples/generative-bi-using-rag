@@ -128,13 +128,14 @@ class ConnectConfigDao:
         if 'Item' in response:
             return ConnectConfigEntity(**response['Item'])
 
-    def add_url_db(self, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment=""):
-        entity = ConnectConfigEntity(None, conn_name, db_type, db_name, db_host, db_port, db_user, db_pwd, comment)
+    def add_url_db(self, db_id, conn_name, db_type, db_host, db_port, db_user, db_pwd, db_name, comment=""):
+        entity = ConnectConfigEntity(db_id, conn_name, db_type, db_name, db_host, db_port, db_user, db_pwd, comment)
         self.add(entity)
 
-    def update_db_info(self, conn_name, db_type, db_host="", db_port=0, db_user="", db_pwd="", db_name="", comment=""):
+    def update_db_info(self, db_id, conn_name, db_type, db_host="", db_port=0, db_user="", db_pwd="", db_name="", comment=""):
         entity = self.get_by_name(conn_name)
         if entity:
+            entity.id = db_id
             entity.db_type = db_type
             entity.db_host = db_host
             entity.db_port = db_port

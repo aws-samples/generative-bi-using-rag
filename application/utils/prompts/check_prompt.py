@@ -1,4 +1,5 @@
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -237,8 +238,69 @@ required_syntax_map = {
             'sonnet-20240229v1-0': ['chat_history', 'question'],
             'sonnet-3-5-20240620v1-0': ['chat_history', 'question']
         }
-    }
+    },
+    'superset_chart': {
+        'system_prompt': {
+            'mixtral-8x7b-instruct-0': [],
+            'llama3-70b-instruct-0': [],
+            'haiku-20240307v1-0': [],
+            'sonnet-20240229v1-0': [],
+            'sonnet-3-5-20240620v1-0': []
+        },
+        'user_prompt': {
+            'mixtral-8x7b-instruct-0': [
+                'database_engine',
+                'sql_schema',
+                'dataset_schema',
+                'examples',
+                'ner_info',
+                'question'
+            ],
+            'llama3-70b-instruct-0': [
+                'database_engine',
+                'sql_schema',
+                'dataset_schema',
+                'examples',
+                'ner_info',
+                'question'
+            ],
+            'haiku-20240307v1-0': [
+                'database_engine',
+                'sql_schema',
+                'dataset_schema',
+                'examples',
+                'ner_info',
+                'question'
+            ],
+            'sonnet-20240229v1-0': [
+                'database_engine',
+                'sql_schema',
+                'dataset_schema',
+                'examples',
+                'ner_info',
+                'question'
+            ],
+            'sonnet-3-5-20240620v1-0': [
+                'database_engine',
+                'sql_schema',
+                'dataset_schema',
+                'examples',
+                'ner_info',
+                'question'
+            ]
+        }
+    },
 }
+
+if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
+    required_syntax_map['data_summary']['system_prompt'][os.getenv("DATA_ANALYSIS_MODEL_NAME")] = []
+    required_syntax_map['data_summary']['user_prompt'][os.getenv("DATA_ANALYSIS_MODEL_NAME")] = ['question', 'data']
+
+    required_syntax_map['data_visualization']['system_prompt'][os.getenv("DATA_ANALYSIS_MODEL_NAME")] = []
+    required_syntax_map['data_visualization']['user_prompt'][os.getenv("DATA_ANALYSIS_MODEL_NAME")] = ['question', 'data']
+
+    required_syntax_map['agent_analyse']['system_prompt'][os.getenv("DATA_ANALYSIS_MODEL_NAME")] = []
+    required_syntax_map['agent_analyse']['user_prompt'][os.getenv("DATA_ANALYSIS_MODEL_NAME")] = ['question', 'data']
 
 
 def check_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id):

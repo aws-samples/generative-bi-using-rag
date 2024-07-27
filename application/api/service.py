@@ -718,7 +718,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
                                model_provider=model_provider)
         logger.info(f'{response=}')
         await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
-        sql = get_generated_sql(response)
+        sql = get_generated_sql(database_profile['tables_info'], response)
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
         search_result.entity_slot_retrieve = entity_slot_retrieve

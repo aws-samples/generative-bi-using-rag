@@ -45,7 +45,7 @@ def normal_text_search(search_box, model_type, database_profile, entity_slot, op
                                ner_example=entity_slot_retrieve,
                                dialect=database_profile['db_type'],
                                model_provider=model_provider)
-        sql = get_generated_sql(response)
+        sql = get_generated_sql(database_profile['tables_info'], response)
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
         search_result.entity_slot_retrieve = entity_slot_retrieve
@@ -87,7 +87,7 @@ def agent_text_search(search_box, model_type, database_profile, entity_slot, ope
                                              ner_example=entity_slot_retrieve,
                                              dialect=database_profile['db_type'],
                                              model_provider=None)
-            each_task_sql = get_generated_sql(each_task_response)
+            each_task_sql = get_generated_sql(database_profile['tables_info'], each_task_response)
             each_res_dict["response"] = each_task_response
             each_res_dict["sql"] = each_task_sql
             if each_res_dict["sql"] != "":

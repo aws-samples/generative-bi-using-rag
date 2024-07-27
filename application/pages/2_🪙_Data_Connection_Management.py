@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from nlq.business.connection import ConnectionManagement
 from nlq.data_access.database import RelationDatabase
 from utils.navigation import make_sidebar
-
+from utils.superset_conn import get_superset_conn, import_superset_conn
 
 # global variables
 
@@ -27,10 +27,35 @@ def index_of_db_type(db_type):
         index += 1
 
 
+conns = get_superset_conn()['result']
+
+
+def get_conns():
+    res = {}
+    for conn in conns:
+        if conn['db_type'] in db_type_mapping.keys():
+            res[f"{conn['database_id']}_{conn['database_name']}_{conn['db_type']}"] = conn
+    return res
+
+
+def index_superset_conn(con):
+    conn_list = list(get_conns().keys())
+    if con not in conn_list:
+        return None
+    else:
+        return conn_list.index(con)
+
+
 def new_connection_clicked():
     st.session_state.new_connection_mode = True
     st.session_state.update_connection_mode = False
     st.session_state.current_conn_name = None
+    st.session_state["current_superset_db_id"] = None
+
+
+def import_superset_connection():
+    # 只引入db_type_mapping，其他的都不引入
+    import_superset_conn(list(db_type_mapping.keys()))
 
 
 def test_connection_view(db_type, user, password, host, port, db_name):
@@ -69,23 +94,37 @@ def main():
             st.session_state.new_connection_mode = False
 
         st.button('Create new...', on_click=new_connection_clicked)
+        st.button('Import Superset Connection', on_click=import_superset_connection)
 
     if st.session_state.new_connection_mode:
         st.subheader("New Database Connection")
-        connection_name = st.text_input("Database Connection Name")
-        db_type = st.selectbox("Database type", db_type_mapping.values(), index=0)  # Add more options as needed
-        db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
-        host = st.text_input("Enter host")
-        port = st.text_input("Enter port")
-        user = st.text_input("Enter username")
-        password = st.text_input("Enter password", type="password")
-        db_name = st.text_input("Enter database name")
+        superset_db_id = st.selectbox("Database Id", list(get_conns().keys()), index=None, key='current_superset_db_id')
+        if not superset_db_id:
+            connection_name = st.text_input("Database Connection Name")
+            db_type = st.selectbox("Database type", db_type_mapping.values(), index=0)  # Add more options as needed
+            db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
+            host = st.text_input("Enter host")
+            port = st.text_input("Enter port")
+            user = st.text_input("Enter username")
+            password = st.text_input("Enter password", type="password")
+            db_name = st.text_input("Enter database name")
+        else:
+            selected_connection = get_conns()[superset_db_id]
+            connection_name = st.text_input("Database Connection Name", selected_connection['database_name'])
+            db_type = st.selectbox("Database type", db_type_mapping.values(), index=index_of_db_type(selected_connection['db_type']))  # Add more options as needed
+            db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
+            host = st.text_input("Enter host", selected_connection['config']['host'])
+            port = st.text_input("Enter port", selected_connection['config']['port'])
+            user = st.text_input("Enter username", selected_connection['config']['username'])
+            password = st.text_input("Enter password", type="password", value=selected_connection['config']['password'])
+            db_name = st.text_input("Enter database name", selected_connection['config']['database'])
         comment = st.text_input("Enter comment")
 
         test_connection_view(db_type, user, password, host, port, db_name)
 
         if st.button('Add Connection', type='primary'):
-            ConnectionManagement.add_connection(connection_name, db_type, host, port, user, password, db_name, comment)
+            db_id = int(superset_db_id.split('_')[0])
+            ConnectionManagement.add_connection(db_id, connection_name, db_type, host, port, user, password, db_name, comment)
             st.success(f"{connection_name} added successfully!")
             st.session_state.new_connection_mode = False
 
@@ -93,6 +132,8 @@ def main():
         st.subheader("Update Database Connection")
         current_conn = st.session_state.current_connection
         connection_name = st.text_input("Database Connection Name", current_conn.conn_name, disabled=True)
+        superset_db_id = st.selectbox("Database Id", list(get_conns().keys()),
+                             index=index_superset_conn(con=f"{current_conn.id}_{current_conn.conn_name}_{current_conn.db_type}"))
         db_type = st.selectbox("Database type", db_type_mapping.values(), index=index_of_db_type(current_conn.db_type),
                                disabled=True)  # Add more options as needed
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
@@ -106,7 +147,8 @@ def main():
         test_connection_view(db_type, user, password, host, port, db_name)
 
         if st.button('Update Connection', type='primary'):
-            ConnectionManagement.update_connection(connection_name, db_type, host, port, user, password, db_name,
+            db_id = int(superset_db_id.split('_')[0])
+            ConnectionManagement.update_connection(db_id, connection_name, db_type, host, port, user, password, db_name,
                                                    comment)
             st.success(f"{connection_name} updated successfully!")
 
