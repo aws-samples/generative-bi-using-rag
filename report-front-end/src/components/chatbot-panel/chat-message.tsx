@@ -450,6 +450,12 @@ function IntentSearchPanel(props: IntentSearchProps) {
           {props.message.knowledge_search_result.knowledge_response}
         </div>
       );
+    case "ask_in_reply":
+      return (
+        <div style={{ whiteSpace: "pre-line" }}>
+          {props.message.ask_rewrite_result.query_rewrite}
+        </div>
+      );
     default:
       return (
         <div style={{ whiteSpace: "pre-line" }}>

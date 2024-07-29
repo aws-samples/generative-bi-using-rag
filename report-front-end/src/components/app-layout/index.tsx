@@ -1,6 +1,5 @@
 import { AppLayout } from "@cloudscape-design/components";
 import { useNavigationPanelState } from "../../common/hooks/use-navigation-panel-state";
-import Index from "../side-navigation";
 import { Dispatch, ReactElement, ReactNode, ReactPortal, SetStateAction } from "react";
 
 export default function BaseAppLayout(
@@ -15,6 +14,7 @@ export default function BaseAppLayout(
       | null
       | undefined;
     info: ReactElement,
+    navigation: ReactElement,
     toolsHide: boolean;
     setToolsHide: Dispatch<SetStateAction<boolean>>;
   }
@@ -26,8 +26,9 @@ export default function BaseAppLayout(
     <AppLayout
       headerSelector="#awsui-top-navigation"
       content={props.content}
-      navigation={<Index />}
-      navigationHide={true}
+      navigation={props.navigation}
+      navigationWidth={300}
+      navigationHide={false}
       navigationOpen={!navigationPanelState.collapsed}
       onNavigationChange={({ detail }) =>
         setNavigationPanelState({ collapsed: !detail.open })

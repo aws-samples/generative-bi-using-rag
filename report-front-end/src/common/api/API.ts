@@ -1,4 +1,9 @@
-import { ChatBotHistoryItem, ChatBotMessageType, FeedBackItem } from "../../components/chatbot-panel/types";
+import {
+  ChatBotHistoryItem,
+  ChatBotMessageType,
+  FeedBackItem,
+  SessionItem,
+} from "../../components/chatbot-panel/types";
 import { Dispatch, SetStateAction } from "react";
 import { BACKEND_URL, DEFAULT_QUERY_CONFIG } from "../constant/constants";
 import { alertMsg } from "../helpers/tools";
@@ -119,5 +124,24 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
     return result;
   } catch (err) {
     console.error('Query error, ', err);
+  }
+}
+
+export async function getSessions(sessionItem: SessionItem) {
+  // call api
+  try {
+    const response = await fetch(`${BACKEND_URL}qa/get_history_by_user_profile`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify(sessionItem)
+    });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("getSessions, error: ", error);
   }
 }

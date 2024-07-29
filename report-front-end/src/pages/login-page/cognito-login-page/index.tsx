@@ -13,6 +13,7 @@ export default function AppConfigured() {
 
   useEffect(() => {
     if (LOGIN_TYPE === COGNITO) {
+      console.log('Cognito configured');
       (async () => {
         try {
           Amplify.configure(awsConfig);

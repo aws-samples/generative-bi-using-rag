@@ -3,7 +3,7 @@ export interface ChatInputState {
 }
 
 export enum ChatBotMessageType {
-  AI = "ai",
+  AI = "AI",
   Human = "human",
 }
 
@@ -28,6 +28,7 @@ export interface ChatBotAnswerItem {
   query: string,
   query_intent: string,
   knowledge_search_result: KnowledgeSearchResult,
+  ask_rewrite_result: AskRewriteResult,
   sql_search_result: SQLSearchResult,
   agent_search_result: AgentSearchResult,
   suggested_question: string[]
@@ -44,6 +45,15 @@ export interface FeedBackItem {
   query: string,
   query_intent: string,
   query_answer: string,
+}
+
+export interface SessionItem {
+  user_id: string,
+  profile_name: string,
+}
+
+export interface AskRewriteResult {
+  query_rewrite: string;
 }
 
 export interface KnowledgeSearchResult {
