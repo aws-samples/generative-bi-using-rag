@@ -13,13 +13,6 @@ from fastapi import HTTPException
 
 @retry(stop_max_attempt_number=3, wait_fixed=1000)
 def validate_token(token):
-    if os.getenv("ENV") == "local":
-        g.user = json.loads(os.getenv("VALIDATE_TOKEN"))
-        return {
-                "success": True,
-                "user_id": g.user["userId"],
-                "user_name": g.user['userName'],
-            }
     validate_url = f"{os.getenv('VALIDATE_HOST')}/dops-temp/token/validate"
     response = requests.post(validate_url, data=token)
     if response.status_code != 200:

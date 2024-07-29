@@ -290,6 +290,32 @@ required_syntax_map = {
             ]
         }
     },
+    'sql_optimization': {
+        'system_prompt': {
+            'mixtral-8x7b-instruct-0': ['database_engine'],
+            'llama3-70b-instruct-0': ['database_engine'],
+            'haiku-20240307v1-0': ['database_engine'],
+            'sonnet-20240229v1-0': ['database_engine'],
+            'sonnet-3-5-20240620v1-0': ['database_engine']
+        },
+        'user_prompt': {
+            'mixtral-8x7b-instruct-0': [
+                'sql'
+            ],
+            'llama3-70b-instruct-0': [
+                'sql'
+            ],
+            'haiku-20240307v1-0': [
+                'sql'
+            ],
+            'sonnet-20240229v1-0': [
+                'sql'
+            ],
+            'sonnet-3-5-20240620v1-0': [
+                'sql'
+            ]
+        }
+    },
 }
 
 if os.getenv("DATA_ANALYSIS_MODE") == 'self-hosted':
