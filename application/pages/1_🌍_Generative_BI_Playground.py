@@ -188,7 +188,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
 
 
             sql = get_generated_sql(response)
-
+            st.code(sql, language="sql")
             feedback = st.columns(2)
             feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
                                use_container_width=True,
