@@ -57,6 +57,10 @@ query_rewrite_user_prompt_dict = {}
 superset_chart_system_prompt_dict = {}
 superset_chart_user_prompt_dict = {}
 
+# sql optimization prompt
+sql_optimization_system_prompt_dict = {}
+sql_optimization_user_prompt_dict = {}
+
 # general map used for prompt management and DynamoDB storage
 prompt_map_dict = {
     'query_rewrite': {
@@ -108,7 +112,12 @@ prompt_map_dict = {
         'title': 'Superset Chart Prompt',
         'system_prompt': superset_chart_system_prompt_dict,
         'user_prompt': superset_chart_user_prompt_dict
-    }
+    },
+    'sql_optimization': {
+        'title': 'SQL Optimization Prompt',
+        'system_prompt': sql_optimization_system_prompt_dict,
+        'user_prompt': sql_optimization_user_prompt_dict
+    },
 
 }
 
@@ -2487,6 +2496,67 @@ Think about your answer first before you respond. Put your JSON in <json></json>
 The question is : {question}
 """
 
+# sql optimijzation prompt
+sql_optimization_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+"""
+
+sql_optimization_system_prompt_dict['haiku-20240307v1-0'] = """
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+"""
+
+sql_optimization_system_prompt_dict['sonnet-20240229v1-0'] = """
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+"""
+
+sql_optimization_system_prompt_dict['llama3-70b-instruct-0'] = """
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+"""
+
+sql_optimization_system_prompt_dict['sonnet-3-5-20240620v1-0'] = """
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+"""
+
+sql_optimization_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
+Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
+
+The origin sql query is : ```{sql}```
+
+"""
+
+sql_optimization_user_prompt_dict['haiku-20240307v1-0'] = """
+Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
+Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
+
+The origin sql query is : ```{sql}```
+
+"""
+
+sql_optimization_user_prompt_dict['sonnet-20240229v1-0'] = """
+Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
+Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
+
+The origin sql query is : ```{sql}```
+
+"""
+
+sql_optimization_user_prompt_dict['llama3-70b-instruct-0'] = """
+Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
+Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
+
+The origin sql query is : ```{sql}```
+
+"""
+
+sql_optimization_user_prompt_dict['sonnet-3-5-20240620v1-0'] = """
+Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
+Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
+
+The origin sql query is : ```{sql}```
+
+"""
+
 
 class SystemPromptMapper:
     def __init__(self):
@@ -2635,6 +2705,17 @@ def generate_llm_superset_prompt(dataset_schema, ddl, hints, prompt_map, search_
     user_prompt = user_prompt.format(database_engine=dialect, sql_schema=table_prompt, dataset_schema=dataset_schema,
                                      examples=example_sql_prompt,
                                      ner_info=example_ner_prompt, question=search_box)
+
+    return user_prompt, system_prompt
+
+
+def generate_llm_sql_optimizer_prompt(prompt_map, model_id, sql, dialect='mysql'):
+    name = support_model_ids_map[model_id]
+    system_prompt = prompt_map.get('sql_optimization', {}).get('system_prompt', {}).get(name)
+    user_prompt = prompt_map.get('sql_optimization', {}).get('user_prompt', {}).get(name)
+
+    system_prompt = system_prompt.format(database_engine=dialect)
+    user_prompt = user_prompt.format(sql=sql)
 
     return user_prompt, system_prompt
 

@@ -15,11 +15,12 @@ from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.domain import SearchTextSqlResult
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization, get_query_rewrite
+    generate_suggested_question, data_visualization, get_query_rewrite, optimize_query
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
-from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql
+from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
+    add_row_level_filter
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity
 from .exception_handler import BizException
@@ -719,6 +720,12 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         logger.info(f'{response=}')
         await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
         sql = get_generated_sql(response)
+        # 行级权限
+        sql = add_row_level_filter(sql, database_profile['tables_info'])
+        if os.getenv("SQL_OPTIMIZATION_ENABLED") == '1':
+            optimized_response = optimize_query(database_profile['prompt_map'], model_type, sql,
+                                                database_profile['db_type'])
+            sql = get_generated_sql(optimized_response)
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
         search_result.entity_slot_retrieve = entity_slot_retrieve

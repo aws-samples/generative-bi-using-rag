@@ -11,7 +11,7 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemake
     generate_sagemaker_sql_prompt, generate_sagemaker_explain_prompt, generate_agent_cot_system_prompt, \
     generate_intent_prompt, generate_knowledge_prompt, generate_data_visualization_prompt, \
     generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
-    generate_query_rewrite_prompt, generate_llm_superset_prompt
+    generate_query_rewrite_prompt, generate_llm_superset_prompt, generate_llm_sql_optimizer_prompt
 
 from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL
 logger = logging.getLogger(__name__)
@@ -328,6 +328,12 @@ def text_to_json(dataset_schema, ddl, hints, prompt_map, search_box, sql_example
     response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
     return response
 
+
+def optimize_query(prompt_map, model_id, sql, dialect='mysql',  with_response_stream=False):
+    user_prompt, system_prompt = generate_llm_sql_optimizer_prompt(prompt_map, model_id, sql, dialect)
+    max_tokens = 4096
+    response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
+    return response
 
 
 def sagemaker_to_explain(endpoint_name: str, sql: str, with_response_stream=False):

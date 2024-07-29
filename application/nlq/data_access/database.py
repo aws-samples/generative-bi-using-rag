@@ -117,6 +117,7 @@ class RelationDatabase:
 
             table_info[table_name_key]['ddl'] = ddl
             table_info[table_name_key]['description'] = table.comment
+            table_info[table_name_key]['database_id'] = int(self.connection.id)
 
             logger.info(f'added table {table_name} to table_info dict')
 

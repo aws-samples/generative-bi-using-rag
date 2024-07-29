@@ -1,7 +1,12 @@
 import logging
+import os
+import re
 import time
 import random
 from datetime import datetime
+
+from utils.sql_parse import ParsedQuery
+from utils.superset_conn import get_superset_rlf
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -14,6 +19,33 @@ def get_generated_sql(generated_sql_response):
     except IndexError:
         logger.error("No SQL found in the LLM's response")
         logger.error(generated_sql_response)
+    return sql
+
+
+def add_row_level_filter(sql, tables_info):
+    if os.getenv("ROW_LEVEL_SECURITY_FILTER_ENABLED") == '1':
+        rls_map = {}
+        for table, table_info in tables_info.items():
+            schema_name = table.split('.')[0]
+            table_name = table.split('.')[1]
+            database_id = int(table_info['database_id'])
+            rlf = get_superset_rlf(table_name=table_name, schema=schema_name, database_id=database_id)['data']
+            if rlf:
+                rls_map[table] = ' and '.join(rlf)
+
+        parse_tables = set(list(ParsedQuery(sql).tables))
+        for pt in parse_tables:
+            if pt.schema:
+                if f"{pt.schema}.{pt.table}" in rls_map:
+                    sql = re.sub(f"(?<=\s|\n){pt.schema}.{pt.table}(?=\n|\s|;|$)",
+                                 f" (select * from {pt.schema}.{pt.table} where {rls_map[f'{pt.schema}.{pt.table}']}) ",
+                                 sql, flags=re.I)
+            else:
+                for table, rlf in rls_map.items():
+                    if pt.table == table.split('.')[1]:
+                        sql = re.sub(f"(?<=\s|\n){pt.table}(?=\n|\s|;|$)",
+                                     f" (select * from {pt.table} where {rls_map[table]}) ",
+                                     sql, flags=re.I)
     return sql
 
 

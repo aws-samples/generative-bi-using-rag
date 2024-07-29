@@ -35,19 +35,14 @@ async def add_process_time_header(request: Request, call_next):
     jwt_token = request.cookies.get('dlunifiedtoken', None)
     print('---JWT TOKEN---', jwt_token)
     if jwt_token:
-        response = validate_token(jwt_token)
-        if response.status_code != 200:
+        res = validate_token(jwt_token)
+        if not res["success"]:
             return Response(status_code=status.HTTP_401_UNAUTHORIZED)
         else:
-            payload = json.loads(response.text)
-            if payload['data']:
-                msg = json.loads(payload['msg'])
-                response = await call_next(request)
-                response.headers["X-User-Id"] = base64.b64encode(msg['userId'].encode('utf-8')).decode('utf-8')
-                response.headers["X-User-Name"] = base64.b64encode(msg['userName'].encode('utf-8')).decode('utf-8')
-                return response
-            else:
-                return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+            response = await call_next(request)
+            response.headers["X-User-Id"] = base64.b64encode(res['user_id'].encode('utf-8')).decode('utf-8')
+            response.headers["X-User-Name"] = base64.b64encode(res['user_name'].encode('utf-8')).decode('utf-8')
+            return response
     else:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 

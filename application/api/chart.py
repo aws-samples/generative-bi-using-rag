@@ -42,23 +42,17 @@ async def websocket_endpoint(websocket: WebSocket, dlunifiedtoken: Optional[str]
                 answer = {}
                 if jwt_token:
                     del question_json['token']
-                    response = validate_token(jwt_token)
-                    if response.status_code != 200:
+                    res = validate_token(jwt_token)
+                    if not res['success']:
                         answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
                         await response_websocket(websocket=websocket, session_id=session_id, content=answer,
                                                  content_type=ContentEnum.END, user_id=user_id)
                     else:
-                        check_res = response.json()
-                        if check_res['data']:
-                            ask_result = await dlset_ask_websocket(websocket, question)
-                            logger.info(ask_result)
-                            answer = ask_result.dict()
-                            await response_websocket(websocket=websocket, session_id=session_id, content=answer,
-                                                     content_type=ContentEnum.END, user_id=user_id)
-                        else:
-                            answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                            await response_websocket(websocket=websocket, session_id=session_id, content=answer,
-                                                     content_type=ContentEnum.END, user_id=user_id)
+                        ask_result = await dlset_ask_websocket(websocket, question)
+                        logger.info(ask_result)
+                        answer = ask_result.dict()
+                        await response_websocket(websocket=websocket, session_id=session_id, content=answer,
+                                                 content_type=ContentEnum.END, user_id=user_id)
                 else:
                     answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
                     await response_websocket(websocket=websocket, session_id=session_id, content=answer,

@@ -85,26 +85,20 @@ async def websocket_endpoint(websocket: WebSocket, dlunifiedtoken: Optional[str]
                 print('---JWT TOKEN---', jwt_token)
 
                 if jwt_token:
-                    response = validate_token(jwt_token)
-                    if response.status_code != 200:
+                    res = validate_token(jwt_token)
+                    if not res["success"]:
                         answer = {}
                         answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
                         await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                     else:
-                        payload = json.loads(response.text)
-                        if payload['data']:
-                            msg = json.loads(payload['msg'])
-                            ask_result = await ask_websocket(websocket, question)
-                            logger.info(ask_result)
-                            answer = ask_result.dict()
-                            answer['X-Status-Code'] = 200
-                            answer['X-User-Id'] = base64.b64encode(msg['userId'].encode('utf-8')).decode('utf-8')
-                            answer['X-User-Name'] = base64.b64encode(msg['userName'].encode('utf-8')).decode('utf-8')
-                            await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
-                        else:
-                            answer = {}
-                            answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
-                            await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
+                        ask_result = await ask_websocket(websocket, question)
+                        logger.info(ask_result)
+                        answer = ask_result.dict()
+                        answer['X-Status-Code'] = 200
+                        answer['X-User-Id'] = base64.b64encode(res['user_id'].encode('utf-8')).decode('utf-8')
+                        answer['X-User-Name'] = base64.b64encode(res['user_name'].encode('utf-8')).decode('utf-8')
+                        await response_websocket(websocket=websocket, session_id=session_id, content=answer,
+                                                 content_type=ContentEnum.END, user_id=user_id)
                 else:
                     answer = {}
                     answer['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
