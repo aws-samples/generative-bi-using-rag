@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Read variable names from the .env file
-env_file="/.env"
+#env_file="/.env"
 vars="VITE_COGNITO_REGION
 VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
 VITE_COGNITO_USER_POOL_ID
