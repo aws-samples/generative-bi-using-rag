@@ -43,23 +43,24 @@ def main():
         if selected_conn_name:
             conn_config = ConnectionManagement.get_conn_config_by_name(selected_conn_name)
             schema_names = st.multiselect("Schema Name", ConnectionManagement.get_all_schemas_by_config(conn_config))
-            tables_from_db = ConnectionManagement.get_table_name_by_config(conn_config, schema_names)
-            print(tables_from_db)
-            selected_tables = st.multiselect("Select tables included in this profile", tables_from_db)
-            comments = st.text_input("Comments")
+            if schema_names:
+                tables_from_db = ConnectionManagement.get_table_name_by_config(conn_config, schema_names)
+                print(tables_from_db)
+                selected_tables = st.multiselect("Select tables included in this profile", tables_from_db)
+                comments = st.text_input("Comments")
 
-            if st.button('Create Profile', type='primary'):
-                if not selected_tables:
-                    st.error('Please select at least one table.')
-                    return
-                with st.spinner('Creating profile...'):
-                    ProfileManagement.add_profile(profile_name, selected_conn_name, schema_names, selected_tables, comments)
-                    st.success('Profile created.')
-                    st.session_state.profile_page_mode = 'default'
-                    table_definitions = ConnectionManagement.get_table_definition_by_config(conn_config, schema_names,
-                                                                                        selected_tables)
-                    st.write(table_definitions)
-                    ProfileManagement.update_table_def(profile_name, table_definitions, merge_before_update=True)
+                if st.button('Create Profile', type='primary'):
+                    if not selected_tables:
+                        st.error('Please select at least one table.')
+                        return
+                    with st.spinner('Creating profile...'):
+                        ProfileManagement.add_profile(profile_name, selected_conn_name, schema_names, selected_tables, comments)
+                        st.success('Profile created.')
+                        st.session_state.profile_page_mode = 'default'
+                        table_definitions = ConnectionManagement.get_table_definition_by_config(conn_config, schema_names,
+                                                                                            selected_tables)
+                        st.write(table_definitions)
+                        ProfileManagement.update_table_def(profile_name, table_definitions, merge_before_update=True)
 
                 # st.session_state.profile_page_mode = 'default'
     elif st.session_state.profile_page_mode == 'update' and st.session_state.current_profile_name is not None:
