@@ -53,6 +53,7 @@
     "sass": "^1.65.1",
     "typescript": "^5.0.2",
     "vite": "^4.5.2",
-    "zen-observable": "^0.10.0"
+    "zen-observable": "^0.10.0",
+    "classnames": "^2.5.1"
   }
 }
