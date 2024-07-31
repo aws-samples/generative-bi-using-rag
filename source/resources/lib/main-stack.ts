@@ -1,3 +1,4 @@
+
 import {StackProps, CfnParameter, CfnOutput} from 'aws-cdk-lib';
 import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
@@ -60,7 +61,7 @@ export class MainStack extends cdk.Stack {
 
         let _CognitoStack: CognitoStack | undefined;
         if (!isChinaRegion) {
-            _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
+            const _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
                 env: props.env
             });
         }
