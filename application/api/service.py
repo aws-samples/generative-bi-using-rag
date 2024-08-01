@@ -61,15 +61,15 @@ def get_example(current_nlq_chain: NLQChain) -> list[Example]:
 def get_history_by_user_profile(user_id: str, profile_name: str):
     history_list = LogManagement.get_history(user_id, profile_name)
     chat_history = []
-    chat_history_session = []
+    chat_history_session = {}
     for item in history_list:
         session_id = item['session_id']
         if session_id not in chat_history_session:
             chat_history_session[session_id] = []
         log_info = item['log_info']
         query = item['query']
-        human_message = Message(type="human", human_content=query)
-        bot_message = Message(type="AI", bot_content=json.loads(log_info))
+        human_message = Message(type="human", content=query)
+        bot_message = Message(type="AI", content=json.loads(log_info))
         chat_history_session[session_id].append(human_message)
         chat_history_session[session_id].append(bot_message)
 
