@@ -443,7 +443,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     query_rewrite_result = {"intent": "original_problem", "query": search_box}
     if context_window > 0:
         context_window_select = context_window * 2
-        if len(user_query_history) > 0:
+        if len(original_user_query_history) > 0:
             user_query_history = original_user_query_history[-context_window_select:]
             user_query_history = get_window_history(user_query_history)
             user_query_history.append("user:" + search_box)
