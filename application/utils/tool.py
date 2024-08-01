@@ -8,9 +8,6 @@ from multiprocessing import Manager
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-manager = Manager()
-shared_data = manager.dict()  # shared data between processes
-
 
 def get_generated_sql(generated_sql_response):
     sql = ""
@@ -68,10 +65,10 @@ def get_window_history(user_query_history):
 
 
 def get_share_data():
-    global shared_data
+    with Manager() as manager:
+        shared_data = manager.dict()
     return shared_data
 
 
-def set_share_data(session_id, value):
-    global shared_data
+def set_share_data(shared_data, session_id, value):
     shared_data[session_id] = value

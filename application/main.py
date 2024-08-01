@@ -1,4 +1,5 @@
 import json
+import logging
 
 from fastapi import FastAPI, status
 from fastapi.staticfiles import StaticFiles
@@ -9,12 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from api import service
 from api.schemas import Option, Message
 from nlq.business.log_store import LogManagement
-from utils.tool import set_share_data
+from utils.tool import set_share_data, get_share_data
 
 MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,7 +48,8 @@ def option():
 
 @app.on_event("startup")
 def set_history_in_share():
-    global shared_data
+    logging.info("Setting history in share data")
+    share_data = get_share_data()
     history_list = LogManagement.get_all_history()
     chat_history_session = {}
     for item in history_list:
@@ -65,4 +65,6 @@ def set_history_in_share():
 
     for key, value in chat_history_session.items():
         value = value[-MAX_CHAT_WINDOW_SIZE:]
-        set_share_data(key, value)
+        set_share_data(share_data, key, value)
+    logging.info("Setting history in share data done")
+    logging.info(share_data)
