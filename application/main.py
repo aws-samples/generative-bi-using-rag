@@ -49,7 +49,6 @@ def option():
 @app.on_event("startup")
 def set_history_in_share():
     logging.info("Setting history in share data")
-    share_data = get_share_data()
     history_list = LogManagement.get_all_history()
     chat_history_session = {}
     for item in history_list:
@@ -65,6 +64,5 @@ def set_history_in_share():
 
     for key, value in chat_history_session.items():
         value = value[-MAX_CHAT_WINDOW_SIZE:]
-        set_share_data(share_data, key, value)
+        set_share_data(key, value)
     logging.info("Setting history in share data done")
-    logging.info(share_data)

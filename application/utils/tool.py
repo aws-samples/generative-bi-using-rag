@@ -69,6 +69,7 @@ def get_window_history(user_query_history):
 
 def set_share_data(session_id, value):
     shared_data[session_id] = value
+    logger.info("Set share data total session is : %s", str(len(shared_data)))
 
 
 def get_share_data(session_id):
