@@ -447,14 +447,15 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         if len(user_query_history) > 0:
             user_query_history = user_query_history[-context_window_select:]
             user_query_history = get_window_history(user_query_history)
-        logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
-        query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
-        logger.info(
+            logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
+            query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+            logger.info(
             "The query_rewrite_result is {query_rewrite_result}".format(query_rewrite_result=query_rewrite_result))
-        search_box = query_rewrite_result.get("query")
 
+            query_rewrite = query_rewrite_result.get("query")
+        else:
+            query_rewrite = search_box
     query_rewrite_intent = query_rewrite_result.get("intent")
-    query_rewrite = query_rewrite_result.get("query")
     if "ask_in_reply" == query_rewrite_intent:
         ask_replay_flag = True
 
