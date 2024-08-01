@@ -21,7 +21,7 @@ from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
     change_class_to_str
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity, AskReplayResult
+    TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum, ContentEnum
@@ -60,7 +60,23 @@ def get_example(current_nlq_chain: NLQChain) -> list[Example]:
 
 def get_history_by_user_profile(user_id: str, profile_name: str):
     history_list = LogManagement.get_history(user_id, profile_name)
-    return history_list
+    chat_history = []
+    chat_history_session = []
+    for item in history_list:
+        session_id = item['session_id']
+        if session_id not in chat_history_session:
+            chat_history_session[session_id] = []
+        log_info = item['log_info']
+        query = item['query']
+        human_message = Message(type="human", human_content=query)
+        bot_message = Message(type="AI", bot_content=json.loads(log_info))
+        chat_history_session[session_id].append(human_message)
+        chat_history_session[session_id].append(bot_message)
+
+    for key, value in chat_history_session.items():
+        each_session_history = HistoryMessage(session_id=key, messages=value)
+        chat_history.append(each_session_history)
+    return chat_history
 
 
 def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_response_stream=False) -> Union[
@@ -425,6 +441,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     if context_window > 0:
         context_window_select = context_window * 2
         user_query_history = user_query_history[-context_window_select:]
+        user_query_history = ["user: " + search_box]
         logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
         query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
         logger.info(

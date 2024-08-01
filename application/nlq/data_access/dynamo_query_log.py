@@ -124,7 +124,7 @@ class DynamoQueryLogDao:
         try:
             # First, we need to scan the table to find all items for the user and profile
             response = self.table.scan(
-                FilterExpression=Key('user_id').eq(user_id) & Key('profile_name').eq(profile_name)
+                FilterExpression=Key('user_id').eq(user_id) & Key('profile_name').eq(profile_name) & Key('log_type').eq("chat_history")
             )
 
             items = response['Items']

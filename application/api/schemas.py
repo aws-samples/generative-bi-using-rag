@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 from pydantic import BaseModel
 
 
@@ -99,11 +99,15 @@ class Answer(BaseModel):
     suggested_question: list[str]
 
 
-class HistoryMessage(BaseModel):
+class Message(BaseModel):
     type: str
-    content: Answer
+    content: Union[str, Answer]
+
+
+class HistoryMessage(BaseModel):
+    session_id: str
+    messages: list[Message]
 
 
 class ChatHistory(BaseModel):
-    session_id: str
     messages: list[HistoryMessage]
