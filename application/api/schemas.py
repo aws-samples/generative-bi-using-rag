@@ -91,6 +91,7 @@ class AskReplayResult(BaseModel):
 
 class Answer(BaseModel):
     query: str
+    query_rewrite: str = ""
     query_intent: str
     knowledge_search_result: KnowledgeSearchResult
     sql_search_result: SQLSearchResult

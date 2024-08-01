@@ -46,3 +46,18 @@ def change_class_to_str(result):
     except Exception as e:
         logger.error(f"Error in changing class to string: {e}")
         return ""
+
+
+def get_window_history(user_query_history):
+    try:
+        history_list = []
+        for item in user_query_history:
+            if item.type == "human":
+                history_list.append("user:" + str(item.content))
+            else:
+                history_list.append("assistant:" + str(item.content["query_rewrite"]))
+        logger.info(f"history_list: {history_list}")
+        return history_list
+    except Exception as e:
+        logger.error(f"Error in getting window history: {e}")
+        return []

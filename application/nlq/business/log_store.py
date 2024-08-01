@@ -19,3 +19,8 @@ class LogManagement:
     def get_history(cls, user_id, profile_name):
         history_list = cls.query_log_dao.get_history_by_user_profile(user_id, profile_name)
         return history_list
+
+    @classmethod
+    def get_all_history(cls):
+        history_list = cls.query_log_dao.get_all_history()
+        return history_list

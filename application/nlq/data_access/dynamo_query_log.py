@@ -132,7 +132,7 @@ class DynamoQueryLogDao:
             # DynamoDB might not return all items in a single response if the data set is large
             while 'LastEvaluatedKey' in response:
                 response = self.table.scan(
-                    FilterExpression=Key('user_id').eq(user_id) & Key('profile_name').eq(profile_name),
+                    FilterExpression=Key('user_id').eq(user_id) & Key('profile_name').eq(profile_name) & Key('log_type').eq("chat_history"),
                     ExclusiveStartKey=response['LastEvaluatedKey']
                 )
                 items.extend(response['Items'])
@@ -147,6 +147,36 @@ class DynamoQueryLogDao:
                 "Couldn't get history for user %s and profile %s. Here's why: %s: %s",
                 user_id,
                 profile_name,
+                err.response["Error"]["Code"],
+                err.response["Error"]["Message"],
+            )
+            return []
+
+    def get_all_history(self):
+        try:
+            # First, we need to scan the table to find all items for the user and profile
+            response = self.table.scan(
+                FilterExpression=Key('log_type').eq("chat_history")
+            )
+
+            items = response['Items']
+
+            # DynamoDB might not return all items in a single response if the data set is large
+            while 'LastEvaluatedKey' in response:
+                response = self.table.scan(
+                    FilterExpression=Key('log_type').eq("chat_history"),
+                    ExclusiveStartKey=response['LastEvaluatedKey']
+                )
+                items.extend(response['Items'])
+
+            # Sort the items by time_str to get them in chronological order
+            sorted_items = sorted(items, key=lambda x: x['time_str'])
+
+            return sorted_items
+
+        except ClientError as err:
+            logger.error(
+                "Couldn't get history Here's why: %s: %s",
                 err.response["Error"]["Code"],
                 err.response["Error"]["Message"],
             )
