@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 import random
@@ -36,3 +37,12 @@ def get_generated_sql_explain(generated_sql_response):
         return generated_sql_response[index + len("</sql>"):]
     else:
         return generated_sql_response
+
+
+def change_class_to_str(result):
+    try:
+        log_info = json.dumps(result.dict())
+        return log_info
+    except Exception as e:
+        logger.error(f"Error in changing class to string: {e}")
+        return ""

@@ -17,7 +17,7 @@ class Question(BaseModel):
     top_p: float = 0.9
     max_tokens: int = 2048
     temperature: float = 0.01
-    context_window: int = 3
+    context_window: int = 5
     session_id: str = "-1"
     user_id: str = "admin"
 
@@ -26,6 +26,11 @@ class Example(BaseModel):
     score: float
     question: str
     answer: str
+
+
+class HistoryRequest(BaseModel):
+    user_id: str
+    profile_name: str
 
 
 class QueryEntity(BaseModel):
@@ -80,10 +85,25 @@ class AgentSearchResult(BaseModel):
     agent_summary: str
 
 
+class AskReplayResult(BaseModel):
+    query_rewrite: str
+
+
 class Answer(BaseModel):
     query: str
     query_intent: str
     knowledge_search_result: KnowledgeSearchResult
     sql_search_result: SQLSearchResult
     agent_search_result: AgentSearchResult
+    ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
+
+
+class HistoryMessage(BaseModel):
+    type: str
+    content: Answer
+
+
+class ChatHistory(BaseModel):
+    session_id: str
+    messages: list[HistoryMessage]

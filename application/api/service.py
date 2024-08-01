@@ -14,13 +14,14 @@ from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.domain import SearchTextSqlResult
 from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
     sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization
+    generate_suggested_question, data_visualization, get_query_rewrite
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
-from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql
+from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
+    change_class_to_str
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity
+    TaskSQLSearchResult, ChartEntity, AskReplayResult
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum, ContentEnum
@@ -55,6 +56,11 @@ def get_example(current_nlq_chain: NLQChain) -> list[Example]:
         )
         )
     return examples
+
+
+def get_history_by_user_profile(user_id: str, profile_name: str):
+    history_list = LogManagement.get_history(user_id, profile_name)
+    return history_list
 
 
 def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_response_stream=False) -> Union[
@@ -367,11 +373,13 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     explain_gen_process_flag = question.explain_gen_process_flag
     gen_suggested_question_flag = question.gen_suggested_question_flag
     answer_with_insights = question.answer_with_insights
+    context_window = question.context_window
 
     reject_intent_flag = False
     search_intent_flag = False
     agent_intent_flag = False
     knowledge_search_flag = False
+    ask_replay_flag = False
 
     agent_search_result = []
     normal_search_result = None
@@ -388,6 +396,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     current_nlq_chain = NLQChain(selected_profile)
 
     sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+
+    ask_result = AskReplayResult(query_rewrite="")
 
     sql_search_result = SQLSearchResult(sql_data=[], sql="", data_show_type="table",
                                         sql_gen_process="",
@@ -409,6 +419,38 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     prompt_map = database_profile['prompt_map']
 
     entity_slot = []
+
+    user_query_history = []
+    query_rewrite_result = {"intent": "original_problem", "query": search_box}
+    if context_window > 0:
+        context_window_select = context_window * 2
+        user_query_history = user_query_history[-context_window_select:]
+        logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
+        query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+        logger.info(
+            "The query_rewrite_result is {query_rewrite_result}".format(query_rewrite_result=query_rewrite_result))
+        search_box = query_rewrite_result.get("query")
+
+    query_rewrite_intent = query_rewrite_result.get("intent")
+    if "ask_in_reply" == query_rewrite_intent:
+        ask_replay_flag = True
+
+    if ask_replay_flag:
+        ask_result.query_rewrite = query_rewrite_result.get("query")
+
+        answer = Answer(query=search_box, query_intent="ask_in_reply", knowledge_search_result=knowledge_search_result,
+                        sql_search_result=sql_search_result, agent_search_result=agent_search_response,
+                        suggested_question=[], ask_rewrite_result=ask_result)
+
+        ask_answer_info = change_class_to_str(answer)
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
+                                          profile_name=selected_profile, sql="", query=search_box,
+                                          intent="ask_in_reply",
+                                          log_info=ask_answer_info,
+                                          log_type="chat_history",
+                                          time_str=current_time)
+        return answer
+
 
     if intent_ner_recognition_flag:
         await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start", user_id)
@@ -438,10 +480,12 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     if reject_intent_flag:
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[])
+                        suggested_question=[], ask_rewrite_result=ask_result)
+        reject_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
-                                          intent="reject_search", log_info="", time_str=current_time)
+                                          intent="reject_search", log_info=reject_answer_info, log_type="chat_history",
+                                          time_str=current_time)
         return answer
     elif search_intent_flag:
         normal_search_result = await normal_text_search_websocket(websocket, session_id, search_box, model_type,
@@ -455,12 +499,13 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         answer = Answer(query=search_box, query_intent="knowledge_search",
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[])
-
+                        suggested_question=[], ask_rewrite_result=ask_result)
+        knowledge_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
                                           intent="knowledge_search",
-                                          log_info=knowledge_search_result.knowledge_response,
+                                          log_info=knowledge_answer_info,
+                                          log_type="chat_history",
                                           time_str=current_time)
         return answer
 
@@ -481,7 +526,6 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         generated_sq = generate_suggested_question(prompt_map, search_box, model_id=model_type)
         split_strings = generated_sq.split("[generate]")
         generate_suggested_question_list = [s.strip() for s in split_strings if s.strip()]
-
 
     if search_intent_flag:
         if normal_search_result.sql != "":
@@ -539,10 +583,20 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                                           query=search_box,
                                           intent="normal_search",
                                           log_info=log_info,
+                                          log_type="normal_log",
                                           time_str=current_time)
         answer = Answer(query=search_box, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=generate_suggested_question_list)
+                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
+
+        intent_answer_info = change_class_to_str(answer)
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
+                                          profile_name=selected_profile, sql=sql_search_result.sql,
+                                          query=search_box,
+                                          intent="normal_search",
+                                          log_info=intent_answer_info,
+                                          log_type="chat_history",
+                                          time_str=current_time)
         return answer
     else:
         sub_search_task = []
@@ -599,7 +653,16 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
         answer = Answer(query=search_box, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=generate_suggested_question_list)
+                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
+
+        agent_answer_info = change_class_to_str(answer)
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
+                                          profile_name=selected_profile, sql="",
+                                          query=search_box,
+                                          intent="agent_search",
+                                          log_info=agent_answer_info,
+                                          log_type="chat_history",
+                                          time_str=current_time)
         return answer
 
 
@@ -663,7 +726,7 @@ def get_executed_result(current_nlq_chain: NLQChain) -> str:
 
 
 async def normal_text_search_websocket(websocket: WebSocket, session_id: str, search_box, model_type, database_profile,
-                                       entity_slot, opensearch_info, selected_profile, use_rag,user_id,
+                                       entity_slot, opensearch_info, selected_profile, use_rag, user_id,
                                        model_provider=None):
     entity_slot_retrieve = []
     retrieve_result = []
@@ -679,7 +742,8 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
             database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
 
         if len(entity_slot) > 0 and use_rag:
-            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start", user_id)
+            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start",
+                                     user_id)
             for each_entity in entity_slot:
                 entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
                                                           selected_profile, 1, 0.7)
