@@ -73,4 +73,7 @@ def set_share_data(session_id, value):
 
 
 def get_share_data(session_id):
-    return shared_data.get(session_id)
+    if session_id in shared_data:
+        return shared_data.get(session_id)
+    else:
+        return []

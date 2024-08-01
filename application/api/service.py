@@ -438,9 +438,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     entity_slot = []
 
     user_query_history = []
-    shared_data = get_share_data()
-    if session_id in shared_data:
-        user_query_history = shared_data[session_id]
+    user_query_history = get_share_data(session_id)
     query_rewrite_result = {"intent": "original_problem", "query": search_box}
     if context_window > 0:
         context_window_select = context_window * 2
