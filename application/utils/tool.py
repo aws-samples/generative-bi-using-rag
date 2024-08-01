@@ -84,8 +84,10 @@ def get_share_data(session_id):
 def update_share_data(session_id, search_box, answer):
     if session_id not in shared_data:
         shared_data[session_id] = []
+        logger.info("session_id not in shared_data")
+        logger.info("Update session_id  is : %s", session_id)
     human_message = Message(type="human", content=search_box)
     bot_message = Message(type="AI", content=answer)
     shared_data[session_id].append(human_message)
     shared_data[session_id].append(bot_message)
-    logger.info("Update share data  is : %s", shared_data)
+    logger.info("Update session is %s, share data  is : %s", session_id, shared_data[session_id])
