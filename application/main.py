@@ -1,5 +1,4 @@
 import json
-from multiprocessing import Manager
 
 from fastapi import FastAPI, status
 from fastapi.staticfiles import StaticFiles
@@ -10,12 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from api import service
 from api.schemas import Option, Message
 from nlq.business.log_store import LogManagement
+from utils.tool import set_share_data
 
 MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
 
-manager = Manager()
-shared_data = manager.dict()  # shared data between processes
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -66,4 +65,4 @@ def set_history_in_share():
 
     for key, value in chat_history_session.items():
         value = value[-MAX_CHAT_WINDOW_SIZE:]
-        shared_data[key] = value
+        set_share_data(key, value)

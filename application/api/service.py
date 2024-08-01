@@ -4,7 +4,6 @@ from typing import Union
 from dotenv import load_dotenv
 import logging
 
-from main import shared_data
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
@@ -21,7 +20,7 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
-    change_class_to_str, get_window_history
+    change_class_to_str, get_window_history, get_share_data
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage
 from .exception_handler import BizException
@@ -408,8 +407,6 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     log_info = ""
     query_rewrite = ""
 
-    shared_data["log_id"] = log_id
-
     all_profiles = ProfileManagement.get_all_profiles_with_info()
     database_profile = all_profiles[selected_profile]
 
@@ -441,6 +438,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     entity_slot = []
 
     user_query_history = []
+    shared_data = get_share_data()
     if session_id in shared_data:
         user_query_history = shared_data[session_id]
     query_rewrite_result = {"intent": "original_problem", "query": search_box}

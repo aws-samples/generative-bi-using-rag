@@ -3,9 +3,13 @@ import logging
 import time
 import random
 from datetime import datetime
+from multiprocessing import Manager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+manager = Manager()
+shared_data = manager.dict()  # shared data between processes
 
 
 def get_generated_sql(generated_sql_response):
@@ -61,3 +65,13 @@ def get_window_history(user_query_history):
     except Exception as e:
         logger.error(f"Error in getting window history: {e}")
         return []
+
+
+def get_share_data():
+    global shared_data
+    return shared_data
+
+
+def set_share_data(session_id, value):
+    global shared_data
+    shared_data[session_id] = value
