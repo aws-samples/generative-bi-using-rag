@@ -88,3 +88,4 @@ def update_share_data(session_id, search_box, answer):
     bot_message = Message(type="AI", content=answer)
     shared_data[session_id].append(human_message)
     shared_data[session_id].append(bot_message)
+    logger.info("Update share data  is : %s", shared_data)
