@@ -439,6 +439,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
     user_query_history = []
     original_user_query_history = get_share_data(session_id)
+    logger.info("The original_user_query_history is {original_user_query_history}".format(original_user_query_history=original_user_query_history))
     query_rewrite_result = {"intent": "original_problem", "query": search_box}
     if context_window > 0:
         context_window_select = context_window * 2
@@ -452,7 +453,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
             "The query_rewrite_result is {query_rewrite_result}".format(query_rewrite_result=query_rewrite_result))
         else:
             user_query_history.append("user:" + search_box)
-            query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, [])
+            query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
     query_rewrite = query_rewrite_result.get("query")
     query_rewrite_intent = query_rewrite_result.get("intent")
     if "ask_in_reply" == query_rewrite_intent:
