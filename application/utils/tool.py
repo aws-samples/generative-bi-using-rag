@@ -5,6 +5,8 @@ import random
 from datetime import datetime
 from multiprocessing import Manager
 
+from api.schemas import Message
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -77,3 +79,12 @@ def get_share_data(session_id):
         return shared_data.get(session_id)
     else:
         return []
+
+
+def update_share_data(session_id, search_box, answer):
+    if session_id not in shared_data:
+        shared_data[session_id] = []
+    human_message = Message(type="human", content=search_box)
+    bot_message = Message(type="AI", content=answer)
+    shared_data[session_id].append(human_message)
+    shared_data[session_id].append(bot_message)
