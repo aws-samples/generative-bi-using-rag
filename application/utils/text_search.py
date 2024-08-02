@@ -35,7 +35,7 @@ def normal_text_search(search_box, model_type, database_profile, entity_slot, op
 
         if use_rag:
             retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                      selected_profile, 3, 0.5)
+                                                      selected_profile, 3, 0.5, sample_type="SQL")
 
         response = text_to_sql(database_profile['tables_info'],
                                database_profile['hints'],
