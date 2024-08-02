@@ -61,7 +61,7 @@ def get_window_history(user_query_history):
             if item.type == "human":
                 history_list.append("user:" + str(item.content))
             else:
-                history_list.append("assistant:" + str(item.content["query_rewrite"]))
+                history_list.append("assistant:" + str(item.content.query_rewrite))
         logger.info(f"history_list: {history_list}")
         return history_list
     except Exception as e:
@@ -92,7 +92,7 @@ def update_share_data(session_id, search_box, answer):
         chat_list.append(human_message)
         chat_list.append(bot_message)
         set_share_data(session_id, chat_list)
-        logger.info("not have session is %s, share data  is : %s", session_id, shared_data[session_id])
+        logger.info("not have session is %s, share data length is : %s", session_id, len(shared_data[session_id]))
     else:
         chat_list = shared_data[session_id]
         human_message = Message(type="human", content=search_box)
@@ -100,4 +100,4 @@ def update_share_data(session_id, search_box, answer):
         chat_list.append(human_message)
         chat_list.append(bot_message)
         set_share_data(session_id, chat_list)
-        logger.info("have session is %s, share data  is : %s", session_id, shared_data[session_id])
+        logger.info("have session is %s, share data  is : %s", session_id, len(shared_data[session_id]))
