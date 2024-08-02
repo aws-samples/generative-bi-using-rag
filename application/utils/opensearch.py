@@ -167,7 +167,7 @@ def update_index_mapping(opensearch_client, index_name, dimension):
                 "entity_type": {
                     "type": "keyword"
                 },
-                "entity_same_count": {
+                "entity_count": {
                     "type": "integer"
                 },
                 "entity_table_info": {
