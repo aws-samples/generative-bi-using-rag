@@ -86,7 +86,11 @@ class VectorStore:
             logger.info('Sample added')
 
     @classmethod
-    def add_entity_sample(cls, profile_name, entity, comment):
+    def add_entity_sample(cls, profile_name, entity, comment, entity_type="metrics", entity_info_dict=None):
+        if entity_type == "metrics" or entity_info_dict is None:
+            entity_table_info = []
+        else:
+            entity_table_info = [entity_info_dict]
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
         if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
             embedding = cls.create_vector_embedding_with_sagemaker(entity)
@@ -95,7 +99,8 @@ class VectorStore:
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['ner_index'], embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
-        if cls.opensearch_dao.add_entity_sample(opensearch_info['ner_index'], profile_name, entity, comment, embedding):
+        if cls.opensearch_dao.add_entity_sample(opensearch_info['ner_index'], profile_name, entity, comment, embedding,
+                                                entity_type, entity_table_info):
             logger.info('Sample added')
 
     @classmethod

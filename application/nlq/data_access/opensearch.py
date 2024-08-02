@@ -162,13 +162,17 @@ class OpenSearchDao:
         success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
         return success == 1
 
-    def add_entity_sample(self, index_name, profile_name, entity, comment, embedding):
+    def add_entity_sample(self, index_name, profile_name, entity, comment, embedding, entity_type="", entity_table_info=[]):
+        entity_count = len(entity_table_info)
         record = {
             '_index': index_name,
             'entity': entity,
             'comment': comment,
             'profile': profile_name,
-            'vector_field': embedding
+            'vector_field': embedding,
+            'entity_type': entity_type,
+            'entity_count': entity_count,
+            'entity_table_info': entity_table_info
         }
 
         success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
