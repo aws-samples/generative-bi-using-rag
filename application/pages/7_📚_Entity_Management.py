@@ -93,7 +93,7 @@ def main():
                         st.error('please input valid question and answer')
         with tab_dimension:
             if current_profile is not None:
-                entity = st.text_input('Entity', key='index_question')
+                entity = st.text_input('Entity', key='index_entity')
                 table = st.text_input('Table', key='index_table')
                 column = st.text_input('Column', key='index_column')
                 value = st.text_input('Dimension value', key='index_value')
