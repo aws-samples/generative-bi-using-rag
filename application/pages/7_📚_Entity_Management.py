@@ -81,7 +81,7 @@ def main():
                 entity = st.text_input('Entity', key='index_question')
                 comment = st.text_area('Comment', key='index_answer', height=300)
 
-                if st.button('Submit', type='primary'):
+                if st.button('Add Metrics Entity', type='primary'):
                     if len(entity) > 0 and len(comment) > 0:
                         VectorStore.add_entity_sample(current_profile, entity, comment)
                         st.success('Sample added')
@@ -97,7 +97,7 @@ def main():
                 table = st.text_input('Table', key='index_table')
                 column = st.text_input('Column', key='index_column')
                 value = st.text_input('Dimension value', key='index_value')
-                if st.button('Submit', type='primary'):
+                if st.button('Add Dimension Entity', type='primary'):
                     if len(entity) > 0 and len(table) > 0 and len(column) > 0 and len(value) > 0:
                         entity_item_table_info = {}
                         entity_item_table_info["table_name"] = table
