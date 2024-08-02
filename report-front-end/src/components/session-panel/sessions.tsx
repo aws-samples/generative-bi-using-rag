@@ -32,6 +32,7 @@ export const Sessions = (
             session_id: uuid(),
             messages: [],
           }, ...(response)]);
+        props.setCurrentSession(0);
       });
   }, [userInfo.queryConfig.selectedDataPro]);
 
