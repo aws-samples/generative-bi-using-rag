@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import logging
 import random
 
+from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
@@ -49,6 +50,16 @@ def upvote_agent_clicked(question, comment):
     current_profile = st.session_state.current_profile
     VectorStore.add_agent_cot_sample(current_profile, question, str(comment))
     logger.info(f'up voted "{question}" with sql "{comment}"')
+
+
+def downvote_clicked(question, comment):
+    current_profile = st.session_state.current_profile
+    user_id = "admin"
+    session_id = "-1"
+    query = question
+    query_intent = "normal_search"
+    query_answer = str(comment)
+    user_feedback_downvote(current_profile, user_id, session_id, query, query_intent, query_answer)
 
 
 def clean_st_history(selected_profile):

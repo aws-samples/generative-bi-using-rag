@@ -716,7 +716,8 @@ def user_feedback_downvote(data_profiles: str, user_id: str, session_id: str, qu
                                               sql=query_answer, query=query,
                                               intent="normal_search_user_downvote",
                                               log_info="",
-                                              time_str=current_time)
+                                              time_str=current_time,
+                                              log_type="feedback_downvote")
         elif query_intent == "agent_search":
             log_id = generate_log_id()
             current_time = get_current_time()
@@ -725,7 +726,8 @@ def user_feedback_downvote(data_profiles: str, user_id: str, session_id: str, qu
                                               sql=query_answer, query=query,
                                               intent="agent_search_user_downvote",
                                               log_info="",
-                                              time_str=current_time)
+                                              time_str=current_time,
+                                              log_type="feedback_downvote")
         return True
     except Exception as e:
         return False
