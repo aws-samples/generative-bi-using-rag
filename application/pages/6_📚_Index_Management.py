@@ -124,7 +124,7 @@ def main():
                             for j, item in enumerate(each_upload_data.itertuples(), 1):
                                 question = str(item.question)
                                 sql = str(item.sql)
-                                VectorStore.add_entity_sample(current_profile, question, sql)
+                                VectorStore.add_sample(current_profile, question, sql)
                                 progress = (j * 1.0) / total_rows
                                 progress_bar.progress(progress, text=progress_text)
                             progress_bar.empty()

@@ -4,7 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum
-from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput
+from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -36,6 +36,13 @@ def get_custom_question(data_profile: str):
 @router.post("/ask", response_model=Answer)
 def ask(question: Question):
     return service.ask(question)
+
+
+@router.post("/get_history_by_user_profile")
+def get_history_by_user_profile(history_request : HistoryRequest):
+    user_id = history_request.user_id
+    profile_name = history_request.profile_name
+    return service.get_history_by_user_profile(user_id, profile_name)
 
 
 @router.post("/user_feedback")
