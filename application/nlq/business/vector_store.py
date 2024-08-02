@@ -217,5 +217,5 @@ class VectorStore:
             similarity_score = similarity_sample["_score"]
             if similarity_score == 1.0:
                 if index_name == opensearch_info['ner_index']:
-                    same_dimension_value = similarity_sample["entity_table_info"]
+                    same_dimension_value = similarity_sample["_source"]["entity_table_info"]
         return same_dimension_value
