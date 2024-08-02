@@ -70,7 +70,7 @@ export function queryWithWS(props: {
     top_p: props.configuration.topP,
     max_tokens: props.configuration.maxLength,
     temperature: props.configuration.temperature,
-    context_window: 3,
+    context_window: props.configuration.contextWindow,
     session_id: Global.sessionId,
     user_id: props.userId
   };

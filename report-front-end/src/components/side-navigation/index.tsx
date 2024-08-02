@@ -1,26 +1,33 @@
-import { SideNavigation, } from "@cloudscape-design/components";
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { CHATBOT_NAME } from "../../common/constant/constants";
+import { Sessions } from "../session-panel/sessions";
+import { ContentLayout, Header } from "@cloudscape-design/components";
+import { Session } from "../session-panel/types";
+import { Dispatch, SetStateAction } from "react";
 
-export default function NavigationPanel() {
-  const location = useLocation();
-  const [activeHref, setActiveHref] = useState(location.pathname ?? "/playground");
-  const navigate = useNavigate();
-  const items: any = [];
+export default function NavigationPanel(
+  props: {
+    sessions: Session[];
+    setSessions: Dispatch<SetStateAction<Session[]>>;
+    currentSession: number;
+    setCurrentSession: Dispatch<SetStateAction<number>>;
+  }) {
 
   return (
-    <SideNavigation
-      activeHref={activeHref}
-      onFollow={event => {
-        if (!event.detail.external) {
-          event.preventDefault();
-          setActiveHref(event.detail.href);
-          navigate(event.detail.href);
-        }
-      }}
-      header={{ href: "/", text: CHATBOT_NAME }}
-      items={items}
-    />
+    <ContentLayout
+      defaultPadding
+      disableOverlap
+      headerVariant="divider"
+      header={
+        <Header variant="h3">
+          Sessions
+        </Header>
+      }
+    >
+      <Sessions
+        sessions={props.sessions}
+        setSessions={props.setSessions}
+        currentSession={props.currentSession}
+        setCurrentSession={props.setCurrentSession}
+      />
+    </ContentLayout>
   );
 }

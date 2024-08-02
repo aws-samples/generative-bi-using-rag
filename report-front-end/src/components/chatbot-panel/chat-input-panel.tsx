@@ -119,7 +119,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
           sendMessage={props.sendMessage}
-        ></CustomQuestions>
+        />
         <div className={styles.input_textarea_container}>
           {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
             <Icon name="microphone" variant="disabled"/>
