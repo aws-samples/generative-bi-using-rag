@@ -164,7 +164,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
         with st.status("Performing QA retrieval...") as status_text:
             if use_rag:
                 retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                          selected_profile, 3, 0.5)
+                                                          selected_profile, 3, 0.5, sample_type="SQL")
                 examples = []
                 for example in retrieve_result:
                     examples.append({'Score': example['_score'],

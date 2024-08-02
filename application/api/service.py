@@ -703,7 +703,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         if use_rag:
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start", user_id)
             retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                      selected_profile, 3, 0.5)
+                                                      selected_profile, 3, 0.5, sample_type="SQL")
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end", user_id)
 
         await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start", user_id)
