@@ -97,18 +97,18 @@ def main():
                 table = st.text_input('Table', key='index_table')
                 column = st.text_input('Column', key='index_column')
                 value = st.text_input('Dimension value', key='index_value')
-            if st.button('Submit', type='primary'):
-                if len(entity) > 0 and len(table) > 0 and len(column) > 0 and len(value) > 0:
-                    entity_item_table_info = {}
-                    entity_item_table_info["table_name"] = table
-                    entity_item_table_info["column_name"] = column
-                    entity_item_table_info["value"] = value
-                    VectorStore.add_entity_sample(current_profile, entity, comment, "dimension", entity_item_table_info)
-                    st.success('Sample added')
-                    time.sleep(2)
-                    st.rerun()
-                else:
-                    st.error('please input valid question and answer')
+                if st.button('Submit', type='primary'):
+                    if len(entity) > 0 and len(table) > 0 and len(column) > 0 and len(value) > 0:
+                        entity_item_table_info = {}
+                        entity_item_table_info["table_name"] = table
+                        entity_item_table_info["column_name"] = column
+                        entity_item_table_info["value"] = value
+                        VectorStore.add_entity_sample(current_profile, entity, comment, "dimension", entity_item_table_info)
+                        st.success('Sample added')
+                        time.sleep(2)
+                        st.rerun()
+                    else:
+                        st.error('please input valid question and answer')
 
         with tab_search:
             if current_profile is not None:
