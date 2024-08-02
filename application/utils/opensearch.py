@@ -131,6 +131,7 @@ def check_field_exists(opensearch_client, index_name, field_name):
         # Get the mapping for the index
         mapping = opensearch_client.indices.get_mapping(index=index_name)
 
+        logger.info(mapping)
         # Traverse the mapping to check if the field exists
         if index_name in mapping:
             properties = mapping[index_name]['mappings']['properties']
@@ -140,6 +141,53 @@ def check_field_exists(opensearch_client, index_name, field_name):
         logger.error(f"Error checking field {field_name}: {e}")
 
     return False
+
+def update_index_mapping(opensearch_client, index_name, dimension):
+    """
+    Create index mapping
+    :param opensearch_client:
+    :param index_name:
+    :param dimension:
+    :return:
+    """
+    response = opensearch_client.indices.put_mapping(
+        index=index_name,
+        body={
+            "properties": {
+                "vector_field": {
+                    "type": "knn_vector",
+                    "dimension": dimension
+                },
+                "text": {
+                    "type": "keyword"
+                },
+                "profile": {
+                    "type": "keyword"
+                },
+                "entity_type": {
+                    "type": "keyword"
+                },
+                "entity_same_count": {
+                    "type": "integer"
+                },
+                "entity_table_info": {
+                    "type": "nested",
+                    "properties": {
+                        "table_name": {
+                            "type": "keyword"
+                        },
+                        "column_name": {
+                            "type": "keyword"
+                        },
+                        "value": {
+                            "type": "text"
+                        }
+                    }
+                }
+            }
+        }
+    )
+    return bool(response['acknowledged'])
 
 
 def delete_opensearch_index(opensearch_client, index_name):
@@ -277,14 +325,14 @@ def opensearch_index_init():
                 if success:
                     logger.info(
                         "Creating OpenSearch index mapping, index is {index_name}".format(index_name=index_name))
-                    if index_name == AOS_INDEX_NER:
-                        check_flag = check_field_exists(opensearch_client, index_name, "ner_table_info")
-                        logger.info(f"check index flag: {check_flag}")
-
                     success = create_index_mapping(opensearch_client, index_name, dimension)
                     logger.info(f"OpenSearch Index mapping created")
                 else:
                     index_create_success = False
+            else:
+                if index_name == AOS_INDEX_NER:
+                    check_flag = check_field_exists(opensearch_client, index_name, "ner_table_info")
+                    logger.info(f"check index flag: {check_flag}")
         return index_create_success
     except Exception as e:
         logger.error("create index error")
