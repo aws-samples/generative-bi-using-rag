@@ -571,6 +571,30 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "end", user_id)
 
         if search_intent_result["status_code"] == 500:
+            await response_websocket(websocket, session_id, "Regenerating SQL ", ContentEnum.STATE, "start", user_id)
+
+            additional_info = '''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
+                sql_statement=current_nlq_chain.get_generated_sql(),
+                error=search_intent_result["error_info"])
+            normal_search_result = await normal_sql_regenerating_websocket(websocket=websocket, session_id=session_id, search_box=query_rewrite,
+                                              model_type=model_type, database_profile=database_profile,
+                                              entity_slot_retrieve=normal_search_result.entity_slot_retrieve,
+                                              retrieve_result=normal_search_result.retrieve_result, additional_info=additional_info)
+
+            await response_websocket(websocket, session_id, "Regenerating SQL ", ContentEnum.STATE, "start", user_id)
+            if normal_search_result.sql != "":
+                current_nlq_chain.set_generated_sql(normal_search_result.sql)
+                sql_search_result.sql = normal_search_result.sql.strip()
+                current_nlq_chain.set_generated_sql_response(normal_search_result.response)
+                if explain_gen_process_flag:
+                    sql_search_result.sql_gen_process = current_nlq_chain.get_generated_sql_explain().strip()
+            else:
+                sql_search_result.sql = "-1"
+        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "start", user_id)
+        search_intent_result = get_sql_result_tool(database_profile,
+                                                   current_nlq_chain.get_generated_sql())
+        await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "end", user_id)
+        if search_intent_result["status_code"] == 500:
             sql_search_result.data_analyse = "The query results are temporarily unavailable, please switch to debugging webpage to try the same query and check the log file for more information."
         else:
             if search_intent_result["data"] is not None and len(search_intent_result["data"]) > 0:
@@ -587,12 +611,15 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
                     sql_search_result.data_analyse = search_intent_analyse_result
 
+                await response_websocket(websocket, session_id, "Data Visualization", ContentEnum.STATE, "start",
+                                         user_id)
                 model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(model_type,
                                                                                                              query_rewrite,
                                                                                                              search_intent_result[
                                                                                                                  "data"],
                                                                                                              database_profile[
                                                                                                                  'prompt_map'])
+                await response_websocket(websocket, session_id, "Data Visualization", ContentEnum.STATE, "end", user_id)
 
                 if select_chart_type != "-1":
                     sql_chart_data = ChartEntity(chart_type="", chart_data=[])
@@ -798,6 +825,45 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
                                model_provider=model_provider)
         logger.info(f'{response=}')
         await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
+        sql = get_generated_sql(response)
+        search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
+                                            retrieve_result=retrieve_result, response=response, sql="")
+        search_result.entity_slot_retrieve = entity_slot_retrieve
+        search_result.retrieve_result = retrieve_result
+        search_result.response = response
+        search_result.sql = sql
+    except Exception as e:
+        logger.error(e)
+    return search_result
+
+
+async def normal_sql_regenerating_websocket(websocket: WebSocket, session_id: str, search_box, model_type,
+                                            database_profile, entity_slot_retrieve, retrieve_result, additional_info):
+    entity_slot_retrieve = entity_slot_retrieve
+    retrieve_result = retrieve_result
+    response = ""
+    sql = ""
+    search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
+                                        retrieve_result=retrieve_result, response=response, sql=sql)
+    try:
+        if database_profile['db_url'] == '':
+            conn_name = database_profile['conn_name']
+            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+            database_profile['db_url'] = db_url
+            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+
+        response = text_to_sql(database_profile['tables_info'],
+                               database_profile['hints'],
+                               database_profile['prompt_map'],
+                               search_box,
+                               model_id=model_type,
+                               sql_examples=retrieve_result,
+                               ner_example=entity_slot_retrieve,
+                               dialect=database_profile['db_type'],
+                               model_provider=None,
+                               additional_info=additional_info)
+        logger.info("normal_sql_regenerating_websocket")
+        logger.info(f'{response=}')
         sql = get_generated_sql(response)
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
