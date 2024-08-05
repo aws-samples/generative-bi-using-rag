@@ -14,6 +14,7 @@ db_type_mapping = {
     'redshift': 'Redshift',
     'starrocks': 'StarRocks',
     'clickhouse': 'Clickhouse',
+    'bigquery': 'BigQuery',
 }
 
 
