@@ -8,10 +8,14 @@ import ChatInputPanel from "./chat-input-panel";
 import ChatMessage from "./chat-message";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
+import { Session } from "../session-panel/types";
 
 export default function Chat(props: {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   toolsHide: boolean;
+  sessions: Session[];
+  setSessions: Dispatch<SetStateAction<Session[]>>;
+  currentSession: number;
 }) {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
     [],
@@ -48,6 +52,26 @@ export default function Chat(props: {
       });
     }
   }, [userState.queryConfig]);
+
+  useEffect(() => {
+    // console.log("current session index: ", props.currentSession);
+    setMessageHistory(props.sessions[props.currentSession].messages);
+  }, [props.currentSession]);
+
+  useEffect(() => {
+    props.setSessions((prevState) => {
+      return prevState.map((session: Session, idx: number) => {
+        if (idx === props.currentSession) {
+          return {
+            session_id: session.session_id,
+            messages: messageHistory
+          };
+        } else {
+          return session;
+        }
+      });
+    });
+  }, [messageHistory]);
 
   return (
     <div className={styles.chat_container}>

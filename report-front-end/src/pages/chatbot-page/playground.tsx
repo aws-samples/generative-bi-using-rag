@@ -7,6 +7,9 @@ import { useLocation } from "react-router-dom";
 import { Global } from "../../common/constant/global";
 import { ActionType, UserInfo, UserState } from "../../common/helpers/types";
 import { useDispatch, useSelector } from "react-redux";
+import NavigationPanel from "../../components/side-navigation";
+import { Session } from "../../components/session-panel/types";
+import { v4 as uuid } from "uuid";
 
 export default function Playground() {
   const [toolsHide, setToolsHide] = useState(true);
@@ -44,11 +47,33 @@ export default function Playground() {
     };
   }, []);
 
+  const [sessions, setSessions] = useState<Session[]>([{
+    session_id: uuid(),
+    messages: [],
+  }]);
+  const [currentSession, setCurrentSession] = useState<number>(0);
+
   return (
     authentication ?
       <BaseAppLayout
         info={<ConfigPanel setToolsHide={setToolsHide} />}
-        content={<Chat toolsHide={toolsHide} setToolsHide={setToolsHide} />}
+        navigation={
+          <NavigationPanel
+            sessions={sessions}
+            setSessions={setSessions}
+            currentSession={currentSession}
+            setCurrentSession={setCurrentSession}
+          />
+        }
+        content={
+          <Chat
+            toolsHide={toolsHide}
+            setToolsHide={setToolsHide}
+            sessions={sessions}
+            setSessions={setSessions}
+            currentSession={currentSession}
+          />
+        }
         toolsHide={toolsHide}
         setToolsHide={setToolsHide}
       /> : <ErrorPage />
