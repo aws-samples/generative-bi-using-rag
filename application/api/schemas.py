@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 from pydantic import BaseModel
 
 
@@ -17,10 +17,13 @@ class Question(BaseModel):
     top_p: float = 0.9
     max_tokens: int = 2048
     temperature: float = 0.01
-    context_window: int = 3
+    context_window: int = 5
     session_id: str = "-1"
     user_id: str = "admin"
 
+class HistoryRequest(BaseModel):
+    user_id: str
+    profile_name: str
 
 class DlsetQuestion(BaseModel):
     #  与 table_name 相同
@@ -107,12 +110,18 @@ class AgentSearchResult(BaseModel):
     agent_summary: str
 
 
+class AskReplayResult(BaseModel):
+    query_rewrite: str
+
+
 class Answer(BaseModel):
     query: str
+    query_rewrite: str = ""
     query_intent: str
     knowledge_search_result: KnowledgeSearchResult
     sql_search_result: SQLSearchResult
     agent_search_result: AgentSearchResult
+    ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
 
 
@@ -123,3 +132,17 @@ class SupersetAnswer(BaseModel):
     json_search_result: JSONSearchResult
     agent_search_result: AgentSearchResult
     suggested_question: list[str]
+
+
+class Message(BaseModel):
+    type: str
+    content: Union[str, Answer]
+
+
+class HistoryMessage(BaseModel):
+    session_id: str
+    messages: list[Message]
+
+
+class ChatHistory(BaseModel):
+    messages: list[HistoryMessage]
