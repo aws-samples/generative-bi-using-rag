@@ -464,11 +464,11 @@ def get_query_intent(model_id, search_box, prompt_map):
 
 
 def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
-    query_rewrite = {"original_problem": search_box}
+    query_rewrite = {"original_problem": search_box, "query":search_box}
     history_query = "\n".join(chat_history)
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
-        if intent_endpoint:
+        if intent_endpoint != "":
             # TODO may need to modify the prompt
             body = json.dumps(
                 {"query": generate_sagemaker_intent_prompt(search_box, meta_instruction=SEARCH_INTENT_PROMPT_CLAUDE3)})
