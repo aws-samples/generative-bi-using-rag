@@ -483,8 +483,7 @@ def main():
                         normal_search_result = normal_text_search_streamlit(search_box, model_type,
                                                                             database_profile,
                                                                             entity_slot, opensearch_info,
-                                                                            selected_profile,
-                                                                            explain_gen_process_flag, use_rag_flag)
+                                                                            selected_profile, use_rag_flag)
                     elif knowledge_search_flag:
                         with st.spinner('Performing knowledge search...'):
                             response = knowledge_search(search_box=search_box, model_id=model_type,
