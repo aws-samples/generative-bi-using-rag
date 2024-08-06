@@ -44,7 +44,7 @@ class DlsetQuestion(BaseModel):
     top_p: float = 0.9
     max_tokens: int = 2048
     temperature: float = 0.01
-    context_window: int = 3
+    context_window: int = 5
 
 
 class Example(BaseModel):
