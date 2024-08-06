@@ -310,6 +310,7 @@ def main():
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         data_with_analyse = st.checkbox("Answer With Insights", False)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
+        auto_correction_flag = st.checkbox("Auto Correcting SQL", True)
         context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 0)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
@@ -512,7 +513,36 @@ def main():
                     if search_intent_result["status_code"] == 500:
                         with st.expander("The SQL Error Info"):
                             st.markdown(search_intent_result["error_info"])
-                    else:
+
+                    if auto_correction_flag:
+                        with st.status("Regenerating SQL") as status_text:
+                            response = text_to_sql(database_profile['tables_info'],
+                                                   database_profile['hints'],
+                                                   database_profile['prompt_map'],
+                                                   search_box,
+                                                   model_id=model_type,
+                                                   sql_examples=normal_search_result.retrieve_result,
+                                                   ner_example=normal_search_result.entity_slot_retrieve,
+                                                   dialect=database_profile['db_type'],
+                                                   model_provider=None,
+                                                   additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
+                                                       sql_statement=current_nlq_chain.get_generated_sql(),
+                                                       error=search_intent_result["error_info"]))
+                            regen_sql = get_generated_sql(response)
+
+                            st.code(regen_sql, language="sql")
+
+                            status_text.update(
+                                label=f"Generating SQL Done",
+                                state="complete", expanded=True)
+                        with st.spinner('Executing query...'):
+                            search_intent_result = get_sql_result_tool(
+                                st.session_state['profiles'][current_nlq_chain.profile],
+                                regen_sql)
+                        if search_intent_result["status_code"] == 500:
+                            with st.expander("The SQL Error Info"):
+                                st.markdown(search_intent_result["error_info"])
+                    if search_intent_result["status_code"] != 500:
                         if search_intent_result["data"] is not None and len(
                                 search_intent_result["data"]) > 0 and data_with_analyse:
                             with st.spinner('Generating data summarize...'):

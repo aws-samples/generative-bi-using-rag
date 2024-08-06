@@ -312,11 +312,11 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
 
 
 def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
-                model_provider=None, with_response_stream=False):
+                model_provider=None, with_response_stream=False, additional_info=''):
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
                                                      model_id, dialect=dialect)
     max_tokens = 4096
-    response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
+    response = invoke_llm_model(model_id, system_prompt, user_prompt + additional_info, max_tokens, with_response_stream)
     return response
 
 
