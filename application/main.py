@@ -1,7 +1,7 @@
 import json
 import logging
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from api.exception_handler import biz_exception
@@ -11,6 +11,7 @@ from api import service
 from api.schemas import Option, Message
 from nlq.business.log_store import LogManagement
 from utils.tool import set_share_data, get_share_data
+from utils.auth import authenticate
 
 MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
@@ -22,6 +23,10 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+@app.middleware("http")
+async def authenticate_handler(request: Request, call_next):
+    return authenticate(request, call_next)
 
 # Global exception capture
 biz_exception(app)
