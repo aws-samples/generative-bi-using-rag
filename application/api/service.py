@@ -509,7 +509,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     if reject_intent_flag:
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[])
+                        suggested_question=[], ask_rewrite_result=ask_result)
         update_share_data(session_id, search_box, answer)
         reject_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
@@ -528,7 +528,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="knowledge_search",
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[])
+                        suggested_question=[], ask_rewrite_result=ask_result)
         update_share_data(session_id, search_box, answer)
         knowledge_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
@@ -645,7 +645,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="normal_search",
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=generate_suggested_question_list)
+                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
         update_share_data(session_id, search_box, answer)
         intent_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
@@ -713,7 +713,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=generate_suggested_question_list)
+                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
         update_share_data(session_id, search_box, answer)
         agent_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
