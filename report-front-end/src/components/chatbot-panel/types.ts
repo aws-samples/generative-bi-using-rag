@@ -46,6 +46,11 @@ export interface FeedBackItem {
   query_answer: string,
 }
 
+export interface SessionItem {
+  user_id: string,
+  profile_name: string,
+}
+
 export interface KnowledgeSearchResult {
   knowledge_response: string;
 }

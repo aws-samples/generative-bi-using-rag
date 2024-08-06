@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import logging
 import random
 
+from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
@@ -51,8 +52,18 @@ def upvote_agent_clicked(question, comment):
     logger.info(f'up voted "{question}" with sql "{comment}"')
 
 
+def downvote_clicked(question, comment):
+    current_profile = st.session_state.current_profile
+    user_id = "admin"
+    session_id = "-1"
+    query = question
+    query_intent = "normal_search"
+    query_answer = str(comment)
+    user_feedback_downvote(current_profile, user_id, session_id, query, query_intent, query_answer)
+
 def clean_st_history(selected_profile):
     st.session_state.messages[selected_profile] = []
+    st.session_state.query_rewrite_history[selected_profile] = []
 
 
 def get_user_history(selected_profile: str):
@@ -61,12 +72,11 @@ def get_user_history(selected_profile: str):
     :param selected_profile:
     :return: history for selected profile list type
     """
-    history_list = st.session_state.messages[selected_profile]
+    history_list = st.session_state.query_rewrite_history[selected_profile]
     history_query = []
     for messages in history_list:
-        current_role = messages["role"]
-        if current_role == "user":
-            history_query.append(messages["content"])
+        if messages["content"] is not None:
+            history_query.append(messages["role"] + ":" + messages["content"])
     return history_query
 
 
@@ -238,6 +248,9 @@ def main():
     if 'selected_sample' not in st.session_state:
         st.session_state['selected_sample'] = ''
 
+    if 'ask_replay' not in st.session_state:
+        st.session_state.ask_replay = False
+
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
@@ -252,6 +265,9 @@ def main():
 
     if "messages" not in st.session_state:
         st.session_state.messages = {}
+
+    if "query_rewrite_history" not in st.session_state:
+        st.session_state.query_rewrite_history = {}
 
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
@@ -285,6 +301,14 @@ def main():
             st.session_state.current_profile = selected_profile
             if selected_profile not in st.session_state.messages:
                 st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
+            st.session_state.nlq_chain = NLQChain(selected_profile)
+        else:
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
         if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
@@ -300,6 +324,7 @@ def main():
         explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
         data_with_analyse = st.checkbox("Answer With Insights", False)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
+        auto_correction_flag = st.checkbox("Auto Correcting SQL", True)
         context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 0)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
@@ -350,6 +375,7 @@ def main():
         search_box = st.session_state['selected_sample']
         st.session_state['selected_sample'] = ""
 
+    st.session_state.ask_replay = False
     reject_intent_flag = False
     search_intent_flag = False
     agent_intent_flag = False
@@ -363,6 +389,8 @@ def main():
                 current_nlq_chain.set_question(search_box)
                 st.session_state.messages[selected_profile].append(
                     {"role": "user", "content": search_box, "type": "text"})
+                st.session_state.query_rewrite_history[selected_profile].append(
+                    {"role": "user", "content": search_box})
                 st.markdown(current_nlq_chain.get_question())
             with st.chat_message("assistant"):
                 filter_deep_dive_sql_result = []
@@ -391,203 +419,247 @@ def main():
 
                 # Multiple rounds of dialogue, query rewriting
                 user_query_history = get_user_history(selected_profile)
-                if len(user_query_history) > 0 and context_window > 0:
+                query_rewrite_result = {"intent": "original_problem", "query": search_box}
+                if context_window > 0:
                     with st.status("Query Context Understanding") as status_text:
-                        user_query_history = user_query_history[-context_window:]
-                        logger.info("The Chat history is {history}".format(history=",".join(user_query_history)))
-                        new_search_box = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
-                        logger.info("The Origin query is {query}  query rewrite is {new_query}".format(query=search_box,
-                                                                                                       new_query=new_search_box))
-                        search_box = new_search_box
+                        context_window_select = context_window * 2
+                        user_query_history = user_query_history[-context_window_select:]
+                        logger.info(
+                            "The Chat history is {history}".format(history="\n".join(user_query_history)))
+                        query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map,
+                                                                 user_query_history)
+                        logger.info("The query_rewrite_result is {query_rewrite_result}".format(
+                            query_rewrite_result=query_rewrite_result))
+                        search_box = query_rewrite_result.get("query")
+                        st.session_state.query_rewrite_history[selected_profile].append(
+                            {"role": "assistant", "content": search_box})
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant", "content": search_box, "type": "text"})
                         st.write(search_box)
-                    status_text.update(label=f"Query Context Rewrite Completed", state="complete", expanded=False)
-                intent_response = {
-                    "intent": "normal_search",
-                    "slot": []
-                }
+                    status_text.update(label=f"Query Context Rewrite Completed", state="complete",
+                                       expanded=False)
 
-                if intent_ner_recognition_flag:
-                    with st.status("Performing intent recognition...") as status_text:
-                        intent_response = get_query_intent(model_type, search_box, prompt_map)
-                        intent = intent_response.get("intent", "normal_search")
-                        entity_slot = intent_response.get("slot", [])
-                        st.write(intent_response)
-                        status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
-                                           state="complete", expanded=False)
-                        if intent == "reject_search":
-                            reject_intent_flag = True
-                            search_intent_flag = False
-                        elif intent == "agent_search":
-                            agent_intent_flag = True
-                            if agent_cot_flag:
+                query_rewrite_intent = query_rewrite_result.get("intent")
+                if "ask_in_reply" == query_rewrite_intent:
+                    st.write(query_rewrite_result.get("query"))
+                    st.session_state.ask_replay = True
+
+                if not st.session_state.ask_replay:
+                    intent_response = {
+                        "intent": "normal_search",
+                        "slot": []
+                    }
+                    if intent_ner_recognition_flag:
+                        with st.status("Performing intent recognition...") as status_text:
+                            intent_response = get_query_intent(model_type, search_box, prompt_map)
+                            intent = intent_response.get("intent", "normal_search")
+                            entity_slot = intent_response.get("slot", [])
+                            st.write(intent_response)
+                            status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
+                                               state="complete", expanded=False)
+                            if intent == "reject_search":
+                                reject_intent_flag = True
                                 search_intent_flag = False
+                            elif intent == "agent_search":
+                                agent_intent_flag = True
+                                if agent_cot_flag:
+                                    search_intent_flag = False
+                                else:
+                                    search_intent_flag = True
+                                    agent_intent_flag = False
+                            elif intent == "knowledge_search":
+                                knowledge_search_flag = True
+                                search_intent_flag = False
+                                agent_intent_flag = False
                             else:
                                 search_intent_flag = True
-                                agent_intent_flag = False
-                        elif intent == "knowledge_search":
-                            knowledge_search_flag = True
-                            search_intent_flag = False
-                            agent_intent_flag = False
+                    else:
+                        search_intent_flag = True
+
+                    if reject_intent_flag:
+                        st.write("Your query statement is currently not supported by the system")
+
+                    elif search_intent_flag:
+                        normal_search_result = normal_text_search_streamlit(search_box, model_type,
+                                                                            database_profile,
+                                                                            entity_slot, opensearch_info,
+                                                                            selected_profile,
+                                                                            explain_gen_process_flag, use_rag_flag)
+                    elif knowledge_search_flag:
+                        with st.spinner('Performing knowledge search...'):
+                            response = knowledge_search(search_box=search_box, model_id=model_type,
+                                                        prompt_map=prompt_map)
+                            logger.info(f'got llm response for knowledge_search: {response}')
+                            st.markdown(f'This is a knowledge search question.\n{response}')
+
+                    elif agent_intent_flag:
+                        with st.spinner('Analysis Of Complex Problems'):
+                            agent_cot_retrieve = get_retrieve_opensearch(opensearch_info, search_box, "agent",
+                                                                         selected_profile, 2, 0.5)
+                            agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
+                                                                       database_profile['tables_info'],
+                                                                       agent_cot_retrieve)
+                        with st.expander(f'Agent Query Retrieve : {len(agent_cot_retrieve)}'):
+                            agent_examples = []
+                            for example in agent_cot_retrieve:
+                                agent_examples.append({'Score': example['_score'],
+                                                       'Question': example['_source']['query'],
+                                                       'Answer': example['_source']['comment'].strip()})
+                            st.write(agent_examples)
+                        with st.expander(f'Agent Task : {len(agent_cot_task_result)}'):
+                            st.write(agent_cot_task_result)
+
+                        with st.spinner('Generate SQL For Multiple Sub Problems'):
+                            agent_search_result = agent_text_search(search_box, model_type,
+                                                                    database_profile,
+                                                                    entity_slot, opensearch_info,
+                                                                    selected_profile, use_rag_flag, agent_cot_task_result)
+                    else:
+                        st.error("Intent recognition error")
+
+                    if search_intent_flag:
+                        if normal_search_result.sql != "":
+                            current_nlq_chain.set_generated_sql(normal_search_result.sql)
+
+                            current_nlq_chain.set_generated_sql_response(normal_search_result.response)
+
+                            if explain_gen_process_flag:
+                                with st.status("Generating explanations...") as status_text:
+                                    st.markdown(current_nlq_chain.get_generated_sql_explain())
+                                    status_text.update(
+                                        label=f"Generating explanations Done",
+                                        state="complete", expanded=False)
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": "SQL:" + normal_search_result.sql, "type": "sql"})
                         else:
-                            search_intent_flag = True
-                else:
-                    search_intent_flag = True
+                            st.write("Unable to generate SQL at the moment, please provide more information")
+                    elif agent_intent_flag:
+                        with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
+                            st.write(agent_search_result)
 
-                if reject_intent_flag:
-                    st.write("Your query statement is currently not supported by the system")
+                    if search_intent_flag:
+                        with st.spinner('Executing query...'):
+                            search_intent_result = get_sql_result_tool(
+                                st.session_state['profiles'][current_nlq_chain.profile],
+                                current_nlq_chain.get_generated_sql())
+                        if search_intent_result["status_code"] == 500:
+                            with st.expander("The SQL Error Info"):
+                                st.markdown(search_intent_result["error_info"])
 
-                elif search_intent_flag:
-                    normal_search_result = normal_text_search_streamlit(search_box, model_type,
-                                                                        database_profile,
-                                                                        entity_slot, opensearch_info,
-                                                                        selected_profile,
-                                                                        explain_gen_process_flag, use_rag_flag)
-                elif knowledge_search_flag:
-                    with st.spinner('Performing knowledge search...'):
-                        response = knowledge_search(search_box=search_box, model_id=model_type,
-                                                    prompt_map=prompt_map)
-                        logger.info(f'got llm response for knowledge_search: {response}')
-                        st.markdown(f'This is a knowledge search question.\n{response}')
+                            if auto_correction_flag:
+                                with st.status("Regenerating SQL") as status_text:
+                                    response = text_to_sql(database_profile['tables_info'],
+                                                           database_profile['hints'],
+                                                           database_profile['prompt_map'],
+                                                           search_box,
+                                                           model_id=model_type,
+                                                           sql_examples=normal_search_result.retrieve_result,
+                                                           ner_example=normal_search_result.entity_slot_retrieve,
+                                                           dialect=database_profile['db_type'],
+                                                           model_provider=None,
+                                                           additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
+                                                               sql_statement=current_nlq_chain.get_generated_sql(),
+                                                               error=search_intent_result["error_info"]))
+                                    regen_sql = get_generated_sql(response)
 
-                elif agent_intent_flag:
-                    with st.spinner('Analysis Of Complex Problems'):
-                        agent_cot_retrieve = get_retrieve_opensearch(opensearch_info, search_box, "agent",
-                                                                     selected_profile, 2, 0.5)
-                        agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, search_box,
-                                                                   database_profile['tables_info'],
-                                                                   agent_cot_retrieve)
-                    with st.expander(f'Agent Query Retrieve : {len(agent_cot_retrieve)}'):
-                        agent_examples = []
-                        for example in agent_cot_retrieve:
-                            agent_examples.append({'Score': example['_score'],
-                                                   'Question': example['_source']['query'],
-                                                   'Answer': example['_source']['comment'].strip()})
-                        st.write(agent_examples)
-                    with st.expander(f'Agent Task : {len(agent_cot_task_result)}'):
-                        st.write(agent_cot_task_result)
+                                    st.code(regen_sql, language="sql")
 
-                    with st.spinner('Generate SQL For Multiple Sub Problems'):
-                        agent_search_result = agent_text_search(search_box, model_type,
-                                                                database_profile,
-                                                                entity_slot, opensearch_info,
-                                                                selected_profile, use_rag_flag, agent_cot_task_result)
-                else:
-                    st.error("Intent recognition error")
+                                    status_text.update(
+                                        label=f"Generating SQL Done",
+                                        state="complete", expanded=True)
+                                with st.spinner('Executing query...'):
+                                    search_intent_result = get_sql_result_tool(
+                                        st.session_state['profiles'][current_nlq_chain.profile],
+                                        regen_sql)
+                                if search_intent_result["status_code"] == 500:
+                                    with st.expander("The SQL Error Info"):
+                                        st.markdown(search_intent_result["error_info"])
+                        if search_intent_result["status_code"] != 500:
+                            if search_intent_result["data"] is not None and len(
+                                    search_intent_result["data"]) > 0 and data_with_analyse:
+                                with st.spinner('Generating data summarize...'):
+                                    search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
+                                                                                     search_intent_result["data"].to_json(
+                                                                                         orient='records',
+                                                                                         force_ascii=False), "query")
+                                    st.markdown(search_intent_analyse_result)
+                                    st.session_state.messages[selected_profile].append(
+                                        {"role": "assistant", "content": search_intent_analyse_result, "type": "text"})
+                        st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
 
-                if search_intent_flag:
-                    if normal_search_result.sql != "":
-                        current_nlq_chain.set_generated_sql(normal_search_result.sql)
+                    elif agent_intent_flag:
+                        for i in range(len(agent_search_result)):
+                            each_task_res = get_sql_result_tool(
+                                st.session_state['profiles'][current_nlq_chain.profile],
+                                agent_search_result[i]["sql"])
+                            if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
+                                agent_search_result[i]["data_result"] = each_task_res["data"].to_json(
+                                    orient='records')
+                                filter_deep_dive_sql_result.append(agent_search_result[i])
 
-                        current_nlq_chain.set_generated_sql_response(normal_search_result.response)
-
-                        if explain_gen_process_flag:
-                            with st.status("Generating explanations...") as status_text:
-                                st.markdown(current_nlq_chain.get_generated_sql_explain())
-                                status_text.update(
-                                    label=f"Generating explanations Done",
-                                    state="complete", expanded=False)
+                        agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
+                                                                      json.dumps(filter_deep_dive_sql_result,
+                                                                                 ensure_ascii=False), "agent")
+                        logger.info("agent_data_analyse_result")
+                        logger.info(agent_data_analyse_result)
                         st.session_state.messages[selected_profile].append(
-                            {"role": "assistant", "content": "SQL:" + normal_search_result.sql, "type": "sql"})
-                    else:
-                        st.write("Unable to generate SQL at the moment, please provide more information")
-                elif agent_intent_flag:
-                    with st.expander(f'Agent Task Result: {len(agent_search_result)}'):
-                        st.write(agent_search_result)
+                            {"role": "user", "content": search_box, "type": "text"})
+                        for i in range(len(filter_deep_dive_sql_result)):
+                            st.write(filter_deep_dive_sql_result[i]["query"])
+                            st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
+                                                      orient='records'), hide_index=True)
 
-                if search_intent_flag:
-                    with st.spinner('Executing query...'):
-                        search_intent_result = get_sql_result_tool(
-                            st.session_state['profiles'][current_nlq_chain.profile],
-                            current_nlq_chain.get_generated_sql())
-                    if search_intent_result["status_code"] == 500:
-                        with st.expander("The SQL Error Info"):
-                            st.markdown(search_intent_result["error_info"])
-                    else:
-                        if search_intent_result["data"] is not None and len(
-                                search_intent_result["data"]) > 0 and data_with_analyse:
-                            with st.spinner('Generating data summarize...'):
-                                search_intent_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
-                                                                                 search_intent_result["data"].to_json(
-                                                                                     orient='records',
-                                                                                     force_ascii=False), "query")
-                                st.markdown(search_intent_analyse_result)
-                                st.session_state.messages[selected_profile].append(
-                                    {"role": "assistant", "content": search_intent_analyse_result, "type": "text"})
-                    st.session_state.current_sql_result[selected_profile] = search_intent_result["data"]
-
-                elif agent_intent_flag:
-                    for i in range(len(agent_search_result)):
-                        each_task_res = get_sql_result_tool(
-                            st.session_state['profiles'][current_nlq_chain.profile],
-                            agent_search_result[i]["sql"])
-                        if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
-                            agent_search_result[i]["data_result"] = each_task_res["data"].to_json(
-                                orient='records')
-                            filter_deep_dive_sql_result.append(agent_search_result[i])
-
-                    agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, search_box,
-                                                                  json.dumps(filter_deep_dive_sql_result,
-                                                                             ensure_ascii=False), "agent")
-                    logger.info("agent_data_analyse_result")
-                    logger.info(agent_data_analyse_result)
-                    st.session_state.messages[selected_profile].append(
-                        {"role": "user", "content": search_box, "type": "text"})
-                    for i in range(len(filter_deep_dive_sql_result)):
-                        st.write(filter_deep_dive_sql_result[i]["query"])
-                        st.dataframe(pd.read_json(filter_deep_dive_sql_result[i]["data_result"],
-                                                  orient='records'), hide_index=True)
-
-                    st.session_state.messages[selected_profile].append(
-                        {"role": "assistant", "content": filter_deep_dive_sql_result, "type": "pandas"})
-
-                    st.markdown(agent_data_analyse_result)
-                    current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
-                    st.session_state.messages[selected_profile].append(
-                        {"role": "assistant", "content": agent_data_analyse_result, "type": "text"})
-
-                    st.markdown('You can provide feedback:')
-
-                    # add a upvote(green)/downvote button with logo
-                    feedback = st.columns(2)
-                    feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                                       use_container_width=True,
-                                       on_click=upvote_agent_clicked,
-                                       args=[current_nlq_chain.get_question(),
-                                             agent_cot_task_result])
-
-                    if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                        # do something here
-                        pass
-
-                if visualize_results_flag and search_intent_flag:
-                    current_search_sql_result = st.session_state.current_sql_result[selected_profile]
-                    if current_search_sql_result is not None and len(current_search_sql_result) > 0:
                         st.session_state.messages[selected_profile].append(
-                            {"role": "assistant", "content": current_search_sql_result, "type": "pandas"})
+                            {"role": "assistant", "content": filter_deep_dive_sql_result, "type": "pandas"})
 
-                        do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
-                    else:
-                        st.markdown("No relevant data found")
+                        st.markdown(agent_data_analyse_result)
+                        current_nlq_chain.set_generated_sql_response(agent_data_analyse_result)
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant", "content": agent_data_analyse_result, "type": "text"})
 
-                if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
-                    st.markdown('You might want to further ask:')
-                    with st.spinner('Generating suggested questions...'):
-                        generated_sq = generate_suggested_question(prompt_map, search_box, model_id=model_type)
-                        split_strings = generated_sq.split("[generate]")
-                        gen_sq_list = [s.strip() for s in split_strings if s.strip()]
-                        sq_result = st.columns(3)
-                        sq_result[0].button(gen_sq_list[0], type='secondary',
-                                            use_container_width=True,
-                                            on_click=sample_question_clicked,
-                                            args=[gen_sq_list[0]])
-                        sq_result[1].button(gen_sq_list[1], type='secondary',
-                                            use_container_width=True,
-                                            on_click=sample_question_clicked,
-                                            args=[gen_sq_list[1]])
-                        sq_result[2].button(gen_sq_list[2], type='secondary',
-                                            use_container_width=True,
-                                            on_click=sample_question_clicked,
-                                            args=[gen_sq_list[2]])
+                        st.markdown('You can provide feedback:')
+
+                        # add a upvote(green)/downvote button with logo
+                        feedback = st.columns(2)
+                        feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                           use_container_width=True,
+                                           on_click=upvote_agent_clicked,
+                                           args=[current_nlq_chain.get_question(),
+                                                 agent_cot_task_result])
+
+                        if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                            # do something here
+                            pass
+
+                    if visualize_results_flag and search_intent_flag:
+                        current_search_sql_result = st.session_state.current_sql_result[selected_profile]
+                        if current_search_sql_result is not None and len(current_search_sql_result) > 0:
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": current_search_sql_result, "type": "pandas"})
+
+                            do_visualize_results(current_nlq_chain, st.session_state.current_sql_result[selected_profile])
+                        else:
+                            st.markdown("No relevant data found")
+
+                    if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
+                        st.markdown('You might want to further ask:')
+                        with st.spinner('Generating suggested questions...'):
+                            generated_sq = generate_suggested_question(prompt_map, search_box, model_id=model_type)
+                            split_strings = generated_sq.split("[generate]")
+                            gen_sq_list = [s.strip() for s in split_strings if s.strip()]
+                            sq_result = st.columns(3)
+                            sq_result[0].button(gen_sq_list[0], type='secondary',
+                                                use_container_width=True,
+                                                on_click=sample_question_clicked,
+                                                args=[gen_sq_list[0]])
+                            sq_result[1].button(gen_sq_list[1], type='secondary',
+                                                use_container_width=True,
+                                                on_click=sample_question_clicked,
+                                                args=[gen_sq_list[1]])
+                            sq_result[2].button(gen_sq_list[2], type='secondary',
+                                                use_container_width=True,
+                                                on_click=sample_question_clicked,
+                                                args=[gen_sq_list[2]])
         else:
 
             if current_nlq_chain.is_visualization_config_changed():

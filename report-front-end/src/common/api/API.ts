@@ -1,4 +1,4 @@
-import { FeedBackItem } from "../../components/chatbot-panel/types";
+import { FeedBackItem, SessionItem } from "../../components/chatbot-panel/types";
 import axios from "axios";
 import { Dispatch, SetStateAction } from "react";
 
@@ -66,5 +66,24 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
     });
   } catch (error) {
     console.error("Query error, ", error);
+  }
+}
+
+export async function getSessions(sessionItem: SessionItem) {
+  // call api
+  try {
+    const response = await fetch(`/api/qa/get_history_by_user_profile`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify(sessionItem)
+    });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("getSessions, error: ", error);
   }
 }
