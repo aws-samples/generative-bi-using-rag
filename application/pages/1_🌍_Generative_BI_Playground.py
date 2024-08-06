@@ -63,6 +63,7 @@ def downvote_clicked(question, comment):
 
 def clean_st_history(selected_profile):
     st.session_state.messages[selected_profile] = []
+    st.session_state.query_rewrite_history[selected_profile] = []
 
 
 def get_user_history(selected_profile: str):
@@ -71,12 +72,11 @@ def get_user_history(selected_profile: str):
     :param selected_profile:
     :return: history for selected profile list type
     """
-    history_list = st.session_state.messages[selected_profile]
+    history_list = st.session_state.query_rewrite_history[selected_profile]
     history_query = []
     for messages in history_list:
-        current_role = messages["role"]
-        if current_role == "user":
-            history_query.append(messages["content"])
+        if messages["content"] is not None:
+            history_query.append(messages["role"] + ":" + messages["content"])
     return history_query
 
 
@@ -248,6 +248,9 @@ def main():
     if 'selected_sample' not in st.session_state:
         st.session_state['selected_sample'] = ''
 
+    if 'ask_replay' not in st.session_state:
+        st.session_state.ask_replay = False
+
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
@@ -262,6 +265,9 @@ def main():
 
     if "messages" not in st.session_state:
         st.session_state.messages = {}
+
+    if "query_rewrite_history" not in st.session_state:
+        st.session_state.query_rewrite_history = {}
 
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = {}
@@ -295,6 +301,14 @@ def main():
             st.session_state.current_profile = selected_profile
             if selected_profile not in st.session_state.messages:
                 st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
+            st.session_state.nlq_chain = NLQChain(selected_profile)
+        else:
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
             st.session_state.nlq_chain = NLQChain(selected_profile)
 
         if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
@@ -361,6 +375,7 @@ def main():
         search_box = st.session_state['selected_sample']
         st.session_state['selected_sample'] = ""
 
+    st.session_state.ask_replay = False
     reject_intent_flag = False
     search_intent_flag = False
     agent_intent_flag = False
@@ -374,6 +389,8 @@ def main():
                 current_nlq_chain.set_question(search_box)
                 st.session_state.messages[selected_profile].append(
                     {"role": "user", "content": search_box, "type": "text"})
+                st.session_state.query_rewrite_history[selected_profile].append(
+                    {"role": "user", "content": search_box})
                 st.markdown(current_nlq_chain.get_question())
             with st.chat_message("assistant"):
                 filter_deep_dive_sql_result = []
