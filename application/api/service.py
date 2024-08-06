@@ -22,7 +22,7 @@ from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
     add_row_level_filter, get_share_data, get_window_history, update_share_data, change_class_to_str
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity, Message, AskReplayResult
+    TaskSQLSearchResult, ChartEntity, Message, AskReplayResult, HistoryMessage
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum, ContentEnum
@@ -59,6 +59,7 @@ def get_example(current_nlq_chain: NLQChain) -> list[Example]:
     return examples
 
 def get_history_by_user_profile(user_id: str, profile_name: str):
+    user_id = base64.b64decode(user_id).decode('utf-8')
     history_list = LogManagement.get_history(user_id, profile_name)
     chat_history = []
     chat_history_session = {}
