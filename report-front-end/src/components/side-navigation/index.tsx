@@ -7,8 +7,8 @@ export default function NavigationPanel(
   props: {
     sessions: Session[];
     setSessions: Dispatch<SetStateAction<Session[]>>;
-    currentSession: number;
-    setCurrentSession: Dispatch<SetStateAction<number>>;
+    currentSessionId: string;
+    setCurrentSessionId: Dispatch<SetStateAction<string>>;
   }) {
 
   return (
@@ -25,8 +25,8 @@ export default function NavigationPanel(
       <Sessions
         sessions={props.sessions}
         setSessions={props.setSessions}
-        currentSession={props.currentSession}
-        setCurrentSession={props.setCurrentSession}
+        currentSessionId={props.currentSessionId}
+        setCurrentSessionId={props.setCurrentSessionId}
       />
     </ContentLayout>
   );
