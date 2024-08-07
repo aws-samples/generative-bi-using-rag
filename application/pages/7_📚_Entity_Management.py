@@ -11,7 +11,7 @@ from utils.env_var import opensearch_info
 
 logger = logging.getLogger(__name__)
 
-
+DIMENSION_VALUE = "dimension"
 def delete_entity_sample(profile_name, id):
     VectorStore.delete_entity_sample(profile_name, id)
     st.success(f'Sample {id} deleted.')
@@ -34,6 +34,8 @@ def read_file(uploaded_file):
     columns = list(uploaded_data.columns)
     if "entity" in columns and "comment" in columns:
         return uploaded_data[["entity", "comment"]]
+    elif "entity" in columns and "table" in columns and "column" in columns and "value" in columns:
+        return uploaded_data[["entity", "table", "column", "value"]]
     else:
         st.error(f"The columns need contains entity and comment")
         return None
@@ -62,8 +64,8 @@ def main():
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add, tab_dimension, tab_search, batch_insert = st.tabs(
-        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Insert Entity'])
+    tab_view, tab_add, tab_dimension, tab_search, batch_insert, batch_dimension_entity = st.tabs(
+        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity', 'Batch Dimension Entity'])
     if current_profile is not None:
         st.session_state['current_profile'] = current_profile
         with tab_view:
@@ -146,6 +148,30 @@ def main():
                                 entity = str(item.entity)
                                 comment = str(item.comment)
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
+                                progress = (j * 1.0) / total_rows
+                                progress_bar.progress(progress, text=progress_text)
+                            progress_bar.empty()
+                        st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
+
+        with batch_dimension_entity:
+            if current_profile is not None:
+                st.write("This page support CSV or Excel files batch insert dimension entity samples.")
+                st.write("**The Column Name need contain 'entity' 'table' 'column' 'value' **")
+                uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
+                                                  type=['csv', 'xls', 'xlsx'])
+                if uploaded_files:
+                    for i, uploaded_file in enumerate(uploaded_files):
+                        status_text = st.empty()
+                        status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
+                        each_upload_data = read_file(uploaded_file)
+                        if each_upload_data is not None:
+                            total_rows = len(each_upload_data)
+                            progress_bar = st.progress(0)
+                            progress_text = "batch insert {} entity  in progress. Please wait.".format(uploaded_file.name)
+                            for j, item in enumerate(each_upload_data.itertuples(), 1):
+                                entity = str(item.entity)
+                                comment = str(item.comment)
+                                VectorStore.add_entity_sample(current_profile, entity, comment, DIMENSION_VALUE)
                                 progress = (j * 1.0) / total_rows
                                 progress_bar.progress(progress, text=progress_text)
                             progress_bar.empty()
