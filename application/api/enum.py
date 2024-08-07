@@ -8,6 +8,7 @@ class ErrorEnum(Enum):
     NOT_SUPPORTED = {1001: "Your query statement is currently not supported by the system"}
     INVAILD_BEDROCK_MODEL_ID = {1002: f"Invalid bedrock model id.Vaild ids:{BEDROCK_MODEL_IDS}"}
     INVAILD_SESSION_ID = {1003: f"Invalid session id."}
+    PROFILE_NOT_FOUND = {1004: "Profile name not found."}
     UNKNOWN_ERROR = {9999: "Unknown error."}
 
     def get_code(self):

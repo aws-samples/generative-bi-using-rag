@@ -1,5 +1,5 @@
 exllamav2==0.0.14
-torch==2.1.2
+torch==2.2.0
 sentencepiece==0.1.99
 accelerate==0.25.0
 bitsandbytes==0.41.1

@@ -6,7 +6,7 @@ The deployment guide here is CDK only. For manual deployment or detailed guide, 
 
 ## Introduction
 
-A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
+A Generative BI  demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
 
 ![Screenshot](./assets/aws_architecture.png)
 *Reference Architecture on AWS*
@@ -49,9 +49,9 @@ The following table provides a sample cost breakdown for deploying this Guidance
 
 | AWS service  | Dimensions | Cost [USD] per Month |
 | ----------- | ------------ | ------------ |
-| Amazon ECS | v0.75 CPU 5GB | $804.1 |
+| Amazon ECS | v0.75 CPU 5GB | $11.51 |
 | Amazon DynamoDB | 25 provisioned write & read capacity units per month | $ 14.04 |
-| Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 416.00 |
+| Amazon Bedrock | 2000 requests per month, with each request consuming 10000 input tokens and 1000 output tokens | $ 90.00 |
 | Amazon OpenSearch Service | 1 domain with m5.large.search | $ 103.66 |
 
 ## Prerequisites

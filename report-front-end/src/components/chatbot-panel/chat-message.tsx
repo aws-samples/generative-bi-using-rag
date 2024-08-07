@@ -355,25 +355,6 @@ const DataTable = (props: { distributions: []; header: [] }) => {
             filteringPlaceholder="Search"
           />
         }
-/*        preferences={
-          <CollectionPreferences
-            title="Preferences"
-            confirmLabel="Confirm"
-            cancelLabel="Cancel"
-            preferences={{
-              pageSize: 5,
-            }}
-            pageSizePreference={{
-              title: "Page size",
-              options: [
-                { value: 5, label: "5 resources" },
-                { value: 10, label: "10 resources" },
-                { value: 20, label: "20 resources" },
-                { value: 30, label: "30 resources" }
-              ]
-            }}
-          />
-        }*/
       />
       <Modal
         onDismiss={() => setVisible(false)}

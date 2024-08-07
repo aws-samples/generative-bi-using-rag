@@ -1,7 +1,7 @@
 import streamlit as st
 import sqlalchemy as db
 from dotenv import load_dotenv
-import logging 
+import logging
 from nlq.business.connection import ConnectionManagement
 from nlq.business.profile import ProfileManagement
 from utils.navigation import make_sidebar

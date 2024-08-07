@@ -33,7 +33,7 @@ def read_file(uploaded_file):
         return None
     columns = list(uploaded_data.columns)
     if "entity" in columns and "comment" in columns:
-        return uploaded_data
+        return uploaded_data[["entity", "comment"]]
     else:
         st.error(f"The columns need contains entity and comment")
         return None
@@ -65,6 +65,7 @@ def main():
     tab_view, tab_add, tab_search, batch_insert = st.tabs(
         ['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
     if current_profile is not None:
+        st.session_state['current_profile'] = current_profile
         with tab_view:
             if current_profile is not None:
                 st.write("The display page can show a maximum of 5000 pieces of data")
@@ -114,20 +115,23 @@ def main():
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
                     for i, uploaded_file in enumerate(uploaded_files):
+                        status_text = st.empty()
                         status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
-                            for index, item in each_upload_data.iterrows():
-                                entity = str(item["entity"])
-                                comment = str(item["comment"])
+                            total_rows = len(each_upload_data)
+                            progress_bar = st.progress(0)
+                            progress_text = "batch insert {} entity  in progress. Please wait.".format(uploaded_file.name)
+                            for j, item in enumerate(each_upload_data.itertuples(), 1):
+                                entity = str(item.entity)
+                                comment = str(item.comment)
                                 VectorStore.add_entity_sample(current_profile, entity, comment)
-                        progress_bar.progress((i + 1) / len(uploaded_files))
-
+                                progress = (j * 1.0) / total_rows
+                                progress_bar.progress(progress, text=progress_text)
+                            progress_bar.empty()
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
-                    progress_bar.empty()
+
     else:
         st.info('Please select data profile in the left sidebar.')
 
