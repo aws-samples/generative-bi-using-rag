@@ -8,12 +8,15 @@ import styles from "./chat.module.scss";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
+import { Session } from "../session-panel/types";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function CustomQuestions(props: RecommendQuestionsProps) {
@@ -62,8 +65,9 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
       query: question,
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
-      setMessageHistory: props.setMessageHistory,
-      userId: userState.userInfo.userId
+      setSessions: props.setSessions,
+      userId: userState.userInfo.userId,
+      sessionId: props.sessionId
     });
   };
 

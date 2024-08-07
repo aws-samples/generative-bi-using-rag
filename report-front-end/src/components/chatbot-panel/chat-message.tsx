@@ -35,6 +35,7 @@ import {
   FeedBackType,
   SQLSearchResult,
 } from "./types";
+import { Session } from "../session-panel/types";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -463,7 +464,9 @@ function AIChatMessage(props: ChatMessageProps) {
               questions={content.suggested_question}
               setLoading={props.setLoading}
               setMessageHistory={props.setMessageHistory}
+              setSessions={props.setSessions}
               sendMessage={props.sendMessage}
+              sessionId={props.sessionId}
             />
           </ExpandableSection>
         ) : null}
@@ -476,7 +479,9 @@ export interface ChatMessageProps {
   message: ChatBotHistoryItem;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
@@ -492,7 +497,9 @@ export default function ChatMessage(props: ChatMessageProps) {
           message={props.message}
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
+          setSessions={props.setSessions}
           sendMessage={props.sendMessage}
+          sessionId={props.sessionId}
         />
       )}
     </SpaceBetween>
