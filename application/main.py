@@ -26,7 +26,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def authenticate_handler(request: Request, call_next):
-    return authenticate(request, call_next)
+    return await authenticate(request, call_next)
 
 # Global exception capture
 biz_exception(app)
