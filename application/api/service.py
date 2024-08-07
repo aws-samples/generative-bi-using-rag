@@ -731,9 +731,9 @@ def user_feedback_upvote(data_profiles: str, user_id: str, session_id: str, quer
                          query_answer):
     try:
         if query_intent == "normal_search":
-            VectorStore.add_sample(data_profiles, query, query_answer)
+            VectorStore.add_sample(data_profiles, query, query_answer, "SQL")
         elif query_intent == "agent_search":
-            VectorStore.add_sample(data_profiles, query, query_answer)
+            VectorStore.add_sample(data_profiles, query, query_answer, "SQL")
             # VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
         return True
     except Exception as e:

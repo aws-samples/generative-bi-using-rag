@@ -40,7 +40,7 @@ def upvote_clicked(question, sql):
     :return:
     """
     current_profile = st.session_state.current_profile
-    VectorStore.add_sample(current_profile, question, sql)
+    VectorStore.add_sample(current_profile, question, sql, "SQL")
     logger.info(f'up voted "{question}" with sql "{sql}"')
 
 
