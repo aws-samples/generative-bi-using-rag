@@ -1,22 +1,24 @@
 FROM public.ecr.aws/docker/library/node:18.17.0 AS builder
 WORKDIR /frontend
 COPY package*.json ./
+COPY . .
+COPY .env /frontend/.env
+
 
 ARG AWS_REGION
 
 RUN echo "Current AWS Region: $AWS_REGION"
 
 RUN if [ "$AWS_REGION" = "cn-north-1" ] || [ "$AWS_REGION" = "cn-northwest-1" ]; then \
+        sed -i "s/PLACEHOLDER_VITE_LOGIN_TYPE/None/g" .env && \
         npm config set registry https://registry.npmmirror.com && \
         npm install; \
     else \
+        sed -i "s/PLACEHOLDER_VITE_LOGIN_TYPE/Cognito/g" .env && \
         npm install; \
     fi
 
-
-COPY . .
 RUN npm run build
-COPY .env /frontend/.env
 
 FROM public.ecr.aws/docker/library/nginx:1.23-alpine
 COPY --from=builder /frontend/dist/ /usr/share/nginx/html/
