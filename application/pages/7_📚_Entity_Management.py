@@ -62,13 +62,13 @@ def main():
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
 
-    tab_view, tab_add, tab_search, batch_insert = st.tabs(
-        ['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
+    tab_view, tab_add, tab_dimension, tab_search, batch_insert = st.tabs(
+        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Insert Entity'])
     if current_profile is not None:
         st.session_state['current_profile'] = current_profile
         with tab_view:
             if current_profile is not None:
-                st.write("The display page can show a maximum of 200 pieces of data")
+                st.write("The display page can show a maximum of 5000 pieces of data")
                 for sample in VectorStore.get_all_entity_samples(current_profile):
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
@@ -81,7 +81,7 @@ def main():
                 entity = st.text_input('Entity', key='index_question')
                 comment = st.text_area('Comment', key='index_answer', height=300)
 
-                if st.button('Submit', type='primary'):
+                if st.button('Add Metrics Entity', type='primary'):
                     if len(entity) > 0 and len(comment) > 0:
                         VectorStore.add_entity_sample(current_profile, entity, comment)
                         st.success('Sample added')
@@ -91,6 +91,25 @@ def main():
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
+        with tab_dimension:
+            if current_profile is not None:
+                entity = st.text_input('Entity', key='index_entity')
+                table = st.text_input('Table', key='index_table')
+                column = st.text_input('Column', key='index_column')
+                value = st.text_input('Dimension value', key='index_value')
+                if st.button('Add Dimension Entity', type='primary'):
+                    if len(entity) > 0 and len(table) > 0 and len(column) > 0 and len(value) > 0:
+                        entity_item_table_info = {}
+                        entity_item_table_info["table_name"] = table
+                        entity_item_table_info["column_name"] = column
+                        entity_item_table_info["value"] = value
+                        VectorStore.add_entity_sample(current_profile, entity, "", "dimension", entity_item_table_info)
+                        st.success('Sample added')
+                        time.sleep(2)
+                        st.rerun()
+                    else:
+                        st.error('please input valid question and answer')
+
         with tab_search:
             if current_profile is not None:
                 entity_search = st.text_input('Entity Search', key='index_entity_search')
@@ -131,6 +150,7 @@ def main():
                                 progress_bar.progress(progress, text=progress_text)
                             progress_bar.empty()
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
+
     else:
         st.info('Please select data profile in the left sidebar.')
 
