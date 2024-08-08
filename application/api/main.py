@@ -9,7 +9,7 @@ from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
 
-from ..utils.auth import authenticate
+from utils.auth import authenticate
 
 from .service import ask_websocket
 
