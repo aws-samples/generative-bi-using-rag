@@ -65,22 +65,19 @@ def get_cognito_identity_from_token(decoded, claims):
 
     return identity
 
-async def http_authenticate(request: Request, call_next):
-    print('---HTTP REQUEST---', vars(request), request.cookies)
-    access_token = request.cookies.get('accessToken')
-    id_token = request.cookies.get('idToken')
-    refresh_token = request.cookies.get('refreshToken')
+def authenticate(access_token, id_token, refresh_token):
+    print('---ACCESS TOKEN---', access_token)
+    print('---ID TOKEN---', id_token)
+    print('---REFRESH TOKEN---', refresh_token)
 
-    if not access_token:
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+    if not access_token or not id_token or not refresh_token:
+        response = {}
+        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        return response
     try:
         decoded = jwt_decode(access_token)
 
     except jwt.ExpiredSignatureError:
-        refresh_token = request.cookies.get('refreshToken', None)
-        if refresh_token is None:
-            return Response(status_code=status.HTTP_401_UNAUTHORIZED)
-
         tokens = refresh_tokens(refresh_token)
         access_token = tokens['accessToken']
         id_token = tokens['idToken']
@@ -88,11 +85,14 @@ async def http_authenticate(request: Request, call_next):
         decoded = jwt_decode(access_token)
 
     except Exception as e:
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+        response = {}
+        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        return response
 
-    response = await call_next(request)
-    response.set_cookie("accessToken", access_token, httponly=True, secure=True, samesite="Lax")
-    response.set_cookie("idToken", id_token, httponly=True, secure=True, samesite="Lax")
+    response = {}
+    response['X-Status-Code'] = status.HTTP_200_OK
+    response["X-Access-Token"] = access_token
+    response["X-ID-Token"] = id_token
 
     claims = ["email"]
     identity = get_cognito_identity_from_token(decoded=decoded, claims=claims)
@@ -102,7 +102,6 @@ async def http_authenticate(request: Request, call_next):
         identity_from_id_token = get_cognito_identity_from_token(decoded=decoded_id, claims=claims)
         identity.update(identity_from_id_token)
 
-    response.headers["X-User-Name"] = identity["username"]
-    response.headers["X-Email"] = identity["attributes"]["email"]
+    response["X-User-Name"] = identity["username"]
+    response["X-Email"] = identity["attributes"]["email"]
     return response
-

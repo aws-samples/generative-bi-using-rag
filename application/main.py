@@ -3,7 +3,7 @@ import logging
 
 from fastapi import FastAPI, status, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from api.exception_handler import biz_exception
 from api.main import router
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +11,7 @@ from api import service
 from api.schemas import Option, Message
 from nlq.business.log_store import LogManagement
 from utils.tool import set_share_data, get_share_data
-from utils.auth import http_authenticate
+from utils.auth import authenticate
 
 MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
@@ -25,8 +25,27 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def authenticate(request: Request, call_next):
-    return await http_authenticate(request, call_next)
+async def http_authenticate(request: Request, call_next):
+    print('---HTTP REQUEST---', vars(request), request.cookies)
+    access_token = request.cookies.get('accessToken')
+    id_token = request.cookies.get('idToken')
+    refresh_token = request.cookies.get('refreshToken')
+
+    response = authenticate(access_token, id_token, refresh_token)
+
+    if response["X-Status-Code"] != status.HTTP_200_OK:
+        return Response(status_code=response["X-Status-Code"])
+    else:
+        access_token = response["X-Access-Token"]
+        id_token = response["X-ID-Token"]
+        username = response["X-User-Name"]
+        email = response["X-Email"]
+        response = await call_next(request)
+        response.set_cookie("accessToken", access_token, httponly=True, secure=True, samesite="Lax")
+        response.set_cookie("idToken", id_token, httponly=True, secure=True, samesite="Lax")
+        response.headers["X-User-Name"] = username
+        response.headers["X-Email"] = email
+        return response
 
 # Global exception capture
 biz_exception(app)
