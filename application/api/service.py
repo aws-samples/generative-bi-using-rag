@@ -20,7 +20,7 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
-    add_row_level_filter, get_share_data, get_window_history, update_share_data, change_class_to_str
+    add_row_level_filter, change_class_to_str
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity, Message, AskReplayResult, HistoryMessage
 from .exception_handler import BizException
@@ -58,26 +58,6 @@ def get_example(current_nlq_chain: NLQChain) -> list[Example]:
         )
     return examples
 
-def get_history_by_user_profile(user_id: str, profile_name: str):
-    user_id = base64.b64decode(user_id).decode('utf-8')
-    history_list = LogManagement.get_history(user_id, profile_name)
-    chat_history = []
-    chat_history_session = {}
-    for item in history_list:
-        session_id = item['session_id']
-        if session_id not in chat_history_session:
-            chat_history_session[session_id] = []
-        log_info = item['log_info']
-        query = item['query']
-        human_message = Message(type="human", content=query)
-        bot_message = Message(type="AI", content=json.loads(log_info))
-        chat_history_session[session_id].append(human_message)
-        chat_history_session[session_id].append(bot_message)
-
-    for key, value in chat_history_session.items():
-        each_session_history = HistoryMessage(session_id=key, messages=value)
-        chat_history.append(each_session_history)
-    return chat_history
 
 def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_response_stream=False) -> Union[
     str, dict]:
@@ -442,23 +422,20 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     entity_slot = []
 
     user_query_history = []
-    original_user_query_history = get_share_data(session_id)
-    logger.info("The original_user_query_history is {original_user_query_history}".format(
-        original_user_query_history=original_user_query_history))
+    # original_user_query_history = get_share_data(session_id)
+    # logger.info("The original_user_query_history is {original_user_query_history}".format(
+    #     original_user_query_history=original_user_query_history))
     query_rewrite_result = {"intent": "original_problem", "query": search_box}
     if context_window > 0:
-        context_window_select = context_window * 2
-        if len(original_user_query_history) > 0:
-            user_query_history = original_user_query_history[-context_window_select:]
-            user_query_history = get_window_history(user_query_history)
+        user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id,
+                                                                  session_id=session_id, size=context_window,
+                                                                  log_type='chat_history')
+        if len(user_query_history) > 0:
             user_query_history.append("user:" + search_box)
             logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
             query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
             logger.info(
                 "The query_rewrite_result is {query_rewrite_result}".format(query_rewrite_result=query_rewrite_result))
-        else:
-            user_query_history.append("user:" + search_box)
-            query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
     query_rewrite = query_rewrite_result.get("query")
     query_rewrite_intent = query_rewrite_result.get("intent")
     if "ask_in_reply" == query_rewrite_intent:
@@ -472,7 +449,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[], ask_rewrite_result=ask_result)
 
-        update_share_data(session_id, search_box, answer)
+        # update_share_data(session_id, search_box, answer)
         ask_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
@@ -511,7 +488,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         answer = Answer(query=search_box, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[], ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+        # update_share_data(session_id, search_box, answer)
         reject_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
@@ -530,7 +507,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=[], ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+        # update_share_data(session_id, search_box, answer)
         knowledge_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
@@ -647,7 +624,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+        # update_share_data(session_id, search_box, answer)
         intent_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql=sql_search_result.sql,
@@ -715,7 +692,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+        # update_share_data(session_id, search_box, answer)
         agent_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="",
@@ -731,9 +708,9 @@ def user_feedback_upvote(data_profiles: str, user_id: str, session_id: str, quer
                          query_answer):
     try:
         if query_intent == "normal_search":
-            VectorStore.add_sample(data_profiles, query, query_answer)
+            VectorStore.add_sample(data_profiles, query, query_answer, "SQL")
         elif query_intent == "agent_search":
-            VectorStore.add_sample(data_profiles, query, query_answer)
+            VectorStore.add_sample(data_profiles, query, query_answer, "SQL")
             # VectorStore.add_agent_cot_sample(data_profiles, query, "\n".join(query_list))
         return True
     except Exception as e:
@@ -816,7 +793,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         if use_rag:
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start", user_id)
             retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                      selected_profile, 3, 0.5)
+                                                      selected_profile, 3, 0.5, sample_type="SQL")
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end", user_id)
 
         await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start", user_id)

@@ -7,10 +7,12 @@ from utils.llm import create_vector_embedding_with_bedrock
 
 logger = logging.getLogger(__name__)
 
+
 def put_bulk_in_opensearch(list, client):
     logger.info(f"Putting {len(list)} documents in OpenSearch")
     success, failed = bulk(client, list)
     return success, failed
+
 
 class OpenSearchDao:
 
@@ -28,7 +30,7 @@ class OpenSearchDao:
             ssl_show_warn=False
         )
 
-    def retrieve_samples(self, index_name, profile_name):
+    def retrieve_samples(self, index_name, profile_name, sample_type):
         # search all docs in the index filtered by profile_name
         search_query = {
             "sort": [
@@ -47,11 +49,13 @@ class OpenSearchDao:
                     "must": [],
                     "filter": [
                         {
-                            "match_all": {}
+                            "term": {
+                                "profile": profile_name
+                            }
                         },
                         {
-                            "match_phrase": {
-                                "profile": profile_name
+                            "term": {
+                                "sample_type": sample_type
                             }
                         }
                     ],
@@ -91,7 +95,7 @@ class OpenSearchDao:
                             "match_all": {}
                         },
                         {
-                            "match_phrase": {
+                            "term": {
                                 "profile": profile_name
                             }
                         }
@@ -103,8 +107,8 @@ class OpenSearchDao:
         }
 
         response = self.opensearch_client.search(
-        body=search_query,
-        index=index_name
+            body=search_query,
+            index=index_name
         )
 
         return response['hits']['hits']
@@ -131,7 +135,7 @@ class OpenSearchDao:
                             "match_all": {}
                         },
                         {
-                            "match_phrase": {
+                            "term": {
                                 "profile": profile_name
                             }
                         }
@@ -144,19 +148,20 @@ class OpenSearchDao:
 
         # Execute the search query
         response = self.opensearch_client.search(
-        body=search_query,
-        index=index_name
+            body=search_query,
+            index=index_name
         )
 
         return response['hits']['hits']
 
-    def add_sample(self, index_name, profile_name, question, answer, embedding):
+    def add_sample(self, index_name, profile_name, question, answer, embedding, sample_type):
         record = {
             '_index': index_name,
             'text': question,
             'sql': answer,
             'profile': profile_name,
-            'vector_field': embedding
+            'vector_field': embedding,
+            'sample_type': sample_type
         }
 
         success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
@@ -189,21 +194,23 @@ class OpenSearchDao:
     def delete_sample(self, index_name, profile_name, doc_id):
         return self.opensearch_client.delete(index=index_name, id=doc_id)
 
-    def search_sample(self, profile_name, top_k, index_name, query):
+    def search_sample(self, profile_name, top_k, index_name, query, sample_type=None):
         records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
-        return self.search_sample_with_embedding(profile_name, top_k, index_name,  records_with_embedding['vector_field'])
+        return self.search_sample_with_embedding(profile_name, top_k, index_name,
+                                                 records_with_embedding['vector_field'], sample_type)
 
-
-    def search_sample_with_embedding(self, profile_name, top_k, index_name, query_embedding):
+    def search_sample_with_embedding(self, profile_name, top_k, index_name, query_embedding, sample_type=None):
         search_query = {
             "size": top_k,  # Adjust the size as needed to retrieve more or fewer results
             "query": {
                 "bool": {
-                    "filter": {
-                        "match_phrase": {
-                            "profile": profile_name
+                    "filter": [
+                        {
+                            "term": {
+                                "profile": profile_name
+                            }
                         }
-                    },
+                    ],
                     "must": [
                         {
                             "knn": {
@@ -219,6 +226,12 @@ class OpenSearchDao:
 
             }
         }
+        if sample_type:
+            search_query['query']['bool']['filter'].append({
+                "term": {
+                    "sample_type": sample_type
+                }
+            })
 
         # Execute the search query
         response = self.opensearch_client.search(

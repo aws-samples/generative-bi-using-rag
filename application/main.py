@@ -1,7 +1,4 @@
-import json
-import logging
-
-from fastapi import FastAPI, status, Request, HTTPException
+from fastapi import FastAPI, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, Response
 from api.exception_handler import biz_exception
@@ -10,14 +7,9 @@ from api.chart import router as dlset_router
 from fastapi.middleware.cors import CORSMiddleware
 from api import service
 from api.schemas import Option, Message
-import json
 import base64
-
-from nlq.business.log_store import LogManagement
-from utils.tool import set_share_data, get_share_data
 from utils.validate import validate_token
 
-MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
 
 # 配置CORS中间件
@@ -29,7 +21,7 @@ app.add_middleware(
     allow_headers=['*'],  # 允许所有请求头
 )
 
-EXEMPT_PATHS = ["/info"]
+EXEMPT_PATHS = ["/info", "/docs"]
 
 
 @app.middleware("http")
@@ -52,43 +44,26 @@ async def add_process_time_header(request: Request, call_next):
     else:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
+
 # Global exception capture
 biz_exception(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(router)
 app.include_router(dlset_router)
 
+
 # changed from "/" to "/test" to avoid health check fails in ECS
 @app.get("/test", status_code=status.HTTP_302_FOUND)
 def index():
     return RedirectResponse("static/WebSocket.html")
+
 
 # health check
 @app.get("/info")
 def health():
     return {"status": "ok"}
 
+
 @app.get("/option", response_model=Option)
 def option():
     return service.get_option()
-
-@app.on_event("startup")
-def set_history_in_share():
-    logging.info("Setting history in share data")
-    history_list = LogManagement.get_all_history()
-    chat_history_session = {}
-    for item in history_list:
-        session_id = item['session_id']
-        if session_id not in chat_history_session:
-            chat_history_session[session_id] = []
-        log_info = item['log_info']
-        query = item['query']
-        human_message = Message(type="human", content=query)
-        bot_message = Message(type="AI", content=json.loads(log_info))
-        chat_history_session[session_id].append(human_message)
-        chat_history_session[session_id].append(bot_message)
-
-    for key, value in chat_history_session.items():
-        value = value[-MAX_CHAT_WINDOW_SIZE:]
-        set_share_data(key, value)
-    logging.info("Setting history in share data done")

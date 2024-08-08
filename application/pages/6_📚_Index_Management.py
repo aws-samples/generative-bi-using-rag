@@ -67,19 +67,21 @@ def main():
         with tab_view:
             if current_profile is not None:
                 st.write("The display page can show a maximum of 200 pieces of data")
-                for sample in VectorStore.get_all_samples(current_profile):
+                view_sample_type = st.selectbox("Index Type", ["SQL", "JSON"], index=0, key='view_sample_type')
+                for sample in VectorStore.get_all_samples(current_profile, view_sample_type):
                     with st.expander(sample['text']):
                         st.code(sample['sql'])
                         st.button('Delete ' + sample['id'], on_click=delete_sample, args=[current_profile, sample['id']])
 
         with tab_add:
             if current_profile is not None:
+                add_sample_type = st.selectbox("Index Type", ["SQL", "JSON"], index=0, key='add_sample_type')
                 question = st.text_input('Question', key='index_question')
-                answer = st.text_area('Answer(SQL)', key='index_answer', height=300)
+                answer = st.text_area(f'Answer({add_sample_type})', key='index_answer', height=300)
 
                 if st.button('Submit', type='primary'):
                     if len(question) > 0 and len(answer) > 0:
-                        VectorStore.add_sample(current_profile, question, answer)
+                        VectorStore.add_sample(current_profile, question, answer, add_sample_type)
                         st.success('Sample added')
                         time.sleep(2)
                         st.rerun()
@@ -87,12 +89,13 @@ def main():
                         st.error('please input valid question and answer')
         with tab_search:
             if current_profile is not None:
+                search_sample_type = st.selectbox("Index Type", ["SQL", "JSON"], index=0, key='search_sample_type')
                 entity_search = st.text_input('Question Search', key='index_entity_search')
                 retrieve_number = st.slider("Question Retrieve Number", 0, 100, 10)
                 if st.button('Search', type='primary'):
                     if len(entity_search) > 0:
                         search_sample_result = VectorStore.search_sample(current_profile, retrieve_number, opensearch_info['sql_index'],
-                                                                         entity_search)
+                                                                         entity_search, search_sample_type)
                         for sample in search_sample_result:
                             sample_res = {'Score': sample['_score'],
                                           'Entity': sample['_source']['text'],
@@ -104,6 +107,7 @@ def main():
             if current_profile is not None:
                 st.write("This page support CSV or Excel files batch insert sql samples.")
                 st.write("**The Column Name need contain 'question' and 'sql'**")
+                batch_sample_type = st.selectbox("Index Type", ["SQL", "JSON"], index=0, key='batch_sample_type')
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
@@ -119,7 +123,7 @@ def main():
                             for j, item in enumerate(each_upload_data.itertuples(), 1):
                                 question = str(item.question)
                                 sql = str(item.sql)
-                                VectorStore.add_sample(current_profile, question, sql)
+                                VectorStore.add_sample(current_profile, question, sql, batch_sample_type)
                                 progress = (j * 1.0) / total_rows
                                 progress_bar.progress(progress, text=progress_text)
                             progress_bar.empty()

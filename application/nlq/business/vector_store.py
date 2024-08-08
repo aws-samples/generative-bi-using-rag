@@ -20,9 +20,9 @@ class VectorStore:
             aws_secret_access_key=bedrock_ak_sk_info['secret_access_key'])
 
     @classmethod
-    def get_all_samples(cls, profile_name):
+    def get_all_samples(cls, profile_name, sample_type):
         logger.info(f'get all samples for {profile_name}...')
-        samples = cls.opensearch_dao.retrieve_samples(opensearch_info['sql_index'], profile_name)
+        samples = cls.opensearch_dao.retrieve_samples(opensearch_info['sql_index'], profile_name, sample_type)
 
         sample_list = []
         for sample in samples:
@@ -71,13 +71,13 @@ class VectorStore:
         return sample_list
 
     @classmethod
-    def add_sample(cls, profile_name, question, answer):
-        logger.info(f'add sample question: {question} to profile {profile_name}')
+    def add_sample(cls, profile_name, question, answer, sample_type):
+        logger.info(f'add sample {sample_type} question: {question} to profile {profile_name}')
         embedding = cls.create_vector_embedding_with_bedrock(question)
-        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
+        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding, sample_type)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
-        if cls.opensearch_dao.add_sample(opensearch_info['sql_index'], profile_name, question, answer, embedding):
+        if cls.opensearch_dao.add_sample(opensearch_info['sql_index'], profile_name, question, answer, embedding, sample_type):
             logger.info('Sample added')
 
     @classmethod
@@ -136,19 +136,19 @@ class VectorStore:
         print(ret)
 
     @classmethod
-    def search_sample(cls, profile_name, top_k, index_name, query):
+    def search_sample(cls, profile_name, top_k, index_name, query, sample_type=None):
         logger.info(f'search sample question: {query}  {index_name} from profile {profile_name}')
-        sample_list = cls.opensearch_dao.search_sample(profile_name, top_k, index_name, query)
+        sample_list = cls.opensearch_dao.search_sample(profile_name, top_k, index_name, query, sample_type)
         return sample_list
 
     @classmethod
-    def search_sample_with_embedding(cls, profile_name, top_k, index_name, query_embedding):
-        sample_list = cls.opensearch_dao.search_sample_with_embedding(profile_name, top_k, index_name, query_embedding)
+    def search_sample_with_embedding(cls, profile_name, top_k, index_name, query_embedding, sample_type=None):
+        sample_list = cls.opensearch_dao.search_sample_with_embedding(profile_name, top_k, index_name, query_embedding, sample_type)
         return sample_list
 
     @classmethod
-    def search_same_query(cls, profile_name, top_k, index_name, embedding):
-        search_res = cls.search_sample_with_embedding(profile_name, top_k, index_name, embedding)
+    def search_same_query(cls, profile_name, top_k, index_name, embedding, sample_type=None):
+        search_res = cls.search_sample_with_embedding(profile_name, top_k, index_name, embedding, sample_type)
         if len(search_res) > 0:
             similarity_sample = search_res[0]
             similarity_score = similarity_sample["_score"]

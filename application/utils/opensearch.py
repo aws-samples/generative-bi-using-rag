@@ -99,22 +99,28 @@ def create_index_mapping(opensearch_client, index_name, dimension):
     :param dimension:
     :return:
     """
-    response = opensearch_client.indices.put_mapping(
-        index=index_name,
-        body={
-            "properties": {
-                "vector_field": {
-                    "type": "knn_vector",
-                    "dimension": dimension
-                },
-                "text": {
-                    "type": "keyword"
-                },
-                "profile": {
-                    "type": "keyword"
+    mapping = {
+                "properties": {
+                    "vector_field": {
+                        "type": "knn_vector",
+                        "dimension": dimension
+                    },
+                    "text": {
+                        "type": "text"
+                    },
+                    "profile": {
+                        "type": "keyword"
+                    }
                 }
             }
-        }
+
+    if index_name == opensearch_info['sql_index']:
+        mapping["properties"].update({"sample_type": {
+            "type": "keyword"
+        }})
+    response = opensearch_client.indices.put_mapping(
+        index=index_name,
+        body=mapping
     )
     return bool(response['acknowledged'])
 
@@ -136,7 +142,7 @@ def delete_opensearch_index(opensearch_client, index_name):
         return True
 
 
-def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profile, top_k, score_threshold=0.7):
+def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profile, top_k, score_threshold=0.7, sample_type=None):
     if search_type == "query":
         index_name = opensearch_info['sql_index']
     elif search_type == "ner":
@@ -158,7 +164,9 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
         port=opensearch_info['port'],
         query_embedding=records_with_embedding['vector_field'],
         top_k=top_k,
-        profile_name=selected_profile)
+        profile_name=selected_profile,
+        sample_type=sample_type
+    )
 
     filter_retrieve_result = []
     for item in retrieve_result:
@@ -168,17 +176,19 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
 
 
 def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch_user, opensearch_password,
-                                     query_embedding, top_k=3, host='', port=443, profile_name=None):
+                                     query_embedding, top_k=3, host='', port=443, profile_name=None, sample_type=None):
     opensearch_client = get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password, region_name)
     search_query = {
         "size": top_k,  # Adjust the size as needed to retrieve more or fewer results
         "query": {
             "bool": {
-                "filter": {
-                    "match_phrase": {
-                        "profile": profile_name
+                "filter": [
+                    {
+                        "term": {
+                            "profile": profile_name
+                        }
                     }
-                },
+                ],
                 "must": [
                     {
                         "knn": {
@@ -193,7 +203,8 @@ def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch
 
         }
     }
-
+    if sample_type:
+        search_query["query"]["bool"]["filter"].append({"term": {"sample_type": sample_type}})
     # Execute the search query
     response = opensearch_client.search(
         body=search_query,

@@ -40,7 +40,7 @@ def upvote_clicked(question, sql):
     :return:
     """
     current_profile = st.session_state.current_profile
-    VectorStore.add_sample(current_profile, question, sql)
+    VectorStore.add_sample(current_profile, question, sql, "SQL")
     logger.info(f'up voted "{question}" with sql "{sql}"')
 
 
@@ -174,7 +174,7 @@ def normal_text_search_streamlit(search_box, model_type, database_profile, entit
         with st.status("Performing QA retrieval...") as status_text:
             if use_rag:
                 retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                          selected_profile, 3, 0.5)
+                                                          selected_profile, 3, 0.5, sample_type="SQL")
                 examples = []
                 for example in retrieve_result:
                     examples.append({'Score': example['_score'],
@@ -483,8 +483,7 @@ def main():
                         normal_search_result = normal_text_search_streamlit(search_box, model_type,
                                                                             database_profile,
                                                                             entity_slot, opensearch_info,
-                                                                            selected_profile,
-                                                                            explain_gen_process_flag, use_rag_flag)
+                                                                            selected_profile, use_rag_flag)
                     elif knowledge_search_flag:
                         with st.spinner('Performing knowledge search...'):
                             response = knowledge_search(search_box=search_box, model_id=model_type,

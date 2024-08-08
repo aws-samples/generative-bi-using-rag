@@ -16,7 +16,7 @@ from utils.llm import get_query_intent, knowledge_search, \
     generate_suggested_question, text_to_json, get_query_rewrite
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
-from utils.tool import generate_log_id, get_current_time, get_generated_json, get_generated_think
+from utils.tool import generate_log_id, get_current_time, get_generated_json, get_generated_think, change_class_to_str
 from .schemas import SupersetAnswer, AgentSearchResult, KnowledgeSearchResult, DlsetQuestion, JSONSearchResult
 from .enum import ContentEnum
 import sqlalchemy as db
@@ -80,7 +80,7 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         if use_rag:
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start", user_id)
             retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                      selected_profile, 3, 0.5)
+                                                      selected_profile, 3, 0.5, sample_type="JSON")
             await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end", user_id)
 
         await response_websocket(websocket, session_id, "Generating Chart Info", ContentEnum.STATE, "start", user_id)
@@ -179,16 +179,15 @@ async def dlset_ask_websocket(websocket: WebSocket, question: DlsetQuestion):
     prompt_map = database_profile['prompt_map']
     entity_slot = []
     # 添加携带历史记录问题重写逻辑
-
+    query_rewrite_result = {"intent": "original_problem", "query": search_box}
     if with_history:
         # 获取历史问题
         if context_windows > 0:
-            user_query_history = []
-            user_history_questions = LogManagement.query_log_dao.get_logs(profile_name=selected_profile, user_id=user_id, session_id=session_id, size=context_windows, log_type='superset')
-            for each_history_question in user_history_questions:
-                user_query_history.append(each_history_question['query'])
-            new_search_box = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
-            search_box = new_search_box
+            user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id, session_id=session_id, size=context_windows, log_type='superset')
+            if len(user_query_history) > 0:
+                user_query_history.append("user:" + search_box)
+                query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+    search_box = query_rewrite_result.get("query")
     if intent_ner_recognition_flag:
         await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start", user_id)
         # 实体识别
@@ -223,7 +222,7 @@ async def dlset_ask_websocket(websocket: WebSocket, question: DlsetQuestion):
                                 suggested_question=[])
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
-                                          intent="reject_search", log_info="", time_str=current_time, log_type="superset")
+                                          intent="reject_search", log_info=change_class_to_str(answer), time_str=current_time, log_type="superset")
         return answer
     elif search_intent_flag:
         # 普通搜索
@@ -244,7 +243,7 @@ async def dlset_ask_websocket(websocket: WebSocket, question: DlsetQuestion):
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
                                           intent="knowledge_search",
-                                          log_info=knowledge_search_result.knowledge_response,
+                                          log_info=change_class_to_str(answer),
                                           time_str=current_time, log_type="superset")
         return answer
 
@@ -257,7 +256,7 @@ async def dlset_ask_websocket(websocket: WebSocket, question: DlsetQuestion):
                                 suggested_question=[])
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
-                                          intent="reject_search", log_info="", time_str=current_time,
+                                          intent="reject_search", log_info=change_class_to_str(answer), time_str=current_time,
                                           log_type="superset")
         return answer
     # 建议问题
@@ -271,20 +270,16 @@ async def dlset_ask_websocket(websocket: WebSocket, question: DlsetQuestion):
         else:
             json_search_result.json = normal_search_result.json
             json_search_result.think_process = normal_search_result.process_think
-        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
-                                          profile_name=selected_profile, sql=json_search_result.json,
-                                          query=search_box,
-                                          intent="normal_search",
-                                          log_info=json.dumps({
-                                              "entity_slot_retrieve": normal_search_result.entity_slot_retrieve,
-                                              "retrieve_result": normal_search_result.retrieve_result,
-                                              "process_think": normal_search_result.process_think,
-                                              "response": normal_search_result.response,
-                                          }, ensure_ascii=False),
-                                          time_str=current_time, log_type="superset")
+
         answer = SupersetAnswer(query=search_box, query_intent="normal_search",
                                 knowledge_search_result=knowledge_search_result,
                                 json_search_result=json_search_result,
                                 agent_search_result=agent_search_response,
                                 suggested_question=generate_suggested_question_list)
+        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
+                                          profile_name=selected_profile, sql=json_search_result.json,
+                                          query=search_box,
+                                          intent="normal_search",
+                                          log_info=change_class_to_str(answer),
+                                          time_str=current_time, log_type="superset")
         return answer
