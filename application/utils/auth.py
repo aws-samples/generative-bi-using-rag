@@ -65,7 +65,7 @@ def get_cognito_identity_from_token(decoded, claims):
 
     return identity
 
-async def authenticate(request: Request, call_next):
+async def http_authenticate(request: Request, call_next):
     print('---HTTP REQUEST---', vars(request), request.cookies)
     access_token = request.cookies.get('accessToken')
     id_token = request.cookies.get('idToken')

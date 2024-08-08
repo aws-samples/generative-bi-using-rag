@@ -11,7 +11,7 @@ from api import service
 from api.schemas import Option, Message
 from nlq.business.log_store import LogManagement
 from utils.tool import set_share_data, get_share_data
-from utils.auth import authenticate
+from utils.auth import http_authenticate
 
 MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
@@ -25,8 +25,8 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def authenticate_handler(request: Request, call_next):
-    return await authenticate(request, call_next)
+async def authenticate(request: Request, call_next):
+    return await http_authenticate(request, call_next)
 
 # Global exception capture
 biz_exception(app)
