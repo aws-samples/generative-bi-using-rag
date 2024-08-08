@@ -1,40 +1,42 @@
-import "./app.scss";
-import PageRouter from "./pages/page-router";
-import CustomTopNavigation from "./components/top-navigation";
-import { BrowserRouter } from "react-router-dom";
+import { AmplifyUser } from "@aws-amplify/ui";
 import { useEffect } from "react";
-import { Auth } from "aws-amplify";
 import { useDispatch } from "react-redux";
+import { BrowserRouter } from "react-router-dom";
+import "./app.scss";
+import { COGNITO, LOGIN_TYPE } from "./common/constant/constants";
 import { ActionType, UserInfo } from "./common/helpers/types";
 import AlertMsg from "./components/alert-msg";
-import { COGNITO, LOGIN_TYPE } from "./common/constant/constants";
+import CustomTopNavigation from "./components/top-navigation";
+import { UseAuthenticator } from "@aws-amplify/ui-react-core";
+import PageRouter from "./pages/page-router";
 
-function App() {
+export type SignOut = UseAuthenticator["signOut"];
+
+function App({ user }: { signOut?: SignOut; user?: AmplifyUser }) {
+  console.log({ user });
 
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (LOGIN_TYPE === COGNITO) {
-      (async () => {
-        const user = await Auth.currentUserInfo();
-        const loginUser: UserInfo = {
-          userId: user?.attributes?.sub || "",
-          displayName: user?.attributes?.displayName || user?.attributes?.email || "",
-          loginExpiration: 0,
-          isLogin: true
-        };
-        dispatch({type: ActionType.UpdateUserInfo, state: loginUser});
-      })();
+      const loginUser: UserInfo = {
+        userId: user?.attributes?.sub || "",
+        displayName:
+          user?.attributes?.displayName || user?.attributes?.email || "",
+        loginExpiration: 0,
+        isLogin: true,
+      };
+      dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
     } else {
       const loginUser: UserInfo = {
         userId: "none",
         displayName: "",
         loginExpiration: 0,
-        isLogin: true
+        isLogin: true,
       };
-      dispatch({type: ActionType.UpdateUserInfo, state: loginUser});
+      dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
     }
-  }, []);
+  }, [dispatch, user]);
 
   return (
     <div style={{ height: "100%" }}>
