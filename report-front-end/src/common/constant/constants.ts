@@ -43,3 +43,9 @@ export const SQL_DISPLAY = process.env.VITE_SQL_DISPLAY;
 
 // https://cloudscape.design/patterns/general/density-settings/
 export const APP_STYLE_DEFAULT_COMPACT = true;
+
+export const LOCAL_STORAGE_KEYS = {
+  accessToken: "accessToken",
+  idToken: "idToken",
+  refreshToken: "refreshToken",
+} as const;

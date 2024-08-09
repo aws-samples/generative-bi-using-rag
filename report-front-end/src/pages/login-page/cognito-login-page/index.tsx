@@ -90,7 +90,7 @@ export default function AppConfigured() {
           },
         }}
       >
-        {({ signOut, user }) => <App signOut={signOut} user={user} />}
+        {({ signOut, user }) => <App signOut={signOut} user={user as any} />}
       </Authenticator>
     </ThemeProvider>
   );

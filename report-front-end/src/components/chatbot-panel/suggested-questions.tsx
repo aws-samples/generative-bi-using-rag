@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { ChatBotHistoryItem } from "./types";
 import styles from "./chat.module.scss";
 import { useSelector } from "react-redux";
-import { queryWithWS } from "../../common/api/WebSocket";
+import {  useQueryWithCookies } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
 
@@ -15,6 +15,7 @@ export interface SuggestedQuestionsProps {
 }
 
 export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
+  const { queryWithWS } = useQueryWithCookies();
 
   const userState = useSelector<UserState>((state) => state) as UserState;
 
