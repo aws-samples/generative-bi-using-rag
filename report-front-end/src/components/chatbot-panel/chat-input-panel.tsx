@@ -9,7 +9,7 @@ import {
 import { useSelector } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { queryWithWS } from "../../common/api/WebSocket";
+import { useQueryWithCookies } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
 import {
   ChatBotHistoryItem,
@@ -36,6 +36,7 @@ export abstract class ChatScrollState {
 }
 
 export default function ChatInputPanel(props: ChatInputPanelProps) {
+  const { queryWithWS } = useQueryWithCookies();
   const [state, setTextValue] = useState<ChatInputState>({
     value: "",
   });
@@ -58,7 +59,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         configuration: userState.queryConfig,
         sendMessage: props.sendMessage,
         setMessageHistory: props.setMessageHistory,
-        userId: userState.userInfo.userId
+        userId: userState.userInfo.userId,
       });
     }
   };

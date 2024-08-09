@@ -36,7 +36,16 @@ export const APP_LOGO = process.env.VITE_LOGO || "";
 
 export const APP_RIGHT_LOGO = process.env.VITE_RIGHT_LOGO || "";
 
+export const APP_LOGO_DISPLAY_ON_LOGIN_PAGE =
+  process.env.VITE_LOGO_DISPLAY_ON_LOGIN_PAGE || true;
+
 export const SQL_DISPLAY = process.env.VITE_SQL_DISPLAY;
 
 // https://cloudscape.design/patterns/general/density-settings/
 export const APP_STYLE_DEFAULT_COMPACT = true;
+
+export const LOCAL_STORAGE_KEYS = {
+  accessToken: "accessToken",
+  idToken: "idToken",
+  refreshToken: "refreshToken",
+} as const;
