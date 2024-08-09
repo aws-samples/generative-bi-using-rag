@@ -1,21 +1,11 @@
 import { Button, Container, SpaceBetween } from "@cloudscape-design/components";
-import {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
-import {
-  ChatBotHistoryItem,
-  ChatBotMessageItem,
-  ChatInputState,
-} from "./types";
+import { ChatBotHistoryItem, ChatBotMessageItem, ChatInputState } from "./types";
 import styles from "./chat.module.scss";
 import CustomQuestions from "./custom-questions";
 import { Session } from "../session-panel/types";
@@ -65,7 +55,21 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
   const handleClear = () => {
     const bool = window.confirm("Are you sure to clear the chat history?");
-    if (bool) props.setMessageHistory([]);
+    if (bool) {
+      // props.setMessageHistory([]);
+      props.setSessions((prevState) => {
+        return prevState.map((session) => {
+          if (props.currSessionId !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: props.currSessionId,
+              messages: []
+            }
+          }
+        })
+      });
+    }
   };
 
   useEffect(() => {
