@@ -63,18 +63,18 @@ def get_cognito_identity_from_token(decoded, claims):
     return identity
 
 def authenticate(access_token, id_token, refresh_token):
+    if access_token and access_token.startswith("Bearer "):
+        access_token = access_token[len("Bearer ")]
+
+    if id_token and id_token.startswith("Bearer "):
+        id_token = id_token[len("Bearer ")]
+
+    if refresh_token and refresh_token.startswith("Bearer "):
+        refresh_token = refresh_token[len("Bearer ")]
+
     print('---ACCESS TOKEN---', access_token)
     print('---ID TOKEN---', id_token)
     print('---REFRESH TOKEN---', refresh_token)
-
-    if access_token and access_token.startsWith("Bearer "):
-        access_token = access_token[len("Bearer ")]
-
-    if id_token and id_token.startsWith("Bearer "):
-        id_token = id_token[len("Bearer ")]
-
-    if refresh_token and refresh_token.startsWith("Bearer "):
-        refresh_token = refresh_token[len("Bearer ")]
 
     if not access_token or not id_token or not refresh_token:
         response = {}
