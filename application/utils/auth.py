@@ -64,13 +64,13 @@ def get_cognito_identity_from_token(decoded, claims):
 
 def authenticate(access_token, id_token, refresh_token):
     if access_token and access_token.startswith("Bearer "):
-        access_token = access_token[len("Bearer ")]
+        access_token = access_token[len("Bearer "):]
 
     if id_token and id_token.startswith("Bearer "):
-        id_token = id_token[len("Bearer ")]
+        id_token = id_token[len("Bearer "):]
 
     if refresh_token and refresh_token.startswith("Bearer "):
-        refresh_token = refresh_token[len("Bearer ")]
+        refresh_token = refresh_token[len("Bearer "):]
 
     print('---ACCESS TOKEN---', access_token)
     print('---ID TOKEN---', id_token)
