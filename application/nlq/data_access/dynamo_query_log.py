@@ -83,17 +83,14 @@ class DynamoQueryLogDao:
             self.table = self.dynamodb.create_table(
                 TableName=self.table_name,
                 KeySchema=[
-                    {"AttributeName": "log_id", "KeyType": "HASH"},  # Partition key
-                    # {"AttributeName": "title", "KeyType": "RANGE"},  # Sort key
+                    {"AttributeName": "user_id", "KeyType": "HASH"},  # Partition key
+                    {"AttributeName": "time_str", "KeyType": "RANGE"},  # Sort key
                 ],
                 AttributeDefinitions=[
-                    {"AttributeName": "log_id", "AttributeType": "S"},
-                    # {"AttributeName": "conn_name", "AttributeType": "S"},
+                    {"AttributeName": "user_id", "AttributeType": "S"},
+                    {"AttributeName": "time_str", "AttributeType": "S"}
                 ],
-                ProvisionedThroughput={
-                    "ReadCapacityUnits": 2,
-                    "WriteCapacityUnits": 1,
-                },
+                BillingMode='PAY_PER_REQUEST'
             )
             self.table.wait_until_exists()
             logger.info(f"DynamoDB Table {self.table_name} created")
@@ -181,3 +178,9 @@ class DynamoQueryLogDao:
                 err.response["Error"]["Message"],
             )
             return []
+
+    def get_all_sessions(self, profile_name, user_id, log_type, max_session_num):
+        return []
+
+    def get_all_history_by_session(self, profile_name, user_id, session_id, log_type):
+        return []

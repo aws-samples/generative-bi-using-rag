@@ -2,9 +2,12 @@ import json
 import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
+
+from nlq.business.log_store import LogManagement
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum
-from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest
+from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest, HistorySessionRequest, \
+    Message, HistoryMessage
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -39,10 +42,50 @@ def ask(question: Question):
 
 
 @router.post("/get_history_by_user_profile")
-def get_history_by_user_profile(history_request : HistoryRequest):
+def get_history_by_user_profile(history_request: HistoryRequest):
     user_id = history_request.user_id
     profile_name = history_request.profile_name
     return service.get_history_by_user_profile(user_id, profile_name)
+
+
+@router.post("/get_sessions")
+def get_sessions(history_request: HistoryRequest):
+    user_id = history_request.user_id
+    return LogManagement.get_all_sessions(user_id, history_request.profile_name, history_request.log_type)
+
+
+@router.post("/get_history_by_session")
+def get_history_by_session(history_request: HistorySessionRequest):
+    user_id = history_request.user_id
+    history_list = LogManagement.get_all_history_by_session(profile_name=history_request.profile_name, user_id=user_id,
+                                                            session_id=history_request.session_id,
+                                                            size=1000, log_type=history_request.log_type)
+    chat_history = format_chat_history(history_list, history_request.log_type)
+    return chat_history
+
+
+def format_chat_history(history_list, log_type):
+    chat_history = []
+    chat_history_session = {}
+    for item in history_list:
+        session_id = item['session_id']
+        query = item['query']
+        if session_id not in chat_history_session:
+            chat_history_session[session_id] = {
+                "history": [],
+                "title": query
+            }
+        log_info = item['log_info']
+        if log_type == 'chat_history':
+            human_message = Message(type="human", content=query)
+            bot_message = Message(type="AI", content=json.loads(log_info))
+            chat_history_session[session_id]['history'].append(human_message)
+            chat_history_session[session_id]['history'].append(bot_message)
+    for key, value in chat_history_session.items():
+        if log_type == 'chat_history':
+            each_session_history = HistoryMessage(session_id=key, messages=value['history'], title=value['title'])
+            chat_history.append(each_session_history)
+    return chat_history
 
 
 @router.post("/user_feedback")
@@ -73,11 +116,13 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 ask_result = await ask_websocket(websocket, question)
                 logger.info(ask_result)
-                await response_websocket(websocket=websocket, session_id=session_id, content=ask_result.dict(), content_type=ContentEnum.END, user_id=user_id)
+                await response_websocket(websocket=websocket, session_id=session_id, content=ask_result.dict(),
+                                         content_type=ContentEnum.END, user_id=user_id)
             except Exception:
                 msg = traceback.format_exc()
                 logger.exception(msg)
-                await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
+                await response_websocket(websocket=websocket, session_id=session_id, content=msg,
+                                         content_type=ContentEnum.EXCEPTION, user_id=user_id)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
 
@@ -121,7 +166,8 @@ async def response_bedrock(websocket: WebSocket, session_id: str, response: dict
 
 
 async def response_websocket(websocket: WebSocket, session_id: str, content,
-                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1", user_id: str = "admin"):
+                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1",
+                             user_id: str = "admin"):
     if content_type == ContentEnum.STATE:
         content_json = {
             "text": content,

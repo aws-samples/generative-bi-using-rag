@@ -31,7 +31,14 @@ class Example(BaseModel):
 class HistoryRequest(BaseModel):
     user_id: str
     profile_name: str
+    log_type: str = "chat_history"
 
+
+class HistorySessionRequest(BaseModel):
+    session_id: str
+    user_id: str
+    profile_name: str
+    log_type: str = "chat_history"
 
 class QueryEntity(BaseModel):
     query: str
