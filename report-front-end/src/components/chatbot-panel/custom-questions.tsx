@@ -52,11 +52,11 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
 
   return (
     <div>
-      {questions.length > 0 && showMoreQuestions && (
+      {questions?.length > 0 && showMoreQuestions && (
         <SpaceBetween size={"xxs"}>
           <div className={styles.questions_grid}>
             {questions
-              .slice(0, Math.min(3, questions.length))
+              ?.slice(0, Math.min(3, questions.length))
               .map((question, kid) => (
                 <Button
                   key={kid}
@@ -78,10 +78,10 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
           </div>
         </SpaceBetween>
       )}
-      {questions.length > 0 && !showMoreQuestions && (
+      {questions?.length > 0 && !showMoreQuestions && (
         <SpaceBetween size={"xxs"}>
           <div className={styles.questions_grid}>
-            {questions.map((question, kid) => (
+            {questions?.map((question, kid) => (
               <Button
                 key={kid}
                 size="small"

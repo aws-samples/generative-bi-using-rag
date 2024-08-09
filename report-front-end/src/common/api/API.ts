@@ -30,6 +30,7 @@ export const getLSTokens = () => {
 export const getBearerTokenObj = () => {
   const { accessToken, idToken, refreshToken } = getLSTokens();
   return {
+    "Authorization": accessToken,
     "X-Access-Token": accessToken,
     "X-Id-Token": idToken,
     "X-Refresh-Token": refreshToken,
