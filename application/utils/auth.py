@@ -97,6 +97,8 @@ def authenticate(access_token, id_token, refresh_token):
     claims = ["email"]
     identity = get_cognito_identity_from_token(decoded=decoded, claims=claims)
 
+    print("Identity:", identity)
+
     if id_token:
         decoded_id = jwt_decode(id_token, audience=CLIENT_ID, access_token=access_token)
         identity_from_id_token = get_cognito_identity_from_token(decoded=decoded_id, claims=claims)
