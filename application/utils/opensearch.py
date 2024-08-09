@@ -3,7 +3,7 @@ from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
 import logging
 from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
-from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING
+from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING, AOS_INDEX_NER
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +271,54 @@ def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch
     return response['hits']['hits']
 
 
+def update_index_mapping(opensearch_client, index_name, dimension):
+    """
+    Create index mapping
+    :param opensearch_client:
+    :param index_name:
+    :param dimension:
+    :return:
+    """
+    response = opensearch_client.indices.put_mapping(
+        index=index_name,
+        body={
+            "properties": {
+                "vector_field": {
+                    "type": "knn_vector",
+                    "dimension": dimension
+                },
+                "text": {
+                    "type": "keyword"
+                },
+                "profile": {
+                    "type": "keyword"
+                },
+                "entity_type": {
+                    "type": "keyword"
+                },
+                "entity_count": {
+                    "type": "integer"
+                },
+                "entity_table_info": {
+                    "type": "nested",
+                    "properties": {
+                        "table_name": {
+                            "type": "keyword"
+                        },
+                        "column_name": {
+                            "type": "keyword"
+                        },
+                        "value": {
+                            "type": "text"
+                        }
+                    }
+                }
+            }
+        }
+    )
+    return bool(response['acknowledged'])
+
+
 def upload_results_to_opensearch(region_name, domain, opensearch_user, opensearch_password, index_name, query, sql,
                                  host='', port=443):
 
@@ -320,10 +368,18 @@ def opensearch_index_init():
                 if success:
                     logger.info(
                         "Creating OpenSearch index mapping, index is {index_name}".format(index_name=index_name))
-                    success = create_index_mapping(opensearch_client, index_name, dimension)
+                    if index_name == AOS_INDEX_NER:
+                        success = create_entity_index_mapping(opensearch_client, index_name, dimension)
+                    else:
+                        success = create_index_mapping(opensearch_client, index_name, dimension)
                     logger.info(f"OpenSearch Index mapping created")
                 else:
                     index_create_success = False
+            else:
+                if index_name == AOS_INDEX_NER:
+                    check_flag = check_field_exists(opensearch_client, index_name, "ner_table_info")
+                    logger.info(f"check index flag: {check_flag}")
+                    update_index_mapping(opensearch_client, index_name, dimension)
         return index_create_success
     except Exception as e:
         logger.error("create index error")
