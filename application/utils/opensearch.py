@@ -118,6 +118,53 @@ def create_index_mapping(opensearch_client, index_name, dimension):
     )
     return bool(response['acknowledged'])
 
+def create_entity_index_mapping(opensearch_client, index_name, dimension):
+    """
+    Create index mapping
+    :param opensearch_client:
+    :param index_name:
+    :param dimension:
+    :return:
+    """
+    response = opensearch_client.indices.put_mapping(
+        index=index_name,
+        body={
+            "properties": {
+                "vector_field": {
+                    "type": "knn_vector",
+                    "dimension": dimension
+                },
+                "text": {
+                    "type": "keyword"
+                },
+                "profile": {
+                    "type": "keyword"
+                },
+                "entity_type": {
+                    "type": "keyword"
+                },
+                "entity_count": {
+                    "type": "integer"
+                },
+                "entity_table_info": {
+                    "type": "nested",
+                    "properties": {
+                        "table_name": {
+                            "type": "keyword"
+                        },
+                        "column_name": {
+                            "type": "keyword"
+                        },
+                        "value": {
+                            "type": "text"
+                        }
+                    }
+                }
+            }
+        }
+    )
+    return bool(response['acknowledged'])
+
 
 def delete_opensearch_index(opensearch_client, index_name):
     """
@@ -134,7 +181,28 @@ def delete_opensearch_index(opensearch_client, index_name):
     except Exception as e:
         logger.info(f"Index {index_name} not found, nothing to delete")
         return True
+def check_field_exists(opensearch_client, index_name, field_name):
+    """
+    Check if a field exists in the specified index
+    :param opensearch_client: OpenSearch client
+    :param index_name: Name of the index
+    :param field_name: Name of the field to check
+    :return: True if the field exists, False otherwise
+    """
+    try:
+        # Get the mapping for the index
+        mapping = opensearch_client.indices.get_mapping(index=index_name)
 
+        logger.info(mapping)
+        # Traverse the mapping to check if the field exists
+        if index_name in mapping:
+            properties = mapping[index_name]['mappings']['properties']
+            if field_name in properties:
+                return True
+    except Exception as e:
+        logger.error(f"Error checking field {field_name}: {e}")
+
+    return False
 
 def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profile, top_k, score_threshold=0.7):
     if search_type == "query":
