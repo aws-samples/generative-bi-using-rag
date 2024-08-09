@@ -106,7 +106,7 @@ def get_sessions(history_request: HistoryRequest):
     return LogManagement.get_all_sessions(user_id, history_request.profile_name, history_request.log_type)
 
 
-@router.post("/get_history")
+@router.post("/get_history_by_session")
 def get_history_by_session(history_request: HistorySessionRequest):
     user_id = base64.b64decode(history_request.user_id).decode('utf-8')
     history_list = LogManagement.get_all_history_by_session(profile_name=history_request.profile_name, user_id=user_id,
