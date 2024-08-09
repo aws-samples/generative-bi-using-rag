@@ -77,13 +77,16 @@ def authenticate(access_token, id_token, refresh_token):
     print('---REFRESH TOKEN---', refresh_token)
 
     if not access_token or not id_token or not refresh_token:
+        print('Token: one of token is none')
         response = {}
         response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
         return response
     try:
         decoded = jwt_decode(access_token)
+        print('Token decoded:', decoded)
 
     except Exception as e:
+        print('Token decode exception', str(e))
         response = {}
         response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
         return response
