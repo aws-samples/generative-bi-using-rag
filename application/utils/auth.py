@@ -7,7 +7,6 @@ import os
 REGION = os.getenv("COGNITO_REGION")
 USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
-CLIENT_SECRET = os.getenv("COGNITO_CLIENT_SECRET")
 AUTH_PATH = os.getenv("COGNITO_AUTH_PATH")
 USER_ROLES_CLAIM = os.getenv("USER_ROLES_CLAIM", "cognito:groups")
 
@@ -33,12 +32,10 @@ class RefreshTokenError(Exception):
         return self.description
 
 def refresh_tokens(refresh_token):
-    auth = requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
     resp = requests.post(
         TOKEN_URL,
         data={"grant_type": 'refresh_token', "refresh_token": refresh_token, "client_id": CLIENT_ID},
-        auth=auth,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
 
