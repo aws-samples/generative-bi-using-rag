@@ -32,7 +32,7 @@ export const Sessions = (
           {
             session_id: sessionId,
             messages: [],
-          }, ...(response)]);
+          }, ...(response.filter((item: any) => item.session_id !== ""))]);
         props.setCurrentSessionId(sessionId);
       });
   }, [userInfo.queryConfig.selectedDataPro]);
