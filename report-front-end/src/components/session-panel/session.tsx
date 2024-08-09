@@ -1,9 +1,10 @@
 import { Button } from "@cloudscape-design/components";
 import "./style.scss";
 import { Dispatch, SetStateAction } from "react";
+import { Session } from "./types";
 
 export const SessionPanel = (props: {
-  session: any,
+  session: Session,
   index: number,
   currSession: number,
   setCurrSession: Dispatch<SetStateAction<number>>,
@@ -22,7 +23,7 @@ export const SessionPanel = (props: {
         iconName="contact"
         className="session"
         onClick={onClick}>
-        {props.session.session_id}
+        {props.session.messages.length > 0 ? props.session.title : "New Chat"}
       </Button>
     </div>
   );

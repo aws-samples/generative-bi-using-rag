@@ -30,6 +30,7 @@ export const Sessions = (
         props.setSessions([
           {
             session_id: uuid(),
+            title: "New Chat",
             messages: [],
           }, ...(response)]);
         props.setCurrentSession(0);
@@ -40,6 +41,7 @@ export const Sessions = (
     props.setSessions([
       {
         session_id: uuid(),
+        title: "New Chat",
         messages: [],
       }, ...props.sessions]);
     props.setCurrentSession(0);
