@@ -19,7 +19,7 @@ app = FastAPI(title='GenBI')
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=['*'],
     allow_headers=['*'],
 )
@@ -39,7 +39,6 @@ async def http_authenticate(request: Request, call_next):
         username = response["X-User-Name"]
         #email = response["X-Email"]
         response = await call_next(request)
-        response.headers["X-Status-Code"] = status.HTTP_200_OK
         response.headers["X-User-Name"] = username
         #response.headers["X-Email"] = email
         return response
