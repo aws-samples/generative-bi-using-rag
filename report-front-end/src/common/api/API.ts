@@ -44,7 +44,7 @@ request.interceptors.request.use((url, options) => {
       ...options,
       headers: {
         "X-Access-Token": accessToken,
-        "X-ID-Token": idToken,
+        "X-Id-Token": idToken,
         "X-Refresh-Token": refreshToken,
         ...options.headers,
       },

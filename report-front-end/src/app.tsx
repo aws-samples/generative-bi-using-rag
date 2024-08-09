@@ -21,12 +21,8 @@ const App: React.FC<{
   signOut?: SignOut;
   user?: AmplifyUser & { signInUserSession: any };
 }> = ({ user }) => {
-  // const [cookies, setCookie] = useCookies([
-  //   "accessToken",
-  //   "refreshToken",
-  //   "idToken",
-  // ]);
   const dispatch = useDispatch();
+  console.log({ user, signInUserSession: user?.signInUserSession });
 
   useEffect(() => {
     if (LOGIN_TYPE === COGNITO) {
@@ -53,9 +49,6 @@ const App: React.FC<{
         localStorage.setItem(LOCAL_STORAGE_KEYS.accessToken, accessToken);
         localStorage.setItem(LOCAL_STORAGE_KEYS.idToken, idToken);
         localStorage.setItem(LOCAL_STORAGE_KEYS.refreshToken, refreshToken);
-        // setCookie("accessToken", accessToken);
-        // setCookie("refreshToken", refreshToken);
-        // setCookie("idToken", idToken);
       } catch (error) {
         console.error("Initiating cognito user state error: ", error);
       }
@@ -69,8 +62,6 @@ const App: React.FC<{
       dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
     }
   }, [dispatch, user]);
-
-  console.log({ user, signInUserSession: user?.signInUserSession });
 
   return (
     <div style={{ height: "100%" }}>

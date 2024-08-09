@@ -76,7 +76,7 @@ export function createWssClient(
 }
 
 export const useQueryWithCookies = () => {
-  const { noToken, ...tokens } = getLSTokens();
+  const { accessToken, idToken, refreshToken } = getLSTokens();
   const queryWithWS = useCallback(
     (props: {
       query: string;
@@ -117,12 +117,14 @@ export const useQueryWithCookies = () => {
         context_window: props.configuration.contextWindow,
         session_id: Global.sessionId,
         user_id: props.userId,
-        ...tokens,
+        "X-Access-Token": accessToken,
+        "X-Id-Token": idToken,
+        "X-Refresh-Token": refreshToken,
       };
       console.log("Send WebSocketMessage: ", param);
       props.sendMessage(param);
     },
-    [tokens]
+    [accessToken, idToken, refreshToken]
   );
-  return { queryWithWS, noToken };
+  return { queryWithWS };
 };
