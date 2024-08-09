@@ -21,9 +21,19 @@ class Question(BaseModel):
     session_id: str = "-1"
     user_id: str = "admin"
 
+
 class HistoryRequest(BaseModel):
     user_id: str
     profile_name: str
+    log_type: str = "chat_history"
+
+
+class HistorySessionRequest(BaseModel):
+    session_id: str
+    profile_name: str
+    user_id: str
+    log_type: str = "chat_history"
+
 
 class DlsetQuestion(BaseModel):
     #  与 table_name 相同
@@ -44,7 +54,7 @@ class DlsetQuestion(BaseModel):
     top_p: float = 0.9
     max_tokens: int = 2048
     temperature: float = 0.01
-    context_window: int = 3
+    context_window: int = 5
 
 
 class Example(BaseModel):
@@ -139,9 +149,21 @@ class Message(BaseModel):
     content: Union[str, Answer]
 
 
+class DlsetMessage(BaseModel):
+    type: str
+    content: Union[str, SupersetAnswer]
+
+
 class HistoryMessage(BaseModel):
     session_id: str
     messages: list[Message]
+    title: str
+
+
+class DlsetHistoryMessage(BaseModel):
+    session_id: str
+    messages: list[Message]
+    title: str
 
 
 class ChatHistory(BaseModel):

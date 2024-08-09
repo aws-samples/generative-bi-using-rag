@@ -3,7 +3,7 @@ from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
 import logging
 from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
-from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING, AOS_INDEX_NER
+from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING
 
 logger = logging.getLogger(__name__)
 
@@ -99,113 +99,28 @@ def create_index_mapping(opensearch_client, index_name, dimension):
     :param dimension:
     :return:
     """
-    response = opensearch_client.indices.put_mapping(
-        index=index_name,
-        body={
-            "properties": {
-                "vector_field": {
-                    "type": "knn_vector",
-                    "dimension": dimension
-                },
-                "text": {
-                    "type": "keyword"
-                },
-                "profile": {
-                    "type": "keyword"
-                },
-                "entity_type": {
-                    "type": "keyword"
-                },
-                "entity_count": {
-                    "type": "integer"
-                },
-                "entity_table_info": {
-                    "type": "nested",
-                    "properties": {
-                        "table_name": {
-                            "type": "keyword"
-                        },
-                        "column_name": {
-                            "type": "keyword"
-                        },
-                        "value": {
-                            "type": "text"
-                        }
+    mapping = {
+                "properties": {
+                    "vector_field": {
+                        "type": "knn_vector",
+                        "dimension": dimension
+                    },
+                    "text": {
+                        "type": "text"
+                    },
+                    "profile": {
+                        "type": "keyword"
                     }
                 }
             }
-        }
-    )
-    return bool(response['acknowledged'])
 
-
-def check_field_exists(opensearch_client, index_name, field_name):
-    """
-    Check if a field exists in the specified index
-    :param opensearch_client: OpenSearch client
-    :param index_name: Name of the index
-    :param field_name: Name of the field to check
-    :return: True if the field exists, False otherwise
-    """
-    try:
-        # Get the mapping for the index
-        mapping = opensearch_client.indices.get_mapping(index=index_name)
-
-        logger.info(mapping)
-        # Traverse the mapping to check if the field exists
-        if index_name in mapping:
-            properties = mapping[index_name]['mappings']['properties']
-            if field_name in properties:
-                return True
-    except Exception as e:
-        logger.error(f"Error checking field {field_name}: {e}")
-
-    return False
-
-def update_index_mapping(opensearch_client, index_name, dimension):
-    """
-    Create index mapping
-    :param opensearch_client:
-    :param index_name:
-    :param dimension:
-    :return:
-    """
+    if index_name == opensearch_info['sql_index']:
+        mapping["properties"].update({"sample_type": {
+            "type": "keyword"
+        }})
     response = opensearch_client.indices.put_mapping(
         index=index_name,
-        body={
-            "properties": {
-                "vector_field": {
-                    "type": "knn_vector",
-                    "dimension": dimension
-                },
-                "text": {
-                    "type": "keyword"
-                },
-                "profile": {
-                    "type": "keyword"
-                },
-                "entity_type": {
-                    "type": "keyword"
-                },
-                "entity_count": {
-                    "type": "integer"
-                },
-                "entity_table_info": {
-                    "type": "nested",
-                    "properties": {
-                        "table_name": {
-                            "type": "keyword"
-                        },
-                        "column_name": {
-                            "type": "keyword"
-                        },
-                        "value": {
-                            "type": "text"
-                        }
-                    }
-                }
-            }
-        }
+        body=mapping
     )
     return bool(response['acknowledged'])
 
@@ -227,7 +142,7 @@ def delete_opensearch_index(opensearch_client, index_name):
         return True
 
 
-def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profile, top_k, score_threshold=0.7):
+def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profile, top_k, score_threshold=0.7, sample_type=None):
     if search_type == "query":
         index_name = opensearch_info['sql_index']
     elif search_type == "ner":
@@ -236,8 +151,7 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
         index_name = opensearch_info['agent_index']
 
     if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-        records_with_embedding = create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING, query,
-                                                                        index_name=index_name)
+        records_with_embedding = create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING, query, index_name=index_name)
     else:
         records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
     retrieve_result = retrieve_results_from_opensearch(
@@ -250,7 +164,9 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
         port=opensearch_info['port'],
         query_embedding=records_with_embedding['vector_field'],
         top_k=top_k,
-        profile_name=selected_profile)
+        profile_name=selected_profile,
+        sample_type=sample_type
+    )
 
     filter_retrieve_result = []
     for item in retrieve_result:
@@ -260,18 +176,19 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
 
 
 def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch_user, opensearch_password,
-                                     query_embedding, top_k=3, host='', port=443, profile_name=None):
-    opensearch_client = get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password,
-                                                      region_name)
+                                     query_embedding, top_k=3, host='', port=443, profile_name=None, sample_type=None):
+    opensearch_client = get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password, region_name)
     search_query = {
         "size": top_k,  # Adjust the size as needed to retrieve more or fewer results
         "query": {
             "bool": {
-                "filter": {
-                    "match_phrase": {
-                        "profile": profile_name
+                "filter": [
+                    {
+                        "term": {
+                            "profile": profile_name
+                        }
                     }
-                },
+                ],
                 "must": [
                     {
                         "knn": {
@@ -286,7 +203,8 @@ def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch
 
         }
     }
-
+    if sample_type:
+        search_query["query"]["bool"]["filter"].append({"term": {"sample_type": sample_type}})
     # Execute the search query
     response = opensearch_client.search(
         body=search_query,
@@ -298,8 +216,8 @@ def retrieve_results_from_opensearch(index_name, region_name, domain, opensearch
 
 def upload_results_to_opensearch(region_name, domain, opensearch_user, opensearch_password, index_name, query, sql,
                                  host='', port=443):
-    opensearch_client = get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password,
-                                                      region_name)
+
+    opensearch_client = get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password, region_name)
 
     # Vector embedding using Amazon Bedrock Titan text embedding
     logger.info(f"Creating embeddings for records")
@@ -349,11 +267,6 @@ def opensearch_index_init():
                     logger.info(f"OpenSearch Index mapping created")
                 else:
                     index_create_success = False
-            else:
-                if index_name == AOS_INDEX_NER:
-                    check_flag = check_field_exists(opensearch_client, index_name, "ner_table_info")
-                    logger.info(f"check index flag: {check_flag}")
-                    update_index_mapping(opensearch_client, index_name, dimension)
         return index_create_success
     except Exception as e:
         logger.error("create index error")

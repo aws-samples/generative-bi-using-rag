@@ -2498,26 +2498,61 @@ The question is : {question}
 
 # sql optimijzation prompt
 sql_optimization_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Your tasks include:
+1.  Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. 
+2.  adjust the structure of the SQL, but you must not change the logic.
+3. Focus on optimizing the conditions, and try not to modify other subjects.
 """
 
 sql_optimization_system_prompt_dict['haiku-20240307v1-0'] = """
-You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Your tasks include:
+1.  Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. 
+2.  adjust the structure of the SQL, but you must not change the logic.
+3. Focus on optimizing the conditions, and try not to modify other subjects.
 """
 
 sql_optimization_system_prompt_dict['sonnet-20240229v1-0'] = """
-You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Your tasks include:
+1.  Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. 
+2.  adjust the structure of the SQL, but you must not change the logic.
+3. Focus on optimizing the conditions, and try not to modify other subjects.
 """
 
 sql_optimization_system_prompt_dict['llama3-70b-instruct-0'] = """
-You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Your tasks include:
+1.  Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. 
+2.  adjust the structure of the SQL, but you must not change the logic.
+3. Focus on optimizing the conditions, and try not to modify other subjects.
 """
 
 sql_optimization_system_prompt_dict['sonnet-3-5-20240620v1-0'] = """
-You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. You only need to adjust the structure of the SQL, but you must not change the logic.
+You are a data analysis expert and proficient in {database_engine}. Please generate an optimized SQL query statement based on the given SQL query statement. Your tasks include:
+1.  Even if the conditions conflict and no data is retrieved, do not remove any filtering conditions. 
+2.  adjust the structure of the SQL, but you must not change the logic.
+3. Focus on optimizing the conditions, and try not to modify other subjects.
 """
 
 sql_optimization_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
+<example>
+origin sql: 
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+FROM (select * from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly where (cal_year = '2023'))
+WHERE cal_year = '2024'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+优化的SQL
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly 
+WHERE cal_year = '2024'  AND cal_year = '2023'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+</example>
 Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
 Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
 
@@ -2526,6 +2561,26 @@ The origin sql query is : ```{sql}```
 """
 
 sql_optimization_user_prompt_dict['haiku-20240307v1-0'] = """
+<example>
+原始的SQL: 
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+FROM (select * from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly where (cal_year = '2023'))
+WHERE cal_year = '2024'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+优化的SQL
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly 
+WHERE cal_year = '2024'  AND cal_year = '2023'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+</example>
 Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
 Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
 
@@ -2534,6 +2589,26 @@ The origin sql query is : ```{sql}```
 """
 
 sql_optimization_user_prompt_dict['sonnet-20240229v1-0'] = """
+<example>
+原始的SQL: 
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+FROM (select * from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly where (cal_year = '2023'))
+WHERE cal_year = '2024'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+优化的SQL
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly 
+WHERE cal_year = '2024'  AND cal_year = '2023'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+</example>
 Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
 Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
 
@@ -2542,6 +2617,26 @@ The origin sql query is : ```{sql}```
 """
 
 sql_optimization_user_prompt_dict['llama3-70b-instruct-0'] = """
+<example>
+原始的SQL: 
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+FROM (select * from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly where (cal_year = '2023'))
+WHERE cal_year = '2024'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+优化的SQL
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly 
+WHERE cal_year = '2024'  AND cal_year = '2023'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+</example>
 Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
 Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
 
@@ -2550,6 +2645,26 @@ The origin sql query is : ```{sql}```
 """
 
 sql_optimization_user_prompt_dict['sonnet-3-5-20240620v1-0'] = """
+<example>
+原始的SQL: 
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+FROM (select * from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly where (cal_year = '2023'))
+WHERE cal_year = '2024'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+优化的SQL
+```
+SELECT
+SUM(ipo3_act_qty) AS "库存数量"
+from rdt.rdt_c4i_dm_cntct_ctp_sales_monthly 
+WHERE cal_year = '2024'  AND cal_year = '2023'
+AND cal_year_month = '202407'
+LIMIT 100
+```
+</example>
 Put your detailed optimization suggestions and explanations in Chinese in the <optimization></optimization> tags
 Think about your answer first before you respond. Put your optimized sql in <sql></sql> tags.
 

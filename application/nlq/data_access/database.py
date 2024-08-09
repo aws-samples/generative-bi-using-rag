@@ -79,7 +79,7 @@ class RelationDatabase:
         if schemas is None:
             schemas = []
         metadata = self.get_metadata_by_connection(schemas)
-        return metadata.tables.keys()
+        return [table.fullname for key, table in metadata.tables.items()]
 
     def get_metadata_by_connection(self, schemas):
         engine = self.get_sqla_engine()
@@ -94,15 +94,12 @@ class RelationDatabase:
         tables = metadata.tables
         table_info = {}
         engine = self.get_sqla_engine()
-        for table_name, table in tables.items():
+        for key, table in tables.items():
             # If table name is provided, only generate DDL for those tables. Otherwise, generate DDL for all tables.
+            table_name = table.fullname
             if len(table_names) > 0 and table_name not in table_names:
                 continue
-            if "." in table_name:
-                table_name_key = table_name
-            else:
-                table_name_key = f"{table.schema}.{table_name}" if table.schema else table_name
-            table_info[table_name_key] = {}
+            table_info[table_name] = {}
             try:
                 create_table = str(CreateTable(table).compile(engine))
                 ddl = f"{create_table.rstrip()}"
@@ -115,9 +112,9 @@ class RelationDatabase:
                     ddl += f"  {column.name} {column.type.__visit_name__} {column_comment},\n"
                 ddl = ddl.rstrip(',\n') + "\n)"
 
-            table_info[table_name_key]['ddl'] = ddl
-            table_info[table_name_key]['description'] = table.comment
-            table_info[table_name_key]['database_id'] = int(self.connection.id)
+            table_info[table_name]['ddl'] = ddl
+            table_info[table_name]['description'] = table.comment
+            table_info[table_name]['database_id'] = int(self.connection.id)
 
             logger.info(f'added table {table_name} to table_info dict')
 
