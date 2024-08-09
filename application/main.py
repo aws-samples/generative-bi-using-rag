@@ -39,12 +39,12 @@ async def http_authenticate(request: Request, call_next):
         access_token = response["X-Access-Token"]
         id_token = response["X-Id-Token"]
         username = response["X-User-Name"]
-        email = response["X-Email"]
+        #email = response["X-Email"]
         response = await call_next(request)
         response.headers["X-Access-Token"] = access_token
         response.headers["X-Id-Token"] = id_token
         response.headers["X-User-Name"] = username
-        response.headers["X-Email"] = email
+        #response.headers["X-Email"] = email
         return response
 
 # Global exception capture

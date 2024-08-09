@@ -105,5 +105,5 @@ def authenticate(access_token, id_token, refresh_token):
         identity.update(identity_from_id_token)
 
     response["X-User-Name"] = identity["username"]
-    response["X-Email"] = identity["attributes"]["email"]
+    #response["X-Email"] = identity["attributes"]["email"]
     return response
