@@ -12,9 +12,12 @@ from utils.env_var import opensearch_info
 logger = logging.getLogger(__name__)
 
 DIMENSION_VALUE = "dimension"
+
+
 def delete_entity_sample(profile_name, id):
     VectorStore.delete_entity_sample(profile_name, id)
     st.success(f'Sample {id} deleted.')
+    st.session_state.ner_refresh_view = True
 
 
 def read_file(uploaded_file):
@@ -53,6 +56,9 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if 'ner_refresh_view' not in st.session_state:
+        st.session_state['ner_refresh_view'] = False
+
     with st.sidebar:
         st.title("Entity Management")
         all_profiles_list = ProfileManagement.get_all_profiles()
@@ -65,11 +71,15 @@ def main():
                                            placeholder="Please select data profile...", key='current_profile_name')
 
     tab_view, tab_add, tab_dimension, tab_search, batch_insert, batch_dimension_entity = st.tabs(
-        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity', 'Batch Dimension Entity'])
+        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity',
+         'Batch Dimension Entity'])
     if current_profile is not None:
         st.session_state['current_profile'] = current_profile
         with tab_view:
             if current_profile is not None:
+                if st.session_state.ner_refresh_view:
+                    st.session_state.ner_refresh_view = False
+                    st.rerun()
                 st.write("The display page can show a maximum of 5000 pieces of data")
                 for sample in VectorStore.get_all_entity_samples(current_profile):
                     # st.write(f"Sample: {sample}")
@@ -88,8 +98,6 @@ def main():
                         VectorStore.add_entity_sample(current_profile, entity, comment)
                         st.success('Sample added')
                         time.sleep(2)
-                        # del st.session_state['index_question']
-                        # del st.session_state['index_answer']
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
@@ -105,7 +113,8 @@ def main():
                         entity_item_table_info["table_name"] = table
                         entity_item_table_info["column_name"] = column
                         entity_item_table_info["value"] = value
-                        VectorStore.add_entity_sample(current_profile, entity, "", "dimension", entity_item_table_info)
+                        VectorStore.add_entity_sample(current_profile, entity, "", DIMENSION_VALUE,
+                                                      entity_item_table_info)
                         st.success('Sample added')
                         time.sleep(2)
                         st.rerun()
@@ -134,7 +143,7 @@ def main():
                 st.write("This page support CSV or Excel files batch insert entity samples.")
                 st.write("**The Column Name need contain 'entity' and 'comment'**")
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
-                                              type=['csv', 'xls', 'xlsx'], key="add metrics value")
+                                                  type=['csv', 'xls', 'xlsx'], key="add metrics value")
                 if uploaded_files:
                     for i, uploaded_file in enumerate(uploaded_files):
                         status_text = st.empty()
@@ -142,15 +151,24 @@ def main():
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
                             total_rows = len(each_upload_data)
-                            progress_bar = st.progress(0)
-                            progress_text = "batch insert {} entity  in progress. Please wait.".format(uploaded_file.name)
+                            unique_batch_data = {}
                             for j, item in enumerate(each_upload_data.itertuples(), 1):
                                 entity = str(item.entity)
                                 comment = str(item.comment)
-                                VectorStore.add_entity_sample(current_profile, entity, comment)
-                                progress = (j * 1.0) / total_rows
-                                progress_bar.progress(progress, text=progress_text)
+                                if entity not in unique_batch_data:
+                                    unique_batch_data[entity] = ""
+                                unique_batch_data[entity] = comment
+
+                            progress_bar = st.progress(0)
+                            unique_total_row = len(unique_batch_data)
+                            for k, (key, value) in enumerate(unique_batch_data.items(), 1):
+                                VectorStore.add_entity_sample(current_profile, key, value)
+                                progress = (k * 1.0) / unique_total_row
+                                upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
+                                    str(k))
+                                progress_bar.progress(progress, text=upload_text)
                             progress_bar.empty()
+                        st.session_state.ner_refresh_view = True
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
 
         with batch_dimension_entity:
@@ -166,15 +184,40 @@ def main():
                         each_upload_data = read_file(uploaded_file)
                         if each_upload_data is not None:
                             total_rows = len(each_upload_data)
-                            progress_bar = st.progress(0)
-                            progress_text = "batch insert {} entity  in progress. Please wait.".format(uploaded_file.name)
+                            unique_batch_data = {}
                             for j, item in enumerate(each_upload_data.itertuples(), 1):
                                 entity = str(item.entity)
-                                comment = str(item.comment)
-                                VectorStore.add_entity_sample(current_profile, entity, comment, DIMENSION_VALUE)
-                                progress = (j * 1.0) / total_rows
-                                progress_bar.progress(progress, text=progress_text)
+                                table = str(item.table)
+                                column = str(item.column)
+                                value = str(item.value)
+                                entity_item_table_info = {}
+                                entity_item_table_info["table_name"] = table
+                                entity_item_table_info["column_name"] = column
+                                entity_item_table_info["value"] = value
+                                value_id = table + "#" + column + "#" + value
+                                if entity in unique_batch_data:
+                                    if value_id not in unique_batch_data[entity]["value_id"]:
+                                        unique_batch_data[entity]["value_id"].append(value_id)
+                                        unique_batch_data[entity]["value_list"].append(entity_item_table_info)
+                                else:
+                                    unique_batch_data[entity] = {}
+                                    unique_batch_data[entity]["value_id"] = []
+                                    unique_batch_data[entity]["value_id"].append(value_id)
+                                    unique_batch_data[entity]["value_list"] = []
+                                    unique_batch_data[entity]["value_list"].append(entity_item_table_info)
+
+                            progress_bar = st.progress(0)
+                            unique_total_row = len(unique_batch_data)
+                            for k, (key, value) in enumerate(unique_batch_data.items(), 1):
+                                VectorStore.add_entity_dimension_batch_sample(current_profile, key, "", DIMENSION_VALUE,
+                                                                              value["value_list"])
+                                progress = (k * 1.0) / unique_total_row
+                                upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
+                                    str(k))
+                                progress_bar.progress(progress, text=upload_text)
+
                             progress_bar.empty()
+                        st.session_state.ner_refresh_view = True
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
 
     else:
