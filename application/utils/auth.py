@@ -74,13 +74,6 @@ def authenticate(access_token, id_token, refresh_token):
     try:
         decoded = jwt_decode(access_token)
 
-    except jwt.ExpiredSignatureError:
-        tokens = refresh_tokens(refresh_token)
-        access_token = tokens['accessToken']
-        id_token = tokens['idToken']
-
-        decoded = jwt_decode(access_token)
-
     except Exception as e:
         response = {}
         response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
