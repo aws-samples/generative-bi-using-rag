@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
+import toast from "react-hot-toast";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import {
@@ -8,8 +9,7 @@ import {
 } from "../../components/chatbot-panel/types";
 import { DEFAULT_QUERY_CONFIG } from "../constant/constants";
 import { Global } from "../constant/global";
-import { getLSTokens } from "./API";
-import toast from "react-hot-toast";
+import { getBearerTokenObj, getLSTokens } from "./API";
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
@@ -76,7 +76,6 @@ export function createWssClient(
 }
 
 export const useQueryWithCookies = () => {
-  const { accessToken, idToken, refreshToken } = getLSTokens();
   const queryWithWS = useCallback(
     (props: {
       query: string;
@@ -117,14 +116,12 @@ export const useQueryWithCookies = () => {
         context_window: props.configuration.contextWindow,
         session_id: Global.sessionId,
         user_id: props.userId,
-        "X-Access-Token": accessToken,
-        "X-Id-Token": idToken,
-        "X-Refresh-Token": refreshToken,
+        ...getBearerTokenObj(),
       };
       console.log("Send WebSocketMessage: ", param);
       props.sendMessage(param);
     },
-    [accessToken, idToken, refreshToken]
+    []
   );
   return { queryWithWS };
 };

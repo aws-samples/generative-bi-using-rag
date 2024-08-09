@@ -27,27 +27,27 @@ export const getLSTokens = () => {
     noToken: !accessToken || !idToken || !refreshToken,
   };
 };
+export const getBearerTokenObj = () => {
+  const { accessToken, idToken, refreshToken } = getLSTokens();
+  return {
+    "X-Access-Token": accessToken,
+    "X-Id-Token": idToken,
+    "X-Refresh-Token": refreshToken,
+  };
+};
 
 export const request = extend({
   prefix: BACKEND_URL,
   timeout: 30 * 1000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
 request.interceptors.request.use((url, options) => {
-  const { accessToken, idToken, refreshToken } = getLSTokens();
   return {
     url,
     options: {
       ...options,
-      headers: {
-        "X-Access-Token": accessToken,
-        "X-Id-Token": idToken,
-        "X-Refresh-Token": refreshToken,
-        ...options.headers,
-      },
+      headers: { ...getBearerTokenObj(), ...options.headers },
     },
   };
 });
@@ -114,7 +114,6 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
 }
 
 export async function getSessions(sessionItem: SessionItem) {
-  // call api
   try {
     const data = await request.post("qa/get_history_by_user_profile", {
       data: sessionItem,
@@ -129,6 +128,9 @@ export async function getSessions(sessionItem: SessionItem) {
   }
 }
 
+/**
+ * @deprecated replaced by websocket query method
+ */
 export async function query(props: {
   query: string;
   setLoading: Dispatch<SetStateAction<boolean>>;
