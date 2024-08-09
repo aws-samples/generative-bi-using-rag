@@ -23,7 +23,7 @@ export const SessionPanel = (props: {
         iconName="contact"
         className="session"
         onClick={onClick}>
-        {props.session.messages.length > 0 ? props.session.title : "New Chat"}
+        {props.session.messages.length > 0 ? props.session.messages[0].content as string : "New Chat"}
       </Button>
     </div>
   );

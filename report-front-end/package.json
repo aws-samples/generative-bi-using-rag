@@ -1,5 +1,5 @@
 {
-  "name": "aws-genai-llm-chatbot",
+  "name": "genbi-chatbot",
   "private": true,
   "version": "3.0.0",
   "type": "module",
