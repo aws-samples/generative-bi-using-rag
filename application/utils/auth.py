@@ -81,8 +81,6 @@ def authenticate(access_token, id_token, refresh_token):
 
     response = {}
     response['X-Status-Code'] = status.HTTP_200_OK
-    response["X-Access-Token"] = access_token
-    response["X-ID-Token"] = id_token
 
     claims = ["email"]
     identity = get_cognito_identity_from_token(decoded=decoded, claims=claims)

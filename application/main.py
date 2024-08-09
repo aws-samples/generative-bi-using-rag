@@ -28,7 +28,7 @@ app.add_middleware(
 async def http_authenticate(request: Request, call_next):
     print('---HTTP REQUEST---', vars(request), request.cookies)
     access_token = request.headers.get("X-Access-Token")
-    id_token = request.headers.get("X-ID-Token")
+    id_token = request.headers.get("X-Id-Token")
     refresh_token = request.headers.get("X-Refresh-Token")
 
     response = authenticate(access_token, id_token, refresh_token)
@@ -37,12 +37,12 @@ async def http_authenticate(request: Request, call_next):
         return Response(status_code=response["X-Status-Code"])
     else:
         access_token = response["X-Access-Token"]
-        id_token = response["X-ID-Token"]
+        id_token = response["X-Id-Token"]
         username = response["X-User-Name"]
         email = response["X-Email"]
         response = await call_next(request)
         response.headers["X-Access-Token"] = access_token
-        response.headers["X-ID-Token"] = id_token
+        response.headers["X-Id-Token"] = id_token
         response.headers["X-User-Name"] = username
         response.headers["X-Email"] = email
         return response

@@ -75,9 +75,9 @@ async def websocket_endpoint(websocket: WebSocket):
             if access_token:
                 del question_json['X-Access-Token']
 
-            id_token = question_json.get('X-ID-Token')
+            id_token = question_json.get('X-Id-Token')
             if id_token:
-                del question_json['X-ID-Token']
+                del question_json['X-Id-Token']
 
             refresh_token = question_json.get('X-Refresh-Token')
             if refresh_token:
