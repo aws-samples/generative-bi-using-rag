@@ -24,6 +24,7 @@ export default function Playground() {
 
   useEffect(() => {
     const handleUnAuthorized = () => {
+      console.info("handleUnAuthorized fired!");
       Auth.signOut().then();
     };
 
