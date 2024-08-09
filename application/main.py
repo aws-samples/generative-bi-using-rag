@@ -27,9 +27,9 @@ app.add_middleware(
 @app.middleware("http")
 async def http_authenticate(request: Request, call_next):
     print('---HTTP REQUEST---', vars(request), request.cookies)
-    access_token = request.headers["X-Access-Token"]
-    id_token = request.headers["X-ID-Token"]
-    refresh_token = request.headers["X-Refresh-Token"]
+    access_token = request.headers.get("X-Access-Token")
+    id_token = request.headers.get("X-ID-Token")
+    refresh_token = request.headers.get("X-Refresh-Token")
 
     response = authenticate(access_token, id_token, refresh_token)
 

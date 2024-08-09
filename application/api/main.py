@@ -71,17 +71,17 @@ async def websocket_endpoint(websocket: WebSocket):
             print('---WEBSOCKET MESSAGE---', data)
             question_json = json.loads(data)
 
-            access_token = question_json.get('accessToken')
+            access_token = question_json.get('X-Access-Token')
             if access_token:
-                del question_json['accessToken']
+                del question_json['X-Access-Token']
 
-            id_token = question_json.get('idToken')
+            id_token = question_json.get('X-ID-Token')
             if id_token:
-                del question_json['idToken']
+                del question_json['X-ID-Token']
 
-            refresh_token = question_json.get('refreshToken')
+            refresh_token = question_json.get('X-Refresh-Token')
             if refresh_token:
-                del question_json['refreshToken']
+                del question_json['X-Refresh-Token']
 
             response = authenticate(access_token, id_token, refresh_token)
             if response["X-Status-Code"] != status.HTTP_200_OK:
