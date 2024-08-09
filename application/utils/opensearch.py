@@ -379,7 +379,8 @@ def opensearch_index_init():
                 if index_name == AOS_INDEX_NER:
                     check_flag = check_field_exists(opensearch_client, index_name, "ner_table_info")
                     logger.info(f"check index flag: {check_flag}")
-                    update_index_mapping(opensearch_client, index_name, dimension)
+                    if not check_flag:
+                        update_index_mapping(opensearch_client, index_name, dimension)
         return index_create_success
     except Exception as e:
         logger.error("create index error")
