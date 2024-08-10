@@ -17,7 +17,7 @@ class LogManagement:
                                   log_type=log_type)
 
     @classmethod
-    def get_history(cls, user_id, profile_name, log_type):
+    def get_history(cls, user_id, profile_name, log_type="chat_history"):
         history_list = cls.query_log_dao.get_history_by_user_profile(user_id, profile_name, log_type)
         return history_list
 
