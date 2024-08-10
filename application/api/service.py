@@ -20,7 +20,7 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
-    change_class_to_str, get_window_history, get_share_data, update_share_data
+    change_class_to_str
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage
 from .exception_handler import BizException
