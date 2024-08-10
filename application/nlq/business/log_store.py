@@ -32,7 +32,7 @@ class LogManagement:
                                                              log_type=log_type)
         for log in history_list:
             logger.info("the opensearch log is : {log}".format(log=log))
-            answer = json.load(log['log_info'])
+            answer = json.loads(log['log_info'])
             user_query_history.append("user:" + log['query'])
             user_query_history.append("assistant:" + answer['query_rewrite'])
         return user_query_history

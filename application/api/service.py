@@ -442,7 +442,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id,
                                                                   session_id=session_id, size=context_window,
                                                                   log_type='chat_history')
-        if len(user_query_history) > 0:
+        if len(user_query_history) >= 0:
             user_query_history.append("user:" + search_box)
             logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
             query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
