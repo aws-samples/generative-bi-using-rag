@@ -30,6 +30,7 @@ class LogManagement:
                                                              size=size,
                                                              log_type=log_type)
         for log in history_list:
+            logger.info("the opensearch log is : {log}".format(log=log))
             user_query_history.append("user:" + log['query'])
             user_query_history.append("assistant:" + log['sql'])
         return user_query_history
