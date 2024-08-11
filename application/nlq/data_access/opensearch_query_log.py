@@ -190,6 +190,7 @@ class OpenSearchQueryLogDao:
         for bucket in response.get('aggregations', {}).get('groups', {}).get('buckets', []):
             session_id = bucket.get('key')
             first_query = bucket.get('top_hits_agg', {}).get('hits', {}).get('hits', [])[0].get('_source', {}).get('query', session_id)
+            
             history_list.append(
                 {
                     "session_id": session_id,
