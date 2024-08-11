@@ -187,16 +187,20 @@ class OpenSearchQueryLogDao:
         }
         response = self.opensearch_client.search(index=QUERY_LOG_TABLE_NAME, body=query)
         history_list = []
+        sorted_history_list = []
         for bucket in response.get('aggregations', {}).get('groups', {}).get('buckets', []):
             session_id = bucket.get('key')
-            first_query = bucket.get('top_hits_agg', {}).get('hits', {}).get('hits', [])[0].get('_source', {}).get('query', session_id)
-            
+            first_query_info = bucket.get('top_hits_agg', {}).get('hits', {}).get('hits', [])[0].get('_source', {})
+            first_query = first_query_info.get('query', session_id)
+            first_query_time = first_query_info.get('time_str')
             history_list.append(
                 {
                     "session_id": session_id,
                     "title": first_query,
+                    "time_str": first_query_time
                 }
             )
-        return history_list
+            sorted_history_list = sorted(history_list, key=lambda x: x['time_str'], reverse=True)
+        return sorted_history_list
 
 
