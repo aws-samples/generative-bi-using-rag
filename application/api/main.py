@@ -64,6 +64,14 @@ def get_history_by_session(history_request: HistorySessionRequest):
     return chat_history
 
 
+@router.post("/delete_history_by_session")
+def delete_history_by_session(history_request: HistorySessionRequest):
+    user_id = history_request.user_id
+    profile_name = history_request.profile_name
+    session_id = history_request.session_id
+    return LogManagement.delete_history_by_session(user_id, profile_name, session_id)
+
+
 def format_chat_history(history_list, log_type):
     chat_history = []
     chat_history_session = {}
