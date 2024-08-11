@@ -9,7 +9,7 @@ from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
 
-from utils.auth import authenticate
+from utils.auth import authenticate, skipAuthentication
 
 from .service import ask_websocket
 
@@ -71,20 +71,22 @@ async def websocket_endpoint(websocket: WebSocket):
             print('---WEBSOCKET MESSAGE---', data)
             question_json = json.loads(data)
 
-            access_token = question_json.get('X-Access-Token')
-            if access_token:
-                del question_json['X-Access-Token']
+            if not skipAuthentication:
+                access_token = question_json.get('X-Access-Token')
+                if access_token:
+                    del question_json['X-Access-Token']
 
-            id_token = question_json.get('X-Id-Token')
-            if id_token:
-                del question_json['X-Id-Token']
+                id_token = question_json.get('X-Id-Token')
+                if id_token:
+                    del question_json['X-Id-Token']
 
-            refresh_token = question_json.get('X-Refresh-Token')
-            if refresh_token:
-                del question_json['X-Refresh-Token']
+                refresh_token = question_json.get('X-Refresh-Token')
+                if refresh_token:
+                    del question_json['X-Refresh-Token']
 
-            response = authenticate(access_token, id_token, refresh_token)
-            if response["X-Status-Code"] != status.HTTP_200_OK:
+                response = authenticate(access_token, id_token, refresh_token)
+
+            if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
                 answer = {}
                 answer['X-Status-Code'] = response["X-Status-Code"]
                 await response_websocket(websocket, session_id, answer, ContentEnum.END)
@@ -96,7 +98,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     ask_result = await ask_websocket(websocket, question)
                     logger.info(ask_result)
                     answer = ask_result.dict()
-                    answer.update(response)
+                    if not skipAuthentication:
+                        answer.update(response)
                     await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
                 except Exception:
                     msg = traceback.format_exc()

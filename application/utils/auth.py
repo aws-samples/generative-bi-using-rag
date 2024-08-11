@@ -9,6 +9,8 @@ USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 AUTH_PATH = os.getenv("COGNITO_AUTH_PATH")
 USER_ROLES_CLAIM = os.getenv("USER_ROLES_CLAIM", "cognito:groups")
+AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
+skipAuthentication = AWS_DEFAULT_REGION.startswith("cn")
 
 JWKS_URL = os.getenv("JWKS_URL",
                         f"https://cognito-idp.{REGION}.amazonaws.com/{USER_POOL_ID}/" ".well-known/jwks.json")
