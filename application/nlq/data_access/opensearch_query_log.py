@@ -174,7 +174,7 @@ class OpenSearchQueryLogDao:
                             "top_hits": {
                                 "size": 1,
                                 "_source": {
-                                    "includes": ["query"]
+                                    "includes": ["query", "time_str"]
                                 },
                                 "sort": [
                                     {"time_str": {"order": "asc"}}
