@@ -5,7 +5,7 @@ from utils.opensearch import check_opensearch_index, get_opensearch_cluster_clie
 
 logger = logging.getLogger(__name__)
 
-QUERY_LOG_TABLE_NAME = os.getenv("DYNAMODB_QUERY_LOG_TABLE_NAME", "NlqQueryLogging")
+QUERY_LOG_TABLE_NAME = os.getenv("DYNAMODB_QUERY_LOG_TABLE_NAME", "nlqquerylogging")
 
 
 class QueryLogEntity:
