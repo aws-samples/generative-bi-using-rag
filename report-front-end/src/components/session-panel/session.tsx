@@ -8,11 +8,11 @@ export const SessionPanel = (props: {
   index: number,
   currSessionId: string,
   setCurrSessionId: Dispatch<SetStateAction<string>>,
-  setSessions: Dispatch<SetStateAction<any[]>>,
+  setSessions: Dispatch<SetStateAction<Session[]>>,
 }) => {
 
   const onClick = () => {
-    console.log("switch sessionId: ", props.session);
+    console.log("Switch sessionId: ", props.session);
     props.setCurrSessionId(props.session.session_id);
   };
 
@@ -24,7 +24,7 @@ export const SessionPanel = (props: {
         iconName="contact"
         className="session"
         onClick={onClick}>
-        {props.session.messages.length > 0 ? props.session.messages[0].content as string : "New Chat"}
+        {props.session.title || "New Chat"}
       </Button>
     </div>
   );

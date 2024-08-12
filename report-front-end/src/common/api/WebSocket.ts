@@ -52,7 +52,8 @@ export function createWssClient(
             return session;
           } else {
             return {
-              session_id: messageJson.session_id,
+              session_id: session.session_id,
+              title: session.title,
               messages: [...session.messages, {
                 type: ChatBotMessageType.AI,
                 content: messageJson.content
@@ -76,13 +77,14 @@ export function queryWithWS(props: {
   userId: string;
   sessionId: string;
 }) {
-  props.setSessions((prevState) => {
-    return prevState.map((session) => {
+  props.setSessions((prevState: any) => {
+    return prevState.map((session: Session) => {
       if (props.sessionId !== session.session_id) {
         return session;
       } else {
         return {
           session_id: session.session_id,
+          title: session.title === "New Chat" ? props.query : session.title,
           messages: [...session.messages, {
             type: ChatBotMessageType.Human,
             content: props.query

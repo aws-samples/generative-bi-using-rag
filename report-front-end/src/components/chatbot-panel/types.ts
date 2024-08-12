@@ -52,6 +52,12 @@ export interface SessionItem {
   profile_name: string,
 }
 
+export interface HistoryItem {
+  user_id: string,
+  session_id: string;
+  profile_name: string;
+}
+
 export interface AskRewriteResult {
   query_rewrite: string;
 }

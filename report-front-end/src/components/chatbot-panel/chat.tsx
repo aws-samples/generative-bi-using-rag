@@ -1,7 +1,7 @@
 import { Box, SpaceBetween, Spinner, StatusIndicator } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getSelectData } from "../../common/api/API";
+import { getHistoryBySession, getSelectData } from "../../common/api/API";
 import { createWssClient } from "../../common/api/WebSocket";
 import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
 import ChatInputPanel from "./chat-input-panel";
@@ -57,6 +57,32 @@ export default function Chat(props: {
     props.sessions.forEach((session) => {
       if (session.session_id === props.currentSessionId) {
         setMessageHistory(session.messages);
+        if (session.messages.length === 0 && session.title !== "New Chat") {
+          const historyItem = {
+            session_id: session.session_id,
+            user_id: userState.userInfo.userId,
+            profile_name: userState.queryConfig.selectedDataPro,
+          };
+          getHistoryBySession(historyItem).then(
+            response => {
+              if (response) {
+                props.setSessions((prevState) => {
+                  return prevState.map((session) => {
+                    if (response.session_id !== session.session_id) {
+                      return session;
+                    } else {
+                      return {
+                        session_id: session.session_id,
+                        title: session.title,
+                        messages: response.messages,
+                      };
+                    }
+                  });
+                });
+              }
+            },
+          );
+        }
       }
     });
   }, [props.currentSessionId]);

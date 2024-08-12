@@ -24,15 +24,35 @@ export const Sessions = (
       user_id: userInfo.userInfo.userId,
       profile_name: userInfo.queryConfig.selectedDataPro,
     };
+    /*    getHistory(sessionItem).then(
+          response => {
+            console.log("Histories: ", response);
+            const sessionId = uuid();
+            props.setSessions([
+              {
+                session_id: sessionId,
+                messages: [],
+              }, ...(response.filter((item: any) => item.session_id !== ""))]);
+            props.setCurrentSessionId(sessionId);
+          });*/
     getSessions(sessionItem).then(
       response => {
-        console.log("sessions: ", response);
+        console.log("Sessions: ", response);
         const sessionId = uuid();
         props.setSessions([
           {
             session_id: sessionId,
-            messages: [],
-          }, ...(response.filter((item: any) => item.session_id !== ""))]);
+            title: "New Chat",
+            messages: []
+          }, ...(response.filter((item: any) => item.session_id !== "")
+            .map((item: any) => {
+                return {
+                  session_id: item.session_id,
+                  title: item.title,
+                  messages: []
+                };
+              },
+            ))]);
         props.setCurrentSessionId(sessionId);
       });
   }, [userInfo.queryConfig.selectedDataPro]);
@@ -42,6 +62,7 @@ export const Sessions = (
     props.setSessions([
       {
         session_id: sessionId,
+        title: "New Chat",
         messages: [],
       }, ...props.sessions]);
     props.setCurrentSessionId(sessionId);
@@ -65,7 +86,8 @@ export const Sessions = (
               currSessionId={props.currentSessionId}
               setCurrSessionId={props.setCurrentSessionId}
               session={session}
-              setSessions={props.setSessions} />
+              setSessions={props.setSessions}
+            />
           ))}
       </div>
     </Box>

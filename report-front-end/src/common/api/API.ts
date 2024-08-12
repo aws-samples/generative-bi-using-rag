@@ -1,4 +1,4 @@
-import { FeedBackItem, SessionItem } from "../../components/chatbot-panel/types";
+import { FeedBackItem, HistoryItem, SessionItem } from "../../components/chatbot-panel/types";
 import axios from "axios";
 import { Dispatch, SetStateAction } from "react";
 
@@ -69,7 +69,7 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
   }
 }
 
-export async function getSessions(sessionItem: SessionItem) {
+export async function getHistory(sessionItem: SessionItem) {
   // call api
   try {
     const response = await fetch(`/api/qa/get_history_by_user_profile`, {
@@ -84,6 +84,44 @@ export async function getSessions(sessionItem: SessionItem) {
     }
     return await response.json();
   } catch (error) {
+    console.error("getHistory, error: ", error);
+  }
+}
+
+export async function getSessions(sessionItem: SessionItem) {
+  // call api
+  try {
+    const response = await fetch(`/api/qa/get_sessions`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify(sessionItem)
+    });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
+  } catch (error) {
     console.error("getSessions, error: ", error);
+  }
+}
+
+export async function getHistoryBySession(historyItem: HistoryItem) {
+  // call api
+  try {
+    const response = await fetch(`/api/qa/get_history_by_session`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify(historyItem)
+    });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("getHistoryBySession, error: ", error);
   }
 }
