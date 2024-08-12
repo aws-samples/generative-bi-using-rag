@@ -115,6 +115,13 @@ def get_history_by_session(history_request: HistorySessionRequest):
     chat_history = format_chat_history(history_list, history_request.log_type)
     return chat_history
 
+@router.post("/delete_history_by_session")
+def delete_history_by_session(history_request: HistorySessionRequest):
+    user_id = history_request.user_id
+    profile_name = history_request.profile_name
+    session_id = history_request.session_id
+    return LogManagement.delete_history_by_session(user_id, profile_name, session_id)
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, dlunifiedtoken: Optional[str] = Cookie(None)):
     print('---WEB SOCKET---', vars(websocket))

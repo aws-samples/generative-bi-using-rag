@@ -36,7 +36,7 @@ class LogManagement:
 
     @classmethod
     def get_all_sessions(cls, user_id, profile_name, log_type):
-        session_list = cls.query_log_dao.get_all_history(profile_name=profile_name,
+        session_list = cls.query_log_dao.get_all_sessions(profile_name=profile_name,
                                                          user_id=user_id,
                                                          log_type=log_type)
         return session_list
@@ -49,3 +49,7 @@ class LogManagement:
                                                              size=size,
                                                              log_type=log_type)
         return history_list
+
+    @classmethod
+    def delete_history_by_session(cls, user_id, profile_name, session_id, log_type="chat_history"):
+        return cls.query_log_dao.delete_history_by_session(user_id, profile_name, session_id)
