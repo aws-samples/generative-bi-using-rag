@@ -10,7 +10,8 @@ QUERY_LOG_TABLE_NAME = os.getenv("DYNAMODB_QUERY_LOG_TABLE_NAME", "nlqqueryloggi
 
 class QueryLogEntity:
 
-    def __init__(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str, log_type='sql'):
+    def __init__(self, log_id, profile_name, user_id, session_id, sql, query, intent, log_info, time_str,
+                 log_type='sql'):
         self.log_id = log_id
         self.profile_name = profile_name
         self.user_id = user_id
@@ -204,15 +205,20 @@ class OpenSearchQueryLogDao:
         return sorted_history_list
 
     def delete_history_by_session(self, user_id, profile_name, session_id):
-        query = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"session_id": session_id}},
-                        {"term": {"user_id": user_id}},
-                        {"term": {"profile_name": profile_name}}
-                    ]
+        try:
+            query = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"term": {"session_id": session_id}},
+                            {"term": {"user_id": user_id}},
+                            {"term": {"profile_name": profile_name}}
+                        ]
+                    }
                 }
             }
-        }
-        self.opensearch_client.delete_by_query(index=QUERY_LOG_TABLE_NAME, body=query)
+            self.opensearch_client.delete_by_query(index=QUERY_LOG_TABLE_NAME, body=query)
+            return True
+        except Exception as e:
+            logger.error("delete history by session is error {}", e)
+            return False
