@@ -150,7 +150,7 @@ class OpenSearchQueryLogDao:
             history_list.append(hit.get('_source'))
         return history_list
 
-    def get_all_history(self, user_id, profile_name, log_type="chat_history"):
+    def get_all_sessions(self, user_id, profile_name, log_type="chat_history"):
         # 获取用户所有的session_id 再通过session_id 获取聊天记录
         query = {
             "size": 0,
@@ -174,7 +174,7 @@ class OpenSearchQueryLogDao:
                             "top_hits": {
                                 "size": 1,
                                 "_source": {
-                                    "includes": ["query"]
+                                    "includes": ["query", "time_str"]
                                 },
                                 "sort": [
                                     {"time_str": {"order": "asc"}}
@@ -189,11 +189,14 @@ class OpenSearchQueryLogDao:
         history_list = []
         for bucket in response.get('aggregations', {}).get('groups', {}).get('buckets', []):
             session_id = bucket.get('key')
-            first_query = bucket.get('top_hits_agg', {}).get('hits', {}).get('hits', [])[0].get('_source', {}).get('query', session_id)
+            first_query_info = bucket.get('top_hits_agg', {}).get('hits', {}).get('hits', [])[0].get('_source', {})
+            first_query = first_query_info.get('query', session_id)
+            first_query_time = first_query_info.get('time_str')
             history_list.append(
                 {
                     "session_id": session_id,
                     "title": first_query,
+                    "time_str": first_query_time
                 }
             )
         return history_list
