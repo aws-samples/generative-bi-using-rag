@@ -21,7 +21,7 @@ class ProcessingContext:
     context_window: int
     entity_same_name_select: Dict[str, Any]
     user_query_history: List[str]
-    opensearch_info = Dict[str, Any]
+    opensearch_info: Dict[str, Any]
     previous_state: str = "INITIAL"
 
 

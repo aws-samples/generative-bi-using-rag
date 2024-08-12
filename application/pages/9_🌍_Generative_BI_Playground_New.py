@@ -404,7 +404,7 @@ def main():
                     {"role": "user", "content": search_box})
                 st.markdown(current_nlq_chain.get_question())
             user_query_history = get_user_history(selected_profile)
-            with st.chat_message("assistant"):
+            with (st.chat_message("assistant")):
                 processing_context = ProcessingContext(
                     search_box=search_box,
                     query_rewrite="",
@@ -441,8 +441,20 @@ def main():
                                 {"role": "assistant", "content": state_machine.get_answer().query_rewrite, "type": "text"})
                             st.write(state_machine.get_answer().query_rewrite)
                     elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
-                        state_machine.handle_entity_retrieval()
+                        with st.status("Performing Entity retrieval...") as status_text:
+                            state_machine.handle_entity_retrieval()
+
+                            examples = []
+                            for example in state_machine.normal_search_entity_slot:
+                                examples.append({'Score': example['_score'],
+                                                 'Question': example['_source']['entity'],
+                                                 'Answer': example['_source']['comment'].strip()})
+                            st.write(examples)
+                            status_text.update(
+                                label=f"Entity Retrieval Completed: {len(state_machine.normal_search_entity_slot)} entities retrieved",
+                                state="complete", expanded=False)
                     elif state_machine.get_state() == QueryState.QA_RETRIEVAL:
+
                         state_machine.handle_qa_retrieval()
                     elif state_machine.get_state() == QueryState.SQL_GENERATION:
                         state_machine.handle_sql_generation()
