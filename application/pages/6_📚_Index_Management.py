@@ -112,21 +112,25 @@ def main():
                                               type=['csv', 'xls', 'xlsx'])
                 if uploaded_files:
                     for i, uploaded_file in enumerate(uploaded_files):
-                        status_text = st.empty()
-                        status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}")
-                        each_upload_data = read_file(uploaded_file)
-                        if each_upload_data is not None:
-                            total_rows = len(each_upload_data)
-                            progress_bar = st.progress(0)
-                            progress_text = "batch insert {} entity  in progress. Please wait.".format(
-                                uploaded_file.name)
-                            for j, item in enumerate(each_upload_data.itertuples(), 1):
-                                question = str(item.question)
-                                sql = str(item.sql)
-                                VectorStore.add_sample(current_profile, question, sql, batch_sample_type)
-                                progress = (j * 1.0) / total_rows
-                                progress_bar.progress(progress, text=progress_text)
-                            progress_bar.empty()
+                        try:
+                            each_upload_data = read_file(uploaded_file)
+                            if each_upload_data is not None:
+                                total_rows = len(each_upload_data)
+                                progress_bar = st.progress(0)
+                                progress_text = "batch insert {} entity  in progress. Please wait.".format(
+                                    uploaded_file.name)
+                                status_text = st.empty()
+                                for j, item in enumerate(each_upload_data.itertuples(), 1):
+                                    status_text.text(f"Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {j} of {total_rows}")
+                                    question = str(item.question)
+                                    sql = str(item.sql)
+                                    VectorStore.add_sample(current_profile, question, sql, batch_sample_type)
+                                    progress = (j * 1.0) / total_rows
+                                    progress_bar.progress(progress, text=progress_text)
+                                progress_bar.empty()
+                        except Exception as e:
+                            st.error(f"Error: {e}, failed in  {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {j} of {total_rows}")
+                            raise e
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
     else:
         st.info('Please select data profile in the left sidebar.')
