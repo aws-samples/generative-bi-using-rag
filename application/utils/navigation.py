@@ -58,6 +58,7 @@ def make_sidebar():
             st.page_link("pages/6_📚_Index_Management.py", label="Index Management", icon="📚")
             st.page_link("pages/7_📚_Entity_Management.py", label="Entity Management", icon="📚")
             st.page_link("pages/8_📚_Agent_Cot_Management.py", label="Agent Cot Management", icon="📚")
+            st.page_link("pages/9_🌍_Generative_BI_Playground_New.py", label="Generative BI Playground", icon="🌍")
 
             if st.button("Log out"):
                 logout()
