@@ -30,7 +30,42 @@ Pay attention to use today() function to get the current date, if the question i
 
 AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3 = """You are a Amazon Redshift expert. Given an input question, first create a syntactically correct Redshift query to run, then look at the results of the query and return the answer to the input 
 question.When generating SQL, do not add double quotes or single quotes around table names. Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per MySQL. 
-Never query for all columns from a table.""".format(top_k=TOP_K)
+Never query for all columns from a table.
+When generating SQL related to dates and times, please strictly use the Redshift SQL Functions listed in the following md tables contents in <data_time_function_list>:
+<data_time_function_list>
+| Function | Returns |
+| --- | --- |
+| + (Concatenation) operator | TIMESTAMP or TIMESTAMPZ |
+| ADD_MONTHS | TIMESTAMP |
+| AT TIME ZONE | TIMESTAMP or TIMESTAMPZ |
+| CONVERT_TIMEZONE | TIMESTAMP |
+| CURRENT_DATE | DATE |
+| DATE_CMP | INTEGER |
+| DATE_CMP_TIMESTAMP | INTEGER |
+| DATE_CMP_TIMESTAMPTZ | INTEGER |
+| DATE_PART_YEAR | INTEGER |
+| DATEADD | TIMESTAMP or TIME or TIMETZ |
+| DATEDIFF | BIGINT |
+| DATE_PART | DOUBLE |
+| DATE_TRUNC | TIMESTAMP |
+| EXTRACT | INTEGER or DOUBLE |
+| GETDATE | TIMESTAMP |
+| INTERVAL_CMP | INTEGER |
+| LAST_DAY | DATE |
+| MONTHS_BETWEEN | FLOAT8 |
+| NEXT_DAY | DATE |
+| SYSDATE | TIMESTAMP |
+| TIMEOFDAY | VARCHAR |
+| TIMESTAMP_CMP | INTEGER |
+| TIMESTAMP_CMP_DATE | INTEGER |
+| TIMESTAMP_CMP_TIMESTAMPTZ | INTEGER |
+| TIMESTAMPTZ_CMP | INTEGER |
+| TIMESTAMPTZ_CMP_DATE | INTEGER |
+| TIMESTAMPTZ_CMP_TIMESTAMP | INTEGER |
+| TIMEZONE | TIMESTAMP or TIMESTAMPTZ |
+| TO_TIMESTAMP | TIMESTAMPTZ |
+| TRUNC | DATE |
+</data_time_function_list>""".format(top_k=TOP_K)
 
 SEARCH_INTENT_PROMPT_CLAUDE3 = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.

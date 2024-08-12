@@ -454,8 +454,7 @@ def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
             final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
             query_rewrite_result = json_parse.parse(final_response)
             logger.info(f'{final_response=}')
-            query_rewrite['query'] = query_rewrite_result
-            return query_rewrite
+            return query_rewrite_result
     except Exception as e:
         logger.error("get_query_rewrite is error:{}".format(e))
         return query_rewrite
