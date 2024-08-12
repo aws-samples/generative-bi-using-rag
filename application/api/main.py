@@ -113,7 +113,15 @@ def get_history_by_session(history_request: HistorySessionRequest):
                                                             session_id=history_request.session_id,
                                                             size=1000, log_type=history_request.log_type)
     chat_history = format_chat_history(history_list, history_request.log_type)
-    return chat_history
+    empty_history = {
+        "session_id": history_request.session_id,
+        "messages": [],
+        "title": ""
+    }
+    if len(chat_history) > 0:
+        return chat_history[0]
+    else:
+        return empty_history
 
 @router.post("/delete_history_by_session")
 def delete_history_by_session(history_request: HistorySessionRequest):
