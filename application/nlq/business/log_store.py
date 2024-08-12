@@ -49,3 +49,7 @@ class LogManagement:
                                                              size=size,
                                                              log_type=log_type)
         return history_list
+
+    @classmethod
+    def delete_history_by_session(cls, user_id, profile_name, session_id, log_type="chat_history"):
+        return cls.query_log_dao.delete_history_by_session(user_id, profile_name, session_id)

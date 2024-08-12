@@ -201,4 +201,22 @@ class OpenSearchQueryLogDao:
             )
         return history_list
 
+    def delete_history_by_session(self, user_id, profile_name, session_id):
+        try:
+            query = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"term": {"session_id": session_id}},
+                            {"term": {"user_id": user_id}},
+                            {"term": {"profile_name": profile_name}}
+                        ]
+                    }
+                }
+            }
+            self.opensearch_client.delete_by_query(index=QUERY_LOG_TABLE_NAME, body=query)
+            return True
+        except Exception as e:
+            logger.error("delete history by session is error {}", e)
+            return False
 
