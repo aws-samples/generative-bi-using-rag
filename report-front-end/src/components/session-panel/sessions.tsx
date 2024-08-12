@@ -42,7 +42,6 @@ export const Sessions = (
     props.setSessions([
       {
         session_id: sessionId,
-        title: "New Chat",
         messages: [],
       }, ...props.sessions]);
     props.setCurrentSessionId(sessionId);

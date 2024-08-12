@@ -9,11 +9,13 @@ import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
 import { getRecommendQuestions } from "../../common/api/API";
 import { Global } from "../../common/constant/global";
+import { Session } from "../session-panel/types";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
   sessionId: string;
 }
@@ -33,13 +35,6 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
   }, [userState.queryConfig?.selectedDataPro]);
 
   const handleSendMessage = (question: string) => {
-    // Call Fast API
-    /*query({
-      query: question,
-      setLoading: props.setLoading,
-      configuration: userState.queryConfig,
-      setMessageHistory: props.setMessageHistory
-    }).then();*/
     setShowMoreQuestions(true)
     // Call WebSocket API
     queryWithWS({
@@ -47,6 +42,7 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
+      setSessions: props.setSessions,
       userId: userState.userInfo.userId,
       sessionId: props.sessionId
     });

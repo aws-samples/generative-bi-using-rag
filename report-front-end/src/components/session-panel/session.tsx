@@ -12,7 +12,7 @@ export const SessionPanel = (props: {
 }) => {
 
   const onClick = () => {
-    console.log("onClick, sessionId: ", props.session);
+    console.log("switch sessionId: ", props.session);
     props.setCurrSessionId(props.session.session_id);
   };
 

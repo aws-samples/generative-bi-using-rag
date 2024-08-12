@@ -23,7 +23,7 @@ export default function Chat(props: {
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const sendJsonMessage = createWssClient(setStatusMessage, setMessageHistory);
+  const sendJsonMessage = createWssClient(setStatusMessage, props.setSessions);
 
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
@@ -62,20 +62,12 @@ export default function Chat(props: {
   }, [props.currentSessionId]);
 
   useEffect(() => {
-    props.setSessions((prevState: any) => {
-      return prevState.map((session: Session) => {
-        if (session.session_id === props.currentSessionId) {
-          return {
-            session_id: session.session_id,
-            title: session.title,
-            messages: messageHistory,
-          };
-        } else {
-          return session;
-        }
-      });
+    props.sessions.forEach((session) => {
+      if (session.session_id === props.currentSessionId) {
+        setMessageHistory(session.messages);
+      }
     });
-  }, [messageHistory]);
+  }, [props.sessions]);
 
   return (
     <div className={styles.chat_container}>
@@ -90,6 +82,7 @@ export default function Chat(props: {
                 setMessageHistory={(
                   history: SetStateAction<ChatBotHistoryItem[]>,
                 ) => setMessageHistory(history)}
+                setSessions={props.setSessions}
                 sendMessage={sendJsonMessage}
                 sessionId={props.currentSessionId}
               />
@@ -144,6 +137,7 @@ export default function Chat(props: {
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
             setMessageHistory(history)
           }
+          setSessions={props.setSessions}
           setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
             setStatusMessage(message)
           }

@@ -5,10 +5,11 @@ import { Dispatch, SetStateAction } from "react";
 import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
 import cookie from 'react-cookies';
 import { Global } from "../constant/global";
+import { Session } from "../../components/session-panel/types";
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>
+  setSessions: Dispatch<SetStateAction<Session[]>>
 ) {
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
   const {sendJsonMessage}
@@ -45,11 +46,20 @@ export function createWssClient(
         [...historyMessage, messageJson]);
     } else {
       setStatusMessage([]);
-      setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [...history, {
-          type: ChatBotMessageType.AI,
-          content: messageJson.content
-        }];
+      setSessions((prevState) => {
+        return prevState.map((session) => {
+          if (messageJson.session_id !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: messageJson.session_id,
+              messages: [...session.messages, {
+                type: ChatBotMessageType.AI,
+                content: messageJson.content
+              }]
+            }
+          }
+        })
       });
     }
   };
@@ -62,15 +72,24 @@ export function queryWithWS(props: {
   configuration: any;
   sendMessage: SendJsonMessage;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   userId: string;
   sessionId: string;
 }) {
-
-  props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-    return [...history, {
-      type: ChatBotMessageType.Human,
-      content: props.query
-    }];
+  props.setSessions((prevState) => {
+    return prevState.map((session) => {
+      if (props.sessionId !== session.session_id) {
+        return session;
+      } else {
+        return {
+          session_id: session.session_id,
+          messages: [...session.messages, {
+            type: ChatBotMessageType.Human,
+            content: props.query
+          }]
+        }
+      }
+    })
   });
   const jwtToken = cookie.load("dlunifiedtoken") || "";
   const param = {

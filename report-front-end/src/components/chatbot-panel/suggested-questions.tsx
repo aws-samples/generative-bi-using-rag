@@ -6,11 +6,13 @@ import { useSelector } from "react-redux";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
+import { Session } from "../session-panel/types";
 
 export interface SuggestedQuestionsProps {
   questions: string[];
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
   sessionId: string;
 }
@@ -20,19 +22,13 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
   const userState = useSelector<UserState>((state) => state) as UserState;
 
   const handleSendMessage = (question: string) => {
-    /*query({
-      query: question,
-      setLoading: props.setLoading,
-      configuration: userState.queryConfig,
-      setMessageHistory: props.setMessageHistory
-    }).then();*/
-
     // Call WebSocket API
     queryWithWS({
       query: question,
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
+      setSessions: props.setSessions,
       userId: userState.userInfo.userId,
       sessionId: props.sessionId
     });

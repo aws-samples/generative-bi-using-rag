@@ -18,12 +18,14 @@ import {
 } from "./types";
 import styles from "./chat.module.scss";
 import CustomQuestions from "./custom-questions";
+import { Session } from "../session-panel/types";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendMessage: SendJsonMessage;
   toolsHide: boolean;
@@ -44,20 +46,13 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
   const handleSendMessage = () => {
     setTextValue({ value: "" });
-    // Call Fast API
-    /*    query({
-      query: state.value,
-      setLoading: props.setLoading,
-      configuration: userState.queryConfig,
-      setMessageHistory: props.setMessageHistory,
-    }).then();*/
-
     if (state.value !== "") {
       // Call WebSocket API
       queryWithWS({
         query: state.value,
         configuration: userState.queryConfig,
         sendMessage: props.sendMessage,
+        setSessions: props.setSessions,
         setMessageHistory: props.setMessageHistory,
         userId: userState.userInfo.userId,
         sessionId: props.currSessionId
@@ -120,13 +115,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           setTextValue={setTextValue}
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
+          setSessions={props.setSessions}
           sendMessage={props.sendMessage}
           sessionId={props.currSessionId}
         />
         <div className={styles.input_textarea_container}>
-          {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
-            <Icon name="microphone" variant="disabled"/>
-          </SpaceBetween> */}
           <TextareaAutosize
             className={styles.input_textarea}
             maxRows={6}
@@ -152,7 +145,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               <Button
                 disabled={state.value.length === 0}
                 onClick={handleSendMessage}
-                // iconName='status-positive'
                 variant="primary"
               >
                 Send
@@ -162,7 +154,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 iconName="settings"
                 variant={props.toolsHide ? "normal" : "primary"}
                 onClick={handleSetting}
-              ></Button>
+              />
             </SpaceBetween>
           </div>
         </div>

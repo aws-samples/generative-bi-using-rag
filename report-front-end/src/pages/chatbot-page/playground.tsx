@@ -49,7 +49,6 @@ export default function Playground() {
 
   const [sessions, setSessions] = useState<Session[]>([{
     session_id: uuid(),
-    title: "New Chat",
     messages: [],
   }]);
   const [currentSessionId, setCurrentSessionId] = useState<string>(sessions[0].session_id);
