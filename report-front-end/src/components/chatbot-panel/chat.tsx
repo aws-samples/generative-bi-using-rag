@@ -68,7 +68,7 @@ export default function Chat(props: {
           return {
             session_id: session.session_id,
             title: session.title,
-            messages: messageHistory
+            messages: messageHistory,
           };
         } else {
           return session;
@@ -96,30 +96,31 @@ export default function Chat(props: {
             </div>
           );
         })}
-        {statusMessage.length === 0 ? null : (
-          <div className={styles.status_container}>
-            <SpaceBetween size="xxs">
-              {statusMessage.map((message, idx) => {
-                const displayMessage =
-                  idx % 2 === 1
-                    ? true
-                    : idx === statusMessage.length - 1;
-                return displayMessage ? (
-                  <StatusIndicator
-                    key={idx}
-                    type={
-                      message.content.status === "end"
-                        ? "success"
-                        : "in-progress"
-                    }
-                  >
-                    {message.content.text}
-                  </StatusIndicator>
-                ) : null;
-              })}
-            </SpaceBetween>
-          </div>
-        )}
+        {statusMessage.filter((status) => status.session_id === props.currentSessionId).length === 0 ?
+          null : (<div className={styles.status_container}>
+              <SpaceBetween size="xxs">
+                {statusMessage.filter((status) => status.session_id === props.currentSessionId)
+                  .map((message, idx) => {
+                    const displayMessage =
+                      idx % 2 === 1
+                        ? true
+                        : idx === statusMessage.length - 1;
+                    return displayMessage ? (
+                      <StatusIndicator
+                        key={idx}
+                        type={
+                          message.content.status === "end"
+                            ? "success"
+                            : "in-progress"
+                        }
+                      >
+                        {message.content.text}
+                      </StatusIndicator>
+                    ) : null;
+                  })}
+              </SpaceBetween>
+            </div>
+          )}
 
         {loading && (
           <div>
@@ -131,7 +132,7 @@ export default function Chat(props: {
       </SpaceBetween>
       <div className={styles.welcome_text}>
         {messageHistory.length === 0 &&
-          statusMessage.length === 0 &&
+          statusMessage.filter((status) => status.session_id === props.currentSessionId).length === 0 &&
           !loading && <center>{"GenBI Chatbot"}</center>}
       </div>
       <div className={styles.input_container}>
