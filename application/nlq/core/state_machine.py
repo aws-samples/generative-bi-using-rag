@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class QueryStateMachine:
-    def __init__(self, initial_state, context: ProcessingContext):
-        self.state = initial_state
+    def __init__(self, context: ProcessingContext):
+        self.state = context.previous_state
         self.context = context
         self.answer = Answer(
             query="",

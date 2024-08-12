@@ -1,5 +1,8 @@
+import asyncio
 import json
 import traceback
+from typing import Set
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
 
@@ -61,7 +64,15 @@ def get_history_by_session(history_request: HistorySessionRequest):
                                                             session_id=history_request.session_id,
                                                             size=1000, log_type=history_request.log_type)
     chat_history = format_chat_history(history_list, history_request.log_type)
-    return chat_history
+    empty_history = {
+        "session_id": history_request.session_id,
+        "messages": [],
+        "title": ""
+    }
+    if len(chat_history) > 0:
+        return chat_history[0]
+    else:
+        return empty_history
 
 
 @router.post("/delete_history_by_session")
@@ -111,28 +122,42 @@ def user_feedback(input_data: FeedBackInput):
         return downvote_res
 
 
+async def handle_question(websocket: WebSocket, question_json: dict):
+    question = Question(**question_json)
+    session_id = question.session_id
+    user_id = question.user_id
+    try:
+        ask_result = await ask_websocket(websocket, question)
+        logger.info(ask_result)
+        await response_websocket(websocket=websocket, session_id=session_id, content=ask_result.dict(),
+                                 content_type=ContentEnum.END, user_id=user_id)
+    except Exception as e:
+        msg = traceback.format_exc()
+        logger.exception(msg)
+        await response_websocket(websocket=websocket, session_id=session_id, content=msg,
+                                 content_type=ContentEnum.EXCEPTION, user_id=user_id)
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    tasks: Set[asyncio.Task] = set()
     try:
         while True:
             data = await websocket.receive_text()
             question_json = json.loads(data)
-            question = Question(**question_json)
-            session_id = question.session_id
-            user_id = question.user_id
-            try:
-                ask_result = await ask_websocket(websocket, question)
-                logger.info(ask_result)
-                await response_websocket(websocket=websocket, session_id=session_id, content=ask_result.dict(),
-                                         content_type=ContentEnum.END, user_id=user_id)
-            except Exception:
-                msg = traceback.format_exc()
-                logger.exception(msg)
-                await response_websocket(websocket=websocket, session_id=session_id, content=msg,
-                                         content_type=ContentEnum.EXCEPTION, user_id=user_id)
+            task = asyncio.create_task(handle_question(websocket, question_json))
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
+    finally:
+        # 取消所有正在运行的任务
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        # 等待所有任务完成
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def response_sagemaker_sql(websocket: WebSocket, session_id: str, response: dict, current_nlq_chain: NLQChain):
