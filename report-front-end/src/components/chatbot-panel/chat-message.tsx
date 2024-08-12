@@ -410,6 +410,7 @@ function AIChatMessage(props: ChatMessageProps) {
               setLoading={props.setLoading}
               setMessageHistory={props.setMessageHistory}
               sendMessage={props.sendMessage}
+              sessionId={props.sessionId}
             />
           </ExpandableSection>
         ) : null}
@@ -423,6 +424,7 @@ export interface ChatMessageProps {
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
@@ -439,6 +441,7 @@ export default function ChatMessage(props: ChatMessageProps) {
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
           sendMessage={props.sendMessage}
+          sessionId={props.sessionId}
         />
       )}
     </SpaceBetween>

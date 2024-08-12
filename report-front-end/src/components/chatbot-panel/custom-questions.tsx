@@ -15,6 +15,7 @@ export interface RecommendQuestionsProps {
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function CustomQuestions(props: RecommendQuestionsProps) {
@@ -46,7 +47,8 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
-      userId: userState.userInfo.userId
+      userId: userState.userInfo.userId,
+      sessionId: props.sessionId
     });
   };
 

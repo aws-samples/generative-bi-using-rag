@@ -12,8 +12,8 @@ export const Sessions = (
   props: {
     sessions: Session[];
     setSessions: Dispatch<SetStateAction<Session[]>>;
-    currentSession: number;
-    setCurrentSession: Dispatch<SetStateAction<number>>;
+    currentSessionId: string;
+    setCurrentSessionId: Dispatch<SetStateAction<string>>;
   },
 ) => {
 
@@ -27,24 +27,25 @@ export const Sessions = (
     getSessions(sessionItem).then(
       response => {
         console.log("sessions: ", response);
+        const sessionId = uuid();
         props.setSessions([
           {
-            session_id: uuid(),
-            title: "New Chat",
+            session_id: sessionId,
             messages: [],
-          }, ...(response)]);
-        props.setCurrentSession(0);
+          }, ...(response.filter((item: any) => item.session_id !== ""))]);
+        props.setCurrentSessionId(sessionId);
       });
   }, [userInfo.queryConfig.selectedDataPro]);
 
   const addNewSession = () => {
+    const sessionId = uuid();
     props.setSessions([
       {
-        session_id: uuid(),
+        session_id: sessionId,
         title: "New Chat",
         messages: [],
       }, ...props.sessions]);
-    props.setCurrentSession(0);
+    props.setCurrentSessionId(sessionId);
   };
 
   return (
@@ -62,8 +63,8 @@ export const Sessions = (
             <SessionPanel
               key={idx}
               index={idx}
-              currSession={props.currentSession}
-              setCurrSession={props.setCurrentSession}
+              currSessionId={props.currentSessionId}
+              setCurrSessionId={props.setCurrentSessionId}
               session={session}
               setSessions={props.setSessions} />
           ))}

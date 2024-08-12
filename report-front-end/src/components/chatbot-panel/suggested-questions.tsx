@@ -12,6 +12,7 @@ export interface SuggestedQuestionsProps {
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
@@ -32,7 +33,8 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
-      userId: userState.userInfo.userId
+      userId: userState.userInfo.userId,
+      sessionId: props.sessionId
     });
   };
 

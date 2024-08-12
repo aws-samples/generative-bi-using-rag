@@ -63,6 +63,7 @@ export function queryWithWS(props: {
   sendMessage: SendJsonMessage;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   userId: string;
+  sessionId: string;
 }) {
 
   props.setMessageHistory((history: ChatBotHistoryItem[]) => {
@@ -88,7 +89,7 @@ export function queryWithWS(props: {
     max_tokens: props.configuration.maxLength,
     temperature: props.configuration.temperature,
     context_window: props.configuration.contextWindow,
-    session_id: Global.sessionId,
+    session_id: props.sessionId,
     user_id: props.userId || "none",
     dlunifiedtoken: jwtToken
   };

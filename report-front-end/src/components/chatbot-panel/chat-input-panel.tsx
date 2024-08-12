@@ -27,6 +27,7 @@ export interface ChatInputPanelProps {
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendMessage: SendJsonMessage;
   toolsHide: boolean;
+  currSessionId: string;
 }
 
 export abstract class ChatScrollState {
@@ -58,7 +59,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         configuration: userState.queryConfig,
         sendMessage: props.sendMessage,
         setMessageHistory: props.setMessageHistory,
-        userId: userState.userInfo.userId
+        userId: userState.userInfo.userId,
+        sessionId: props.currSessionId
       });
     }
   };
@@ -119,7 +121,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
           sendMessage={props.sendMessage}
-        ></CustomQuestions>
+          sessionId={props.currSessionId}
+        />
         <div className={styles.input_textarea_container}>
           {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
             <Icon name="microphone" variant="disabled"/>
