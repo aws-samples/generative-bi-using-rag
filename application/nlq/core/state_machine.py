@@ -158,6 +158,9 @@ class QueryStateMachine:
         self.intent_search_result["response"] = response
         self.transition(QueryState.EXECUTE_QUERY)
 
+    def handle_agent_sql_generation(self):
+        pass
+
     def handle_intent_recognition(self):
         # Perform intent recognition
         if self.context.intent_ner_recognition_flag:
@@ -188,6 +191,10 @@ class QueryStateMachine:
             self.transition(QueryState.REJECT_INTENT)
         elif self.knowledge_search_flag:
             self.transition(QueryState.KNOWLEDGE_SEARCH)
+        elif self.agent_intent_flag:
+            self.answer.query_intent = "agent_search"
+        else:
+            self.answer.query_intent = "normal_search"
         self.transition(QueryState.ENTITY_RETRIEVAL)
 
     def handle_reject_intent(self):
@@ -224,9 +231,7 @@ class QueryStateMachine:
 
     def handle_sql_auto_correction(self):
         # Handle SQL auto correction
-        self.transition(QueryState.EXECUTE_QUERY)
-        if self.context.auto_correction_flag and self.intent_search_result["sql_execute_result"]["status_code"] != 200:
-            response = text_to_sql(self.context.database_profile['tables_info'],
+        response = text_to_sql(self.context.database_profile['tables_info'],
                                    self.context.database_profile['hints'],
                                    self.context.database_profile['prompt_map'],
                                    self.context.query_rewrite,
@@ -239,14 +244,29 @@ class QueryStateMachine:
                                        sql_statement=self.intent_search_result["sql_execute_result"]["sql"],
                                        error=self.intent_search_result["sql_execute_result"]["error_info"]))
 
-            regen_sql = get_generated_sql(response)
+        regen_sql = get_generated_sql(response)
+        self.intent_search_result["sql"] = regen_sql
+        self.intent_search_result["response"] = response
+        self.transition(QueryState.EXECUTE_QUERY)
+
 
     def handle_analyze_data(self):
         # Analyze the data
-        if self.context.
-            search_intent_analyse_result = data_analyse_tool(self.context.model_type, prompt_map,
+        search_intent_analyse_result = data_analyse_tool(self.context.model_type, self.context.database_profile['prompt_map'],
                                                              self.context.query_rewrite,
-                                                             search_intent_result["data"].to_json(
+                                                             self.intent_search_result["sql_execute_result"]["data"].to_json(
                                                                  orient='records',
                                                                  force_ascii=False), "query")
+        self.answer.sql_search_result.data_analyse = search_intent_analyse_result
+        self.transition(QueryState.COMPLETE)
+
+
+    def handle_agent_analyze_data(self):
+        # Analyze the data
+
+        # search_intent_analyse_result = data_analyse_tool(self.context.model_type, prompt_map,
+        #                                                      self.context.query_rewrite,
+        #                                                      search_intent_result["data"].to_json(
+        #                                                          orient='records',
+        #                                                          force_ascii=False), "query")
         self.transition(QueryState.COMPLETE)
