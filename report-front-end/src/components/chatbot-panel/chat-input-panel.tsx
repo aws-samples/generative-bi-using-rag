@@ -10,6 +10,7 @@ import styles from "./chat.module.scss";
 import CustomQuestions from "./custom-questions";
 import { Session } from "../session-panel/types";
 import { deleteHistoryBySession } from "../../common/api/API";
+import { v4 as uuid } from "uuid";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
@@ -48,7 +49,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         setSessions: props.setSessions,
         setMessageHistory: props.setMessageHistory,
         userId: userState.userInfo.userId,
-        sessionId: props.currSessionId
+        sessionId: props.currSessionId,
       });
     }
   };
@@ -69,12 +70,19 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       deleteHistoryBySession(historyItem).then(
         response => {
           if (response) {
-            props.setCurrentSessionId(props.sessions.length > 0 ? props.sessions[0].session_id : "-1");
+            const sessionId = uuid();
             props.setSessions((prevState) => {
-              return prevState.filter((item) => item.session_id !== props.currSessionId);
+              return [
+                {
+                  session_id: sessionId,
+                  title: "New Chat",
+                  messages: [],
+                }, ...prevState.filter((item) => item.session_id !== props.currSessionId)
+              ];
             });
+            props.setCurrentSessionId(sessionId);
           }
-        }
+        },
       );
     }
   };
@@ -89,8 +97,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       const isScrollToTheEnd =
         Math.abs(
           window.innerHeight +
-            window.scrollY -
-            document.documentElement.scrollHeight
+          window.scrollY -
+          document.documentElement.scrollHeight,
         ) <= 10;
 
       ChatScrollState.userHasScrolled = !isScrollToTheEnd;
