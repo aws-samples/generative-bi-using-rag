@@ -15,21 +15,9 @@ def get_authenticator():
         config['credentials'],
         config['cookie']['name'],
         config['cookie']['key'],
-        float(config['cookie']['expiry_days']),
+        config['cookie']['expiry_days'],
         config['pre-authorized']
     )
-
-
-def force_set_cookie(authenticator):
-    """
-    Force the cookie
-    :param authenticator:
-    :return:
-    """
-    try:
-        authenticator.cookie_handler.set_cookie()
-    except:
-        pass
 
 
 def get_current_page_name():

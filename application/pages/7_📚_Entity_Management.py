@@ -1,3 +1,5 @@
+import base64
+import io
 import time
 
 import pandas as pd
@@ -152,22 +154,52 @@ def main():
                         if each_upload_data is not None:
                             total_rows = len(each_upload_data)
                             unique_batch_data = {}
-                            for j, item in enumerate(each_upload_data.itertuples(), 1):
-                                entity = str(item.entity)
-                                comment = str(item.comment)
-                                if entity not in unique_batch_data:
-                                    unique_batch_data[entity] = ""
-                                unique_batch_data[entity] = comment
+                            status_text = st.empty()
+                            try:
+                                for j, item in enumerate(each_upload_data.itertuples(), 1):
+                                    status_text.text(
+                                        f"Data pre-aggregating， Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {j} of {total_rows}")
+                                    entity = str(item.entity)
+                                    comment = str(item.comment)
+                                    if entity not in unique_batch_data:
+                                        unique_batch_data[entity] = ""
+                                    unique_batch_data[entity] = comment
 
+                            except Exception as e:
+                                st.error(
+                                    f"Data pre-aggregation failed，Error: {e}, failed in  {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {j} of {total_rows}")
+                                raise e
                             progress_bar = st.progress(0)
                             unique_total_row = len(unique_batch_data)
-                            for k, (key, value) in enumerate(unique_batch_data.items(), 1):
-                                VectorStore.add_entity_sample(current_profile, key, value)
-                                progress = (k * 1.0) / unique_total_row
-                                upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
-                                    str(k))
-                                progress_bar.progress(progress, text=upload_text)
-                            progress_bar.empty()
+                            status_text = st.empty()
+                            finishd_rows = []
+                            try:
+                                for k, (key, value) in enumerate(unique_batch_data.items(), 1):
+                                    status_text.text(
+                                        f"Uploading， Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {k} of {unique_total_row}")
+                                    VectorStore.add_entity_sample(current_profile, key, value)
+                                    progress = (k * 1.0) / unique_total_row
+                                    upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
+                                        str(k))
+                                    progress_bar.progress(progress, text=upload_text)
+                                    finishd_rows.append(key)
+                                progress_bar.empty()
+                            except Exception as e:
+                                unfinished_df = each_upload_data[~each_upload_data['entity'].isin(finishd_rows)]
+                                csv_buffer = io.StringIO()
+                                unfinished_df.to_csv(csv_buffer, index=False)
+                                csv_data = csv_buffer.getvalue()
+                                # 创建下载链接
+                                b64 = base64.b64encode(csv_data.encode()).decode()  # 将 CSV 数据编码为 base64
+                                href = f'<a href="data:file/csv;base64,{b64}" download="unfinished_entity_data.csv">Click to download unfinished entity data</a>'
+                                st.markdown(href, unsafe_allow_html=True)
+
+                                # 自动触发下载链接
+                                st.markdown(f'<script>location.href="data:file/csv;base64,{b64}"</script>', unsafe_allow_html=True)
+
+                                st.error(
+                                    f"Upload failed，Error: {e}, failed in  {i + 1} of {len(uploaded_files)}: {uploaded_file.name},rows: {k} of {unique_total_row}")
+                                raise e
                         st.session_state.ner_refresh_view = True
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
 
@@ -185,38 +217,68 @@ def main():
                         if each_upload_data is not None:
                             total_rows = len(each_upload_data)
                             unique_batch_data = {}
-                            for j, item in enumerate(each_upload_data.itertuples(), 1):
-                                entity = str(item.entity)
-                                table = str(item.table)
-                                column = str(item.column)
-                                value = str(item.value)
-                                entity_item_table_info = {}
-                                entity_item_table_info["table_name"] = table
-                                entity_item_table_info["column_name"] = column
-                                entity_item_table_info["value"] = value
-                                value_id = table + "#" + column + "#" + value
-                                if entity in unique_batch_data:
-                                    if value_id not in unique_batch_data[entity]["value_id"]:
+                            status_text = st.empty()
+                            try:
+                                for j, item in enumerate(each_upload_data.itertuples(), 1):
+                                    status_text.text(
+                                        f"Data pre-aggregating， Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {j} of {total_rows}")
+                                    entity = str(item.entity)
+                                    table = str(item.table)
+                                    column = str(item.column)
+                                    value = str(item.value)
+                                    entity_item_table_info = {}
+                                    entity_item_table_info["table_name"] = table
+                                    entity_item_table_info["column_name"] = column
+                                    entity_item_table_info["value"] = value
+                                    value_id = table + "#" + column + "#" + value
+                                    if entity in unique_batch_data:
+                                        if value_id not in unique_batch_data[entity]["value_id"]:
+                                            unique_batch_data[entity]["value_id"].append(value_id)
+                                            unique_batch_data[entity]["value_list"].append(entity_item_table_info)
+                                    else:
+                                        unique_batch_data[entity] = {}
+                                        unique_batch_data[entity]["value_id"] = []
                                         unique_batch_data[entity]["value_id"].append(value_id)
+                                        unique_batch_data[entity]["value_list"] = []
                                         unique_batch_data[entity]["value_list"].append(entity_item_table_info)
-                                else:
-                                    unique_batch_data[entity] = {}
-                                    unique_batch_data[entity]["value_id"] = []
-                                    unique_batch_data[entity]["value_id"].append(value_id)
-                                    unique_batch_data[entity]["value_list"] = []
-                                    unique_batch_data[entity]["value_list"].append(entity_item_table_info)
+                            except Exception as e:
+                                st.error(
+                                    f"Data pre-aggregation failed，Error: {e}, failed in  {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {j} of {total_rows}")
+                                raise e
 
                             progress_bar = st.progress(0)
                             unique_total_row = len(unique_batch_data)
-                            for k, (key, value) in enumerate(unique_batch_data.items(), 1):
-                                VectorStore.add_entity_dimension_batch_sample(current_profile, key, "", DIMENSION_VALUE,
-                                                                              value["value_list"])
-                                progress = (k * 1.0) / unique_total_row
-                                upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
-                                    str(k))
-                                progress_bar.progress(progress, text=upload_text)
+                            status_text = st.empty()
+                            finishd_rows = []
+                            try:
+                                for k, (key, value) in enumerate(unique_batch_data.items(), 1):
+                                    status_text.text(
+                                        f"Uploading， Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {k} of {unique_total_row}")
+                                    VectorStore.add_entity_dimension_batch_sample(current_profile, key, "", DIMENSION_VALUE,
+                                                                                  value["value_list"])
+                                    progress = (k * 1.0) / unique_total_row
+                                    upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
+                                        str(k))
+                                    progress_bar.progress(progress, text=upload_text)
+                                    finishd_rows.append(key)
+                                progress_bar.empty()
+                            except Exception as e:
+                                unfinished_df = each_upload_data[~each_upload_data['entity'].isin(finishd_rows)]
+                                csv_buffer = io.StringIO()
+                                unfinished_df.to_csv(csv_buffer, index=False)
+                                csv_data = csv_buffer.getvalue()
+                                # 创建下载链接
+                                b64 = base64.b64encode(csv_data.encode()).decode()  # 将 CSV 数据编码为 base64
+                                href = f'<a href="data:file/csv;base64,{b64}" download="unfinished_dimension_entity.csv">Click to download unfinished entity data</a>'
+                                st.markdown(href, unsafe_allow_html=True)
 
-                            progress_bar.empty()
+                                # 自动触发下载链接
+                                st.markdown(f'<script>location.href="data:file/csv;base64,{b64}"</script>',
+                                            unsafe_allow_html=True)
+
+                                st.error(
+                                    f"Upload failed，Error: {e}, failed in  {i + 1} of {len(uploaded_files)}: {uploaded_file.name},rows: {k} of {unique_total_row}")
+                                raise e
                         st.session_state.ner_refresh_view = True
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
 
