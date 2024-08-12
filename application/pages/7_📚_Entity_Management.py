@@ -177,8 +177,6 @@ def main():
                                 for k, (key, value) in enumerate(unique_batch_data.items(), 1):
                                     status_text.text(
                                         f"Uploading， Processing file {i + 1} of {len(uploaded_files)}: {uploaded_file.name}, rows: {k} of {unique_total_row}")
-                                    if k == 10:
-                                        raise Exception("Upload failed, the maximum number of entities is 10")
                                     VectorStore.add_entity_sample(current_profile, key, value)
                                     progress = (k * 1.0) / unique_total_row
                                     upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
