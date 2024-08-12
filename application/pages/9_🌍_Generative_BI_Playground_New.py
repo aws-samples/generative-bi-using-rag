@@ -1,0 +1,462 @@
+import json
+import os
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from dotenv import load_dotenv
+import logging
+import random
+
+from api.service import user_feedback_downvote
+from nlq.business.connection import ConnectionManagement
+from nlq.business.nlq_chain import NLQChain
+from nlq.business.profile import ProfileManagement
+from nlq.business.vector_store import VectorStore
+from nlq.core.chat_context import ProcessingContext
+from nlq.core.state import QueryState
+from nlq.core.state_machine import QueryStateMachine
+from utils.domain import SearchTextSqlResult
+from utils.llm import get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
+    knowledge_search, text_to_sql, get_query_rewrite
+from utils.navigation import make_sidebar
+from utils.apis import get_sql_result_tool
+from utils.prompts.generate_prompt import prompt_map_dict
+from utils.opensearch import get_retrieve_opensearch
+from utils.text_search import agent_text_search
+from utils.tool import get_generated_sql
+from utils.env_var import opensearch_info
+
+logger = logging.getLogger(__name__)
+
+
+def sample_question_clicked(sample):
+    """Update the selected_sample variable with the text of the clicked button"""
+    st.session_state['selected_sample'] = sample
+
+
+def upvote_clicked(question, sql):
+    """
+    add upvote button to opensearch
+    :param question: user question
+    :param sql: true SQL
+    :param env_vars:
+    :return:
+    """
+    current_profile = st.session_state.current_profile
+    VectorStore.add_sample(current_profile, question, sql)
+    logger.info(f'up voted "{question}" with sql "{sql}"')
+
+
+def upvote_agent_clicked(question, comment):
+    # HACK: configurable opensearch endpoint
+
+    current_profile = st.session_state.current_profile
+    VectorStore.add_agent_cot_sample(current_profile, question, str(comment))
+    logger.info(f'up voted "{question}" with sql "{comment}"')
+
+
+def downvote_clicked(question, comment):
+    current_profile = st.session_state.current_profile
+    user_id = "admin"
+    session_id = "-1"
+    query = question
+    query_intent = "normal_search"
+    query_answer = str(comment)
+    user_feedback_downvote(current_profile, user_id, session_id, query, query_intent, query_answer)
+
+
+def clean_st_history(selected_profile):
+    st.session_state.messages[selected_profile] = []
+    st.session_state.query_rewrite_history[selected_profile] = []
+
+
+def get_user_history(selected_profile: str):
+    """
+    get user history for selected profile
+    :param selected_profile:
+    :return: history for selected profile list type
+    """
+    history_list = st.session_state.query_rewrite_history[selected_profile]
+    history_query = []
+    for messages in history_list:
+        if messages["content"] is not None:
+            history_query.append(messages["role"] + ":" + messages["content"])
+    return history_query
+
+
+def do_visualize_results(nlq_chain, sql_result):
+    sql_query_result = sql_result
+    if sql_query_result is not None:
+        nlq_chain.set_visualization_config_change(False)
+        # Auto-detect columns
+        visualize_config_columns = st.columns(3)
+
+        available_columns = sql_query_result.columns
+
+        # hacky way to get around the issue of selectbox not updating when the options change
+        chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
+                                                           ['Table', 'Bar', 'Line', 'Pie'],
+                                                           on_change=nlq_chain.set_visualization_config_change
+                                                           )
+        if chart_type != 'Table':
+            x_column = visualize_config_columns[1].selectbox(f'Choose x-axis column', available_columns,
+                                                             on_change=nlq_chain.set_visualization_config_change,
+                                                             key=random.randint(0, 10000)
+                                                             )
+            y_column = visualize_config_columns[2].selectbox('Choose y-axis column',
+                                                             reversed(available_columns.to_list()),
+                                                             on_change=nlq_chain.set_visualization_config_change,
+                                                             key=random.randint(0, 10000)
+                                                             )
+        if chart_type == 'Table':
+            st.dataframe(sql_query_result, hide_index=True)
+        elif chart_type == 'Bar':
+            st.plotly_chart(px.bar(sql_query_result, x=x_column, y=y_column))
+        elif chart_type == 'Line':
+            st.plotly_chart(px.line(sql_query_result, x=x_column, y=y_column))
+        elif chart_type == 'Pie':
+            st.plotly_chart(px.pie(sql_query_result, names=x_column, values=y_column))
+    else:
+        st.markdown('No visualization generated.')
+
+
+def recurrent_display(messages, i):
+    # hacking way of displaying messages, since the chat_message does not support multiple messages outside of "with" statement
+    current_role = messages[i]["role"]
+    message = messages[i]
+    if message["type"] == "pandas":
+        if isinstance(message["content"], pd.DataFrame):
+            st.dataframe(message["content"], hide_index=True)
+        elif isinstance(message["content"], list):
+            for each_content in message["content"]:
+                st.write(each_content["query"])
+                st.dataframe(pd.read_json(each_content["data_result"], orient='records'), hide_index=True)
+    elif message["type"] == "text":
+        st.markdown(message["content"])
+    elif message["type"] == "error":
+        st.error(message["content"])
+    elif message["type"] == "sql":
+        with st.expander("The Generate SQL"):
+            st.code(message["content"], language="sql")
+    return i
+
+
+def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info,
+                                 selected_profile,
+                                 use_rag,
+                                 model_provider=None):
+    entity_slot_retrieve = []
+    retrieve_result = []
+    response = ""
+    sql = ""
+    search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
+                                        retrieve_result=retrieve_result, response=response, sql=sql)
+    try:
+        if database_profile['db_url'] == '':
+            conn_name = database_profile['conn_name']
+            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+            database_profile['db_url'] = db_url
+            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+
+        with st.status("Performing Entity retrieval...") as status_text:
+            if len(entity_slot) > 0 and use_rag:
+                for each_entity in entity_slot:
+                    entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
+                                                              selected_profile, 1, 0.7)
+                    if len(entity_retrieve) > 0:
+                        entity_slot_retrieve.extend(entity_retrieve)
+            examples = []
+            for example in entity_slot_retrieve:
+                examples.append({'Score': example['_score'],
+                                 'Question': example['_source']['entity'],
+                                 'Answer': example['_source']['comment'].strip()})
+            st.write(examples)
+            status_text.update(
+                label=f"Entity Retrieval Completed: {len(entity_slot_retrieve)} entities retrieved",
+                state="complete", expanded=False)
+
+        with st.status("Performing QA retrieval...") as status_text:
+            if use_rag:
+                retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
+                                                          selected_profile, 3, 0.5)
+                examples = []
+                for example in retrieve_result:
+                    examples.append({'Score': example['_score'],
+                                     'Question': example['_source']['text'],
+                                     'Answer': example['_source']['sql'].strip()})
+                st.write(examples)
+                status_text.update(
+                    label=f"QA Retrieval Completed: {len(retrieve_result)} entities retrieved",
+                    state="complete", expanded=False)
+
+        with st.status("Generating SQL... ") as status_text:
+            response = text_to_sql(database_profile['tables_info'],
+                                   database_profile['hints'],
+                                   database_profile['prompt_map'],
+                                   search_box,
+                                   model_id=model_type,
+                                   sql_examples=retrieve_result,
+                                   ner_example=entity_slot_retrieve,
+                                   dialect=database_profile['db_type'],
+                                   model_provider=model_provider)
+
+            sql = get_generated_sql(response)
+
+            st.code(sql, language="sql")
+
+            feedback = st.columns(2)
+            feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                               use_container_width=True,
+                               on_click=upvote_clicked,
+                               args=[search_box,
+                                     sql])
+
+            if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
+                # do something here
+                pass
+
+            status_text.update(
+                label=f"Generating SQL Done",
+                state="complete", expanded=True)
+
+            search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
+                                                retrieve_result=retrieve_result, response=response, sql="")
+            search_result.entity_slot_retrieve = entity_slot_retrieve
+            search_result.retrieve_result = retrieve_result
+            search_result.response = response
+            search_result.sql = sql
+    except Exception as e:
+        logger.error(e)
+    return search_result
+
+
+def main():
+    load_dotenv()
+
+    st.set_page_config(page_title="Demo", layout="wide")
+    make_sidebar()
+
+    # Title and Description
+    st.subheader('Generative BI Playground')
+
+    demo_profile_suffix = '(demo)'
+    # Initialize or set up state variables
+    if 'profiles' not in st.session_state:
+        # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        # all_profiles.update(demo_profile)
+        st.session_state['profiles'] = all_profiles
+    else:
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state['profiles'] = all_profiles
+
+    if 'selected_sample' not in st.session_state:
+        st.session_state['selected_sample'] = ''
+
+    if 'ask_replay' not in st.session_state:
+        st.session_state.ask_replay = False
+
+    if 'current_profile' not in st.session_state:
+        st.session_state['current_profile'] = ''
+
+    if 'current_model_id' not in st.session_state:
+        st.session_state['current_model_id'] = ''
+
+    if 'config_data_with_analyse' not in st.session_state:
+        st.session_state['config_data_with_analyse'] = False
+
+    if 'nlq_chain' not in st.session_state:
+        st.session_state['nlq_chain'] = None
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = {}
+
+    if "query_rewrite_history" not in st.session_state:
+        st.session_state.query_rewrite_history = {}
+
+    if "current_sql_result" not in st.session_state:
+        st.session_state.current_sql_result = {}
+
+    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+                 'anthropic.claude-3-opus-20240229-v1:0',
+                 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
+                 'meta.llama3-70b-instruct-v1:0']
+
+    session_state_list = list(st.session_state.get('profiles', {}).keys())
+
+    hava_session_state_flag = False
+    if len(session_state_list) > 0:
+        hava_session_state_flag = True
+
+    with st.sidebar:
+        st.title('Setting')
+        # The default option can be the first one in the profiles dictionary, if exists
+        session_state_list = list(st.session_state.get('profiles', {}).keys())
+        if st.session_state.current_profile != "":
+            if st.session_state.current_profile in session_state_list:
+                profile_index = session_state_list.index(st.session_state.current_profile)
+                selected_profile = st.selectbox("Data Profile", session_state_list, index=profile_index)
+            else:
+                selected_profile = st.selectbox("Data Profile", session_state_list)
+        else:
+            selected_profile = st.selectbox("Data Profile", session_state_list)
+        if selected_profile != st.session_state.current_profile:
+            # clear session state
+            st.session_state.selected_sample = ''
+            st.session_state.current_profile = selected_profile
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
+            st.session_state.nlq_chain = NLQChain(selected_profile)
+        else:
+            if selected_profile not in st.session_state.messages:
+                st.session_state.messages[selected_profile] = []
+            if selected_profile not in st.session_state.query_rewrite_history:
+                st.session_state.query_rewrite_history[selected_profile] = []
+            st.session_state.nlq_chain = NLQChain(selected_profile)
+
+        if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
+            model_index = model_ids.index(st.session_state.current_model_id)
+            model_type = st.selectbox("Choose your model", model_ids, index=model_index)
+        else:
+            model_type = st.selectbox("Choose your model", model_ids)
+
+        use_rag_flag = st.checkbox("Using RAG from Q/A Embedding", True)
+        visualize_results_flag = st.checkbox("Visualize Results", True)
+        intent_ner_recognition_flag = st.checkbox("Intent NER", True)
+        agent_cot_flag = st.checkbox("Agent COT", True)
+        explain_gen_process_flag = st.checkbox("Explain Generation Process", True)
+        data_with_analyse = st.checkbox("Answer With Insights", False)
+        gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
+        auto_correction_flag = st.checkbox("Auto Correcting SQL", True)
+        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 5)
+
+        clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
+
+    st.chat_message("assistant").write(
+        f"I'm the Generative BI assistant. Please **ask a question** or **select a sample question** below to start.")
+
+    if not hava_session_state_flag:
+        st.info("You should first create a database connection and then create a data profile")
+        return
+
+    # Display sample questions
+    comments = st.session_state.profiles[selected_profile]['comments']
+    comments_questions = []
+    if len(comments.split("Examples:")) > 1:
+        comments_questions_txt = comments.split("Examples:")[1]
+        comments_questions = [i for i in comments_questions_txt.split("\n") if i != '']
+
+    search_samples = st.session_state.profiles[selected_profile]['search_samples']
+    search_samples = search_samples + comments_questions
+    question_column_number = 3
+    search_sample_columns = st.columns(question_column_number)
+
+    for i, sample in enumerate(search_samples):
+        i = i % question_column_number
+        search_sample_columns[i].button(sample, use_container_width=True, on_click=sample_question_clicked,
+                                        args=[sample])
+
+    current_nlq_chain = st.session_state.nlq_chain
+
+    # Display chat messages from history
+    logger.info(f'{st.session_state.messages}')
+    if selected_profile in st.session_state.messages:
+        current_role = ""
+        new_index = 0
+        for i in range(len(st.session_state.messages[selected_profile])):
+            print('!!!!!')
+            print(i, new_index)
+            # if i - 1 < new_index:
+            #     continue
+            with st.chat_message(st.session_state.messages[selected_profile][i]["role"]):
+                new_index = recurrent_display(st.session_state.messages[selected_profile], i)
+
+    text_placeholder = "Type your query here..."
+
+    search_box = st.chat_input(placeholder=text_placeholder)
+    if st.session_state['selected_sample'] != "":
+        search_box = st.session_state['selected_sample']
+        st.session_state['selected_sample'] = ""
+
+    database_profile = st.session_state.profiles[selected_profile]
+    with st.spinner('Connecting to database...'):
+        # fix db url is Empty
+        if database_profile['db_url'] == '':
+            conn_name = database_profile['conn_name']
+            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+            database_profile['db_url'] = db_url
+            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+    prompt_map = database_profile['prompt_map']
+
+    st.session_state.ask_replay = False
+
+    # add select box for which model to use
+    if search_box != "Type your query here..." or \
+            current_nlq_chain.is_visualization_config_changed():
+        if search_box is not None and len(search_box) > 0:
+            with st.chat_message("user"):
+                current_nlq_chain.set_question(search_box)
+                st.session_state.messages[selected_profile].append(
+                    {"role": "user", "content": search_box, "type": "text"})
+                st.session_state.query_rewrite_history[selected_profile].append(
+                    {"role": "user", "content": search_box})
+                st.markdown(current_nlq_chain.get_question())
+            user_query_history = get_user_history(selected_profile)
+            with st.chat_message("assistant"):
+                processing_context = ProcessingContext(
+                    search_box=search_box,
+                    query_rewrite="",
+                    session_id="",
+                    user_id="",
+                    selected_profile=selected_profile,
+                    database_profile=database_profile,
+                    model_type=model_type,
+                    use_rag_flag=use_rag_flag,
+                    intent_ner_recognition_flag=intent_ner_recognition_flag,
+                    agent_cot_flag=agent_cot_flag,
+                    explain_gen_process_flag=explain_gen_process_flag,
+                    visualize_results_flag=visualize_results_flag,
+                    data_with_analyse=data_with_analyse,
+                    gen_suggested_question_flag=gen_suggested_question_flag,
+                    auto_correction_flag=auto_correction_flag,
+                    context_window=context_window,
+                    entity_same_name_select={},
+                    user_query_history=user_query_history,
+                    opensearch_info=opensearch_info,
+                    previous_state="INITIAL")
+                state_machine = QueryStateMachine(processing_context)
+
+                while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
+                    if state_machine.get_state() == QueryState.INITIAL:
+                        with st.status("Query Context Understanding") as status_text:
+                            state_machine.handle_initial()
+                            st.write(state_machine.get_answer().query_rewrite)
+                        status_text.update(label=f"Query Context Rewrite Completed", state="complete", expanded=False)
+                        if state_machine.get_answer().query_intent == "ask_in_reply":
+                            st.session_state.query_rewrite_history[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().query_rewrite})
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().query_rewrite, "type": "text"})
+                            st.write(state_machine.get_answer().query_rewrite)
+                    elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
+                        state_machine.handle_entity_retrieval()
+                    elif state_machine.get_state() == QueryState.QA_RETRIEVAL:
+                        state_machine.handle_qa_retrieval()
+                    elif state_machine.get_state() == QueryState.SQL_GENERATION:
+                        state_machine.handle_sql_generation()
+                    elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
+                        state_machine.handle_intent_recognition()
+                    elif state_machine.state == QueryState.EXECUTE_QUERY:
+                        state_machine.handle_execute_query()
+                    elif state_machine.get_state() == QueryState.ANALYZE_DATA:
+                        state_machine.handle_analyze_data()
+                    else:
+                        state_machine.state = QueryState.ERROR
+
+
+
+
+if __name__ == '__main__':
+    main()
