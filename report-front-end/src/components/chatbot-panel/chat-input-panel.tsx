@@ -1,35 +1,28 @@
 import { Button, Container, SpaceBetween } from "@cloudscape-design/components";
-import {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
-import {
-  ChatBotHistoryItem,
-  ChatBotMessageItem,
-  ChatInputState,
-} from "./types";
+import { ChatBotHistoryItem, ChatBotMessageItem, ChatInputState } from "./types";
 import styles from "./chat.module.scss";
 import CustomQuestions from "./custom-questions";
 import { Session } from "../session-panel/types";
+import { deleteHistoryBySession } from "../../common/api/API";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  sessions: Session[];
   setSessions: Dispatch<SetStateAction<Session[]>>;
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendMessage: SendJsonMessage;
   toolsHide: boolean;
   currSessionId: string;
+  setCurrentSessionId: Dispatch<SetStateAction<string>>;
 }
 
 export abstract class ChatScrollState {
@@ -65,8 +58,25 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   };
 
   const handleClear = () => {
-    const bool = window.confirm("Are you sure to clear the chat history?");
-    if (bool) props.setMessageHistory([]);
+    const bool = window.confirm("Are you sure to clear current session history?");
+    // if (bool) props.setMessageHistory([]);
+    if (bool) {
+      const historyItem = {
+        session_id: props.currSessionId,
+        user_id: userState.userInfo.userId,
+        profile_name: userState.queryConfig.selectedDataPro,
+      };
+      deleteHistoryBySession(historyItem).then(
+        response => {
+          if (response) {
+            props.setCurrentSessionId(props.sessions.length > 0 ? props.sessions[0].session_id : "-1");
+            props.setSessions((prevState) => {
+              return prevState.filter((item) => item.session_id !== props.currSessionId);
+            });
+          }
+        }
+      );
+    }
   };
 
   useEffect(() => {

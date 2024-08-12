@@ -16,6 +16,7 @@ export default function Chat(props: {
   sessions: Session[];
   setSessions: Dispatch<SetStateAction<Session[]>>;
   currentSessionId: string;
+  setCurrentSessionId: Dispatch<SetStateAction<string>>;
 }) {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
     [],
@@ -163,12 +164,14 @@ export default function Chat(props: {
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
             setMessageHistory(history)
           }
+          sessions={props.sessions}
           setSessions={props.setSessions}
           setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
             setStatusMessage(message)
           }
           sendMessage={sendJsonMessage}
           currSessionId={props.currentSessionId}
+          setCurrentSessionId={props.setCurrentSessionId}
         />
       </div>
     </div>

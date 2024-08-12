@@ -73,6 +73,7 @@ export default function Playground() {
             sessions={sessions}
             setSessions={setSessions}
             currentSessionId={currentSessionId}
+            setCurrentSessionId={setCurrentSessionId}
           />
         }
         toolsHide={toolsHide}

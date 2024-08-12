@@ -107,6 +107,25 @@ export async function getSessions(sessionItem: SessionItem) {
   }
 }
 
+export async function deleteHistoryBySession(historyItem: HistoryItem) {
+  // call api
+  try {
+    const response = await fetch(`/api/qa/delete_history_by_session`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify(historyItem)
+    });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("deleteHistoryBySession, error: ", error);
+  }
+}
+
 export async function getHistoryBySession(historyItem: HistoryItem) {
   // call api
   try {
