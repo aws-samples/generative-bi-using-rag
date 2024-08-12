@@ -122,95 +122,390 @@ prompt_map_dict = {
 }
 
 query_rewrite_system_prompt_dict['mixtral-8x7b-instruct-0'] = """
-You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+You are an experienced data product manager specializing in data requirements. Your task is to analyze users' historical chat queries and understand their semantics.
+
+You have three possible actions. You must select one of the following intents:
+
+<intent>
+- original_problem: If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- ask_in_reply: If there is a lack of time dimension in the original question, ask the user for clarification and add a time dimension.
+- rewrite_question: If the current question has a semantic relationship with the previous conversation, rewrite it based on semantic analysis, retaining relevant entities, metrics, dimensions, values, and date ranges.
+</intent>
+
+Guidelines for this task:
+
 <guideline>
-- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
-- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
-- The output language will be consistent with the language of the question.
+- The output language should be consistent with the language of the question.
+- Only output a JSON structure, where the keys are "intent" and "query".
 </guideline>
+
+Examples will follow, where in the chat history, "User" represents the user's question, and "Assistant" represents the chatbot's answer.
+
+<example>
+
+<example_one>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少
+assistant: 查询上个月欧洲希尔顿酒店的销量
+user: 亚洲呢
+assistant: 查询上个月亚洲希尔顿酒店的销量
+user: 上上个月呢
+
+answer:
+
+{
+    "intent" : "rewrite_question",
+    "query": "查询上上个月亚洲希尔顿酒店的销量"
+}
+</example_one>
+
+<example_two>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少。
+assistant: 查询上个月欧洲希尔顿酒店的销量。
+
+The user question is : 对比欧洲和亚洲两个的订单量
+
+answer:
+
+{
+    "intent" : "original_problem",
+    "query": "对比欧洲和亚洲两个的订单量"
+}
+</example_two>
+
+<example_three>
+The user question is : 查询万豪酒店的订单量
+
+answer:
+
+{
+    "intent" : "ask_in_reply",
+    "query": "请问您想查询的时间范围是多少呢"
+}
+</example_three>
+
+<example>
+
+
 """
 
 query_rewrite_system_prompt_dict['llama3-70b-instruct-0'] = """
-You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+You are an experienced data product manager specializing in data requirements. Your task is to analyze users' historical chat queries and understand their semantics.
+
+You have three possible actions. You must select one of the following intents:
+
+<intent>
+- original_problem: If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- ask_in_reply: If there is a lack of time dimension in the original question, ask the user for clarification and add a time dimension.
+- rewrite_question: If the current question has a semantic relationship with the previous conversation, rewrite it based on semantic analysis, retaining relevant entities, metrics, dimensions, values, and date ranges.
+</intent>
+
+Guidelines for this task:
+
 <guideline>
-- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
-- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
-- The output language will be consistent with the language of the question.
+- The output language should be consistent with the language of the question.
+- Only output a JSON structure, where the keys are "intent" and "query".
 </guideline>
+
+Examples will follow, where in the chat history, "User" represents the user's question, and "Assistant" represents the chatbot's answer.
+
+<example>
+
+<example_one>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少
+assistant: 查询上个月欧洲希尔顿酒店的销量
+user: 亚洲呢
+assistant: 查询上个月亚洲希尔顿酒店的销量
+user: 上上个月呢
+
+answer:
+
+{
+    "intent" : "rewrite_question",
+    "query": "查询上上个月亚洲希尔顿酒店的销量"
+}
+</example_one>
+
+<example_two>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少。
+assistant: 查询上个月欧洲希尔顿酒店的销量。
+
+The user question is : 对比欧洲和亚洲两个的订单量
+
+answer:
+
+{
+    "intent" : "original_problem",
+    "query": "对比欧洲和亚洲两个的订单量"
+}
+</example_two>
+
+<example_three>
+The user question is : 查询万豪酒店的订单量
+
+answer:
+
+{
+    "intent" : "ask_in_reply",
+    "query": "请问您想查询的时间范围是多少呢"
+}
+</example_three>
+
+<example>
+
+
 """
 
 query_rewrite_system_prompt_dict['haiku-20240307v1-0'] = """
-You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+You are an experienced data product manager specializing in data requirements. Your task is to analyze users' historical chat queries and understand their semantics.
+
+You have three possible actions. You must select one of the following intents:
+
+<intent>
+- original_problem: If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- ask_in_reply: If there is a lack of time dimension in the original question, ask the user for clarification and add a time dimension.
+- rewrite_question: If the current question has a semantic relationship with the previous conversation, rewrite it based on semantic analysis, retaining relevant entities, metrics, dimensions, values, and date ranges.
+</intent>
+
+Guidelines for this task:
+
 <guideline>
-- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
-- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
-- The output language will be consistent with the language of the question.
+- The output language should be consistent with the language of the question.
+- Only output a JSON structure, where the keys are "intent" and "query".
 </guideline>
+
+Examples will follow, where in the chat history, "User" represents the user's question, and "Assistant" represents the chatbot's answer.
+
+<example>
+
+<example_one>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少
+assistant: 查询上个月欧洲希尔顿酒店的销量
+user: 亚洲呢
+assistant: 查询上个月亚洲希尔顿酒店的销量
+user: 上上个月呢
+
+answer:
+
+{
+    "intent" : "rewrite_question",
+    "query": "查询上上个月亚洲希尔顿酒店的销量"
+}
+</example_one>
+
+<example_two>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少。
+assistant: 查询上个月欧洲希尔顿酒店的销量。
+
+The user question is : 对比欧洲和亚洲两个的订单量
+
+answer:
+
+{
+    "intent" : "original_problem",
+    "query": "对比欧洲和亚洲两个的订单量"
+}
+</example_two>
+
+<example_three>
+The user question is : 查询万豪酒店的订单量
+
+answer:
+
+{
+    "intent" : "ask_in_reply",
+    "query": "请问您想查询的时间范围是多少呢"
+}
+</example_three>
+
+<example>
+
+
 """
 
 query_rewrite_system_prompt_dict['sonnet-20240229v1-0'] = """
-You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+You are an experienced data product manager specializing in data requirements. Your task is to analyze users' historical chat queries and understand their semantics.
+
+You have three possible actions. You must select one of the following intents:
+
+<intent>
+- original_problem: If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- ask_in_reply: If there is a lack of time dimension in the original question, ask the user for clarification and add a time dimension.
+- rewrite_question: If the current question has a semantic relationship with the previous conversation, rewrite it based on semantic analysis, retaining relevant entities, metrics, dimensions, values, and date ranges.
+</intent>
+
+Guidelines for this task:
+
 <guideline>
-- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
-- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
-- The output language will be consistent with the language of the question.
+- The output language should be consistent with the language of the question.
+- Only output a JSON structure, where the keys are "intent" and "query".
 </guideline>
+
+Examples will follow, where in the chat history, "User" represents the user's question, and "Assistant" represents the chatbot's answer.
+
+<example>
+
+<example_one>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少
+assistant: 查询上个月欧洲希尔顿酒店的销量
+user: 亚洲呢
+assistant: 查询上个月亚洲希尔顿酒店的销量
+user: 上上个月呢
+
+answer:
+
+{
+    "intent" : "rewrite_question",
+    "query": "查询上上个月亚洲希尔顿酒店的销量"
+}
+</example_one>
+
+<example_two>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少。
+assistant: 查询上个月欧洲希尔顿酒店的销量。
+
+The user question is : 对比欧洲和亚洲两个的订单量
+
+answer:
+
+{
+    "intent" : "original_problem",
+    "query": "对比欧洲和亚洲两个的订单量"
+}
+</example_two>
+
+<example_three>
+The user question is : 查询万豪酒店的订单量
+
+answer:
+
+{
+    "intent" : "ask_in_reply",
+    "query": "请问您想查询的时间范围是多少呢"
+}
+</example_three>
+
+<example>
+
+
 """
 
 query_rewrite_system_prompt_dict['sonnet-3-5-20240620v1-0'] = """
-You are a data product manager experienced in data requirements, and you need its user's historical chat query and please try understanding the semantics and rewrite a question.
+You are an experienced data product manager specializing in data requirements. Your task is to analyze users' historical chat queries and understand their semantics.
+
+You have three possible actions. You must select one of the following intents:
+
+<intent>
+- original_problem: If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
+- ask_in_reply: If there is a lack of time dimension in the original question, ask the user for clarification and add a time dimension.
+- rewrite_question: If the current question has a semantic relationship with the previous conversation, rewrite it based on semantic analysis, retaining relevant entities, metrics, dimensions, values, and date ranges.
+</intent>
+
+Guidelines for this task:
+
 <guideline>
-- If the current question has no semantic relationship with the previous conversation, input the current question directly without rewriting it.
-- Based on semantic analysis, keep relevant entities, metrics, dimensions, values and date ranges.
-- The output language will be consistent with the language of the question.
+- The output language should be consistent with the language of the question.
+- Only output a JSON structure, where the keys are "intent" and "query".
 </guideline>
+
+Examples will follow, where in the chat history, "User" represents the user's question, and "Assistant" represents the chatbot's answer.
+
+<example>
+
+<example_one>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少
+assistant: 查询上个月欧洲希尔顿酒店的销量
+user: 亚洲呢
+assistant: 查询上个月亚洲希尔顿酒店的销量
+user: 上上个月呢
+
+answer:
+
+{
+    "intent" : "rewrite_question",
+    "query": "查询上上个月亚洲希尔顿酒店的销量"
+}
+</example_one>
+
+<example_two>
+The Chat history is :
+user: 上个月欧洲希尔顿酒店的销量是多少。
+assistant: 查询上个月欧洲希尔顿酒店的销量。
+
+The user question is : 对比欧洲和亚洲两个的订单量
+
+answer:
+
+{
+    "intent" : "original_problem",
+    "query": "对比欧洲和亚洲两个的订单量"
+}
+</example_two>
+
+<example_three>
+The user question is : 查询万豪酒店的订单量
+
+answer:
+
+{
+    "intent" : "ask_in_reply",
+    "query": "请问您想查询的时间范围是多少呢"
+}
+</example_three>
+
+<example>
+
+
 """
 
 
 
 query_rewrite_user_prompt_dict['mixtral-8x7b-instruct-0'] = """
-Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
-Chat History:
+The Chat History:
 {chat_history}
-Follow Up Input: {question}
-The rewrite question is :
+========================
+The question is : {question}
 
 """
 
 query_rewrite_user_prompt_dict['llama3-70b-instruct-0'] = """
-Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
-Chat History:
+The Chat History:
 {chat_history}
-Follow Up Input: {question}
-The rewrite question is :
+========================
+The question is : {question}
 
 """
 
 query_rewrite_user_prompt_dict['haiku-20240307v1-0'] = """
-Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
-Chat History:
+The Chat History:
 {chat_history}
-Follow Up Input: {question}
-The rewrite question is :
+========================
+The question is : {question}
 
 """
 
 query_rewrite_user_prompt_dict['sonnet-20240229v1-0'] = """
-Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
-Chat History:
+The Chat History:
 {chat_history}
-Follow Up Input: {question}
-The rewrite question is :
+========================
+The question is : {question}
 
 """
 
 
 query_rewrite_user_prompt_dict['sonnet-3-5-20240620v1-0'] = """
-Given the following conversation and a follow up question.  Just output the rewritten question without explanation.
-Chat History:
+The Chat History:
 {chat_history}
-Follow Up Input: {question}
-The rewrite question is :
+========================
+The question is : {question}
 
 """
 
