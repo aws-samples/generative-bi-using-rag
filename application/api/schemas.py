@@ -40,6 +40,7 @@ class HistorySessionRequest(BaseModel):
     profile_name: str
     log_type: str = "chat_history"
 
+
 class QueryEntity(BaseModel):
     query: str
     sql: str
@@ -96,6 +97,11 @@ class AskReplayResult(BaseModel):
     query_rewrite: str
 
 
+class AskEntitySelect(BaseModel):
+    entity_select: str
+    entity_info: dict[str, Any]
+
+
 class Answer(BaseModel):
     query: str
     query_rewrite: str = ""
@@ -105,6 +111,7 @@ class Answer(BaseModel):
     agent_search_result: AgentSearchResult
     ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
+    ask_entity_select: AskEntitySelect
 
 
 class Message(BaseModel):
