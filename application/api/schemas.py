@@ -111,7 +111,7 @@ class Answer(BaseModel):
     agent_search_result: AgentSearchResult
     ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
-    ask_entity_select: AskEntitySelect
+    # ask_entity_select: AskEntitySelect
 
 
 class Message(BaseModel):
