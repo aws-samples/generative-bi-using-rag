@@ -15,6 +15,7 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemake
 
 from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL, SAGEMAKER_EMBEDDING_REGION, \
     SAGEMAKER_SQL_REGION, SAGEMAKER_ENDPOINT_EMBEDDING, SAGEMAKER_ENDPOINT_SQL
+from utils.tool import convert_timestamps_to_str
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -520,6 +521,7 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     columns = list(search_data.columns)
     data_list = search_data.values.tolist()
     all_columns_data = [columns] + data_list
+    all_columns_data = convert_timestamps_to_str(all_columns_data)
     try:
         if len(all_columns_data) < 1:
             return "table", all_columns_data, "-1", []
