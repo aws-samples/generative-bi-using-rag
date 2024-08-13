@@ -2,12 +2,12 @@ import useWebSocket from "react-use-websocket";
 import { DEFAULT_QUERY_CONFIG } from "../constant/constants";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { Dispatch, SetStateAction } from "react";
-import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
-import { Global } from "../constant/global";
+import { ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
+import { Session } from "../../components/session-panel/types";
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>
+  setSessions: Dispatch<SetStateAction<Session[]>>
 ) {
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
   const {sendJsonMessage}
@@ -29,12 +29,22 @@ export function createWssClient(
         [...historyMessage, messageJson]);
     } else {
       setStatusMessage([]);
-      setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [...history, {
-          type: ChatBotMessageType.AI,
-          content: messageJson.content
-        }];
+      setSessions((prevState) => {
+        return prevState.map((session) => {
+          if (messageJson.session_id !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: messageJson.session_id,
+              messages: [...session.messages, {
+                type: ChatBotMessageType.AI,
+                content: messageJson.content
+              }]
+            }
+          }
+        })
       });
+
     }
   };
 
@@ -45,15 +55,24 @@ export function queryWithWS(props: {
   query: string;
   configuration: any;
   sendMessage: SendJsonMessage;
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   userId: string;
+  sessionId: string;
 }) {
-
-  props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-    return [...history, {
-      type: ChatBotMessageType.Human,
-      content: props.query
-    }];
+  props.setSessions((prevState) => {
+    return prevState.map((session) => {
+      if (props.sessionId !== session.session_id) {
+        return session;
+      } else {
+        return {
+          session_id: session.session_id,
+          messages: [...session.messages, {
+            type: ChatBotMessageType.Human,
+            content: props.query
+          }]
+        }
+      }
+    })
   });
   const param = {
     query: props.query,
@@ -71,7 +90,7 @@ export function queryWithWS(props: {
     max_tokens: props.configuration.maxLength,
     temperature: props.configuration.temperature,
     context_window: props.configuration.contextWindow,
-    session_id: Global.sessionId,
+    session_id: props.sessionId,
     user_id: props.userId
   };
   console.log("Send WebSocketMessage: ", param);

@@ -6,12 +6,15 @@ import { useSelector } from "react-redux";
 import { queryWithWS } from "../../common/api/WebSocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { UserState } from "../../common/helpers/types";
+import { Session } from "../session-panel/types";
 
 export interface SuggestedQuestionsProps {
   questions: string[];
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
@@ -32,7 +35,9 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
-      userId: userState.userInfo.userId
+      setSessions: props.setSessions,
+      userId: userState.userInfo.userId,
+      sessionId: props.sessionId
     });
   };
 

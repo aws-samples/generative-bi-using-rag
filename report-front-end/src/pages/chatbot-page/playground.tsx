@@ -13,7 +13,7 @@ export default function Playground() {
     session_id: uuid(),
     messages: [],
   }]);
-  const [currentSession, setCurrentSession] = useState<number>(0);
+  const [currentSessionId, setCurrentSessionId] = useState<string>(sessions[0].session_id);
 
   return (
     <BaseAppLayout
@@ -22,8 +22,8 @@ export default function Playground() {
         <NavigationPanel
           sessions={sessions}
           setSessions={setSessions}
-          currentSession={currentSession}
-          setCurrentSession={setCurrentSession}
+          currentSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
         />
       }
       content={
@@ -32,7 +32,7 @@ export default function Playground() {
           setToolsHide={setToolsHide}
           sessions={sessions}
           setSessions={setSessions}
-          currentSession={currentSession}
+          currentSessionId={currentSessionId}
         />
       }
       toolsHide={toolsHide}
