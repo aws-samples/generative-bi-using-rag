@@ -74,7 +74,7 @@ class RelationDatabase():
         # connection = engine.connect()
         metadata = db.MetaData()
         for s in schemas:
-            metadata.reflect(bind=engine, schema=s)
+            metadata.reflect(bind=engine, schema=s, views=True)
         # metadata.reflect(bind=engine)
         return metadata
 
