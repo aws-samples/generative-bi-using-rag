@@ -20,18 +20,6 @@ def get_authenticator():
     )
 
 
-def force_set_cookie(authenticator):
-    """
-    Force the cookie
-    :param authenticator:
-    :return:
-    """
-    try:
-        authenticator.cookie_handler.set_cookie()
-    except:
-        pass
-
-
 def get_current_page_name():
     ctx = get_script_run_ctx()
     if ctx is None:
