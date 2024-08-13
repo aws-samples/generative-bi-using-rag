@@ -1,6 +1,6 @@
 import json
 import traceback
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 import logging
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum
@@ -8,6 +8,8 @@ from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, Hi
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
+
+from utils.auth import authenticate, skipAuthentication
 
 from .service import ask_websocket
 
@@ -66,18 +68,43 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            print('---WEBSOCKET MESSAGE---', data)
             question_json = json.loads(data)
-            question = Question(**question_json)
-            session_id = question.session_id
-            user_id = question.user_id
-            try:
-                ask_result = await ask_websocket(websocket, question)
-                logger.info(ask_result)
-                await response_websocket(websocket=websocket, session_id=session_id, content=ask_result.dict(), content_type=ContentEnum.END, user_id=user_id)
-            except Exception:
-                msg = traceback.format_exc()
-                logger.exception(msg)
-                await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
+
+            if not skipAuthentication:
+                access_token = question_json.get('X-Access-Token')
+                if access_token:
+                    del question_json['X-Access-Token']
+
+                id_token = question_json.get('X-Id-Token')
+                if id_token:
+                    del question_json['X-Id-Token']
+
+                refresh_token = question_json.get('X-Refresh-Token')
+                if refresh_token:
+                    del question_json['X-Refresh-Token']
+
+                response = authenticate(access_token, id_token, refresh_token)
+
+            if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
+                answer = {}
+                answer['X-Status-Code'] = response["X-Status-Code"]
+                await response_websocket(websocket, session_id, answer, ContentEnum.END)
+            else:
+                question = Question(**question_json)
+                session_id = question.session_id
+                user_id = question.user_id
+                try:
+                    ask_result = await ask_websocket(websocket, question)
+                    logger.info(ask_result)
+                    answer = ask_result.dict()
+                    if not skipAuthentication:
+                        answer.update(response)
+                    await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
+                except Exception:
+                    msg = traceback.format_exc()
+                    logger.exception(msg)
+                    await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
 

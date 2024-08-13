@@ -1,9 +1,9 @@
 import json
 import logging
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from api.exception_handler import biz_exception
 from api.main import router
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +11,7 @@ from api import service
 from api.schemas import Option, Message
 from nlq.business.log_store import LogManagement
 from utils.tool import set_share_data, get_share_data
+from utils.auth import authenticate, skipAuthentication
 
 MAX_CHAT_WINDOW_SIZE = 10 * 2
 app = FastAPI(title='GenBI')
@@ -18,10 +19,33 @@ app = FastAPI(title='GenBI')
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+@app.middleware("http")
+async def http_authenticate(request: Request, call_next):
+    print('---HTTP REQUEST---', vars(request), request.headers)
+
+    if not skipAuthentication:
+        access_token = request.headers.get("X-Access-Token")
+        id_token = request.headers.get("X-Id-Token")
+        refresh_token = request.headers.get("X-Refresh-Token")
+
+        response = authenticate(access_token, id_token, refresh_token)
+
+    if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
+        return Response(status_code=response["X-Status-Code"])
+    else:
+        if not skipAuthentication:
+            username = response["X-User-Name"]
+            #email = response["X-Email"]
+        response = await call_next(request)
+        if not skipAuthentication:
+            response.headers["X-User-Name"] = username
+            #response.headers["X-Email"] = email
+        return response
 
 # Global exception capture
 biz_exception(app)
