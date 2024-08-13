@@ -1,28 +1,30 @@
 import { Button } from "@cloudscape-design/components";
 import "./style.scss";
 import { Dispatch, SetStateAction } from "react";
+import { Session } from "./types";
 
 export const SessionPanel = (props: {
-  session: any,
+  session: Session,
   index: number,
-  currSession: number,
-  setCurrSession: Dispatch<SetStateAction<number>>,
+  currSessionId: string,
+  setCurrSessionId: Dispatch<SetStateAction<string>>,
   setSessions: Dispatch<SetStateAction<any[]>>,
 }) => {
 
   const onClick = () => {
-    props.setCurrSession(props.index);
+    console.log("onClick, sessionId: ", props.session);
+    props.setCurrSessionId(props.session.session_id);
   };
 
   return (
     <div
-      style={{ backgroundColor: props.index === props.currSession ? "lightgray" : "white" }}
+      style={{ backgroundColor: props.session.session_id === props.currSessionId ? "lightgray" : "white" }}
       className="session_container">
       <Button
         iconName="contact"
         className="session"
         onClick={onClick}>
-        {props.session.session_id}
+        {props.session.messages.length > 0 ? props.session.messages[0].content as string : "New conversation"}
       </Button>
     </div>
   );

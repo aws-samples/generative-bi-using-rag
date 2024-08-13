@@ -1633,7 +1633,7 @@ the answer is :
 
 {{
     "show_type" : "pie",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+    "format_data" : [["gender", "num_users"], ["F", 1906], ["M", 1788]]
 }}
 ```
 <example>
@@ -1670,7 +1670,7 @@ the answer is :
 
 {{
     "show_type" : "pie",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+    "format_data" : [["gender", "num_users"], ["F", 1906], ["M", 1788]]
 }}
 ```
 <example>
@@ -1707,7 +1707,7 @@ the answer is :
 
 {{
     "show_type" : "pie",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+    "format_data" : [["gender", "num_users"], ["F", 1906], ["M", 1788]]
 }}
 ```
 <example>
@@ -1744,7 +1744,7 @@ the answer is :
 
 {{
     "show_type" : "pie",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+    "format_data" : [["gender", "num_users"], ["F", 1906], ["M", 1788]]
 }}
 ```
 <example>
@@ -1781,7 +1781,7 @@ the answer is :
 
 {{
     "show_type" : "pie",
-    "format_data" : [['gender', 'num_users'], ['F', 1906], ['M', 1788]]
+    "format_data" : [["gender", "num_users"], ["F", 1906], ["M", 1788]]
 }}
 ```
 <example>

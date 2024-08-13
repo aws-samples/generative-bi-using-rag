@@ -15,7 +15,7 @@ export default function Chat(props: {
   toolsHide: boolean;
   sessions: Session[];
   setSessions: Dispatch<SetStateAction<Session[]>>;
-  currentSession: number;
+  currentSessionId: string;
 }) {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
     [],
@@ -23,7 +23,7 @@ export default function Chat(props: {
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const sendJsonMessage = createWssClient(setStatusMessage, setMessageHistory);
+  const sendJsonMessage = createWssClient(setStatusMessage, props.setSessions);
 
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
@@ -54,24 +54,21 @@ export default function Chat(props: {
   }, [userState.queryConfig]);
 
   useEffect(() => {
-    // console.log("current session index: ", props.currentSession);
-    setMessageHistory(props.sessions[props.currentSession].messages);
-  }, [props.currentSession]);
-
-  useEffect(() => {
-    props.setSessions((prevState) => {
-      return prevState.map((session: Session, idx: number) => {
-        if (idx === props.currentSession) {
-          return {
-            session_id: session.session_id,
-            messages: messageHistory
-          };
-        } else {
-          return session;
-        }
-      });
+    props.sessions.forEach((session) => {
+      if (session.session_id === props.currentSessionId) {
+        setMessageHistory(session.messages);
+      }
     });
-  }, [messageHistory]);
+  }, [props.currentSessionId]);
+
+  // update history message
+  useEffect(() => {
+    props.sessions.forEach((session) => {
+      if (session.session_id === props.currentSessionId) {
+        setMessageHistory(session.messages);
+      }
+    });
+  }, [props.sessions]);
 
   return (
     <div className={styles.chat_container}>
@@ -86,15 +83,18 @@ export default function Chat(props: {
                 setMessageHistory={(
                   history: SetStateAction<ChatBotHistoryItem[]>,
                 ) => setMessageHistory(history)}
+                setSessions={props.setSessions}
                 sendMessage={sendJsonMessage}
+                sessionId={props.currentSessionId}
               />
             </div>
           );
         })}
-        {statusMessage.length === 0 ? null : (
+        {statusMessage.filter((status) => status.session_id === props.currentSessionId).length === 0 ? null : (
           <div className={styles.status_container}>
             <SpaceBetween size="xxs">
-              {statusMessage.map((message, idx) => {
+              {statusMessage.filter((status) => status.session_id === props.currentSessionId)
+                .map((message, idx) => {
                 const displayMessage =
                   idx % 2 === 1
                     ? true
@@ -138,10 +138,12 @@ export default function Chat(props: {
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
             setMessageHistory(history)
           }
+          setSessions={props.setSessions}
           setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
             setStatusMessage(message)
           }
           sendMessage={sendJsonMessage}
+          currSessionId={props.currentSessionId}
         />
       </div>
     </div>
