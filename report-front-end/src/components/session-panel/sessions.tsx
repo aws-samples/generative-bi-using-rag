@@ -24,17 +24,6 @@ export const Sessions = (
       user_id: userInfo.userInfo.userId,
       profile_name: userInfo.queryConfig.selectedDataPro,
     };
-    /*    getHistory(sessionItem).then(
-          response => {
-            console.log("Histories: ", response);
-            const sessionId = uuid();
-            props.setSessions([
-              {
-                session_id: sessionId,
-                messages: [],
-              }, ...(response.filter((item: any) => item.session_id !== ""))]);
-            props.setCurrentSessionId(sessionId);
-          });*/
     getSessions(sessionItem).then(
       response => {
         console.log("Sessions: ", response);

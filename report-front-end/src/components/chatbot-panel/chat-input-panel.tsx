@@ -70,17 +70,20 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       deleteHistoryBySession(historyItem).then(
         response => {
           if (response) {
-            const sessionId = uuid();
-            props.setSessions((prevState) => {
-              return [
-                {
-                  session_id: sessionId,
+            props.setSessions((prevState: Session[]) => {
+              const filterState = prevState.filter((item: Session) => {
+                return item.session_id !== props.currSessionId;
+              });
+              if (filterState.length === 0) {
+                filterState.push({
+                  session_id: uuid(),
                   title: "New Chat",
                   messages: [],
-                }, ...prevState.filter((item) => item.session_id !== props.currSessionId)
-              ];
+                });
+              }
+              props.setCurrentSessionId(filterState[0].session_id);
+              return filterState;
             });
-            props.setCurrentSessionId(sessionId);
           }
         },
       );
