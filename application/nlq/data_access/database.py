@@ -12,7 +12,7 @@ class RelationDatabase():
     db_mapping = {
         'mysql': 'mysql+pymysql',
         'postgresql': 'postgresql+psycopg2',
-        'redshift': 'postgresql+psycopg2',
+        'redshift': 'redshift+psycopg2',
         'starrocks': 'starrocks',
         'clickhouse': 'clickhouse',
         # Add more mappings here for other databases

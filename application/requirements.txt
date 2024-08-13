@@ -18,3 +18,4 @@ starrocks==1.0.6
 clickhouse-sqlalchemy==0.2.6
 sagemaker
 fastapi~=0.110.1
+sqlalchemy-redshift~=0.8.14
