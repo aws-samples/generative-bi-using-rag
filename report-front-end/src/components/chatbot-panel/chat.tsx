@@ -126,7 +126,7 @@ export default function Chat(props: {
       </SpaceBetween>
       <div className={styles.welcome_text}>
         {messageHistory.length === 0 &&
-          statusMessage.length === 0 &&
+          statusMessage.filter((status) => status.session_id === props.currentSessionId).length === 0 &&
           !loading && <center>{"GenBI Chatbot"}</center>}
       </div>
       <div className={styles.input_container}>
