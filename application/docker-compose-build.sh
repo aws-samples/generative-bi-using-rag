@@ -18,19 +18,9 @@ if [ -n "$container_id" ]; then
 
     echo "容器 $container_name 已成功停止和删除."
 
-    docker-compose build
-
-    docker-compose up -d
-
     echo "容器 $container_name 已重新启动."
 else
     echo "没有找到名称为 $container_name 的容器."
-
-    docker-compose build
-
-    docker-compose up -d
-
-    echo "容器 $container_name 已重新启动."
 fi
 
 container_id=$(docker ps -aq --filter="name=nlq-api")
@@ -47,19 +37,33 @@ if [ -n "$container_id" ]; then
 
     echo "容器 $container_name 已成功停止和删除."
 
-    docker-compose build
+    echo "容器 $container_name 已重新启动."
+else
+    echo "没有找到名称为 $container_name 的容器."
+fi
 
-    docker-compose up -d
+container_id=$(docker ps -aq --filter="name=react-front-end")
+
+# 如果找到匹配的容器
+if [ -n "$container_id" ]; then
+    # 停止容器
+    echo "正在停止容器 $container_name..."
+    docker stop $container_id
+
+    # 删除容器
+    echo "正在删除容器 $container_name..."
+    docker rm $container_id
+
+    echo "容器 $container_name 已成功停止和删除."
 
     echo "容器 $container_name 已重新启动."
 else
     echo "没有找到名称为 $container_name 的容器."
-
-    docker-compose build
-
-    docker-compose up -d
-
-    echo "容器 $container_name 已重新启动."
 fi
+
+
+docker-compose build
+
+docker-compose up -d
 
 docker images -q --filter "dangling=true" | xargs -r docker rmi
