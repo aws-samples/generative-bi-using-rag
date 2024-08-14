@@ -107,6 +107,7 @@ class QueryStateMachine:
                                                  self.context.database_profile['prompt_map'],
                                                  self.context.user_query_history)
         self.context.query_rewrite = query_rewrite_result.get("query")
+
         query_rewrite_intent = query_rewrite_result.get("intent")
         if query_rewrite_intent == "ask_in_reply":
             self._set_ask_in_reply_result()
@@ -127,7 +128,8 @@ class QueryStateMachine:
     def _perform_entity_retrieval(self):
         if self.context.use_rag_flag:
             return entity_retrieve_search(self.entity_slot, self.context.opensearch_info, self.context.selected_profile)
-        return []
+        else:
+            return []
 
     def handle_qa_retrieval(self):
         self.normal_search_qa_retrival = self._perform_qa_retrieval()
