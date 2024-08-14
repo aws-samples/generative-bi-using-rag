@@ -440,8 +440,10 @@ def main():
                             st.session_state.messages[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().query_rewrite, "type": "text"})
                             st.write(state_machine.get_answer().query_rewrite)
-
-
+                    elif state_machine.get_state() == QueryState.REJECT_INTENT:
+                        state_machine.handle_reject_intent()
+                    elif state_machine.get_state() == QueryState.KNOWLEDGE_SEARCH:
+                        state_machine.handle_knowledge_search()
                     elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
                         with st.status("Performing Entity retrieval...") as status_text:
                             state_machine.handle_entity_retrieval()
@@ -498,6 +500,8 @@ def main():
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "user", "content": state_machine.intent_search_result["sql"], "type": "sql"})
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
                             st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]["data"]
                             do_visualize_results()

@@ -80,6 +80,10 @@ class QueryStateMachine:
         while self.state != QueryState.COMPLETE and self.state != QueryState.ERROR:
             if self.state == QueryState.INITIAL:
                 self.handle_initial()
+            elif self.get_state() == QueryState.REJECT_INTENT:
+                self.handle_reject_intent()
+            elif self.get_state() == QueryState.KNOWLEDGE_SEARCH:
+                self.transition(QueryState.COMPLETE)
             elif self.state == QueryState.ENTITY_RETRIEVAL:
                 self.handle_entity_retrieval()
             elif self.state == QueryState.QA_RETRIEVAL:
@@ -88,8 +92,6 @@ class QueryStateMachine:
                 self.handle_sql_generation()
             elif self.state == QueryState.INTENT_RECOGNITION:
                 self.handle_intent_recognition()
-            # elif self.state == QueryState.ENTITY_SELECTION:
-            #     self.handle_entity_selection()
             elif self.state == QueryState.EXECUTE_QUERY:
                 self.handle_execute_query()
             elif self.state == QueryState.ANALYZE_DATA:
@@ -202,6 +204,7 @@ class QueryStateMachine:
 
     def _transition_based_on_intent(self):
         if self.reject_intent_flag:
+            self.answer.query_intent = "reject_search"
             self.transition(QueryState.REJECT_INTENT)
         elif self.knowledge_search_flag:
             self.transition(QueryState.KNOWLEDGE_SEARCH)
@@ -210,7 +213,6 @@ class QueryStateMachine:
         else:
             self.answer.query_intent = "normal_search"
         self.transition(QueryState.ENTITY_RETRIEVAL)
-
 
     def handle_reject_intent(self):
         self.answer.query = self.context.search_box
