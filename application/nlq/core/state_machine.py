@@ -106,12 +106,12 @@ class QueryStateMachine:
         query_rewrite_result = get_query_rewrite(self.context.model_type, self.context.search_box,
                                                  self.context.database_profile['prompt_map'],
                                                  self.context.user_query_history)
-        self.context.query_rewrite = query_rewrite_result.get("query")
-
         query_rewrite_intent = query_rewrite_result.get("intent")
         if query_rewrite_intent == "ask_in_reply":
             self._set_ask_in_reply_result()
         else:
+            self.answer.query_rewrite = query_rewrite_result.get("query")
+            self.answer.query = self.context.search_box
             self.transition(QueryState.INTENT_RECOGNITION)
 
     def _set_ask_in_reply_result(self):

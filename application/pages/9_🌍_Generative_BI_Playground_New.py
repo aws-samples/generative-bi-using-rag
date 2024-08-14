@@ -453,8 +453,17 @@ def main():
                                 label=f"Entity Retrieval Completed: {len(state_machine.normal_search_entity_slot)} entities retrieved",
                                 state="complete", expanded=False)
                     elif state_machine.get_state() == QueryState.QA_RETRIEVAL:
-
                         state_machine.handle_qa_retrieval()
+                        with st.status("Performing QA retrieval...") as status_text:
+                            examples = []
+                            for example in state_machine.normal_search_qa_retrival:
+                                examples.append({'Score': example['_score'],
+                                                 'Question': example['_source']['text'],
+                                                 'Answer': example['_source']['sql'].strip()})
+                            st.write(examples)
+                            status_text.update(
+                                label=f"QA Retrieval Completed: {len(state_machine.normal_search_qa_retrival)} entities retrieved",
+                                state="complete", expanded=False)
                     elif state_machine.get_state() == QueryState.SQL_GENERATION:
                         state_machine.handle_sql_generation()
                     elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
