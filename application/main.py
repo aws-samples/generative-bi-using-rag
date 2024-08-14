@@ -19,7 +19,7 @@ app = FastAPI(title='GenBI')
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
@@ -28,23 +28,32 @@ app.add_middleware(
 async def http_authenticate(request: Request, call_next):
     print('---HTTP REQUEST---', vars(request), request.headers)
 
+    if request.method == "OPTIONS":
+        response = Response(status_code=status.HTTP_200_OK)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+
     if not skipAuthentication:
         access_token = request.headers.get("X-Access-Token")
         id_token = request.headers.get("X-Id-Token")
         refresh_token = request.headers.get("X-Refresh-Token")
 
         response = authenticate(access_token, id_token, refresh_token)
+    else:
+        response = {'X-Status-Code': status.HTTP_200_OK}
 
     if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
         return Response(status_code=response["X-Status-Code"])
     else:
         if not skipAuthentication:
             username = response["X-User-Name"]
-            #email = response["X-Email"]
+        else:
+            username = "admin"
         response = await call_next(request)
         if not skipAuthentication:
             response.headers["X-User-Name"] = username
-            #response.headers["X-Email"] = email
         return response
 
 # Global exception capture
