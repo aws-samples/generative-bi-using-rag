@@ -19,3 +19,4 @@ starrocks==1.0.6
 clickhouse-sqlalchemy==0.2.6
 sagemaker
 python-jose
+sqlalchemy-redshift~=0.8.14
