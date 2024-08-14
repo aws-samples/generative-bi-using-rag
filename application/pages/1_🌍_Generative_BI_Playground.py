@@ -5,25 +5,14 @@ import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
 import logging
-import random
-
 from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
-from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from nlq.core.state_machine import QueryStateMachine
-from utils.domain import SearchTextSqlResult
-from utils.llm import get_query_intent, generate_suggested_question, get_agent_cot_task, data_analyse_tool, \
-    knowledge_search, text_to_sql, get_query_rewrite
 from utils.navigation import make_sidebar
-from utils.apis import get_sql_result_tool
-from utils.prompts.generate_prompt import prompt_map_dict
-from utils.opensearch import get_retrieve_opensearch
-from utils.text_search import agent_text_search
-from utils.tool import get_generated_sql
 from utils.env_var import opensearch_info
 
 logger = logging.getLogger(__name__)
@@ -127,8 +116,7 @@ def do_visualize_results():
             st.plotly_chart(px.line(sql_query_result, x=st.session_state.x_column, y=st.session_state.y_column))
         elif chart_type == 'Pie':
             st.plotly_chart(px.pie(sql_query_result, names=st.session_state.x_column, values=st.session_state.y_column))
-    else:
-        st.markdown('No visualization generated.')
+
 
 
 def recurrent_display(messages, i):
@@ -190,9 +178,6 @@ def main():
     if 'config_data_with_analyse' not in st.session_state:
         st.session_state['config_data_with_analyse'] = False
 
-    if 'nlq_chain' not in st.session_state:
-        st.session_state['nlq_chain'] = None
-
     if "messages" not in st.session_state:
         st.session_state.messages = {}
 
@@ -233,13 +218,11 @@ def main():
                 st.session_state.messages[selected_profile] = []
             if selected_profile not in st.session_state.query_rewrite_history:
                 st.session_state.query_rewrite_history[selected_profile] = []
-            st.session_state.nlq_chain = NLQChain(selected_profile)
         else:
             if selected_profile not in st.session_state.messages:
                 st.session_state.messages[selected_profile] = []
             if selected_profile not in st.session_state.query_rewrite_history:
                 st.session_state.query_rewrite_history[selected_profile] = []
-            st.session_state.nlq_chain = NLQChain(selected_profile)
 
         if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
             model_index = model_ids.index(st.session_state.current_model_id)
@@ -283,8 +266,6 @@ def main():
         search_sample_columns[i].button(sample, use_container_width=True, on_click=sample_question_clicked,
                                         args=[sample])
 
-    current_nlq_chain = st.session_state.nlq_chain
-
     # Display chat messages from history
     logger.info(f'{st.session_state.messages}')
     if selected_profile in st.session_state.messages:
@@ -322,12 +303,11 @@ def main():
         if search_box is not None and len(search_box) > 0:
             st.session_state.current_sql_result = None
             with st.chat_message("user"):
-                current_nlq_chain.set_question(search_box)
                 st.session_state.messages[selected_profile].append(
                     {"role": "user", "content": search_box, "type": "text"})
                 st.session_state.query_rewrite_history[selected_profile].append(
                     {"role": "user", "content": search_box})
-                st.markdown(current_nlq_chain.get_question())
+                st.markdown(search_box)
             user_query_history = get_user_history(selected_profile)
             with (st.chat_message("assistant")):
                 processing_context = ProcessingContext(

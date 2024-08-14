@@ -103,6 +103,7 @@ class QueryStateMachine:
         if self.context.context_window > 0:
             self._handle_query_rewrite()
         else:
+            self.context.query_rewrite = self.context.search_box
             self.transition(QueryState.INTENT_RECOGNITION)
 
     def _handle_query_rewrite(self):
