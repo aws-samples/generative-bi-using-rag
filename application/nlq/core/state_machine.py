@@ -54,6 +54,7 @@ class QueryStateMachine:
 
         self.intent_search_result = {}
         self.agent_search_result = {}
+        self.intent_response = {}
         self.entity_slot = []
         self.normal_search_entity_slot = []
         self.normal_search_qa_retrival = []
@@ -173,6 +174,7 @@ class QueryStateMachine:
         if self.context.intent_ner_recognition_flag:
             intent_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
                                                self.context.database_profile['prompt_map'])
+            self.intent_response = intent_response
             self._process_intent_response(intent_response)
         else:
             self.search_intent_flag = True

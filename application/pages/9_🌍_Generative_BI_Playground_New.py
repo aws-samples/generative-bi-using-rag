@@ -427,7 +427,6 @@ def main():
                     opensearch_info=opensearch_info,
                     previous_state="INITIAL")
                 state_machine = QueryStateMachine(processing_context)
-
                 while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
                     if state_machine.get_state() == QueryState.INITIAL:
                         with st.status("Query Context Understanding") as status_text:
@@ -440,6 +439,8 @@ def main():
                             st.session_state.messages[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().query_rewrite, "type": "text"})
                             st.write(state_machine.get_answer().query_rewrite)
+
+
                     elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
                         with st.status("Performing Entity retrieval...") as status_text:
                             state_machine.handle_entity_retrieval()
@@ -467,28 +468,28 @@ def main():
                     elif state_machine.get_state() == QueryState.SQL_GENERATION:
                         with st.status("Generating SQL... ") as status_text:
                             state_machine.handle_sql_generation()
-
-                            sql = get_generated_sql(response)
-
+                            sql = state_machine.intent_search_result["sql"]
                             st.code(sql, language="sql")
-
                             feedback = st.columns(2)
                             feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
                                                use_container_width=True,
                                                on_click=upvote_clicked,
                                                args=[search_box,
                                                      sql])
-
                             if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
                                 # do something here
                                 pass
-
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
 
                     elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
-                        state_machine.handle_intent_recognition()
+                        with st.status("Performing intent recognition...") as status_text:
+                            state_machine.handle_intent_recognition()
+                            intent = state_machine.intent_response.get("intent", "normal_search")
+                            st.write(state_machine.intent_response)
+                        status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
+                                           state="complete", expanded=False)
                     elif state_machine.state == QueryState.EXECUTE_QUERY:
                         state_machine.handle_execute_query()
                     elif state_machine.get_state() == QueryState.ANALYZE_DATA:
