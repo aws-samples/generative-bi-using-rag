@@ -443,7 +443,6 @@ def main():
                     elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
                         with st.status("Performing Entity retrieval...") as status_text:
                             state_machine.handle_entity_retrieval()
-
                             examples = []
                             for example in state_machine.normal_search_entity_slot:
                                 examples.append({'Score': example['_score'],

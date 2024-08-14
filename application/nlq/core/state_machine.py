@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class QueryStateMachine:
     def __init__(self, context: ProcessingContext):
-        self.state = context.previous_state
+        self.state = self.get_state_from_name(context.previous_state)
         self.context = context
         self.answer = Answer(
             query="",
@@ -56,7 +56,7 @@ class QueryStateMachine:
         self.agent_search_result = {}
         self.entity_slot = []
         self.normal_search_entity_slot = []
-        self.normal_search_qa_retrival = {}
+        self.normal_search_qa_retrival = []
         self.agent_qa_retrieval = []
 
     def transition(self, new_state):
@@ -67,6 +67,10 @@ class QueryStateMachine:
 
     def get_state(self):
         return self.state
+
+    def get_state_from_name(self, state_name):
+        if state_name == QueryState.INITIAL.name:
+            return QueryState.INITIAL
 
     def run(self):
         if self.context.previous_state == QueryState.ASK_ENTITY_SELECT.name:
