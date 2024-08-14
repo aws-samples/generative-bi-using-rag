@@ -25,6 +25,7 @@ export const DEFAULT_QUERY_CONFIG = {
 export const LOCALSTORAGE_KEY = "__GEN_BI_STORE_INFO__";
 
 export const LOGIN_TYPE = process.env.VITE_LOGIN_TYPE;
+export const isLoginWithCognito = LOGIN_TYPE === COGNITO;
 
 export const BACKEND_URL = process.env.VITE_BACKEND_URL?.endsWith("/")
   ? process.env.VITE_BACKEND_URL

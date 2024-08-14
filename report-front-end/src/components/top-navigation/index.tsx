@@ -12,8 +12,7 @@ import {
   APP_RIGHT_LOGO,
   APP_TITLE,
   CHATBOT_NAME,
-  COGNITO,
-  LOGIN_TYPE,
+  isLoginWithCognito,
 } from "../../common/constant/constants";
 import { Storage } from "../../common/helpers/storage";
 import { UserState } from "../../common/helpers/types";
@@ -30,7 +29,7 @@ export default function CustomTopNavigation() {
     detail: ButtonDropdownProps.ItemClickDetails;
   }) => {
     if (detail.id === "signout") {
-      if (LOGIN_TYPE === COGNITO) {
+      if (isLoginWithCognito) {
         Auth.signOut().then();
       }
     }
