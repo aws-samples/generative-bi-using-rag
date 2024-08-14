@@ -70,6 +70,10 @@ def clean_st_history(selected_profile):
     st.session_state.query_rewrite_history[selected_profile] = []
 
 
+def set_vision_change():
+    st.session_state.vision_change = True
+
+
 def get_user_history(selected_profile: str):
     """
     get user history for selected profile
@@ -104,8 +108,12 @@ def do_visualize_results():
 
         if chart_type != 'Table':
             # X-axis and Y-axis selection
-            st.session_state.x_column = col2.selectbox('Choose x-axis column', available_columns, index=available_columns.index(st.session_state.x_column) if st.session_state.x_column in available_columns else 0)
-            st.session_state.y_column = col3.selectbox('Choose y-axis column', available_columns, index=available_columns.index(st.session_state.y_column) if st.session_state.y_column in available_columns else 0)
+            st.session_state.x_column = col2.selectbox('Choose x-axis column', available_columns,
+                                                       index=available_columns.index(
+                                                           st.session_state.x_column) if st.session_state.x_column in available_columns else 0)
+            st.session_state.y_column = col3.selectbox('Choose y-axis column', available_columns,
+                                                       index=available_columns.index(
+                                                           st.session_state.y_column) if st.session_state.y_column in available_columns else 0)
 
         # Visualization
         if chart_type == 'Table':
@@ -141,95 +149,6 @@ def recurrent_display(messages, i):
     return i
 
 
-def normal_text_search_streamlit(search_box, model_type, database_profile, entity_slot, opensearch_info,
-                                 selected_profile,
-                                 use_rag,
-                                 model_provider=None):
-    entity_slot_retrieve = []
-    retrieve_result = []
-    response = ""
-    sql = ""
-    search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                                        retrieve_result=retrieve_result, response=response, sql=sql)
-    try:
-        if database_profile['db_url'] == '':
-            conn_name = database_profile['conn_name']
-            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
-            database_profile['db_url'] = db_url
-            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
-
-        with st.status("Performing Entity retrieval...") as status_text:
-            if len(entity_slot) > 0 and use_rag:
-                for each_entity in entity_slot:
-                    entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
-                                                              selected_profile, 1, 0.7)
-                    if len(entity_retrieve) > 0:
-                        entity_slot_retrieve.extend(entity_retrieve)
-            examples = []
-            for example in entity_slot_retrieve:
-                examples.append({'Score': example['_score'],
-                                 'Question': example['_source']['entity'],
-                                 'Answer': example['_source']['comment'].strip()})
-            st.write(examples)
-            status_text.update(
-                label=f"Entity Retrieval Completed: {len(entity_slot_retrieve)} entities retrieved",
-                state="complete", expanded=False)
-
-        with st.status("Performing QA retrieval...") as status_text:
-            if use_rag:
-                retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                          selected_profile, 3, 0.5)
-                examples = []
-                for example in retrieve_result:
-                    examples.append({'Score': example['_score'],
-                                     'Question': example['_source']['text'],
-                                     'Answer': example['_source']['sql'].strip()})
-                st.write(examples)
-                status_text.update(
-                    label=f"QA Retrieval Completed: {len(retrieve_result)} entities retrieved",
-                    state="complete", expanded=False)
-
-        with st.status("Generating SQL... ") as status_text:
-            response = text_to_sql(database_profile['tables_info'],
-                                   database_profile['hints'],
-                                   database_profile['prompt_map'],
-                                   search_box,
-                                   model_id=model_type,
-                                   sql_examples=retrieve_result,
-                                   ner_example=entity_slot_retrieve,
-                                   dialect=database_profile['db_type'],
-                                   model_provider=model_provider)
-
-            sql = get_generated_sql(response)
-
-            st.code(sql, language="sql")
-
-            feedback = st.columns(2)
-            feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
-                               use_container_width=True,
-                               on_click=upvote_clicked,
-                               args=[search_box,
-                                     sql])
-
-            if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                # do something here
-                pass
-
-            status_text.update(
-                label=f"Generating SQL Done",
-                state="complete", expanded=True)
-
-            search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                                                retrieve_result=retrieve_result, response=response, sql="")
-            search_result.entity_slot_retrieve = entity_slot_retrieve
-            search_result.retrieve_result = retrieve_result
-            search_result.response = response
-            search_result.sql = sql
-    except Exception as e:
-        logger.error(e)
-    return search_result
-
-
 def main():
     load_dotenv()
 
@@ -249,6 +168,9 @@ def main():
     else:
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         st.session_state['profiles'] = all_profiles
+
+    if "vision_change" not in st.session_state:
+        st.session_state["vision_change"] = False
 
     if 'selected_sample' not in st.session_state:
         st.session_state['selected_sample'] = ''
@@ -393,8 +315,7 @@ def main():
     st.session_state.ask_replay = False
 
     # add select box for which model to use
-    if search_box != "Type your query here..." or \
-            current_nlq_chain.is_visualization_config_changed():
+    if search_box != "Type your query here..." or st.session_state.vision_change:
         if search_box is not None and len(search_box) > 0:
             st.session_state.current_sql_result = None
             with st.chat_message("user"):
@@ -438,12 +359,19 @@ def main():
                             st.session_state.query_rewrite_history[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().query_rewrite})
                             st.session_state.messages[selected_profile].append(
-                                {"role": "assistant", "content": state_machine.get_answer().query_rewrite, "type": "text"})
+                                {"role": "assistant", "content": state_machine.get_answer().query_rewrite,
+                                 "type": "text"})
                             st.write(state_machine.get_answer().query_rewrite)
                     elif state_machine.get_state() == QueryState.REJECT_INTENT:
                         state_machine.handle_reject_intent()
+                        st.write("Your query statement is currently not supported by the system")
                     elif state_machine.get_state() == QueryState.KNOWLEDGE_SEARCH:
                         state_machine.handle_knowledge_search()
+                        st.write(state_machine.get_answer().knowledge_search_result.knowledge_response)
+                        st.session_state.messages[selected_profile].append(
+                            {"role": "assistant",
+                             "content": state_machine.get_answer().knowledge_search_result.knowledge_response,
+                             "type": "text"})
                     elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
                         with st.status("Performing Entity retrieval...") as status_text:
                             state_machine.handle_entity_retrieval()
@@ -501,13 +429,13 @@ def main():
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
                         st.session_state.messages[selected_profile].append(
-                            {"role": "user", "content": state_machine.intent_search_result["sql"], "type": "sql"})
+                            {"role": "assistant", "content": state_machine.intent_search_result["sql"], "type": "sql"})
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
-                            st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]["data"]
+                            st.session_state.current_sql_result = \
+                            state_machine.intent_search_result["sql_execute_result"]["data"]
                             do_visualize_results()
-    else:
-        do_visualize_results()
-
+        else:
+            do_visualize_results()
 
 
 if __name__ == '__main__':
