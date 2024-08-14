@@ -200,7 +200,7 @@ def main():
         st.session_state.query_rewrite_history = {}
 
     if "current_sql_result" not in st.session_state:
-        st.session_state.current_sql_result = {}
+        st.session_state.current_sql_result = None
 
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                  'anthropic.claude-3-opus-20240229-v1:0',
