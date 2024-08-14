@@ -104,14 +104,17 @@ def do_visualize_results():
         col1, col2, col3 = st.columns([1, 1, 2])
 
         # Chart type selection
-        chart_type = col1.selectbox('Choose the chart type', ['Table', 'Bar', 'Line', 'Pie'])
+        chart_type = col1.selectbox('Choose the chart type', ['Table', 'Bar', 'Line', 'Pie'],
+                                    on_change=set_vision_change)
 
         if chart_type != 'Table':
             # X-axis and Y-axis selection
             st.session_state.x_column = col2.selectbox('Choose x-axis column', available_columns,
+                                                       on_change=set_vision_change,
                                                        index=available_columns.index(
                                                            st.session_state.x_column) if st.session_state.x_column in available_columns else 0)
             st.session_state.y_column = col3.selectbox('Choose y-axis column', available_columns,
+                                                       on_change=set_vision_change,
                                                        index=available_columns.index(
                                                            st.session_state.y_column) if st.session_state.y_column in available_columns else 0)
 
