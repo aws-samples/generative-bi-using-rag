@@ -84,28 +84,24 @@ def get_user_history(selected_profile: str):
     return history_query
 
 
-def do_visualize_results(nlq_chain, sql_result):
-    sql_query_result = sql_result
+def do_visualize_results():
+    sql_query_result = st.session_state.current_sql_result
     if sql_query_result is not None:
-        nlq_chain.set_visualization_config_change(False)
         # Auto-detect columns
         visualize_config_columns = st.columns(3)
 
-        available_columns = sql_query_result.columns
+        available_columns = st.session_state.current_sql_result.columns
 
         # hacky way to get around the issue of selectbox not updating when the options change
         chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
-                                                           ['Table', 'Bar', 'Line', 'Pie'],
-                                                           on_change=nlq_chain.set_visualization_config_change
+                                                           ['Table', 'Bar', 'Line', 'Pie']
                                                            )
         if chart_type != 'Table':
             x_column = visualize_config_columns[1].selectbox(f'Choose x-axis column', available_columns,
-                                                             on_change=nlq_chain.set_visualization_config_change,
                                                              key=random.randint(0, 10000)
                                                              )
             y_column = visualize_config_columns[2].selectbox('Choose y-axis column',
                                                              reversed(available_columns.to_list()),
-                                                             on_change=nlq_chain.set_visualization_config_change,
                                                              key=random.randint(0, 10000)
                                                              )
         if chart_type == 'Table':
@@ -396,6 +392,7 @@ def main():
     if search_box != "Type your query here..." or \
             current_nlq_chain.is_visualization_config_changed():
         if search_box is not None and len(search_box) > 0:
+            st.session_state.current_sql_result = None
             with st.chat_message("user"):
                 current_nlq_chain.set_question(search_box)
                 st.session_state.messages[selected_profile].append(
@@ -482,7 +479,6 @@ def main():
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
-
                     elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
                         with st.status("Performing intent recognition...") as status_text:
                             state_machine.handle_intent_recognition()
@@ -496,6 +492,10 @@ def main():
                         state_machine.handle_analyze_data()
                     else:
                         state_machine.state = QueryState.ERROR
+                if state_machine.get_state() == QueryState.COMPLETE:
+                    if state_machine.get_answer().query_intent == "normal_search":
+                        st.session_state.current_sql_result = state_machine.get_answer().intent_search_result["sql_execute_result"]
+                        do_visualize_results()
 
 
 
