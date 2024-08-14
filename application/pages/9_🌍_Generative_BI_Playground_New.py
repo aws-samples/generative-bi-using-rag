@@ -498,9 +498,11 @@ def main():
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
-                        st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]
-                        do_visualize_results()
-
+                        if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
+                            st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]["data"]
+                            do_visualize_results()
+    else:
+        do_visualize_results()
 
 
 
