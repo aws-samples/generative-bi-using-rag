@@ -83,7 +83,7 @@ class QueryStateMachine:
             elif self.get_state() == QueryState.REJECT_INTENT:
                 self.handle_reject_intent()
             elif self.get_state() == QueryState.KNOWLEDGE_SEARCH:
-                self.transition(QueryState.COMPLETE)
+                self.handle_knowledge_search()
             elif self.state == QueryState.ENTITY_RETRIEVAL:
                 self.handle_entity_retrieval()
             elif self.state == QueryState.QA_RETRIEVAL:
