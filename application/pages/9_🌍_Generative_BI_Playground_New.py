@@ -88,30 +88,34 @@ def do_visualize_results():
     sql_query_result = st.session_state.current_sql_result
     if sql_query_result is not None:
         # Auto-detect columns
-        visualize_config_columns = st.columns(3)
+        available_columns = sql_query_result.columns.tolist()
 
-        available_columns = st.session_state.current_sql_result.columns
+        # Initialize session state for x_column and y_column if not already present
+        if 'x_column' not in st.session_state or st.session_state.x_column is None:
+            st.session_state.x_column = available_columns[0] if available_columns else None
+        if 'y_column' not in st.session_state or st.session_state.x_column is None:
+            st.session_state.y_column = available_columns[0] if available_columns else None
 
-        # hacky way to get around the issue of selectbox not updating when the options change
-        chart_type = visualize_config_columns[0].selectbox('Choose the chart type',
-                                                           ['Table', 'Bar', 'Line', 'Pie']
-                                                           )
+        # Layout configuration
+        col1, col2, col3 = st.columns([1, 1, 2])
+
+        # Chart type selection
+        chart_type = col1.selectbox('Choose the chart type', ['Table', 'Bar', 'Line', 'Pie'])
+
         if chart_type != 'Table':
-            x_column = visualize_config_columns[1].selectbox(f'Choose x-axis column', available_columns,
-                                                             key=random.randint(0, 10000)
-                                                             )
-            y_column = visualize_config_columns[2].selectbox('Choose y-axis column',
-                                                             reversed(available_columns.to_list()),
-                                                             key=random.randint(0, 10000)
-                                                             )
+            # X-axis and Y-axis selection
+            st.session_state.x_column = col2.selectbox('Choose x-axis column', available_columns, index=available_columns.index(st.session_state.x_column) if st.session_state.x_column in available_columns else 0)
+            st.session_state.y_column = col3.selectbox('Choose y-axis column', available_columns, index=available_columns.index(st.session_state.y_column) if st.session_state.y_column in available_columns else 0)
+
+        # Visualization
         if chart_type == 'Table':
             st.dataframe(sql_query_result, hide_index=True)
         elif chart_type == 'Bar':
-            st.plotly_chart(px.bar(sql_query_result, x=x_column, y=y_column))
+            st.plotly_chart(px.bar(sql_query_result, x=st.session_state.x_column, y=st.session_state.y_column))
         elif chart_type == 'Line':
-            st.plotly_chart(px.line(sql_query_result, x=x_column, y=y_column))
+            st.plotly_chart(px.line(sql_query_result, x=st.session_state.x_column, y=st.session_state.y_column))
         elif chart_type == 'Pie':
-            st.plotly_chart(px.pie(sql_query_result, names=x_column, values=y_column))
+            st.plotly_chart(px.pie(sql_query_result, names=st.session_state.x_column, values=st.session_state.y_column))
     else:
         st.markdown('No visualization generated.')
 
@@ -494,7 +498,7 @@ def main():
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
-                        st.session_state.current_sql_result = state_machine.get_answer().intent_search_result["sql_execute_result"]
+                        st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]
                         do_visualize_results()
 
 
