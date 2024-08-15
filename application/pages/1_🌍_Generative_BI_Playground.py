@@ -391,9 +391,9 @@ def main():
                                                on_click=upvote_clicked,
                                                args=[search_box,
                                                      sql])
-                            if feedback[1].button('👎 Downvote', type='secondary', use_container_width=True):
-                                # do something here
-                                pass
+                            feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
+                                               on_click=downvote_clicked,
+                                               args=[search_box, sql])
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
@@ -425,8 +425,6 @@ def main():
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
-                        st.session_state.messages[selected_profile].append(
-                            {"role": "assistant", "content": state_machine.intent_search_result["sql"], "type": "sql"})
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
                             st.session_state.current_sql_result = \
                                 state_machine.intent_search_result["sql_execute_result"]["data"]
