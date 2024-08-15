@@ -7,7 +7,8 @@ from api.schemas import Answer, KnowledgeSearchResult, SQLSearchResult, AgentSea
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from utils.apis import get_sql_result_tool
-from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, text_to_sql, data_analyse_tool
+from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, text_to_sql, data_analyse_tool, \
+    generate_suggested_question
 from utils.text_search import entity_retrieve_search, qa_retrieve_search
 from utils.tool import get_generated_sql
 
@@ -151,6 +152,8 @@ class QueryStateMachine:
         sql, response = self._generate_sql()
         self.intent_search_result["sql"] = sql
         self.intent_search_result["response"] = response
+        self.answer.sql_search_result.sql = sql
+        self.answer.sql_search_result.sql_gen_process = get_generated_sql(response)
         if self.context.visualize_results_flag:
             self.transition(QueryState.EXECUTE_QUERY)
         else:
@@ -238,6 +241,7 @@ class QueryStateMachine:
         sql = self.intent_search_result.get("sql", "")
         sql_execute_result = self._execute_sql(sql)
         self.intent_search_result["sql_execute_result"] = sql_execute_result
+        self.answer.sql_search_result.sql_data = sql_execute_result["data"]
         if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
             self.transition(QueryState.ANALYZE_DATA)
         elif sql_execute_result["status_code"] == 200:
@@ -291,3 +295,15 @@ class QueryStateMachine:
         #                                                          orient='records',
         #                                                          force_ascii=False), "query")
         self.transition(QueryState.COMPLETE)
+
+    def handle_suggest_question(self):
+        # Handle suggest question
+        if self.context.gen_suggested_question_flag:
+            if self.search_intent_flag or self.agent_intent_flag:
+                generated_sq = generate_suggested_question(self.context.database_profile['prompt_map'],
+                                                           self.context.query_rewrite,
+                                                           model_id=self.context.model_type)
+                split_strings = generated_sq.split("[generate]")
+                gen_sq_list = [s.strip() for s in split_strings if s.strip()]
+                self.answer.suggested_question = gen_sq_list
+

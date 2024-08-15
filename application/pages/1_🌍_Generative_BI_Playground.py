@@ -118,7 +118,6 @@ def do_visualize_results():
             st.plotly_chart(px.pie(sql_query_result, names=st.session_state.x_column, values=st.session_state.y_column))
 
 
-
 def recurrent_display(messages, i):
     # hacking way of displaying messages, since the chat_message does not support multiple messages outside of "with" statement
     current_role = messages[i]["role"]
@@ -396,6 +395,13 @@ def main():
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
+                        if state_machine.context.gen_suggested_question_flag:
+                            with st.status("Generating explanations...") as status_text:
+                                st.markdown(state_machine.get_answer().sql_search_result.sql_gen_process)
+                                status_text.update(
+                                    label=f"Generating explanations Done",
+                                    state="complete", expanded=False)
+
                     elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
                         with st.status("Performing intent recognition...") as status_text:
                             state_machine.handle_intent_recognition()
@@ -415,8 +421,26 @@ def main():
                             {"role": "assistant", "content": state_machine.intent_search_result["sql"], "type": "sql"})
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
                             st.session_state.current_sql_result = \
-                            state_machine.intent_search_result["sql_execute_result"]["data"]
+                                state_machine.intent_search_result["sql_execute_result"]["data"]
                             do_visualize_results()
+                if processing_context.gen_suggested_question_flag:
+                    st.markdown('You might want to further ask:')
+                    with st.spinner('Generating suggested questions...'):
+                        state_machine.handle_suggest_question()
+                        gen_sq_list = state_machine.get_answer().suggested_question
+                        sq_result = st.columns(3)
+                        sq_result[0].button(gen_sq_list[0], type='secondary',
+                                            use_container_width=True,
+                                            on_click=sample_question_clicked,
+                                            args=[gen_sq_list[0]])
+                        sq_result[1].button(gen_sq_list[1], type='secondary',
+                                            use_container_width=True,
+                                            on_click=sample_question_clicked,
+                                            args=[gen_sq_list[1]])
+                        sq_result[2].button(gen_sq_list[2], type='secondary',
+                                            use_container_width=True,
+                                            on_click=sample_question_clicked,
+                                            args=[gen_sq_list[2]])
         else:
             do_visualize_results()
 
