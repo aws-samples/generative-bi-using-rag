@@ -39,6 +39,7 @@ export const Sessions = (props: {
     props.setSessions([
       {
         session_id: uuid(),
+        title: "New Chat",
         messages: [],
       },
       ...props.sessions,

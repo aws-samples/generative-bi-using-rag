@@ -5,12 +5,7 @@ import {
   SessionItem,
 } from "../../components/chatbot-panel/types";
 import { Dispatch, SetStateAction } from "react";
-import {
-  BACKEND_URL,
-  DEFAULT_QUERY_CONFIG,
-  isLoginWithCognito,
-  LOCAL_STORAGE_KEYS,
-} from "../constant/constants";
+import { BACKEND_URL, DEFAULT_QUERY_CONFIG, isLoginWithCognito, LOCAL_STORAGE_KEYS } from "../constant/constants";
 import { alertMsg } from "../helpers/tools";
 import { extend } from "umi-request";
 
@@ -119,14 +114,13 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
 
 export async function getSessions(sessionItem: SessionItem) {
   try {
-    const data = await request.post("qa/get_history_by_user_profile", {
+    return await request.post("qa/get_history_by_user_profile", {
       data: sessionItem,
       errorHandler: (error) => {
         alertMsg("getSessions", "error");
         console.error("getSessions, error: ", error);
       },
     });
-    return data;
   } catch (error) {
     console.error("getSessions, error: ", error);
   }

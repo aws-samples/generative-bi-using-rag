@@ -36,7 +36,6 @@ export function createWssClient(
   const { noToken } = getLSTokens();
   if (noToken && isLoginWithCognito) {
     toast.error("Please login first!");
-    return;
   }
 
   const handleWebSocketMessage = (message: MessageEvent) => {
