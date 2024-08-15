@@ -57,6 +57,7 @@ def downvote_clicked(question, comment):
 def clean_st_history(selected_profile):
     st.session_state.messages[selected_profile] = []
     st.session_state.query_rewrite_history[selected_profile] = []
+    st.session_state.current_sql_result = None
 
 
 def set_vision_change():
@@ -423,7 +424,7 @@ def main():
                                  "type": "text"})
                     elif state_machine.state == QueryState.ASK_ENTITY_SELECT:
                         state_machine.handle_entity_selection()
-                        if state_machine.get_answer().query_intent == "handle_entity_selection":
+                        if state_machine.get_answer().query_intent == "entity_select":
                             st.write(state_machine.get_answer().ask_entity_select.entity_select)
                             st.session_state.query_rewrite_history[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().ask_entity_select.entity_select})
