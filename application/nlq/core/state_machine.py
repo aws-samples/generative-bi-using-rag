@@ -1,3 +1,4 @@
+import json
 import logging
 import string
 
@@ -9,8 +10,9 @@ from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from utils.apis import get_sql_result_tool
 from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, text_to_sql, data_analyse_tool, \
-    generate_suggested_question
-from utils.text_search import entity_retrieve_search, qa_retrieve_search
+    generate_suggested_question, get_agent_cot_task
+from utils.opensearch import get_retrieve_opensearch
+from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search
 from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
@@ -56,12 +58,15 @@ class QueryStateMachine:
         self.knowledge_search_flag = False
 
         self.intent_search_result = {}
-        self.agent_search_result = {}
         self.intent_response = {}
         self.entity_slot = []
         self.normal_search_entity_slot = []
         self.normal_search_qa_retrival = []
-        self.agent_qa_retrieval = []
+        self.agent_cot_retrieve = []
+        self.agent_task_split = {}
+        self.agent_search_result = []
+        self.agent_data_analyse_result = ""
+        self.agent_valid_data = []
 
     def transition(self, new_state):
         self.state = new_state
@@ -103,6 +108,12 @@ class QueryStateMachine:
                 self.handle_analyze_data()
             elif self.state == QueryState.ASK_ENTITY_SELECT:
                 self.handle_entity_selection()
+            elif self.state == QueryState.AGENT_TASK:
+                self.handle_agent_task()
+            elif self.state == QueryState.AGENT_SEARCH:
+                self.handle_agent_sql_generation()
+            elif self.state == QueryState.AGENT_DATA_SUMMARY:
+                self.handle_agent_analyze_data()
             else:
                 self.state = QueryState.ERROR
 
@@ -212,7 +223,15 @@ class QueryStateMachine:
             return "", ""
 
     def handle_agent_sql_generation(self):
-        pass
+
+        agent_search_result = agent_text_search(self.context.query_rewrite, self.context.model_type,
+                                                self.context.database_profile,
+                                                self.entity_slot, self.context.opensearch_info,
+                                                self.context.selected_profile, self.context.use_rag_flag,
+                                                self.agent_task_split)
+
+        self.agent_search_result = agent_search_result
+        self.transition(QueryState.AGENT_DATA_SUMMARY)
 
     def handle_intent_recognition(self):
         if self.context.intent_ner_recognition_flag:
@@ -252,9 +271,10 @@ class QueryStateMachine:
             self.transition(QueryState.KNOWLEDGE_SEARCH)
         elif self.agent_intent_flag:
             self.answer.query_intent = "agent_search"
+            self.transition(QueryState.AGENT_TASK)
         else:
             self.answer.query_intent = "normal_search"
-        self.transition(QueryState.ENTITY_RETRIEVAL)
+            self.transition(QueryState.ENTITY_RETRIEVAL)
 
     def handle_reject_intent(self):
         self.answer.query = self.context.search_box
@@ -283,7 +303,8 @@ class QueryStateMachine:
             for each_value in entity_value:
                 if index < len(alphabet_list):
                     entity_desc += alphabet_list[index] + " ："
-                    entity_desc = entity_desc + "数据表：" + each_value["table_name"] + "，" + "列名是：" + each_value["column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
+                    entity_desc = entity_desc + "数据表：" + each_value["table_name"] + "，" + "列名是：" + each_value[
+                        "column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
                     index = index + 1
             entity_select_format += entity_desc
         self.answer.query_intent = "entity_select"
@@ -332,14 +353,39 @@ class QueryStateMachine:
         self.answer.sql_search_result.data_analyse = search_intent_analyse_result
         self.transition(QueryState.COMPLETE)
 
+    def handle_agent_task(self):
+
+        self.agent_cot_retrieve = get_retrieve_opensearch(self.context.opensearch_info, self.context.query_rewrite,
+                                                          "agent", self.context.selected_profile, 2, 0.5)
+
+        agent_cot_task_result = get_agent_cot_task(self.context.model_type, self.context.database_profile["prompt_map"],
+                                                   self.context.query_rewrite,
+                                                   self.context.database_profile['tables_info'],
+                                                   self.agent_cot_retrieve)
+        self.agent_task_split = agent_cot_task_result
+        self.transition(QueryState.AGENT_SEARCH)
+
     def handle_agent_analyze_data(self):
         # Analyze the data
+        filter_deep_dive_sql_result = []
+        for i in range(len(self.agent_search_result)):
+            each_task_res = get_sql_result_tool(
+                self.context.database_profile,
+                self.agent_search_result[i]["sql"])
+            if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
+                self.agent_search_result[i]["data_result"] = each_task_res["data"].to_json(
+                    orient='records')
+                filter_deep_dive_sql_result.append(self.agent_search_result[i])
 
-        # search_intent_analyse_result = data_analyse_tool(self.context.model_type, prompt_map,
-        #                                                      self.context.query_rewrite,
-        #                                                      search_intent_result["data"].to_json(
-        #                                                          orient='records',
-        #                                                          force_ascii=False), "query")
+        agent_data_analyse_result = data_analyse_tool(self.context.model_type,
+                                                      self.context.database_profile["prompt_map"],
+                                                      self.context.query_rewrite,
+                                                      json.dumps(filter_deep_dive_sql_result,
+                                                                 ensure_ascii=False), "agent")
+        self.agent_valid_data = filter_deep_dive_sql_result
+        self.agent_data_analyse_result = agent_data_analyse_result
+        self.answer.agent_search_result.agent_summary = agent_data_analyse_result
+        self.answer.agent_search_result.agent_sql_search_result = None
         self.transition(QueryState.COMPLETE)
 
     def handle_suggest_question(self):
@@ -352,4 +398,3 @@ class QueryStateMachine:
                 split_strings = generated_sq.split("[generate]")
                 gen_sq_list = [s.strip() for s in split_strings if s.strip()]
                 self.answer.suggested_question = gen_sq_list
-

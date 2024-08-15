@@ -420,7 +420,7 @@ def main():
                             st.write(state_machine.intent_response)
                         status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
                                            state="complete", expanded=False)
-                    elif state_machine.state == QueryState.EXECUTE_QUERY:
+                    elif state_machine.get_state == QueryState.EXECUTE_QUERY:
                         state_machine.handle_execute_query()
                     elif state_machine.get_state() == QueryState.ANALYZE_DATA:
                         with st.spinner('Generating data summarize...'):
@@ -430,7 +430,7 @@ def main():
                                 {"role": "assistant",
                                  "content": state_machine.get_answer().sql_search_result.data_analyse,
                                  "type": "text"})
-                    elif state_machine.state == QueryState.ASK_ENTITY_SELECT:
+                    elif state_machine.get_state == QueryState.ASK_ENTITY_SELECT:
                         state_machine.handle_entity_selection()
                         if state_machine.get_answer().query_intent == "entity_select":
                             st.session_state.previous_state[selected_profile] = "ASK_ENTITY_SELECT"
@@ -440,6 +440,40 @@ def main():
                             st.session_state.messages[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().ask_entity_select.entity_select,
                                  "type": "text"})
+                    elif state_machine.get_state == QueryState.AGENT_TASK:
+                        with st.status("Agent Cot retrieval...") as status_text:
+                            state_machine.handle_agent_task()
+                            agent_examples = []
+                            for example in state_machine.agent_cot_retrieve:
+                                agent_examples.append({'Score': example['_score'],
+                                                       'Question': example['_source']['query'],
+                                                       'Answer': example['_source']['comment'].strip()})
+                            st.write(agent_examples)
+                        status_text.update(label=f"Agent Cot Retrieval Completed",
+                                           state="complete", expanded=False)
+                        with st.status("Agent Task split...") as status_text:
+                            st.write(state_machine.agent_task_split)
+                        status_text.update(label=f"Agent Task Split Completed",
+                                           state="complete", expanded=False)
+                    elif state_machine.get_state == QueryState.AGENT_SEARCH:
+                        with st.status("Multiple SQL generated...") as status_text:
+                            state_machine.handle_agent_sql_generation()
+                            st.write(state_machine.agent_search_result)
+                        status_text.update(label=f"Multiple SQL Generated Completed",
+                                           state="complete", expanded=False)
+                    elif state_machine.get_state == QueryState.AGENT_DATA_SUMMARY:
+                        with st.spinner('Generating data summarize...'):
+                            state_machine.handle_agent_analyze_data()
+                            for i in range(len(state_machine.agent_valid_data)):
+                                st.write(state_machine.agent_valid_data[i]["query"])
+                                st.dataframe(pd.read_json(state_machine.agent_valid_data[i]["data_result"],
+                                                          orient='records'), hide_index=True)
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.agent_valid_data, "type": "pandas"})
+
+                            st.markdown(state_machine.get_answer().agent_search_result.agent_summary)
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().agent_search_result.agent_summary, "type": "text"})
                     else:
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
