@@ -7,7 +7,10 @@ import {
   ChatBotMessageItem,
   ChatBotMessageType,
 } from "../../components/chatbot-panel/types";
-import { DEFAULT_QUERY_CONFIG } from "../constant/constants";
+import {
+  DEFAULT_QUERY_CONFIG,
+  isLoginWithCognito,
+} from "../constant/constants";
 import { Global } from "../constant/global";
 import { getBearerTokenObj, getLSTokens } from "./API";
 
@@ -31,7 +34,7 @@ export function createWssClient(
     });
 
   const { noToken } = getLSTokens();
-  if (noToken) {
+  if (noToken && isLoginWithCognito) {
     toast.error("Please login first!");
     return;
   }
@@ -39,23 +42,27 @@ export function createWssClient(
   const handleWebSocketMessage = (message: MessageEvent) => {
     console.log("Received WebSocketMessage: ", message.data);
     const messageJson = JSON.parse(message.data);
-    if (messageJson.content["X-Status-Code"] === 401) {
-      const patchEvent = new CustomEvent("unauthorized", {
-        detail: {},
-      });
-      window.dispatchEvent(patchEvent);
-      return;
-    } else if (messageJson.content["X-Status-Code"] === 200) {
-      // if (messageJson.content["X-User-Id"]) {
-      //   const patchEvent = new CustomEvent("authorized", {
-      //     detail: {
-      //       userId: messageJson.content["X-User-Id"],
-      //       userName: messageJson.content["X-User-Name"],
-      //     },
-      //   });
-      //   window.dispatchEvent(patchEvent);
-      // }
+
+    if (isLoginWithCognito) {
+      if (messageJson.content["X-Status-Code"] === 401) {
+        const patchEvent = new CustomEvent("unauthorized", {
+          detail: {},
+        });
+        window.dispatchEvent(patchEvent);
+        return;
+      } else if (messageJson.content["X-Status-Code"] === 200) {
+        // if (messageJson.content["X-User-Id"]) {
+        //   const patchEvent = new CustomEvent("authorized", {
+        //     detail: {
+        //       userId: messageJson.content["X-User-Id"],
+        //       userName: messageJson.content["X-User-Name"],
+        //     },
+        //   });
+        //   window.dispatchEvent(patchEvent);
+        // }
+      }
     }
+
     if (messageJson.content_type === "state") {
       setStatusMessage((historyMessage) => [...historyMessage, messageJson]);
     } else {
@@ -93,6 +100,7 @@ export const useQueryWithCookies = () => {
           },
         ];
       });
+      const extraToken = isLoginWithCognito ? getBearerTokenObj() : {};
       const param = {
         query: props.query,
         bedrock_model_id:
@@ -116,7 +124,7 @@ export const useQueryWithCookies = () => {
         context_window: props.configuration.contextWindow,
         session_id: Global.sessionId,
         user_id: props.userId,
-        ...getBearerTokenObj(),
+        ...extraToken,
       };
       console.log("Send WebSocketMessage: ", param);
       props.sendMessage(param);

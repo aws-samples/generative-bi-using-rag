@@ -6,9 +6,8 @@ import { useDispatch } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import "./app.scss";
 import {
-  COGNITO,
+  isLoginWithCognito,
   LOCAL_STORAGE_KEYS,
-  LOGIN_TYPE,
 } from "./common/constant/constants";
 import { ActionType, UserInfo } from "./common/helpers/types";
 import AlertMsg from "./components/alert-msg";
@@ -25,7 +24,7 @@ const App: React.FC<{
   console.log({ user, signInUserSession: user?.signInUserSession });
 
   useEffect(() => {
-    if (LOGIN_TYPE === COGNITO) {
+    if (isLoginWithCognito) {
       if (!user?.signInUserSession) {
         toast.error("User session not found");
         return;

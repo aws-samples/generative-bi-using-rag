@@ -8,6 +8,7 @@ import { Dispatch, SetStateAction } from "react";
 import {
   BACKEND_URL,
   DEFAULT_QUERY_CONFIG,
+  isLoginWithCognito,
   LOCAL_STORAGE_KEYS,
 } from "../constant/constants";
 import { alertMsg } from "../helpers/tools";
@@ -30,7 +31,7 @@ export const getLSTokens = () => {
 export const getBearerTokenObj = () => {
   const { accessToken, idToken, refreshToken } = getLSTokens();
   return {
-    "Authorization": accessToken,
+    // Authorization: accessToken,
     "X-Access-Token": accessToken,
     "X-Id-Token": idToken,
     "X-Refresh-Token": refreshToken,
@@ -44,6 +45,7 @@ export const request = extend({
 });
 
 request.interceptors.request.use((url, options) => {
+  if (!isLoginWithCognito) return { url, options };
   return {
     url,
     options: {
@@ -54,6 +56,7 @@ request.interceptors.request.use((url, options) => {
 });
 
 request.interceptors.response.use((response) => {
+  if (!isLoginWithCognito) return response;
   if (response.status === 401) {
     const patchEvent = new CustomEvent("unauthorized", {
       detail: {},
