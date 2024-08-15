@@ -1,7 +1,8 @@
 import json
 import logging
 import string
-
+import functools
+import logging
 import pandas as pd
 
 from api.schemas import Answer, KnowledgeSearchResult, SQLSearchResult, AgentSearchResult, AskReplayResult, \
@@ -16,6 +17,16 @@ from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_
 from utils.tool import get_generated_sql
 
 logger = logging.getLogger(__name__)
+
+
+def log_execution(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        state_name = self.get_state().name if self.get_state() else "Unknown State"
+        logger.info(f"Executing {func.__name__} in state {state_name}")
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class QueryStateMachine:
@@ -117,6 +128,7 @@ class QueryStateMachine:
             else:
                 self.state = QueryState.ERROR
 
+    @log_execution
     def handle_initial(self):
         if self.context.context_window > 0:
             self._handle_query_rewrite()
@@ -166,6 +178,7 @@ class QueryStateMachine:
         else:
             return []
 
+    @log_execution
     def handle_qa_retrieval(self):
         self.normal_search_qa_retrival = self._perform_qa_retrieval()
         self.transition(QueryState.SQL_GENERATION)
@@ -176,6 +189,7 @@ class QueryStateMachine:
                                       self.context.selected_profile)
         return []
 
+    @log_execution
     def handle_sql_generation(self):
         sql, response = self._generate_sql()
         self.intent_search_result["sql"] = sql
@@ -222,6 +236,7 @@ class QueryStateMachine:
             logger.error(e)
             return "", ""
 
+    @log_execution
     def handle_agent_sql_generation(self):
 
         agent_search_result = agent_text_search(self.context.query_rewrite, self.context.model_type,
@@ -233,6 +248,7 @@ class QueryStateMachine:
         self.agent_search_result = agent_search_result
         self.transition(QueryState.AGENT_DATA_SUMMARY)
 
+    @log_execution
     def handle_intent_recognition(self):
         if self.context.intent_ner_recognition_flag:
             intent_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
@@ -276,12 +292,14 @@ class QueryStateMachine:
             self.answer.query_intent = "normal_search"
             self.transition(QueryState.ENTITY_RETRIEVAL)
 
+    @log_execution
     def handle_reject_intent(self):
         self.answer.query = self.context.search_box
         self.answer.query_rewrite = self.context.query_rewrite
         self.answer.query_intent = "reject_search"
         self.transition(QueryState.COMPLETE)
 
+    @log_execution
     def handle_knowledge_search(self):
         response = knowledge_search(search_box=self.context.query_rewrite, model_id=self.context.model_type,
                                     prompt_map=self.context.database_profile["prompt_map"])
@@ -291,6 +309,7 @@ class QueryStateMachine:
         self.answer.knowledge_search_result.knowledge_response = response
         self.transition(QueryState.COMPLETE)
 
+    @log_execution
     def handle_entity_selection(self):
         # Handle entity selection
         entity_select_format = "根据您的描述，检索到多个相同名称的实体，请选择您想要查询的实体。\n"
@@ -311,6 +330,7 @@ class QueryStateMachine:
         self.answer.ask_entity_select.entity_select = entity_select_format
         self.transition(QueryState.COMPLETE)
 
+    @log_execution
     def handle_execute_query(self):
         sql = self.intent_search_result.get("sql", "")
         sql_execute_result = self._execute_sql(sql)
@@ -341,6 +361,7 @@ class QueryStateMachine:
             return {"data": pd.DataFrame(), "sql": sql, "status_code": 500, "error_info": "The SQL is empty."}
         return get_sql_result_tool(self.context.database_profile, sql)
 
+    @log_execution
     def handle_analyze_data(self):
         # Analyze the data
         search_intent_analyse_result = data_analyse_tool(self.context.model_type,
@@ -353,6 +374,7 @@ class QueryStateMachine:
         self.answer.sql_search_result.data_analyse = search_intent_analyse_result
         self.transition(QueryState.COMPLETE)
 
+    @log_execution
     def handle_agent_task(self):
 
         self.agent_cot_retrieve = get_retrieve_opensearch(self.context.opensearch_info, self.context.query_rewrite,
@@ -365,6 +387,7 @@ class QueryStateMachine:
         self.agent_task_split = agent_cot_task_result
         self.transition(QueryState.AGENT_SEARCH)
 
+    @log_execution
     def handle_agent_analyze_data(self):
         # Analyze the data
         filter_deep_dive_sql_result = []
@@ -388,6 +411,7 @@ class QueryStateMachine:
         self.answer.agent_search_result.agent_sql_search_result = None
         self.transition(QueryState.COMPLETE)
 
+    @log_execution
     def handle_suggest_question(self):
         # Handle suggest question
         if self.context.gen_suggested_question_flag:
