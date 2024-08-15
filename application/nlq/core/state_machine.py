@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 class QueryStateMachine:
     def __init__(self, context: ProcessingContext):
-        self.state = self.get_state_from_name(context.previous_state)
+        self.state = self.get_state_from_name("INITIAL")
+        self.previous_state = self.get_state_from_name(context.previous_state)
         self.context = context
         self.answer = Answer(
             query="",
@@ -74,6 +75,8 @@ class QueryStateMachine:
     def get_state_from_name(self, state_name):
         if state_name == QueryState.INITIAL.name:
             return QueryState.INITIAL
+        elif state_name == QueryState.ASK_ENTITY_SELECT:
+            return QueryState.ASK_ENTITY_SELECT
 
     def run(self):
         if self.context.previous_state == QueryState.ASK_ENTITY_SELECT.name:

@@ -434,7 +434,7 @@ def main():
                         state_machine.handle_entity_selection()
                         if state_machine.get_answer().query_intent == "entity_select":
                             st.session_state.previous_state[selected_profile] = "ASK_ENTITY_SELECT"
-                            st.write(state_machine.get_answer().ask_entity_select.entity_select)
+                            st.markdown(state_machine.get_answer().ask_entity_select.entity_select)
                             st.session_state.query_rewrite_history[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().ask_entity_select.entity_select})
                             st.session_state.messages[selected_profile].append(
