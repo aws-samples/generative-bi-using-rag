@@ -1,4 +1,5 @@
 import logging
+import string
 
 import pandas as pd
 
@@ -97,6 +98,8 @@ class QueryStateMachine:
                 self.handle_execute_query()
             elif self.state == QueryState.ANALYZE_DATA:
                 self.handle_analyze_data()
+            elif self.state == QueryState.ASK_ENTITY_SELECT:
+                self.handle_entity_selection()
             else:
                 self.state = QueryState.ERROR
 
@@ -130,7 +133,15 @@ class QueryStateMachine:
 
     def handle_entity_retrieval(self):
         self.normal_search_entity_slot = self._perform_entity_retrieval()
-        self.transition(QueryState.QA_RETRIEVAL)
+        same_name_entity = {}
+        for each_entity in self.normal_search_entity_slot:
+            if each_entity['_source']['entity_count'] > 1 and each_entity['_score'] > 0.98:
+                same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
+        if len(same_name_entity) > 0:
+            self.answer.ask_entity_select.entity_info = same_name_entity
+            self.transition(QueryState.ASK_ENTITY_SELECT)
+        else:
+            self.transition(QueryState.QA_RETRIEVAL)
 
     def _perform_entity_retrieval(self):
         if self.context.use_rag_flag:
@@ -256,7 +267,22 @@ class QueryStateMachine:
 
     def handle_entity_selection(self):
         # Handle entity selection
-        self.transition(QueryState.EXECUTE_QUERY)
+        entity_select_format = "根据您的描述，检索到多个相同名称的实体，请选择您想要查询的实体。\n"
+        alphabet_list = list(string.ascii_uppercase)
+        index = 0
+        for entity in self.answer.ask_entity_select.entity_info:
+            entity_value = self.answer.ask_entity_select.entity_info[entity]
+            entity_name = entity
+            entity_desc = "实体：" + entity_name + "，有如下维度值：\n"
+            for each_value in entity_value:
+                if index < len(alphabet_list):
+                    entity_desc += alphabet_list[index] + " ："
+                    entity_desc = entity_desc + "数据表：" + each_value["table_name"] + "，" + "列名：" + each_value["column_name"] + "，" + "维度值：" + each_value["value"] + "\n"
+                    index = index + 1
+            entity_select_format += entity_desc
+        self.answer.query_intent = "entity_select"
+        self.answer.ask_entity_select.entity_select = entity_select_format
+        self.transition(QueryState.COMPLETE)
 
     def handle_execute_query(self):
         sql = self.intent_search_result.get("sql", "")

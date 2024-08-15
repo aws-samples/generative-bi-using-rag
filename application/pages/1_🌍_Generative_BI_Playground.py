@@ -421,6 +421,15 @@ def main():
                                 {"role": "assistant",
                                  "content": state_machine.get_answer().sql_search_result.data_analyse,
                                  "type": "text"})
+                    elif state_machine.state == QueryState.ASK_ENTITY_SELECT:
+                        state_machine.handle_entity_selection()
+                        if state_machine.get_answer().query_intent == "handle_entity_selection":
+                            st.write(state_machine.get_answer().ask_entity_select.entity_select)
+                            st.session_state.query_rewrite_history[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().ask_entity_select.entity_select})
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().ask_entity_select.entity_select,
+                                 "type": "text"})
                     else:
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
