@@ -187,6 +187,9 @@ def main():
     if "current_sql_result" not in st.session_state:
         st.session_state.current_sql_result = None
 
+    if "previous_state" not in st.session_state:
+        st.session_state.previous_state = {}
+
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                  'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
@@ -223,6 +226,9 @@ def main():
                 st.session_state.messages[selected_profile] = []
             if selected_profile not in st.session_state.query_rewrite_history:
                 st.session_state.query_rewrite_history[selected_profile] = []
+
+        if selected_profile not in st.session_state.previous_state:
+            st.session_state.previous_state[selected_profile] = "INITIAL"
 
         if st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
             model_index = model_ids.index(st.session_state.current_model_id)
@@ -310,6 +316,7 @@ def main():
                 st.markdown(search_box)
             user_query_history = get_user_history(selected_profile)
             with (st.chat_message("assistant")):
+                previous_state = st.session_state.previous_state[selected_profile]
                 processing_context = ProcessingContext(
                     search_box=search_box,
                     query_rewrite="",
@@ -330,7 +337,8 @@ def main():
                     entity_same_name_select={},
                     user_query_history=user_query_history,
                     opensearch_info=opensearch_info,
-                    previous_state="INITIAL")
+                    previous_state=previous_state)
+                st.session_state.previous_state[selected_profile] = "INITIAL"
                 state_machine = QueryStateMachine(processing_context)
                 while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
                     if state_machine.get_state() == QueryState.INITIAL:
@@ -425,6 +433,7 @@ def main():
                     elif state_machine.state == QueryState.ASK_ENTITY_SELECT:
                         state_machine.handle_entity_selection()
                         if state_machine.get_answer().query_intent == "entity_select":
+                            st.session_state.previous_state[selected_profile] = "ASK_ENTITY_SELECT"
                             st.write(state_machine.get_answer().ask_entity_select.entity_select)
                             st.session_state.query_rewrite_history[selected_profile].append(
                                 {"role": "assistant", "content": state_machine.get_answer().ask_entity_select.entity_select})

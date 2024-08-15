@@ -138,8 +138,11 @@ class QueryStateMachine:
             if each_entity['_source']['entity_count'] > 1 and each_entity['_score'] > 0.98:
                 same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
         if len(same_name_entity) > 0:
-            self.answer.ask_entity_select.entity_info = same_name_entity
-            self.transition(QueryState.ASK_ENTITY_SELECT)
+            if self.context.previous_state != "ASK_ENTITY_SELECT":
+                self.answer.ask_entity_select.entity_info = same_name_entity
+                self.transition(QueryState.ASK_ENTITY_SELECT)
+            else:
+                self.transition(QueryState.QA_RETRIEVAL)
         else:
             self.transition(QueryState.QA_RETRIEVAL)
 
