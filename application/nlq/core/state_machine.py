@@ -283,7 +283,7 @@ class QueryStateMachine:
             for each_value in entity_value:
                 if index < len(alphabet_list):
                     entity_desc += alphabet_list[index] + " ："
-                    entity_desc = entity_desc + "数据表：" + each_value["table_name"] + "，" + "列名：" + each_value["column_name"] + "，" + "维度值：" + each_value["value"] + "\n"
+                    entity_desc = entity_desc + "在数据表：" + each_value["table_name"] + "中，" + "列名是：" + each_value["column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
                     index = index + 1
             entity_select_format += entity_desc
         self.answer.query_intent = "entity_select"
