@@ -381,8 +381,10 @@ def main():
                     elif state_machine.get_state() == QueryState.SQL_GENERATION:
                         with st.status("Generating SQL... ") as status_text:
                             state_machine.handle_sql_generation()
-                            sql = state_machine.intent_search_result["sql"]
+                            sql = state_machine.get_answer().sql_search_result.sql
                             st.code(sql, language="sql")
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": sql, "type": "sql"})
                             feedback = st.columns(2)
                             feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
                                                use_container_width=True,
@@ -412,7 +414,13 @@ def main():
                     elif state_machine.state == QueryState.EXECUTE_QUERY:
                         state_machine.handle_execute_query()
                     elif state_machine.get_state() == QueryState.ANALYZE_DATA:
-                        state_machine.handle_analyze_data()
+                        with st.spinner('Generating data summarize...'):
+                            state_machine.handle_analyze_data()
+                            st.write(state_machine.get_answer().sql_search_result.data_analyse)
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant",
+                                 "content": state_machine.get_answer().sql_search_result.data_analyse,
+                                 "type": "text"})
                     else:
                         state_machine.state = QueryState.ERROR
                 if state_machine.get_state() == QueryState.COMPLETE:
