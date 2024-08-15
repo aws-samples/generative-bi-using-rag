@@ -241,7 +241,7 @@ class QueryStateMachine:
         if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
             self.transition(QueryState.ANALYZE_DATA)
         elif sql_execute_result["status_code"] == 200:
-            self.transition(QueryState.COMPLETE)
+                self.transition(QueryState.COMPLETE)
         else:
             self.transition(QueryState.ERROR)
 
