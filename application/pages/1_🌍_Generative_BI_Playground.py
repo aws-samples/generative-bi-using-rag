@@ -432,23 +432,24 @@ def main():
                                 state_machine.intent_search_result["sql_execute_result"]["data"]
                             do_visualize_results()
                 if processing_context.gen_suggested_question_flag:
-                    st.markdown('You might want to further ask:')
-                    with st.spinner('Generating suggested questions...'):
-                        state_machine.handle_suggest_question()
-                        gen_sq_list = state_machine.get_answer().suggested_question
-                        sq_result = st.columns(3)
-                        sq_result[0].button(gen_sq_list[0], type='secondary',
-                                            use_container_width=True,
-                                            on_click=sample_question_clicked,
-                                            args=[gen_sq_list[0]])
-                        sq_result[1].button(gen_sq_list[1], type='secondary',
-                                            use_container_width=True,
-                                            on_click=sample_question_clicked,
-                                            args=[gen_sq_list[1]])
-                        sq_result[2].button(gen_sq_list[2], type='secondary',
-                                            use_container_width=True,
-                                            on_click=sample_question_clicked,
-                                            args=[gen_sq_list[2]])
+                    if state_machine.search_intent_flag or state_machine.agent_intent_flag:
+                        st.markdown('You might want to further ask:')
+                        with st.spinner('Generating suggested questions...'):
+                            state_machine.handle_suggest_question()
+                            gen_sq_list = state_machine.get_answer().suggested_question
+                            sq_result = st.columns(3)
+                            sq_result[0].button(gen_sq_list[0], type='secondary',
+                                                use_container_width=True,
+                                                on_click=sample_question_clicked,
+                                                args=[gen_sq_list[0]])
+                            sq_result[1].button(gen_sq_list[1], type='secondary',
+                                                use_container_width=True,
+                                                on_click=sample_question_clicked,
+                                                args=[gen_sq_list[1]])
+                            sq_result[2].button(gen_sq_list[2], type='secondary',
+                                                use_container_width=True,
+                                                on_click=sample_question_clicked,
+                                                args=[gen_sq_list[2]])
         else:
             do_visualize_results()
 
