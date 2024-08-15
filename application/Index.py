@@ -2,7 +2,7 @@ import streamlit as st
 from utils.navigation import get_authenticator, force_set_cookie
 
 st.set_page_config(
-    page_title="Intelligent BI",
+    page_title="Generative BI",
     page_icon="👋",
 )
 
