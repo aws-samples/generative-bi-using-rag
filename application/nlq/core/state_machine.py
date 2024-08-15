@@ -173,6 +173,27 @@ class QueryStateMachine:
             logger.error(e)
             return "", ""
 
+    def _generate_sql_again(self):
+        try:
+            response = text_to_sql(self.context.database_profile['tables_info'],
+                                   self.context.database_profile['hints'],
+                                   self.context.database_profile['prompt_map'],
+                                   self.context.query_rewrite,
+                                   model_id=self.context.model_type,
+                                   sql_examples=self.normal_search_qa_retrival,
+                                   ner_example=self.normal_search_entity_slot,
+                                   dialect=self.context.database_profile['db_type'],
+                                   model_provider=None,
+                                   additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
+                                       sql_statement=self.intent_search_result["sql_execute_result"]["sql"],
+                                       error=self.intent_search_result["sql_execute_result"]["error_info"]))
+            sql = get_generated_sql(response)
+            return sql, response
+        except Exception as e:
+            logger.error("handle_sql_generation is error")
+            logger.error(e)
+            return "", ""
+
     def handle_agent_sql_generation(self):
         pass
 
@@ -245,7 +266,18 @@ class QueryStateMachine:
         if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
             self.transition(QueryState.ANALYZE_DATA)
         elif sql_execute_result["status_code"] == 200:
+            self.transition(QueryState.COMPLETE)
+        elif sql_execute_result["status_code"] == 500 and self.context.auto_correction_flag:
+            sql, response = self._generate_sql_again()
+            sql_execute_result = self._execute_sql(sql)
+            self.intent_search_result["sql_execute_result"] = sql_execute_result
+            self.answer.sql_search_result.sql_data = sql_execute_result["data"]
+            if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
+                self.transition(QueryState.ANALYZE_DATA)
+            elif sql_execute_result["status_code"] == 200:
                 self.transition(QueryState.COMPLETE)
+            else:
+                self.transition(QueryState.ERROR)
         else:
             self.transition(QueryState.ERROR)
 
@@ -253,26 +285,6 @@ class QueryStateMachine:
         if sql == "":
             return {"data": pd.DataFrame(), "sql": sql, "status_code": 500, "error_info": "The SQL is empty."}
         return get_sql_result_tool(self.context.database_profile, sql)
-
-    def handle_sql_auto_correction(self):
-        # Handle SQL auto correction
-        response = text_to_sql(self.context.database_profile['tables_info'],
-                               self.context.database_profile['hints'],
-                               self.context.database_profile['prompt_map'],
-                               self.context.query_rewrite,
-                               model_id=self.context.model_type,
-                               sql_examples=self.normal_search_qa_retrival,
-                               ner_example=self.normal_search_entity_slot,
-                               dialect=self.context.database_profile['db_type'],
-                               model_provider=None,
-                               additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
-                                   sql_statement=self.intent_search_result["sql_execute_result"]["sql"],
-                                   error=self.intent_search_result["sql_execute_result"]["error_info"]))
-
-        regen_sql = get_generated_sql(response)
-        self.intent_search_result["sql"] = regen_sql
-        self.intent_search_result["response"] = response
-        self.transition(QueryState.EXECUTE_QUERY)
 
     def handle_analyze_data(self):
         # Analyze the data
