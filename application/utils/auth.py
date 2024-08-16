@@ -4,7 +4,7 @@ from jose import jwt
 import requests
 import os
 
-VITE_COGNITO_REGION = os.getenv("COGNITO_REGION")
+VITE_COGNITO_REGION = os.getenv("VITE_COGNITO_REGION")
 USER_POOL_ID = os.getenv("VITE_COGNITO_USER_POOL_ID")
 CLIENT_ID = os.getenv("VITE_COGNITO_USER_POOL_WEB_CLIENT_ID")
 AUTH_PATH = os.getenv("COGNITO_AUTH_PATH")
