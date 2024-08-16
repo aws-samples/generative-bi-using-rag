@@ -1,7 +1,7 @@
 import {
   ChatBotHistoryItem,
   ChatBotMessageType,
-  FeedBackItem,
+  FeedBackItem, HistoryItem,
   SessionItem,
 } from "../../components/chatbot-panel/types";
 import { Dispatch, SetStateAction } from "react";
@@ -113,16 +113,40 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
 }
 
 export async function getSessions(sessionItem: SessionItem) {
+  // call api
   try {
-    return await request.post("qa/get_history_by_user_profile", {
-      data: sessionItem,
-      errorHandler: (error) => {
-        alertMsg("getSessions", "error");
-        console.error("getSessions, error: ", error);
+    const response = await fetch(`/api/qa/get_sessions`, {
+      headers: {
+        "Content-Type": "application/json"
       },
+      method: "POST",
+      body: JSON.stringify(sessionItem)
     });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
   } catch (error) {
     console.error("getSessions, error: ", error);
+  }
+}
+
+export async function getHistoryBySession(historyItem: HistoryItem) {
+  // call api
+  try {
+    const response = await fetch(`qa/get_history_by_session`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify(historyItem)
+    });
+    if (!response.ok) {
+      return;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("getHistoryBySession, error: ", error);
   }
 }
 

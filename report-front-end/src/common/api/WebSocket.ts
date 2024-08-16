@@ -2,21 +2,14 @@ import { Dispatch, SetStateAction, useCallback } from "react";
 import toast from "react-hot-toast";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import {
-  ChatBotHistoryItem,
-  ChatBotMessageItem,
-  ChatBotMessageType,
-} from "../../components/chatbot-panel/types";
-import {
-  DEFAULT_QUERY_CONFIG,
-  isLoginWithCognito,
-} from "../constant/constants";
-import { Global } from "../constant/global";
+import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
+import { DEFAULT_QUERY_CONFIG, isLoginWithCognito } from "../constant/constants";
 import { getBearerTokenObj, getLSTokens } from "./API";
+import { Session } from "../../components/session-panel/types";
 
 export function createWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>
+  setSessions: Dispatch<SetStateAction<Session[]>>,
 ) {
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
   const { sendJsonMessage } =
@@ -66,14 +59,21 @@ export function createWssClient(
       setStatusMessage((historyMessage) => [...historyMessage, messageJson]);
     } else {
       setStatusMessage([]);
-      setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [
-          ...history,
-          {
-            type: ChatBotMessageType.AI,
-            content: messageJson.content,
-          },
-        ];
+      setSessions((prevState) => {
+        return prevState.map((session) => {
+          if (messageJson.session_id !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: session.session_id,
+              title: session.title,
+              messages: [...session.messages, {
+                type: ChatBotMessageType.AI,
+                content: messageJson.content,
+              }],
+            };
+          }
+        });
       });
     }
   };
@@ -88,16 +88,25 @@ export const useQueryWithCookies = () => {
       configuration: any;
       sendMessage: SendJsonMessage;
       setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+      setSessions: Dispatch<SetStateAction<Session[]>>;
       userId: string;
+      sessionId: string;
     }) => {
-      props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [
-          ...history,
-          {
-            type: ChatBotMessageType.Human,
-            content: props.query,
-          },
-        ];
+      props.setSessions((prevState) => {
+        return prevState.map((session: Session) => {
+          if (props.sessionId !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: session.session_id,
+              title: session.title === "New Chat" ? props.query : session.title,
+              messages: [...session.messages, {
+                type: ChatBotMessageType.Human,
+                content: props.query,
+              }],
+            };
+          }
+        });
       });
       const extraToken = isLoginWithCognito ? getBearerTokenObj() : {};
       const param = {
@@ -121,14 +130,14 @@ export const useQueryWithCookies = () => {
         max_tokens: props.configuration.maxLength,
         temperature: props.configuration.temperature,
         context_window: props.configuration.contextWindow,
-        session_id: Global.sessionId,
+        session_id: props.sessionId,
         user_id: props.userId,
         ...extraToken,
       };
       console.log("Send WebSocketMessage: ", param);
       props.sendMessage(param);
     },
-    []
+    [],
   );
   return { queryWithWS };
 };

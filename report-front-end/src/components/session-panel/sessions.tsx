@@ -11,8 +11,8 @@ import { useSelector } from "react-redux";
 export const Sessions = (props: {
   sessions: Session[];
   setSessions: Dispatch<SetStateAction<Session[]>>;
-  currentSession: number;
-  setCurrentSession: Dispatch<SetStateAction<number>>;
+  currentSessionId: string;
+  setCurrentSessionId: Dispatch<SetStateAction<string>>;
 }) => {
   const userInfo = useSelector<UserState>((state) => state) as UserState;
 
@@ -21,30 +21,37 @@ export const Sessions = (props: {
       user_id: userInfo.userInfo.userId,
       profile_name: userInfo.queryConfig.selectedDataPro,
     };
-    getSessions(sessionItem).then((response) => {
-      if (!response) return;
-      console.log("sessions: ", response);
-      props.setSessions([
-        {
-          session_id: uuid(),
-          messages: [],
-        },
-        ...response,
-      ]);
-      props.setCurrentSession(0);
-    });
+    getSessions(sessionItem).then(
+      response => {
+        console.log("Sessions: ", response);
+        const sessionId = uuid();
+        props.setSessions([
+          {
+            session_id: sessionId,
+            title: "New Chat",
+            messages: []
+          }, ...(response.filter((item: any) => item.session_id !== "")
+            .map((item: any) => {
+                return {
+                  session_id: item.session_id,
+                  title: item.title,
+                  messages: []
+                };
+              },
+            ))]);
+        props.setCurrentSessionId(sessionId);
+      });
   }, [userInfo.queryConfig.selectedDataPro]);
 
   const addNewSession = () => {
+    const sessionId = uuid();
     props.setSessions([
       {
-        session_id: uuid(),
+        session_id: sessionId,
         title: "New Chat",
         messages: [],
-      },
-      ...props.sessions,
-    ]);
-    props.setCurrentSession(0);
+      }, ...props.sessions]);
+    props.setCurrentSessionId(sessionId);
   };
 
   return (
@@ -62,8 +69,8 @@ export const Sessions = (props: {
           <SessionPanel
             key={idx}
             index={idx}
-            currSession={props.currentSession}
-            setCurrSession={props.setCurrentSession}
+            currSessionId={props.currentSessionId}
+            setCurrSessionId={props.setCurrentSessionId}
             session={session}
             setSessions={props.setSessions}
           />

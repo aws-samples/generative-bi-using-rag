@@ -11,15 +11,6 @@ import NavigationPanel from "../../components/side-navigation";
 export default function Playground() {
   const [toolsHide, setToolsHide] = useState(true);
 
-  const [sessions, setSessions] = useState<Session[]>([
-    {
-      session_id: uuid(),
-      title: "New Chat",
-      messages: [],
-    },
-  ]);
-  const [currentSession, setCurrentSession] = useState<number>(0);
-
   const dispatch = useDispatch();
   // const userState = useSelector<UserState>((state) => state) as UserState;
 
@@ -50,6 +41,13 @@ export default function Playground() {
     };
   }, [dispatch]);
 
+  const [sessions, setSessions] = useState<Session[]>([{
+    session_id: uuid(),
+    title: "New Chat",
+    messages: [],
+  }]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>(sessions[0].session_id);
+
   return (
     <BaseAppLayout
       info={<ConfigPanel setToolsHide={setToolsHide} />}
@@ -57,8 +55,8 @@ export default function Playground() {
         <NavigationPanel
           sessions={sessions}
           setSessions={setSessions}
-          currentSession={currentSession}
-          setCurrentSession={setCurrentSession}
+          currentSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
         />
       }
       content={
@@ -67,7 +65,8 @@ export default function Playground() {
           setToolsHide={setToolsHide}
           sessions={sessions}
           setSessions={setSessions}
-          currentSession={currentSession}
+          currentSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
         />
       }
       toolsHide={toolsHide}

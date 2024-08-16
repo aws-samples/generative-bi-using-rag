@@ -1,7 +1,7 @@
 import { Box, SpaceBetween, Spinner, StatusIndicator } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getSelectData } from "../../common/api/API";
+import { getHistoryBySession, getSelectData } from "../../common/api/API";
 import { createWssClient } from "../../common/api/WebSocket";
 import { ActionType, LLMConfigState, UserState } from "../../common/helpers/types";
 import ChatInputPanel from "./chat-input-panel";
@@ -15,7 +15,8 @@ export default function Chat(props: {
   toolsHide: boolean;
   sessions: Session[];
   setSessions: Dispatch<SetStateAction<Session[]>>;
-  currentSession: number;
+  currentSessionId: string;
+  setCurrentSessionId: Dispatch<SetStateAction<string>>;
 }) {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
     [],
@@ -23,7 +24,7 @@ export default function Chat(props: {
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const sendJsonMessage = createWssClient(setStatusMessage, setMessageHistory);
+  const sendJsonMessage = createWssClient(setStatusMessage, props.setSessions);
 
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
@@ -54,25 +55,46 @@ export default function Chat(props: {
   }, [userState.queryConfig]);
 
   useEffect(() => {
-    // console.log("current session index: ", props.currentSession);
-    setMessageHistory(props.sessions[props.currentSession].messages);
-  }, [props.currentSession]);
+    props.sessions.forEach((session) => {
+      if (session.session_id === props.currentSessionId) {
+        setMessageHistory(session.messages);
+        if (session.messages.length === 0 && session.title !== "New Chat") {
+          const historyItem = {
+            session_id: session.session_id,
+            user_id: userState.userInfo.userId,
+            profile_name: userState.queryConfig.selectedDataPro,
+          };
+          getHistoryBySession(historyItem).then(
+            response => {
+              if (response) {
+                props.setSessions((prevState) => {
+                  return prevState.map((session) => {
+                    if (response.session_id !== session.session_id) {
+                      return session;
+                    } else {
+                      return {
+                        session_id: session.session_id,
+                        title: session.title,
+                        messages: response.messages,
+                      };
+                    }
+                  });
+                });
+              }
+            },
+          );
+        }
+      }
+    });
+  }, [props.currentSessionId]);
 
   useEffect(() => {
-    props.setSessions((prevState) => {
-      return prevState.map((session: Session, idx: number) => {
-        if (idx === props.currentSession) {
-          return {
-            session_id: session.session_id,
-            title: session.title,
-            messages: messageHistory
-          };
-        } else {
-          return session;
-        }
-      });
+    props.sessions.forEach((session) => {
+      if (session.session_id === props.currentSessionId) {
+        setMessageHistory(session.messages);
+      }
     });
-  }, [messageHistory]);
+  }, [props.sessions]);
 
   return (
     <div className={styles.chat_container}>
@@ -92,31 +114,31 @@ export default function Chat(props: {
             </div>
           );
         })}
-        {statusMessage.length === 0 ? null : (
-          <div className={styles.status_container}>
-            <SpaceBetween size="xxs">
-              {statusMessage.map((message, idx) => {
-                const displayMessage =
-                  idx % 2 === 1
-                    ? true
-                    : idx === statusMessage.length - 1;
-                return displayMessage ? (
-                  <StatusIndicator
-                    key={idx}
-                    type={
-                      message.content.status === "end"
-                        ? "success"
-                        : "in-progress"
-                    }
-                  >
-                    {message.content.text}
-                  </StatusIndicator>
-                ) : null;
-              })}
-            </SpaceBetween>
-          </div>
-        )}
-
+        {statusMessage.filter((status) => status.session_id === props.currentSessionId).length === 0 ?
+          null : (<div className={styles.status_container}>
+              <SpaceBetween size="xxs">
+                {statusMessage.filter((status) => status.session_id === props.currentSessionId)
+                  .map((message, idx) => {
+                    const displayMessage =
+                      idx % 2 === 1
+                        ? true
+                        : idx === statusMessage.length - 1;
+                    return displayMessage ? (
+                      <StatusIndicator
+                        key={idx}
+                        type={
+                          message.content.status === "end"
+                            ? "success"
+                            : "in-progress"
+                        }
+                      >
+                        {message.content.text}
+                      </StatusIndicator>
+                    ) : null;
+                  })}
+              </SpaceBetween>
+            </div>
+          )}
         {loading && (
           <div>
             <Box float="left">
@@ -139,10 +161,14 @@ export default function Chat(props: {
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
             setMessageHistory(history)
           }
+          sessions={props.sessions}
+          setSessions={props.setSessions}
           setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
             setStatusMessage(message)
           }
           sendMessage={sendJsonMessage}
+          currSessionId={props.currentSessionId}
+          setCurrentSessionId={props.setCurrentSessionId}
         />
       </div>
     </div>
