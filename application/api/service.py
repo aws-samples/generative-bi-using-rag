@@ -20,9 +20,9 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
-    change_class_to_str, get_window_history, get_share_data, update_share_data
+    change_class_to_str
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage
+    TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage, AskEntitySelect
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
 from .enum import ErrorEnum, ContentEnum
@@ -424,6 +424,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
     knowledge_search_result = KnowledgeSearchResult(knowledge_response="")
 
+    ask_entity_select = AskEntitySelect(entity_select="", entity_info={})
+
     agent_sql_search_result = []
 
     generate_suggested_question_list = []
@@ -437,23 +439,17 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
     entity_slot = []
 
-    user_query_history = []
-    original_user_query_history = get_share_data(session_id)
-    logger.info("The original_user_query_history is {original_user_query_history}".format(original_user_query_history=original_user_query_history))
     query_rewrite_result = {"intent": "original_problem", "query": search_box}
     if context_window > 0:
-        context_window_select = context_window * 2
-        if len(original_user_query_history) > 0:
-            user_query_history = original_user_query_history[-context_window_select:]
-            user_query_history = get_window_history(user_query_history)
+        user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id,
+                                                                  session_id=session_id, size=context_window,
+                                                                  log_type='chat_history')
+        if len(user_query_history) >= 0:
             user_query_history.append("user:" + search_box)
             logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
             query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
             logger.info(
-            "The query_rewrite_result is {query_rewrite_result}".format(query_rewrite_result=query_rewrite_result))
-        else:
-            user_query_history.append("user:" + search_box)
-            query_rewrite_result = get_query_rewrite(model_type, search_box, prompt_map, user_query_history)
+                "The query_rewrite_result is {query_rewrite_result}".format(query_rewrite_result=query_rewrite_result))
     query_rewrite = query_rewrite_result.get("query")
     query_rewrite_intent = query_rewrite_result.get("intent")
     if "ask_in_reply" == query_rewrite_intent:
@@ -464,9 +460,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
         answer = Answer(query=search_box, query_rewrite=ask_result.query_rewrite, query_intent="ask_in_reply", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[], ask_rewrite_result=ask_result)
+                        suggested_question=[], ask_rewrite_result=ask_result, ask_entity_select=ask_entity_select)
 
-        update_share_data(session_id, search_box, answer)
         ask_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
@@ -504,8 +499,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     if reject_intent_flag:
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="reject_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[], ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+                        suggested_question=[], ask_rewrite_result=ask_result, ask_entity_select=ask_entity_select)
         reject_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
@@ -524,8 +518,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="knowledge_search",
                         knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=[], ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+                        suggested_question=[], ask_rewrite_result=ask_result, ask_entity_select=ask_entity_select)
         knowledge_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="", query=search_box,
@@ -640,8 +633,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                                           time_str=current_time)
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result, ask_entity_select=ask_entity_select)
         intent_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql=sql_search_result.sql,
@@ -706,8 +698,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="agent_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
-                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result)
-        update_share_data(session_id, search_box, answer)
+                        suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result, ask_entity_select=ask_entity_select)
         agent_answer_info = change_class_to_str(answer)
         LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                           profile_name=selected_profile, sql="",

@@ -2,9 +2,12 @@ import json
 import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 import logging
+
+from nlq.business.log_store import LogManagement
 from nlq.business.profile import ProfileManagement
 from .enum import ContentEnum
-from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest
+from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest, HistorySessionRequest, \
+    Message, HistoryMessage
 from . import service
 from nlq.business.nlq_chain import NLQChain
 from dotenv import load_dotenv
@@ -41,10 +44,66 @@ def ask(question: Question):
 
 
 @router.post("/get_history_by_user_profile")
-def get_history_by_user_profile(history_request : HistoryRequest):
+def get_history_by_user_profile(history_request: HistoryRequest):
     user_id = history_request.user_id
     profile_name = history_request.profile_name
     return service.get_history_by_user_profile(user_id, profile_name)
+
+
+@router.post("/get_sessions")
+def get_sessions(history_request: HistoryRequest):
+    user_id = history_request.user_id
+    return LogManagement.get_all_sessions(user_id, history_request.profile_name, history_request.log_type)
+
+
+@router.post("/get_history_by_session")
+def get_history_by_session(history_request: HistorySessionRequest):
+    user_id = history_request.user_id
+    history_list = LogManagement.get_all_history_by_session(profile_name=history_request.profile_name, user_id=user_id,
+                                                            session_id=history_request.session_id,
+                                                            size=1000, log_type=history_request.log_type)
+    chat_history = format_chat_history(history_list, history_request.log_type)
+    empty_history = {
+        "session_id": history_request.session_id,
+        "messages": [],
+        "title": ""
+    }
+    if len(chat_history) > 0:
+        return chat_history[0]
+    else:
+        return empty_history
+
+
+@router.post("/delete_history_by_session")
+def delete_history_by_session(history_request: HistorySessionRequest):
+    user_id = history_request.user_id
+    profile_name = history_request.profile_name
+    session_id = history_request.session_id
+    return LogManagement.delete_history_by_session(user_id, profile_name, session_id)
+
+
+def format_chat_history(history_list, log_type):
+    chat_history = []
+    chat_history_session = {}
+    for item in history_list:
+        session_id = item['session_id']
+        query = item['query']
+        if session_id not in chat_history_session:
+            chat_history_session[session_id] = {
+                "history": [],
+                "title": query
+            }
+        log_info = item['log_info']
+        if log_type == 'chat_history':
+            human_message = Message(type="human", content=query)
+            bot_message = Message(type="AI", content=json.loads(log_info))
+            chat_history_session[session_id]['history'].append(human_message)
+            chat_history_session[session_id]['history'].append(bot_message)
+    for key, value in chat_history_session.items():
+        if log_type == 'chat_history':
+            each_session_history = HistoryMessage(session_id=key, messages=value['history'], title=value['title'])
+            chat_history.append(each_session_history)
+    return chat_history
 
 
 @router.post("/user_feedback")
@@ -70,7 +129,9 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             print('---WEBSOCKET MESSAGE---', data)
             question_json = json.loads(data)
-
+            question = Question(**question_json)
+            session_id = question.session_id
+            user_id = question.user_id
             if not skipAuthentication:
                 access_token = question_json.get('X-Access-Token')
                 if access_token:
@@ -85,26 +146,27 @@ async def websocket_endpoint(websocket: WebSocket):
                     del question_json['X-Refresh-Token']
 
                 response = authenticate(access_token, id_token, refresh_token)
+            else:
+                response = {'X-Status-Code': status.HTTP_200_OK}
 
             if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
                 answer = {}
                 answer['X-Status-Code'] = response["X-Status-Code"]
                 await response_websocket(websocket, session_id, answer, ContentEnum.END)
             else:
-                question = Question(**question_json)
-                session_id = question.session_id
-                user_id = question.user_id
                 try:
                     ask_result = await ask_websocket(websocket, question)
                     logger.info(ask_result)
                     answer = ask_result.dict()
                     if not skipAuthentication:
                         answer.update(response)
-                    await response_websocket(websocket=websocket, session_id=session_id, content=answer, content_type=ContentEnum.END, user_id=user_id)
+                    await response_websocket(websocket=websocket, session_id=session_id, content=answer,
+                                             content_type=ContentEnum.END, user_id=user_id)
                 except Exception:
                     msg = traceback.format_exc()
                     logger.exception(msg)
-                    await response_websocket(websocket=websocket, session_id=session_id, content=msg, content_type=ContentEnum.EXCEPTION, user_id=user_id)
+                    await response_websocket(websocket=websocket, session_id=session_id, content=msg,
+                                             content_type=ContentEnum.EXCEPTION, user_id=user_id)
     except WebSocketDisconnect:
         logger.info(f"{websocket.client.host} disconnected.")
 
@@ -148,7 +210,8 @@ async def response_bedrock(websocket: WebSocket, session_id: str, response: dict
 
 
 async def response_websocket(websocket: WebSocket, session_id: str, content,
-                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1", user_id: str = "admin"):
+                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1",
+                             user_id: str = "admin"):
     if content_type == ContentEnum.STATE:
         content_json = {
             "text": content,
