@@ -11,9 +11,9 @@ import {
   Toggle,
 } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { getSelectData } from "../../common/api/API";
-import { alertMsg } from "../../common/helpers/tools";
 import {
   ActionType,
   LLMConfigState,
@@ -81,7 +81,10 @@ const ConfigPanel = (props: {
         setSelectedLLM(tempLLM[0]);
       }
     });
-  }, []);
+  }, [
+    userState.queryConfig?.selectedDataPro,
+    userState.queryConfig?.selectedLLM,
+  ]);
 
   const onSave = () => {
     const configInfo: LLMConfigState = {
@@ -99,7 +102,7 @@ const ConfigPanel = (props: {
     };
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
     props.setToolsHide(true);
-    alertMsg("Configuration saved", "success");
+    toast.success("Configuration saved");
   };
 
   useEffect(() => {
@@ -214,10 +217,7 @@ const ConfigPanel = (props: {
                 inputMode="numeric"
                 value={contextWindow.toString()}
                 onChange={({ detail }) => {
-                  if (
-                    Number(detail.value) > 10 ||
-                    Number(detail.value) < 0
-                  ) {
+                  if (Number(detail.value) > 10 || Number(detail.value) < 0) {
                     return;
                   }
                   setContextWindow(Number(detail.value));

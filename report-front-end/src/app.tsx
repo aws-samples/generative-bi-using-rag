@@ -10,7 +10,6 @@ import {
   LOCAL_STORAGE_KEYS,
 } from "./common/constant/constants";
 import { ActionType, UserInfo } from "./common/helpers/types";
-import AlertMsg from "./components/alert-msg";
 import CustomTopNavigation from "./components/top-navigation";
 import PageRouter from "./pages/page-router";
 
@@ -66,7 +65,6 @@ const App: React.FC<{
     <div style={{ height: "100%" }}>
       <BrowserRouter>
         <Toaster />
-        <AlertMsg />
         <CustomTopNavigation />
         <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
         <div>

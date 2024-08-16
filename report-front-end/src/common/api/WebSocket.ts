@@ -1,35 +1,35 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
-import toast from "react-hot-toast";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { ChatBotHistoryItem, ChatBotMessageItem, ChatBotMessageType } from "../../components/chatbot-panel/types";
-import { DEFAULT_QUERY_CONFIG, isLoginWithCognito } from "../constant/constants";
-import { getBearerTokenObj, getLSTokens } from "./API";
+import {
+  ChatBotHistoryItem,
+  ChatBotMessageItem,
+  ChatBotMessageType,
+} from "../../components/chatbot-panel/types";
 import { Session } from "../../components/session-panel/types";
+import {
+  DEFAULT_QUERY_CONFIG,
+  isLoginWithCognito,
+} from "../constant/constants";
+import { logout } from "../helpers/tools";
+import { getBearerTokenObj } from "./API";
 
-export function createWssClient(
+export function useCreateWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setSessions: Dispatch<SetStateAction<Session[]>>,
+  setSessions: Dispatch<SetStateAction<Session[]>>
 ) {
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
-  const { sendJsonMessage } =
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useWebSocket(socketUrl, {
-      onOpen: (openMessage) =>
-        console.log("websocket connection opened, ", openMessage),
-      onClose: (closeMessage) =>
-        console.error("websocket connection closed, ", closeMessage),
-      onError: (errorMessage) =>
-        console.error("websocket connection error, ", errorMessage),
-      //Will attempt to reconnect on all close events, such as server shutting down
-      shouldReconnect: () => true,
-      onMessage: (message) => handleWebSocketMessage(message),
-    });
-
-  const { noToken } = getLSTokens();
-  if (noToken && isLoginWithCognito) {
-    toast.error("Please login first!");
-  }
+  const { sendJsonMessage } = useWebSocket(socketUrl, {
+    onOpen: (openMessage) =>
+      console.log("websocket connection opened, ", openMessage),
+    onClose: (closeMessage) =>
+      console.error("websocket connection closed, ", closeMessage),
+    onError: (errorMessage) =>
+      console.error("websocket connection error, ", errorMessage),
+    //Will attempt to reconnect on all close events, such as server shutting down
+    shouldReconnect: () => true,
+    onMessage: (message) => handleWebSocketMessage(message),
+  });
 
   const handleWebSocketMessage = (message: MessageEvent) => {
     console.log("Received WebSocketMessage: ", message.data);
@@ -37,21 +37,9 @@ export function createWssClient(
 
     if (isLoginWithCognito) {
       if (messageJson.content["X-Status-Code"] === 401) {
-        const patchEvent = new CustomEvent("unauthorized", {
-          detail: {},
-        });
-        window.dispatchEvent(patchEvent);
-        return;
+        return logout();
       } else if (messageJson.content["X-Status-Code"] === 200) {
-        // if (messageJson.content["X-User-Id"]) {
-        //   const patchEvent = new CustomEvent("authorized", {
-        //     detail: {
-        //       userId: messageJson.content["X-User-Id"],
-        //       userName: messageJson.content["X-User-Name"],
-        //     },
-        //   });
-        //   window.dispatchEvent(patchEvent);
-        // }
+        // Do something extra here
       }
     }
 
@@ -67,10 +55,13 @@ export function createWssClient(
             return {
               session_id: session.session_id,
               title: session.title,
-              messages: [...session.messages, {
-                type: ChatBotMessageType.AI,
-                content: messageJson.content,
-              }],
+              messages: [
+                ...session.messages,
+                {
+                  type: ChatBotMessageType.AI,
+                  content: messageJson.content,
+                },
+              ],
             };
           }
         });
@@ -100,10 +91,13 @@ export const useQueryWithCookies = () => {
             return {
               session_id: session.session_id,
               title: session.title === "New Chat" ? props.query : session.title,
-              messages: [...session.messages, {
-                type: ChatBotMessageType.Human,
-                content: props.query,
-              }],
+              messages: [
+                ...session.messages,
+                {
+                  type: ChatBotMessageType.Human,
+                  content: props.query,
+                },
+              ],
             };
           }
         });
@@ -137,7 +131,7 @@ export const useQueryWithCookies = () => {
       console.log("Send WebSocketMessage: ", param);
       props.sendMessage(param);
     },
-    [],
+    []
   );
   return { queryWithWS };
 };
