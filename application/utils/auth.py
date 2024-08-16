@@ -4,16 +4,16 @@ from jose import jwt
 import requests
 import os
 
-REGION = os.getenv("COGNITO_REGION")
-USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
-CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
+VITE_COGNITO_REGION = os.getenv("VITE_COGNITO_REGION")
+USER_POOL_ID = os.getenv("VITE_COGNITO_USER_POOL_ID")
+CLIENT_ID = os.getenv("VITE_COGNITO_USER_POOL_WEB_CLIENT_ID")
 AUTH_PATH = os.getenv("COGNITO_AUTH_PATH")
 USER_ROLES_CLAIM = os.getenv("USER_ROLES_CLAIM", "cognito:groups")
 AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
 skipAuthentication = AWS_DEFAULT_REGION.startswith("cn")
 
 JWKS_URL = os.getenv("JWKS_URL",
-                        f"https://cognito-idp.{REGION}.amazonaws.com/{USER_POOL_ID}/" ".well-known/jwks.json")
+                        f"https://cognito-idp.{VITE_COGNITO_REGION}.amazonaws.com/{USER_POOL_ID}/" ".well-known/jwks.json")
 
 TOKEN_URL = f"{AUTH_PATH}/oauth2/token"
 
