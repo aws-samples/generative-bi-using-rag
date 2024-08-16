@@ -19,6 +19,8 @@ import {
 import styles from "./chat.module.scss";
 import CustomQuestions from "./custom-questions";
 import { Session } from "../session-panel/types";
+import { deleteHistoryBySession } from "../../common/api/API";
+import { v4 as uuid } from "uuid";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
@@ -68,8 +70,34 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   };
 
   const handleClear = () => {
-    const bool = window.confirm("Are you sure to clear the chat history?");
-    if (bool) props.setMessageHistory([]);
+    const bool = window.confirm("Are you sure to clear current session history?");
+    if (bool) {
+      const historyItem = {
+        session_id: props.currSessionId,
+        user_id: userState.userInfo.userId,
+        profile_name: userState.queryConfig.selectedDataPro,
+      };
+      deleteHistoryBySession(historyItem).then(
+        response => {
+          if (response) {
+            props.setSessions((prevState: Session[]) => {
+              const filterState = prevState.filter((item: Session) => {
+                return item.session_id !== props.currSessionId;
+              });
+              if (filterState.length === 0) {
+                filterState.push({
+                  session_id: uuid(),
+                  title: "New Chat",
+                  messages: [],
+                });
+              }
+              props.setCurrentSessionId(filterState[0].session_id);
+              return filterState;
+            });
+          }
+        },
+      );
+    }
   };
 
   useEffect(() => {
