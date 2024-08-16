@@ -115,7 +115,7 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
 export async function getSessions(sessionItem: SessionItem) {
   // call api
   try {
-    const response = await fetch(`/api/qa/get_sessions`, {
+    const response = await fetch(`qa/get_sessions`, {
       headers: {
         "Content-Type": "application/json"
       },
