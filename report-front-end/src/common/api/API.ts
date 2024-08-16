@@ -1,11 +1,17 @@
 import {
   ChatBotHistoryItem,
   ChatBotMessageType,
-  FeedBackItem, HistoryItem,
+  FeedBackItem,
+  HistoryItem,
   SessionItem,
 } from "../../components/chatbot-panel/types";
 import { Dispatch, SetStateAction } from "react";
-import { BACKEND_URL, DEFAULT_QUERY_CONFIG, isLoginWithCognito, LOCAL_STORAGE_KEYS } from "../constant/constants";
+import {
+  BACKEND_URL,
+  DEFAULT_QUERY_CONFIG,
+  isLoginWithCognito,
+  LOCAL_STORAGE_KEYS,
+} from "../constant/constants";
 import { alertMsg } from "../helpers/tools";
 import { extend } from "umi-request";
 
@@ -95,7 +101,6 @@ export const getRecommendQuestions = async (data_profile: string) => {
   }
 };
 export async function addUserFeedback(feedbackData: FeedBackItem) {
-  // call api
   try {
     const data = await request.post("qa/user_feedback", {
       data: feedbackData,
@@ -113,38 +118,30 @@ export async function addUserFeedback(feedbackData: FeedBackItem) {
 }
 
 export async function getSessions(sessionItem: SessionItem) {
-  // call api
   try {
-    const response = await fetch(`qa/get_sessions`, {
-      headers: {
-        "Content-Type": "application/json"
+    const data = await request.post(`qa/get_sessions`, {
+      data: sessionItem,
+      errorHandler: (error) => {
+        alertMsg("getSessions error", "error");
+        console.error("getSessions error: ", error);
       },
-      method: "POST",
-      body: JSON.stringify(sessionItem)
     });
-    if (!response.ok) {
-      return;
-    }
-    return await response.json();
+    return data;
   } catch (error) {
     console.error("getSessions, error: ", error);
   }
 }
 
 export async function deleteHistoryBySession(historyItem: HistoryItem) {
-  // call api
   try {
-    const response = await fetch(`qa/delete_history_by_session`, {
-      headers: {
-        "Content-Type": "application/json"
+    const data = await request.post(`qa/delete_history_by_session`, {
+      data: historyItem,
+      errorHandler: (error) => {
+        alertMsg("deleteHistoryBySession error", "error");
+        console.error("deleteHistoryBySession error: ", error);
       },
-      method: "POST",
-      body: JSON.stringify(historyItem)
     });
-    if (!response.ok) {
-      return;
-    }
-    return await response.json();
+    return data;
   } catch (error) {
     console.error("deleteHistoryBySession, error: ", error);
   }
@@ -153,17 +150,14 @@ export async function deleteHistoryBySession(historyItem: HistoryItem) {
 export async function getHistoryBySession(historyItem: HistoryItem) {
   // call api
   try {
-    const response = await fetch(`qa/get_history_by_session`, {
-      headers: {
-        "Content-Type": "application/json"
+    const data = await request.post(`qa/get_history_by_session`, {
+      data: historyItem,
+      errorHandler: (error) => {
+        alertMsg("getHistoryBySession error", "error");
+        console.error("getHistoryBySession error: ", error);
       },
-      method: "POST",
-      body: JSON.stringify(historyItem)
     });
-    if (!response.ok) {
-      return;
-    }
-    return await response.json();
+    return data;
   } catch (error) {
     console.error("getHistoryBySession, error: ", error);
   }
