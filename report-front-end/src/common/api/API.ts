@@ -134,7 +134,7 @@ export async function getSessions(sessionItem: SessionItem) {
 export async function deleteHistoryBySession(historyItem: HistoryItem) {
   // call api
   try {
-    const response = await fetch(`/api/qa/delete_history_by_session`, {
+    const response = await fetch(`qa/delete_history_by_session`, {
       headers: {
         "Content-Type": "application/json"
       },
