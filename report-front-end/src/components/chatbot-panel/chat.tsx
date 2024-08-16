@@ -64,6 +64,7 @@ export default function Chat(props: {
         if (idx === props.currentSession) {
           return {
             session_id: session.session_id,
+            title: session.title,
             messages: messageHistory
           };
         } else {
