@@ -31,6 +31,14 @@ class Example(BaseModel):
 class HistoryRequest(BaseModel):
     user_id: str
     profile_name: str
+    log_type: str = "chat_history"
+
+
+class HistorySessionRequest(BaseModel):
+    session_id: str
+    user_id: str
+    profile_name: str
+    log_type: str = "chat_history"
 
 
 class QueryEntity(BaseModel):
@@ -89,6 +97,11 @@ class AskReplayResult(BaseModel):
     query_rewrite: str
 
 
+class AskEntitySelect(BaseModel):
+    entity_select: str
+    entity_info: dict[str, Any]
+
+
 class Answer(BaseModel):
     query: str
     query_rewrite: str = ""
@@ -98,6 +111,7 @@ class Answer(BaseModel):
     agent_search_result: AgentSearchResult
     ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
+    ask_entity_select: AskEntitySelect
 
 
 class Message(BaseModel):
