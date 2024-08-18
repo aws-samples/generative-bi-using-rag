@@ -289,7 +289,10 @@ class ConnectConfigDao:
         db_list = []
         # item['id'] = None
         for item in response['Items']:
-            db_sm = item['db_sm']
+            if "db_sm" not in item:
+                db_sm = None
+            else:
+                db_sm = item['db_sm']
             if db_sm:
                 # 从 Secrets Manager 中获取 db_host、db_port、db_user、db_pwd
                 secrets_manager_name = db_sm
