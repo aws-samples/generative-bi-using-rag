@@ -110,7 +110,7 @@ def main():
                         entity_item_table_info["table_name"] = table
                         entity_item_table_info["column_name"] = column
                         entity_item_table_info["value"] = value
-                        VectorStore.add_entity_sample(current_profile, entity, "", DIMENSION_VALUE, entity_item_table_info)
+                        VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE, entity_item_table_info)
                         st.success('Sample added')
                         time.sleep(2)
                         st.rerun()

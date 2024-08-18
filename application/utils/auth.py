@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import status, Request
 from fastapi.responses import Response
 from jose import jwt
@@ -16,6 +18,8 @@ JWKS_URL = os.getenv("JWKS_URL",
                         f"https://cognito-idp.{VITE_COGNITO_REGION}.amazonaws.com/{USER_POOL_ID}/" ".well-known/jwks.json")
 
 TOKEN_URL = f"{AUTH_PATH}/oauth2/token"
+
+logger = logging.getLogger(__name__)
 
 def jwt_decode(token, audience=None, access_token=None):
     return jwt.decode(
@@ -74,9 +78,14 @@ def authenticate(access_token, id_token, refresh_token):
     if refresh_token and refresh_token.startswith("Bearer "):
         refresh_token = refresh_token[len("Bearer "):]
 
-    print('---ACCESS TOKEN---', access_token)
-    print('---ID TOKEN---', id_token)
-    print('---REFRESH TOKEN---', refresh_token)
+    if len(access_token.strip()) < 2 or len(id_token.strip()) < 2 or len(refresh_token.strip()) < 2:
+        response = {}
+        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        return response
+
+    # print('---ACCESS TOKEN---', access_token)
+    # print('---ID TOKEN---', id_token)
+    # print('---REFRESH TOKEN---', refresh_token)
 
     if not access_token or not id_token or not refresh_token:
         print('Token: one of token is none')
@@ -85,10 +94,10 @@ def authenticate(access_token, id_token, refresh_token):
         return response
     try:
         decoded = jwt_decode(access_token)
-        print('Token decoded:', decoded)
+        # print('Token decoded:', decoded)
 
     except Exception as e:
-        print('Token decode exception', str(e))
+        logger.error('Token decode exception: ', str(e))
         response = {}
         response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
         return response
