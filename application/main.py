@@ -24,6 +24,9 @@ app.add_middleware(
 async def http_authenticate(request: Request, call_next):
     # print('---HTTP REQUEST---', vars(request), request.headers)
 
+    if request.url.path == "/":
+        return await call_next(request)
+
     if request.method == "OPTIONS":
         response = Response(status_code=status.HTTP_200_OK)
         response.headers["Access-Control-Allow-Origin"] = "*"
