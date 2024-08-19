@@ -46,8 +46,8 @@ class OpenSearchQueryLogDao:
                                                                opensearch_info["port"],
                                                                opensearch_info["username"], opensearch_info["password"],
                                                                opensearch_info["region"])
-        if not self.exists():
-            self.create_index()
+        # if not self.exists():
+        #     self.create_index()
 
     def exists(self):
         is_exist = check_opensearch_index(self.opensearch_client, QUERY_LOG_TABLE_NAME)

@@ -122,11 +122,13 @@ export class ECSStack extends cdk.Stack {
         // Add secrets manager access policy
         const opensearchHostUrlSecretAccessPolicy = new iam.PolicyStatement({
             actions: [
-                "secretsmanager:GetSecretValue"
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:CreateSecret",
             ],
             resources: [
                 `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
-                `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`
+                `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-master-user*`,
+                `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:GenBI-*`
             ]
         });
         taskRole.addToPolicy(opensearchHostUrlSecretAccessPolicy);

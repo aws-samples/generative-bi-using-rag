@@ -115,4 +115,6 @@ opensearch_info = {
     'embedding_dimension': EMBEDDING_DIMENSION
 }
 
+query_log_name = os.getenv("QUERY_LOG_INDEX_NAME", "genbi_query_logging")
+
 bedrock_ak_sk_info = get_bedrock_parameter()

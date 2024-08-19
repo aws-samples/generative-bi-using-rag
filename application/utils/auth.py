@@ -78,6 +78,11 @@ def authenticate(access_token, id_token, refresh_token):
     if refresh_token and refresh_token.startswith("Bearer "):
         refresh_token = refresh_token[len("Bearer "):]
 
+    if access_token is None or id_token is None or refresh_token is None:
+        response = {}
+        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        return response
+
     if len(access_token.strip()) < 2 or len(id_token.strip()) < 2 or len(refresh_token.strip()) < 2:
         response = {}
         response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED

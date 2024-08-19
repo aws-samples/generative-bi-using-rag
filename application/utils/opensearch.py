@@ -3,7 +3,7 @@ from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
 import logging
 from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
-from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING, AOS_INDEX_NER
+from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING, AOS_INDEX_NER, query_log_name
 
 logger = logging.getLogger(__name__)
 
@@ -319,6 +319,47 @@ def update_index_mapping(opensearch_client, index_name, dimension):
     return bool(response['acknowledged'])
 
 
+def create_log_index(opensearch_client):
+    mapping = {
+        "mappings": {
+            "properties": {
+                "log_id": {
+                    "type": "keyword"
+                },
+                "profile_name": {
+                    "type": "keyword"
+                },
+                "user_id": {
+                    "type": "keyword"
+                },
+                "session_id": {
+                    "type": "keyword"
+                },
+                "sql": {
+                    "type": "text"
+                },
+                "query": {
+                    "type": "text"
+                },
+                "intent": {
+                    "type": "keyword"
+                },
+                "log_info": {
+                    "type": "text"
+                },
+                "time_str": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss"
+                },
+                "log_type": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+    opensearch_client.indices.create(index="genbi_query_logging", body=mapping)
+
+
 def upload_results_to_opensearch(region_name, domain, opensearch_user, opensearch_password, index_name, query, sql,
                                  host='', port=443):
 
@@ -381,6 +422,10 @@ def opensearch_index_init():
                     logger.info(f"check index flag: {check_flag}")
                     if not check_flag:
                         update_index_mapping(opensearch_client, index_name, dimension)
+        exists = check_opensearch_index(opensearch_client, query_log_name)
+        if not exists:
+            logger.info("genbi_query_logging not exit")
+            create_log_index(opensearch_client)
         return index_create_success
     except Exception as e:
         logger.error("create index error")

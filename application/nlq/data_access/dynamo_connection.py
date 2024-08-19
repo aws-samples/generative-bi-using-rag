@@ -50,7 +50,7 @@ class ConnectConfigEntity:
     def get_secrets_manager_name(self):
         """Generate a random Secrets Manager name"""
         random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        return f"{self.conn_name}-{random_str}"
+        return f"GenBI-{self.conn_name}-{random_str}"
 
 
 class ConnectConfigDao:
