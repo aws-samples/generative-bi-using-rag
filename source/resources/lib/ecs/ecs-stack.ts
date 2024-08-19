@@ -4,7 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import {DockerImageAsset} from 'aws-cdk-lib/aws-ecr-assets';
+import {DockerImageAsset, Platform} from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 
@@ -61,6 +61,7 @@ export class ECSStack extends cdk.Stack {
             'dockerImageAsset': new DockerImageAsset(this, 'GenBiStreamlitDockerImage', {
                 directory: services[0].dockerfileDirectory,
                 file: services[0].dockerfile,
+                platform: Platform.LINUX_AMD64,
                 buildArgs: {
                     AWS_REGION: awsRegion, // Pass the AWS region as a build argument
                 },
@@ -71,6 +72,7 @@ export class ECSStack extends cdk.Stack {
             'dockerImageAsset': new DockerImageAsset(this, 'GenBiAPIDockerImage', {
                 directory: services[1].dockerfileDirectory,
                 file: services[1].dockerfile,
+                platform: Platform.LINUX_AMD64,
                 buildArgs: {
                     AWS_REGION: awsRegion, // Pass the AWS region as a build argument
                 }
@@ -275,6 +277,7 @@ export class ECSStack extends cdk.Stack {
             'dockerImageAsset': new DockerImageAsset(this, 'GenBiFrontendDockerImage', {
                 directory: services[2].dockerfileDirectory,
                 file: services[2].dockerfile,
+                platform: Platform.LINUX_AMD64,
                 buildArgs: {
                     AWS_REGION: awsRegion, // Pass the AWS region as a build argument
                 }
