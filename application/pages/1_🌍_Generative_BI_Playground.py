@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
-import logging
+
 from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
 from nlq.business.profile import ProfileManagement
@@ -13,9 +13,9 @@ from nlq.core.state import QueryState
 from nlq.core.state_machine import QueryStateMachine
 from utils.navigation import make_sidebar
 from utils.env_var import opensearch_info
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
-
+logger = getLogger()
 
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""
@@ -148,7 +148,8 @@ def main():
     # Title and Description
     st.subheader('Generative BI Playground')
 
-    demo_profile_suffix = '(demo)'
+    st.write('Current Username: ' + st.session_state['auth_username'])
+
     # Initialize or set up state variables
     if 'profiles' not in st.session_state:
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
@@ -320,7 +321,7 @@ def main():
                     search_box=search_box,
                     query_rewrite="",
                     session_id="",
-                    user_id="",
+                    user_id=st.session_state['auth_username'],
                     selected_profile=selected_profile,
                     database_profile=database_profile,
                     model_type=model_type,

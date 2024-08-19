@@ -7,6 +7,8 @@ import pandas as pd
 
 from api.schemas import Answer, KnowledgeSearchResult, SQLSearchResult, AgentSearchResult, AskReplayResult, \
     AskEntitySelect
+from nlq.business.datasource.factory import DataSourceFactory
+from nlq.business.login_user import LoginUser
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from utils.apis import get_sql_result_tool
@@ -191,7 +193,7 @@ class QueryStateMachine:
 
     @log_execution
     def handle_sql_generation(self):
-        sql, response = self._generate_sql()
+        sql, response, origin_sql = self._generate_sql()
         self.intent_search_result["sql"] = sql
         self.intent_search_result["response"] = response
         self.answer.sql_search_result.sql = sql
@@ -209,7 +211,14 @@ class QueryStateMachine:
                                    ner_example=self.normal_search_entity_slot,
                                    dialect=self.context.database_profile['db_type'])
             sql = get_generated_sql(response)
-            return sql, response
+            # post-processing the sql
+            data_source = DataSourceFactory.get_data_source(self.context.database_profile['db_type'])
+            post_sql = data_source.post_sql_generation(
+                sql,
+                rls_config=self.context.database_profile['row_level_security_config'],
+                login_user=LoginUser(self.context.user_id))
+
+            return post_sql, response, sql
         except Exception as e:
             logger.error("handle_sql_generation is error")
             logger.error(e)

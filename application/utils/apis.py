@@ -72,6 +72,31 @@ def query_from_sql_pd(p_db_url: str, query, schema=None):
         return res
 
 
+def replace_table_with_subquery(sql, table_name, col_name, username):
+    # 解析SQL语句
+    parsed = sqlparse.parse(sql)
+
+    # 遍历解析后的语句
+    for stmt in parsed:
+        # 处理每个语句中的表名
+        process_table_names(stmt, table_name, col_name, username)
+
+    # 返回修改后的SQL语句
+    return ''.join([str(stmt) for stmt in parsed])
+
+def process_table_names(stmt, table_name, col_name, col_value):
+    # 遍历语句中的每个标识符
+    for token in stmt.flatten():
+        # 如果标识符是一个表名
+        if token.ttype == sqlparse.tokens.Name and token.value.lower() == table_name:
+            # 构造子查询
+            subquery = f'(SELECT * FROM {table_name} WHERE {col_name} = \'{col_value}\') AS {table_name} /* RLS applied */'
+
+            # 替换原有的表名
+            parent = token.parent
+            idx = parent.token_index(token)
+            parent.tokens[idx] = sqlparse.parse(subquery)[0]
+
 def get_sql_result_tool(profile, sql):
     result_dict = {"data": pd.DataFrame(), "sql": sql, "status_code": 200, "error_info": ""}
     try:
