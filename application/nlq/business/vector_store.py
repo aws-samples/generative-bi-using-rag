@@ -79,10 +79,11 @@ class VectorStore:
             embedding = cls.create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING,question,opensearch_info['sql_index'])
         else:
             embedding = cls.create_vector_embedding_with_bedrock(question)
-        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
+        #has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
+        has_same_sample = False
         if has_same_sample:
             logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
-        if cls.opensearch_dao.add_sample(opensearch_info['sql_index'], profile_name, question, answer, embedding):
+        if cls.opensearch_dao.add_sample(opensearch_info['sql_index'], profile_name, question, answer, embedding['vector_field']):
             logger.info('Sample added')
 
     @classmethod
@@ -92,10 +93,11 @@ class VectorStore:
             embedding = cls.create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING,entity,opensearch_info['ner_index'])
         else:
             embedding = cls.create_vector_embedding_with_bedrock(entity)
-        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['ner_index'], embedding)
+        #has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['ner_index'], embedding)
+        has_same_sample = False
         if has_same_sample:
             logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
-        if cls.opensearch_dao.add_entity_sample(opensearch_info['ner_index'], profile_name, entity, comment, embedding):
+        if cls.opensearch_dao.add_entity_sample(opensearch_info['ner_index'], profile_name, entity, comment, embedding['vector_field']):
             logger.info('Sample added')
 
     @classmethod
@@ -105,10 +107,11 @@ class VectorStore:
             embedding = cls.create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING,entity,opensearch_info['agent_index'])
         else:
             embedding = cls.create_vector_embedding_with_bedrock(entity)
-        has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['agent_index'], embedding)
+        #has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['agent_index'], embedding)
+        has_same_sample = False
         if has_same_sample:
             logger.info(f'delete agent sample sample query: {entity} to profile {profile_name}')
-        if cls.opensearch_dao.add_agent_cot_sample(opensearch_info['agent_index'], profile_name, entity, comment, embedding):
+        if cls.opensearch_dao.add_agent_cot_sample(opensearch_info['agent_index'], profile_name, entity, comment, embedding['vector_field']):
             logger.info('Sample added')
 
     @classmethod
@@ -139,6 +142,8 @@ class VectorStore:
         )
         response = invoke_model_sagemaker_endpoint(endpoint_name, body, "embeddings")
         embeddings = response['sentence_embeddings'][0]
+        logger.info("embeddings to ingestion")
+        prinlogger.info(embeddings[:10])
         return {"_index": index_name, "text": text, "vector_field": embeddings}
 
     @classmethod
