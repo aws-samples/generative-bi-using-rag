@@ -81,6 +81,7 @@ export const useQueryWithCookies = () => {
       setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
       setSessions: Dispatch<SetStateAction<Session[]>>;
       userId: string;
+      username: string;
       sessionId: string;
     }) => {
       props.setSessions((prevState) => {
@@ -126,6 +127,8 @@ export const useQueryWithCookies = () => {
         context_window: props.configuration.contextWindow,
         session_id: props.sessionId,
         user_id: props.userId,
+        //TODO remove default username
+        username: props.username || 'admin',
         ...extraToken,
       };
       console.log("Send WebSocketMessage: ", param);
