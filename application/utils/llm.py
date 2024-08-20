@@ -570,14 +570,15 @@ def create_vector_embedding_with_bedrock(text, index_name):
 
 
 def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
-    body = json.dumps(
+    body=json.dumps(
         {
             "inputs": text,
-            "is_query": True
+            "is_query": True,
+            "instruction" :  "Represent this sentence for searching relevant passages:"
         }
     )
-    response = invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="embedding")
-    embeddings = response[0]
+    response = invoke_model_sagemaker_endpoint(endpoint_name, body, "embeddings")
+    embeddings = response['sentence_embeddings'][0]
     return {"_index": index_name, "text": text, "vector_field": embeddings}
 
 

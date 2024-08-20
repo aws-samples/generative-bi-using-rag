@@ -76,7 +76,7 @@ class VectorStore:
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
         if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(question)
+            embedding = cls.create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING,question,opensearch_info['sql_index'])
         else:
             embedding = cls.create_vector_embedding_with_bedrock(question)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
@@ -89,7 +89,7 @@ class VectorStore:
     def add_entity_sample(cls, profile_name, entity, comment):
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
         if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(entity)
+            embedding = cls.create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING,entity,opensearch_info['ner_index'])
         else:
             embedding = cls.create_vector_embedding_with_bedrock(entity)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['ner_index'], embedding)
@@ -102,7 +102,7 @@ class VectorStore:
     def add_agent_cot_sample(cls, profile_name, entity, comment):
         logger.info(f'add agent sample query: {entity} to profile {profile_name}')
         if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(entity)
+            embedding = cls.create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING,entity,opensearch_info['agent_index'])
         else:
             embedding = cls.create_vector_embedding_with_bedrock(entity)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['agent_index'], embedding)
@@ -129,19 +129,17 @@ class VectorStore:
         return embedding
 
     @classmethod
-    def create_vector_embedding_with_sagemaker(cls, text):
-        try:
-            body = json.dumps(
-                {
-                    "inputs": text,
-                    "is_query": True
-                }
-            )
-            response = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body, model_type="embedding")
-            embeddings = response[0]
-            return embeddings
-        except Exception as e:
-            logger.error(f'create_vector_embedding_with_sagemaker is error {e}')
+    def create_vector_embedding_with_sagemaker(cls,endpoint_name, text, index_name):
+        body=json.dumps(
+        {
+            "inputs": text,
+            "is_query": True,
+            "instruction" :  "Represent this sentence for searching relevant passages:"
+        }
+        )
+        response = invoke_model_sagemaker_endpoint(endpoint_name, body, "embeddings")
+        embeddings = response['sentence_embeddings'][0]
+        return {"_index": index_name, "text": text, "vector_field": embeddings}
 
     @classmethod
     def delete_sample(cls, profile_name, doc_id):
