@@ -21,6 +21,7 @@ export type UserInfo = {
   displayName: string;
   loginExpiration: number;
   isLogin: boolean;
+  username: string;
 };
 
 export type LLMConfigState = {

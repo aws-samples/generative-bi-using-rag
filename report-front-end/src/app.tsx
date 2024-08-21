@@ -42,6 +42,7 @@ const App: React.FC<{
             user?.attributes?.displayName || user?.attributes?.email || "",
           loginExpiration: 0,
           isLogin: true,
+          username: user?.username || "",
         };
         dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
         localStorage.setItem(LOCAL_STORAGE_KEYS.accessToken, accessToken);
@@ -56,6 +57,7 @@ const App: React.FC<{
         displayName: "",
         loginExpiration: 0,
         isLogin: true,
+        username: "anonymous",
       };
       dispatch({ type: ActionType.UpdateUserInfo, state: loginUser });
     }

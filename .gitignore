@@ -175,3 +175,5 @@ package-lock.json
 internlm2-chat-7b/
 sqlcoder-7b-2/
 bge-m3/
+
+.DS_Store
