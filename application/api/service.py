@@ -13,9 +13,8 @@ from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.domain import SearchTextSqlResult
-from utils.llm import text_to_sql, get_query_intent, create_vector_embedding_with_sagemaker, \
-    sagemaker_to_sql, sagemaker_to_explain, knowledge_search, get_agent_cot_task, data_analyse_tool, \
-    generate_suggested_question, data_visualization, get_query_rewrite
+from utils.llm import text_to_sql, get_query_intent, knowledge_search, get_agent_cot_task, \
+    data_analyse_tool, generate_suggested_question, data_visualization, get_query_rewrite
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
@@ -108,28 +107,16 @@ def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_re
         db_url = ConnectionManagement.get_db_url_by_name(conn_name)
         database_profile['db_url'] = db_url
 
-    sql_endpoint = os.getenv('SAGEMAKER_ENDPOINT_SQL', '')
-    if sql_endpoint:
-        response = sagemaker_to_sql(database_profile['tables_info'],
-                                    database_profile['hints'],
-                                    question.keywords,
-                                    endpoint_name=sql_endpoint,
-                                    sql_examples=current_nlq_chain.get_retrieve_samples(),
-                                    ner_example=entity_slot_retrieve,
-                                    dialect=get_db_url_dialect(database_profile['db_url']),
-                                    model_provider=None,
-                                    with_response_stream=with_response_stream, )  # This does not support streaming
-    else:
-        response = text_to_sql(database_profile['tables_info'],
-                               database_profile['hints'],
-                               database_profile['prompt_map'],
-                               question.keywords,
-                               model_id=question.bedrock_model_id,
-                               sql_examples=current_nlq_chain.get_retrieve_samples(),
-                               ner_example=entity_slot_retrieve,
-                               dialect=get_db_url_dialect(database_profile['db_url']),
-                               model_provider=None,
-                               with_response_stream=with_response_stream, )
+    response = text_to_sql(database_profile['tables_info'],
+                            database_profile['hints'],
+                            database_profile['prompt_map'],
+                            question.keywords,
+                            model_id=question.bedrock_model_id,
+                            sql_examples=current_nlq_chain.get_retrieve_samples(),
+                            ner_example=entity_slot_retrieve,
+                            dialect=get_db_url_dialect(database_profile['db_url']),
+                            model_provider=None,
+                            with_response_stream=with_response_stream, )
     return response
 
 
@@ -756,12 +743,6 @@ def ask_with_response_stream(question: Question, current_nlq_chain: NLQChain) ->
     response = get_result_from_llm(question, current_nlq_chain, True)
     logger.info("got llm response")
     return response
-
-
-def explain_with_response_stream(current_nlq_chain: NLQChain) -> dict:
-    endpoint_name = os.getenv("SAGEMAKER_ENDPOINT_EXPLAIN")
-    explain = sagemaker_to_explain(endpoint_name, current_nlq_chain.get_generated_sql(), True)
-    return explain
 
 
 def get_executed_result(current_nlq_chain: NLQChain) -> str:
