@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 from nlq.business.connection import ConnectionManagement
 from nlq.business.datasource.factory import DataSourceFactory
-from nlq.business.login_user import LoginUser
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
@@ -571,12 +570,13 @@ async def ask_websocket(websocket: WebSocket, question: Question):
             await response_websocket(websocket, session_id, "Regenerating SQL ", ContentEnum.STATE, "start", user_id)
 
             additional_info = '''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
-                sql_statement=current_nlq_chain.get_generated_sql(),
+                sql_statement=normal_search_result.original_sql,
                 error=search_intent_result["error_info"])
             normal_search_result = await normal_sql_regenerating_websocket(websocket=websocket, session_id=session_id, search_box=query_rewrite,
                                               model_type=model_type, database_profile=database_profile,
                                               entity_slot_retrieve=normal_search_result.entity_slot_retrieve,
-                                              retrieve_result=normal_search_result.retrieve_result, additional_info=additional_info)
+                                              retrieve_result=normal_search_result.retrieve_result, additional_info=additional_info,
+                                              username=username)
 
             await response_websocket(websocket, session_id, "Regenerating SQL ", ContentEnum.STATE, "start", user_id)
             if normal_search_result.sql != "":
@@ -823,11 +823,12 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
         sql = get_generated_sql(response)
         # post-processing the sql for row level security
-        data_source = DataSourceFactory.get_data_source(database_profile['db_type'])
-        post_sql = data_source.post_sql_generation(
-            sql,
-            rls_config=database_profile['row_level_security_config'],
-            login_user=LoginUser(username))
+        post_sql = DataSourceFactory.apply_row_level_security_for_sql(
+                        database_profile['db_type'],
+                        sql,
+                        database_profile['row_level_security_config'],
+                        username
+                    )
 
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
@@ -835,14 +836,15 @@ async def normal_text_search_websocket(websocket: WebSocket, session_id: str, se
         search_result.retrieve_result = retrieve_result
         search_result.response = response
         search_result.sql = post_sql
-        search_result.origin_sql = sql
+        search_result.original_sql = sql
     except Exception as e:
         logger.exception(e)
     return search_result
 
 
 async def normal_sql_regenerating_websocket(websocket: WebSocket, session_id: str, search_box, model_type,
-                                            database_profile, entity_slot_retrieve, retrieve_result, additional_info):
+                                            database_profile, entity_slot_retrieve, retrieve_result, additional_info,
+                                            username: str):
     entity_slot_retrieve = entity_slot_retrieve
     retrieve_result = retrieve_result
     response = ""
@@ -869,12 +871,19 @@ async def normal_sql_regenerating_websocket(websocket: WebSocket, session_id: st
         logger.info("normal_sql_regenerating_websocket")
         logger.info(f'{response=}')
         sql = get_generated_sql(response)
+        post_sql = DataSourceFactory.apply_row_level_security_for_sql(
+                        database_profile['db_type'],
+                        sql,
+                        database_profile['row_level_security_config'],
+                        username
+                    )
         search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
                                             retrieve_result=retrieve_result, response=response, sql="")
         search_result.entity_slot_retrieve = entity_slot_retrieve
         search_result.retrieve_result = retrieve_result
         search_result.response = response
-        search_result.sql = sql
+        search_result.sql = post_sql
+        search_result.original_sql = sql
     except Exception as e:
         logger.error(e)
     return search_result

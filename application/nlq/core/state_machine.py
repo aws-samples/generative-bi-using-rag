@@ -8,7 +8,6 @@ import pandas as pd
 from api.schemas import Answer, KnowledgeSearchResult, SQLSearchResult, AgentSearchResult, AskReplayResult, \
     AskEntitySelect
 from nlq.business.datasource.factory import DataSourceFactory
-from nlq.business.login_user import LoginUser
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from utils.apis import get_sql_result_tool
@@ -193,15 +192,25 @@ class QueryStateMachine:
 
     @log_execution
     def handle_sql_generation(self):
-        sql, response, origin_sql = self._generate_sql()
+        sql, response, original_sql = self._generate_sql()
         self.intent_search_result["sql"] = sql
         self.intent_search_result["response"] = response
+        self.intent_search_result["original_sql"] = original_sql
         self.answer.sql_search_result.sql = sql
         self.answer.sql_search_result.sql_gen_process = get_generated_sql(response)
         if self.context.visualize_results_flag:
             self.transition(QueryState.EXECUTE_QUERY)
         else:
             self.transition(QueryState.COMPLETE)
+
+    def _apply_row_level_security_for_sql(self, sql):
+        post_sql = DataSourceFactory.apply_row_level_security_for_sql(
+                        self.context.database_profile['db_type'],
+                        sql,
+                        self.context.database_profile['row_level_security_config'],
+                        self.context.user_id
+                    )
+        return post_sql
 
     def _generate_sql(self):
         try:
@@ -212,11 +221,7 @@ class QueryStateMachine:
                                    dialect=self.context.database_profile['db_type'])
             sql = get_generated_sql(response)
             # post-processing the sql
-            data_source = DataSourceFactory.get_data_source(self.context.database_profile['db_type'])
-            post_sql = data_source.post_sql_generation(
-                sql,
-                rls_config=self.context.database_profile['row_level_security_config'],
-                login_user=LoginUser(self.context.user_id))
+            post_sql = self._apply_row_level_security_for_sql(sql)
 
             return post_sql, response, sql
         except Exception as e:
@@ -236,14 +241,16 @@ class QueryStateMachine:
                                    dialect=self.context.database_profile['db_type'],
                                    model_provider=None,
                                    additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
-                                       sql_statement=self.intent_search_result["sql_execute_result"]["sql"],
+                                       sql_statement=self.intent_search_result["original_sql"],
                                        error=self.intent_search_result["sql_execute_result"]["error_info"]))
             sql = get_generated_sql(response)
-            return sql, response
+            post_sql = self._apply_row_level_security_for_sql(sql)
+
+            return post_sql, response, sql
         except Exception as e:
             logger.error("handle_sql_generation is error")
             logger.error(e)
-            return "", ""
+            return "", "", ""
 
     @log_execution
     def handle_agent_sql_generation(self):
@@ -350,7 +357,7 @@ class QueryStateMachine:
         elif sql_execute_result["status_code"] == 200:
             self.transition(QueryState.COMPLETE)
         elif sql_execute_result["status_code"] == 500 and self.context.auto_correction_flag:
-            sql, response = self._generate_sql_again()
+            sql, response, original_sql = self._generate_sql_again()
             sql_execute_result = self._execute_sql(sql)
             self.answer.sql_search_result.sql = sql
             self.answer.sql_search_result.sql_gen_process = get_generated_sql(response)

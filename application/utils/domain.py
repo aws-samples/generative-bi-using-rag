@@ -9,4 +9,4 @@ class SearchTextSqlResult:
     response: str
     sql: str
     '''Origin sql before post processing'''
-    origin_sql: str = ''
+    original_sql: str = ''
