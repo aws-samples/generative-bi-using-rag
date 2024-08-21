@@ -128,7 +128,7 @@ export const useQueryWithCookies = () => {
         session_id: props.sessionId,
         user_id: props.userId,
         //TODO remove default username
-        username: props.username || 'admin',
+        username: props.username,
         ...extraToken,
       };
       console.log("Send WebSocketMessage: ", param);

@@ -31,7 +31,8 @@ export default function SuggestedQuestions(props: SuggestedQuestionsProps) {
       setMessageHistory: props.setMessageHistory,
       setSessions: props.setSessions,
       userId: userState.userInfo.userId,
-      sessionId: props.sessionId
+      sessionId: props.sessionId,
+      username: userState.userInfo.username,
     });
   };
 
