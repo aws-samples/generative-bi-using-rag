@@ -2,7 +2,7 @@ import json
 import logging
 import time
 import random
-from datetime import datetime
+import datetime
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ def generate_log_id():
 
 
 def get_current_time():
-    now = datetime.now()
+    now = datetime.datetime.now()
     formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')
     return formatted_time
 
@@ -59,6 +59,9 @@ def convert_timestamps_to_str(data):
             for item in row:
                 if isinstance(item, pd.Timestamp):
                     # Convert Timestamp to string
+                    new_row.append(item.strftime('%Y-%m-%d %H:%M:%S'))
+                elif isinstance(item, datetime.date):
+                    # Convert datetime.date to string
                     new_row.append(item.strftime('%Y-%m-%d %H:%M:%S'))
                 else:
                     new_row.append(item)
