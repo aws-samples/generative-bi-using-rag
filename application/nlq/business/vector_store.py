@@ -143,7 +143,7 @@ class VectorStore:
         response = invoke_model_sagemaker_endpoint(endpoint_name, body, "embeddings")
         embeddings = response['sentence_embeddings'][0]
         logger.info("embeddings to ingestion")
-        prinlogger.info(embeddings[:10])
+        logger.info(embeddings[:10])
         return {"_index": index_name, "text": text, "vector_field": embeddings}
 
     @classmethod
