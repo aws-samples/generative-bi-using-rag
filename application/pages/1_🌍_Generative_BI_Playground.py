@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
-
+import logging
 from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
 from nlq.business.profile import ProfileManagement
@@ -13,9 +13,9 @@ from nlq.core.state import QueryState
 from nlq.core.state_machine import QueryStateMachine
 from utils.navigation import make_sidebar
 from utils.env_var import opensearch_info
-from utils.logging import getLogger
 
-logger = getLogger()
+logger = logging.getLogger(__name__)
+
 
 def sample_question_clicked(sample):
     """Update the selected_sample variable with the text of the clicked button"""
@@ -148,8 +148,7 @@ def main():
     # Title and Description
     st.subheader('Generative BI Playground')
 
-    st.write('Current Username: ' + st.session_state['auth_username'])
-
+    demo_profile_suffix = '(demo)'
     # Initialize or set up state variables
     if 'profiles' not in st.session_state:
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
@@ -321,7 +320,7 @@ def main():
                     search_box=search_box,
                     query_rewrite="",
                     session_id="",
-                    user_id=st.session_state['auth_username'],
+                    user_id="",
                     selected_profile=selected_profile,
                     database_profile=database_profile,
                     model_type=model_type,
@@ -482,6 +481,12 @@ def main():
                             st.session_state.current_sql_result = \
                                 state_machine.intent_search_result["sql_execute_result"]["data"]
                             do_visualize_results()
+                elif state_machine.get_state() == QueryState.ERROR:
+                    with st.status("The Error Info Please Check") as status_text:
+                        st.write(state_machine.error_log)
+                    status_text.update(label=f"The Error Info Please Check",
+                                       state="error", expanded=False)
+
                 if processing_context.gen_suggested_question_flag:
                     if state_machine.search_intent_flag or state_machine.agent_intent_flag:
                         st.markdown('You might want to further ask:')
@@ -502,7 +507,8 @@ def main():
                                                 on_click=sample_question_clicked,
                                                 args=[gen_sq_list[2]])
         else:
-            do_visualize_results()
+            if visualize_results_flag:
+                do_visualize_results()
 
 
 if __name__ == '__main__':
