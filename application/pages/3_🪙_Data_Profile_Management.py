@@ -51,6 +51,7 @@ def get_table_name_by_config(_conn_config, schema_names, default_values):
 
 def show_delete_profile(profile_name):
     if st.button('Delete Profile'):
+        st.session_state.update_profile = True
         ProfileManagement.delete_profile(profile_name)
         st.success(f"{profile_name} deleted successfully!")
         st.session_state.profile_page_mode = 'default'
