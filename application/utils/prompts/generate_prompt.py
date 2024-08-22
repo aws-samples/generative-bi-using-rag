@@ -1,5 +1,6 @@
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, STARROCKS_DIALECT_PROMPT_CLAUDE3, CLICKHOUSE_DIALECT_PROMPT_CLAUDE3
+    DEFAULT_DIALECT_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, STARROCKS_DIALECT_PROMPT_CLAUDE3, \
+    CLICKHOUSE_DIALECT_PROMPT_CLAUDE3, HIVE_DIALECT_PROMPT_CLAUDE3
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
 import logging
@@ -2206,6 +2207,8 @@ def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, n
         dialect_prompt = STARROCKS_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'clickhouse':
         dialect_prompt = CLICKHOUSE_DIALECT_PROMPT_CLAUDE3
+    elif dialect == 'hive':
+        dialect_prompt = HIVE_DIALECT_PROMPT_CLAUDE3
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
