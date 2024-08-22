@@ -57,14 +57,27 @@ def main():
     if 'ner_refresh_view' not in st.session_state:
         st.session_state['ner_refresh_view'] = False
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
+    if "profiles_list" not in st.session_state:
+        st.session_state["profiles_list"] = []
+
+    if st.session_state.update_profile:
+        logger.info("session_state update_profile get_all_profiles_with_info")
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+        st.session_state['profiles'] = all_profiles
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Entity Management")
-        all_profiles_list = ProfileManagement.get_all_profiles()
+        all_profiles_list = st.session_state["profiles_list"]
         if st.session_state.current_profile != "" and st.session_state.current_profile in all_profiles_list:
             profile_index = all_profiles_list.index(st.session_state.current_profile)
             current_profile = st.selectbox("My Data Profiles", all_profiles_list, index=profile_index)
         else:
-            current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
+            current_profile = st.selectbox("My Data Profiles", all_profiles_list,
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
 
