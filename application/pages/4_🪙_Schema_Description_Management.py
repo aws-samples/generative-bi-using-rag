@@ -15,6 +15,9 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Schema Management")
         all_profiles_list = ProfileManagement.get_all_profiles()
