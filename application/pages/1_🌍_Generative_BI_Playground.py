@@ -154,15 +154,20 @@ def main():
     if "update_profile" not in st.session_state:
         st.session_state.update_profile = False
 
+    if "profiles_list" not in st.session_state:
+        st.session_state["profiles_list"] = []
+
     if 'profiles' not in st.session_state:
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
+        st.session_state["profiles_list"] = list(all_profiles.keys())
     else:
         if st.session_state.update_profile:
             logger.info("session_state update_profile get_all_profiles_with_info")
             all_profiles = ProfileManagement.get_all_profiles_with_info()
+            st.session_state["profiles_list"] = list(all_profiles.keys())
             st.session_state['profiles'] = all_profiles
             st.session_state.update_profile = False
 

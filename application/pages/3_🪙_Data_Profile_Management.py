@@ -28,9 +28,20 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if "profiles_list" not in st.session_state:
+        st.session_state["profiles_list"] = []
+
+    if st.session_state.update_profile:
+        logger.info("session_state update_profile get_all_profiles_with_info")
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+        st.session_state['profiles'] = all_profiles
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Data Profile Management")
-        st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
+        all_profiles = st.session_state["profiles_list"]
+        st.selectbox("My Data Profiles", all_profiles,
                      index=None,
                      placeholder="Please select data profile...", key='current_profile_name')
         if st.session_state.current_profile_name:
