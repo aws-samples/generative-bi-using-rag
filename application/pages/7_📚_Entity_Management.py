@@ -94,9 +94,10 @@ def main():
 
         st.session_state["entity_sample_search"][current_profile] = None
 
-        if st.session_state.ner_refresh_view or st.session_state["entity_sample_search"][current_profile] is None:
-            st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(current_profile)
-            st.session_state.ner_refresh_view = False
+        if current_profile is not None:
+            if st.session_state.ner_refresh_view or st.session_state["entity_sample_search"][current_profile] is None:
+                st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(current_profile)
+                st.session_state.ner_refresh_view = False
 
 
     tab_view, tab_add, tab_dimension, tab_search, batch_insert, batch_dimension_entity = st.tabs(
