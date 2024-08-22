@@ -14,7 +14,7 @@ from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, tex
     generate_suggested_question, get_agent_cot_task
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search
-from utils.tool import get_generated_sql
+from utils.tool import get_generated_sql, get_generated_sql_explain
 
 logger = logging.getLogger(__name__)
 
@@ -370,7 +370,7 @@ class QueryStateMachine:
                 sql, response = self._generate_sql_again()
                 sql_execute_result = self._execute_sql(sql)
                 self.answer.sql_search_result.sql = sql
-                self.answer.sql_search_result.sql_gen_process = get_generated_sql(response)
+                self.answer.sql_search_result.sql_gen_process = get_generated_sql_explain(response)
                 self.intent_search_result["sql_execute_result"] = sql_execute_result
                 self.answer.sql_search_result.sql_data = sql_execute_result["data"]
                 if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
