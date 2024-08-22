@@ -448,6 +448,9 @@ def main():
                         else:
                             st.session_state.messages[selected_profile].append(
                                 {"role": "assistant", "content": sql, "type": "sql"})
+                        if state_machine.get_answer().sql_search_result.sql_data is not None:
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().sql_search_result.sql_data, "type": "pandas"})
 
                     elif state_machine.get_state() == QueryState.ANALYZE_DATA:
                         with st.spinner('Generating data summarize...'):
