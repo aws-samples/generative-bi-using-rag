@@ -56,6 +56,7 @@ def main():
 );
     ''')
                 if st.button('Save', type='primary'):
+                    st.session_state.update_profile = True
                     origin_tables_info = profile_detail.tables_info
                     origin_table_info = origin_tables_info[selected_table]
                     origin_table_info['tbl_a'] = tbl_annotation

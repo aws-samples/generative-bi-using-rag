@@ -54,6 +54,7 @@ def main():
 
                     if st.button('Save', type='primary'):
                         # check prompt syntax, missing placeholder will cause backend execution failure
+                        st.session_state.update_profile = True
                         if check_prompt_syntax(system_prompt_input, user_prompt_input,
                                                prompt_type_selected_table, model_selected_table):
                             # assign new system/user prompt by selected model
