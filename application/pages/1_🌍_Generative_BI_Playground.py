@@ -481,6 +481,12 @@ def main():
                             st.session_state.current_sql_result = \
                                 state_machine.intent_search_result["sql_execute_result"]["data"]
                             do_visualize_results()
+                elif state_machine.get_state() == QueryState.ERROR:
+                    with st.status("The Error Info Please Check") as status_text:
+                        st.write(state_machine.error_log)
+                    status_text.update(label=f"The Error Info Please Check",
+                                       state="error", expanded=False)
+
                 if processing_context.gen_suggested_question_flag:
                     if state_machine.search_intent_flag or state_machine.agent_intent_flag:
                         st.markdown('You might want to further ask:')
@@ -501,7 +507,8 @@ def main():
                                                 on_click=sample_question_clicked,
                                                 args=[gen_sq_list[2]])
         else:
-            do_visualize_results()
+            if visualize_results_flag:
+                do_visualize_results()
 
 
 if __name__ == '__main__':
