@@ -396,11 +396,13 @@ def main():
                                 {"role": "assistant", "content": sql, "type": "sql"})
                             feedback = st.columns(2)
                             feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                               key="upvote",
                                                use_container_width=True,
                                                on_click=upvote_clicked,
                                                args=[search_box,
                                                      sql])
                             feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
+                                               key="downvote",
                                                on_click=downvote_clicked,
                                                args=[search_box, sql])
                             status_text.update(
@@ -435,11 +437,13 @@ def main():
                                     {"role": "assistant", "content": sql, "type": "sql"})
                                 feedback = st.columns(2)
                                 feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                                   key="upvote_again",
                                                    use_container_width=True,
                                                    on_click=upvote_clicked,
                                                    args=[search_box,
                                                          sql])
                                 feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
+                                                   key="downcote_again",
                                                    on_click=downvote_clicked,
                                                    args=[search_box, sql])
                                 status_text.update(
