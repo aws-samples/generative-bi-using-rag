@@ -63,6 +63,12 @@ def main():
     if "profiles_list" not in st.session_state:
         st.session_state["profiles_list"] = []
 
+    if "entity_sample_search" not in st.session_state:
+        st.session_state["entity_sample_search"] = {}
+
+    if "entity_sample_search" not in st.session_state:
+        st.session_state["entity_sample_search"] = {}
+
     if st.session_state.update_profile:
         logger.info("session_state update_profile get_all_profiles_with_info")
         all_profiles = ProfileManagement.get_all_profiles_with_info()
@@ -81,17 +87,21 @@ def main():
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
 
+        st.session_state["entity_sample_search"][current_profile] = None
+
+        if st.session_state.ner_refresh_view or st.session_state["entity_sample_search"][current_profile] is None:
+            st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(current_profile)
+            st.session_state.ner_refresh_view = False
+
+
     tab_view, tab_add, tab_dimension, tab_search, batch_insert, batch_dimension_entity = st.tabs(
         ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity', 'Batch Dimension Entity'])
     if current_profile is not None:
         st.session_state['current_profile'] = current_profile
         with tab_view:
             if current_profile is not None:
-                if st.session_state.ner_refresh_view:
-                    st.session_state.ner_refresh_view = False
-                    st.rerun()
                 st.write("The display page can show a maximum of 5000 pieces of data")
-                for sample in VectorStore.get_all_entity_samples(current_profile):
+                for sample in st.session_state["entity_sample_search"][current_profile]:
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
                         st.code(sample['comment'])
