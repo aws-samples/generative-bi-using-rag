@@ -157,6 +157,7 @@ def main():
         st.session_state['profiles'] = all_profiles
     else:
         if st.session_state.update_profile:
+            logger.info("session_state update_profile get_all_profiles_with_info")
             all_profiles = ProfileManagement.get_all_profiles_with_info()
             st.session_state['profiles'] = all_profiles
             st.session_state.update_profile = False
