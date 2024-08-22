@@ -150,14 +150,26 @@ def main():
 
     demo_profile_suffix = '(demo)'
     # Initialize or set up state variables
+
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
+    if "profiles_list" not in st.session_state:
+        st.session_state["profiles_list"] = []
+
     if 'profiles' not in st.session_state:
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
+        st.session_state["profiles_list"] = list(all_profiles.keys())
     else:
-        all_profiles = ProfileManagement.get_all_profiles_with_info()
-        st.session_state['profiles'] = all_profiles
+        if st.session_state.update_profile:
+            logger.info("session_state update_profile get_all_profiles_with_info")
+            all_profiles = ProfileManagement.get_all_profiles_with_info()
+            st.session_state["profiles_list"] = list(all_profiles.keys())
+            st.session_state['profiles'] = all_profiles
+            st.session_state.update_profile = False
 
     if "vision_change" not in st.session_state:
         st.session_state["vision_change"] = False
@@ -391,21 +403,24 @@ def main():
                             state_machine.handle_sql_generation()
                             sql = state_machine.get_answer().sql_search_result.sql
                             st.code(sql, language="sql")
-                            st.session_state.messages[selected_profile].append(
+                            if not visualize_results_flag:
+                                st.session_state.messages[selected_profile].append(
                                 {"role": "assistant", "content": sql, "type": "sql"})
                             feedback = st.columns(2)
                             feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                               key="upvote",
                                                use_container_width=True,
                                                on_click=upvote_clicked,
                                                args=[search_box,
                                                      sql])
                             feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
+                                               key="downvote",
                                                on_click=downvote_clicked,
                                                args=[search_box, sql])
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
-                        if state_machine.context.gen_suggested_question_flag:
+                        if state_machine.context.explain_gen_process_flag:
                             with st.status("Generating explanations...") as status_text:
                                 st.markdown(state_machine.get_answer().sql_search_result.sql_gen_process)
                                 status_text.update(
@@ -420,7 +435,39 @@ def main():
                         status_text.update(label=f"Intent Recognition Completed: This is a **{intent}** question",
                                            state="complete", expanded=False)
                     elif state_machine.get_state() == QueryState.EXECUTE_QUERY:
-                        state_machine.handle_execute_query()
+                        with st.status("Execute SQL...") as status_text:
+                            state_machine.handle_execute_query()
+                        status_text.update(label=f"Execute SQL Done",
+                                           state="complete", expanded=False)
+                        sql = state_machine.get_answer().sql_search_result.sql
+                        if state_machine.use_auto_correction_flag:
+                            with st.expander("The SQL Error Info"):
+                                st.markdown(state_machine.first_sql_execute_info["error_info"])
+                            with st.status("Generating SQL Again ... ") as status_text:
+                                st.code(sql, language="sql")
+                                st.session_state.messages[selected_profile].append(
+                                    {"role": "assistant", "content": sql, "type": "sql"})
+                                feedback = st.columns(2)
+                                feedback[0].button('👍 Upvote (save as embedding for retrieval)', type='secondary',
+                                                   key="upvote_again",
+                                                   use_container_width=True,
+                                                   on_click=upvote_clicked,
+                                                   args=[search_box,
+                                                         sql])
+                                feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
+                                                   key="downcote_again",
+                                                   on_click=downvote_clicked,
+                                                   args=[search_box, sql])
+                                status_text.update(
+                                    label=f"Generating SQL Done",
+                                    state="complete", expanded=True)
+                        else:
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": sql, "type": "sql"})
+                        if state_machine.get_answer().sql_search_result.sql_data is not None:
+                            st.session_state.messages[selected_profile].append(
+                                {"role": "assistant", "content": state_machine.get_answer().sql_search_result.sql_data, "type": "pandas"})
+
                     elif state_machine.get_state() == QueryState.ANALYZE_DATA:
                         with st.spinner('Generating data summarize...'):
                             state_machine.handle_analyze_data()
