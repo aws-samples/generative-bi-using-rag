@@ -79,6 +79,8 @@ class QueryStateMachine:
         self.agent_data_analyse_result = ""
         self.agent_valid_data = []
         self.error_log = {}
+        self.use_auto_correction_flag = False
+        self.first_sql_execute_info = {}
 
     def transition(self, new_state):
         self.state = new_state
@@ -363,6 +365,8 @@ class QueryStateMachine:
             elif sql_execute_result["status_code"] == 200:
                 self.transition(QueryState.COMPLETE)
             elif sql_execute_result["status_code"] == 500 and self.context.auto_correction_flag:
+                self.use_auto_correction_flag = True
+                self.first_sql_execute_info = sql_execute_result
                 sql, response = self._generate_sql_again()
                 sql_execute_result = self._execute_sql(sql)
                 self.answer.sql_search_result.sql = sql
