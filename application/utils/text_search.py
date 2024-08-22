@@ -12,12 +12,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def entity_retrieve_search(entity_slot, opensearch_info, selected_profile):
     entity_slot_retrieve = []
+    entity_name_set = set()
     try:
         for each_entity in entity_slot:
             entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
                                                       selected_profile, 1, 0.7)
             if len(entity_retrieve) > 0:
-                entity_slot_retrieve.extend(entity_retrieve)
+                for each_entity_retrieve in entity_retrieve:
+                    if each_entity_retrieve['_source']['entity'] not in entity_name_set:
+                        entity_name_set.add(each_entity_retrieve['_source']['entity'])
+                        entity_slot_retrieve.append(each_entity_retrieve)
         return entity_slot_retrieve
     except Exception as e:
         logger.error("entity_search is error")
