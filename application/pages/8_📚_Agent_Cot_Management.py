@@ -30,6 +30,9 @@ def main():
     if "profiles_list" not in st.session_state:
         st.session_state["profiles_list"] = []
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
     if 'profiles' not in st.session_state:
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         st.session_state['profiles'] = all_profiles
