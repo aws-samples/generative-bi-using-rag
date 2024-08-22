@@ -15,6 +15,9 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Schema Management")
         all_profiles_list = ProfileManagement.get_all_profiles()
@@ -56,6 +59,7 @@ def main():
 );
     ''')
                 if st.button('Save', type='primary'):
+                    st.session_state.update_profile = True
                     origin_tables_info = profile_detail.tables_info
                     origin_table_info = origin_tables_info[selected_table]
                     origin_table_info['tbl_a'] = tbl_annotation

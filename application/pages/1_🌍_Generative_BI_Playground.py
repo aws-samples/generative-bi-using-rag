@@ -150,14 +150,21 @@ def main():
 
     demo_profile_suffix = '(demo)'
     # Initialize or set up state variables
+
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
     if 'profiles' not in st.session_state:
         # get all user defined profiles with info (db_url, conn_name, tables_info, hints, search_samples)
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
     else:
-        all_profiles = ProfileManagement.get_all_profiles_with_info()
-        st.session_state['profiles'] = all_profiles
+        if st.session_state.update_profile:
+            logger.info("session_state update_profile get_all_profiles_with_info")
+            all_profiles = ProfileManagement.get_all_profiles_with_info()
+            st.session_state['profiles'] = all_profiles
+            st.session_state.update_profile = False
 
     if "vision_change" not in st.session_state:
         st.session_state["vision_change"] = False

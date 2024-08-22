@@ -17,6 +17,9 @@ def main():
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Prompt Management")
         all_profiles_list = ProfileManagement.get_all_profiles()
@@ -54,6 +57,7 @@ def main():
 
                     if st.button('Save', type='primary'):
                         # check prompt syntax, missing placeholder will cause backend execution failure
+                        st.session_state.update_profile = True
                         if check_prompt_syntax(system_prompt_input, user_prompt_input,
                                                prompt_type_selected_table, model_selected_table):
                             # assign new system/user prompt by selected model
