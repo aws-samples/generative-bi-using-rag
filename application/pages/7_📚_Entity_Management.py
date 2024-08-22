@@ -69,6 +69,11 @@ def main():
     if "entity_sample_search" not in st.session_state:
         st.session_state["entity_sample_search"] = {}
 
+    if 'profiles' not in st.session_state:
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state['profiles'] = all_profiles
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+
     if st.session_state.update_profile:
         logger.info("session_state update_profile get_all_profiles_with_info")
         all_profiles = ProfileManagement.get_all_profiles_with_info()
@@ -117,8 +122,6 @@ def main():
                     if len(entity) > 0 and len(comment) > 0:
                         VectorStore.add_entity_sample(current_profile, entity, comment)
                         st.success('Sample added')
-                        time.sleep(2)
-                        st.rerun()
                     else:
                         st.error('please input valid question and answer')
         with tab_dimension:
@@ -135,8 +138,6 @@ def main():
                         entity_item_table_info["value"] = value
                         VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE, entity_item_table_info)
                         st.success('Sample added')
-                        time.sleep(2)
-                        st.rerun()
                     else:
                         st.error('please input valid question and answer')
 
