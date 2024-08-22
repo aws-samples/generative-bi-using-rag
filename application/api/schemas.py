@@ -20,6 +20,7 @@ class Question(BaseModel):
     context_window: int = 5
     session_id: str = "-1"
     user_id: str = "admin"
+    username: str = ''
 
 
 class Example(BaseModel):

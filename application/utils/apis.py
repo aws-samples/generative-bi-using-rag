@@ -71,7 +71,6 @@ def query_from_sql_pd(p_db_url: str, query, schema=None):
             logger.error(e)
         return res
 
-
 def get_sql_result_tool(profile, sql):
     result_dict = {"data": pd.DataFrame(), "sql": sql, "status_code": 200, "error_info": ""}
     try:

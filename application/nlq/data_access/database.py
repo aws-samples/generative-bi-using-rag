@@ -15,6 +15,7 @@ class RelationDatabase():
         'redshift': 'redshift+psycopg2',
         'starrocks': 'starrocks',
         'clickhouse': 'clickhouse',
+        'hive': 'hive'
         # Add more mappings here for other databases
     }
 

@@ -60,6 +60,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         setSessions: props.setSessions,
         setMessageHistory: props.setMessageHistory,
         userId: userState.userInfo.userId,
+        username: userState.userInfo.username,
         sessionId: props.currSessionId,
       });
     }

@@ -8,3 +8,5 @@ class SearchTextSqlResult:
     retrieve_result: list
     response: str
     sql: str
+    '''Origin sql before post processing'''
+    original_sql: str = ''
