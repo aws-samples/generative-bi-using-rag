@@ -415,7 +415,7 @@ def main():
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
-                        if state_machine.context.gen_suggested_question_flag:
+                        if state_machine.context.explain_gen_process_flag:
                             with st.status("Generating explanations...") as status_text:
                                 st.markdown(state_machine.get_answer().sql_search_result.sql_gen_process)
                                 status_text.update(
