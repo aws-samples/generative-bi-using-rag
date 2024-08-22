@@ -156,11 +156,16 @@ def main():
         # all_profiles.update(demo_profile)
         st.session_state['profiles'] = all_profiles
     else:
-        all_profiles = ProfileManagement.get_all_profiles_with_info()
-        st.session_state['profiles'] = all_profiles
+        if st.session_state.update_profile:
+            all_profiles = ProfileManagement.get_all_profiles_with_info()
+            st.session_state['profiles'] = all_profiles
+            st.session_state.update_profile = False
 
     if "vision_change" not in st.session_state:
         st.session_state["vision_change"] = False
+
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
 
     if 'selected_sample' not in st.session_state:
         st.session_state['selected_sample'] = ''
