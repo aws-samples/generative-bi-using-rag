@@ -15,7 +15,7 @@ from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, tex
     generate_suggested_question, get_agent_cot_task
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search
-from utils.tool import get_generated_sql
+from utils.tool import get_generated_sql, get_generated_sql_explain
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,9 @@ class QueryStateMachine:
         self.agent_search_result = []
         self.agent_data_analyse_result = ""
         self.agent_valid_data = []
+        self.error_log = {}
+        self.use_auto_correction_flag = False
+        self.first_sql_execute_info = {}
 
     def transition(self, new_state):
         self.state = new_state
@@ -131,11 +134,16 @@ class QueryStateMachine:
 
     @log_execution
     def handle_initial(self):
-        if self.context.context_window > 0:
-            self._handle_query_rewrite()
-        else:
-            self.context.query_rewrite = self.context.search_box
-            self.transition(QueryState.INTENT_RECOGNITION)
+        try:
+            if self.context.context_window > 0:
+                self._handle_query_rewrite()
+            else:
+                self.context.query_rewrite = self.context.search_box
+                self.transition(QueryState.INTENT_RECOGNITION)
+        except Exception as e:
+            self.error_log[QueryState.INITIAL.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_initial encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     def _handle_query_rewrite(self):
         query_rewrite_result = get_query_rewrite(self.context.model_type, self.context.search_box,
@@ -159,19 +167,24 @@ class QueryStateMachine:
         self.transition(QueryState.COMPLETE)
 
     def handle_entity_retrieval(self):
-        self.normal_search_entity_slot = self._perform_entity_retrieval()
-        same_name_entity = {}
-        for each_entity in self.normal_search_entity_slot:
-            if each_entity['_source']['entity_count'] > 1 and each_entity['_score'] > 0.98:
-                same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
-        if len(same_name_entity) > 0:
-            if self.context.previous_state != "ASK_ENTITY_SELECT":
-                self.answer.ask_entity_select.entity_info = same_name_entity
-                self.transition(QueryState.ASK_ENTITY_SELECT)
+        try:
+            self.normal_search_entity_slot = self._perform_entity_retrieval()
+            same_name_entity = {}
+            for each_entity in self.normal_search_entity_slot:
+                if each_entity['_source']['entity_count'] > 1 and each_entity['_score'] > 0.98:
+                    same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
+            if len(same_name_entity) > 0:
+                if self.context.previous_state != "ASK_ENTITY_SELECT":
+                    self.answer.ask_entity_select.entity_info = same_name_entity
+                    self.transition(QueryState.ASK_ENTITY_SELECT)
+                else:
+                    self.transition(QueryState.QA_RETRIEVAL)
             else:
                 self.transition(QueryState.QA_RETRIEVAL)
-        else:
-            self.transition(QueryState.QA_RETRIEVAL)
+        except Exception as e:
+            self.error_log[QueryState.ENTITY_RETRIEVAL.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_entity_retrieval encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     def _perform_entity_retrieval(self):
         if self.context.use_rag_flag:
@@ -181,8 +194,13 @@ class QueryStateMachine:
 
     @log_execution
     def handle_qa_retrieval(self):
-        self.normal_search_qa_retrival = self._perform_qa_retrieval()
-        self.transition(QueryState.SQL_GENERATION)
+        try:
+            self.normal_search_qa_retrival = self._perform_qa_retrieval()
+            self.transition(QueryState.SQL_GENERATION)
+        except Exception as e:
+            self.error_log[QueryState.QA_RETRIEVAL.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_qa_retrieval encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     def _perform_qa_retrieval(self):
         if self.context.use_rag_flag:
@@ -222,12 +240,11 @@ class QueryStateMachine:
             sql = get_generated_sql(response)
             # post-processing the sql
             post_sql = self._apply_row_level_security_for_sql(sql)
-
             return post_sql, response, sql
         except Exception as e:
-            logger.error("handle_sql_generation is error")
-            logger.error(e)
-            return "", ""
+            self.error_log[QueryState.SQL_GENERATION.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, _generate_sql encountered an error: {e}")
+            return "", "", ""
 
     def _generate_sql_again(self):
         try:
@@ -245,16 +262,15 @@ class QueryStateMachine:
                                        error=self.intent_search_result["sql_execute_result"]["error_info"]))
             sql = get_generated_sql(response)
             post_sql = self._apply_row_level_security_for_sql(sql)
-
+            self.delete_error_log_entry(QueryState.SQL_GENERATION.name)
             return post_sql, response, sql
         except Exception as e:
-            logger.error("handle_sql_generation is error")
-            logger.error(e)
-            return "", "", ""
+            self.error_log[QueryState.SQL_GENERATION.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, _generate_sql encountered an error: {e}")
+            return "", ""
 
     @log_execution
     def handle_agent_sql_generation(self):
-
         agent_search_result = agent_text_search(self.context.query_rewrite, self.context.model_type,
                                                 self.context.database_profile,
                                                 self.entity_slot, self.context.opensearch_info,
@@ -266,14 +282,19 @@ class QueryStateMachine:
 
     @log_execution
     def handle_intent_recognition(self):
-        if self.context.intent_ner_recognition_flag:
-            intent_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
-                                               self.context.database_profile['prompt_map'])
-            self.intent_response = intent_response
-            self._process_intent_response(intent_response)
-        else:
-            self.search_intent_flag = True
-        self._transition_based_on_intent()
+        try:
+            if self.context.intent_ner_recognition_flag:
+                intent_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
+                                                   self.context.database_profile['prompt_map'])
+                self.intent_response = intent_response
+                self._process_intent_response(intent_response)
+            else:
+                self.search_intent_flag = True
+            self._transition_based_on_intent()
+        except Exception as e:
+            self.error_log[QueryState.INTENT_RECOGNITION.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_intent_recognition encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     def _process_intent_response(self, intent_response):
         intent = intent_response.get("intent", "normal_search")
@@ -348,28 +369,37 @@ class QueryStateMachine:
 
     @log_execution
     def handle_execute_query(self):
-        sql = self.intent_search_result.get("sql", "")
-        sql_execute_result = self._execute_sql(sql)
-        self.intent_search_result["sql_execute_result"] = sql_execute_result
-        self.answer.sql_search_result.sql_data = sql_execute_result["data"]
-        if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
-            self.transition(QueryState.ANALYZE_DATA)
-        elif sql_execute_result["status_code"] == 200:
-            self.transition(QueryState.COMPLETE)
-        elif sql_execute_result["status_code"] == 500 and self.context.auto_correction_flag:
-            sql, response, original_sql = self._generate_sql_again()
+        try:
+            sql = self.intent_search_result.get("sql", "")
             sql_execute_result = self._execute_sql(sql)
-            self.answer.sql_search_result.sql = sql
-            self.answer.sql_search_result.sql_gen_process = get_generated_sql(response)
             self.intent_search_result["sql_execute_result"] = sql_execute_result
             self.answer.sql_search_result.sql_data = sql_execute_result["data"]
             if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
                 self.transition(QueryState.ANALYZE_DATA)
             elif sql_execute_result["status_code"] == 200:
                 self.transition(QueryState.COMPLETE)
+            elif sql_execute_result["status_code"] == 500 and self.context.auto_correction_flag:
+                self.use_auto_correction_flag = True
+                self.first_sql_execute_info = sql_execute_result
+                sql, response, original_sql = self._generate_sql_again()
+                sql_execute_result = self._execute_sql(sql)
+                self.answer.sql_search_result.sql = sql
+                self.answer.sql_search_result.sql_gen_process = get_generated_sql_explain(response)
+                self.intent_search_result["sql_execute_result"] = sql_execute_result
+                self.answer.sql_search_result.sql_data = sql_execute_result["data"]
+                if self.context.data_with_analyse and sql_execute_result["status_code"] == 200:
+                    self.transition(QueryState.ANALYZE_DATA)
+                elif sql_execute_result["status_code"] == 200:
+                    self.transition(QueryState.COMPLETE)
+                else:
+                    self.error_log[QueryState.EXECUTE_QUERY.name] = sql_execute_result["error_info"]
+                    self.transition(QueryState.ERROR)
             else:
+                self.error_log[QueryState.EXECUTE_QUERY.name] = sql_execute_result["error_info"]
                 self.transition(QueryState.ERROR)
-        else:
+        except Exception as e:
+            self.error_log[QueryState.EXECUTE_QUERY.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_execute_query encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     def _execute_sql(self, sql):
@@ -380,15 +410,20 @@ class QueryStateMachine:
     @log_execution
     def handle_analyze_data(self):
         # Analyze the data
-        search_intent_analyse_result = data_analyse_tool(self.context.model_type,
-                                                         self.context.database_profile['prompt_map'],
-                                                         self.context.query_rewrite,
-                                                         self.intent_search_result["sql_execute_result"][
-                                                             "data"].to_json(
-                                                             orient='records',
-                                                             force_ascii=False), "query")
-        self.answer.sql_search_result.data_analyse = search_intent_analyse_result
-        self.transition(QueryState.COMPLETE)
+        try:
+            search_intent_analyse_result = data_analyse_tool(self.context.model_type,
+                                                             self.context.database_profile['prompt_map'],
+                                                             self.context.query_rewrite,
+                                                             self.intent_search_result["sql_execute_result"][
+                                                                 "data"].to_json(
+                                                                 orient='records',
+                                                                 force_ascii=False), "query")
+            self.answer.sql_search_result.data_analyse = search_intent_analyse_result
+            self.transition(QueryState.COMPLETE)
+        except Exception as e:
+            self.error_log[QueryState.ANALYZE_DATA.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_analyze_data encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     @log_execution
     def handle_agent_task(self):
@@ -406,26 +441,31 @@ class QueryStateMachine:
     @log_execution
     def handle_agent_analyze_data(self):
         # Analyze the data
-        filter_deep_dive_sql_result = []
-        for i in range(len(self.agent_search_result)):
-            each_task_res = get_sql_result_tool(
-                self.context.database_profile,
-                self.agent_search_result[i]["sql"])
-            if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
-                self.agent_search_result[i]["data_result"] = each_task_res["data"].to_json(
-                    orient='records')
-                filter_deep_dive_sql_result.append(self.agent_search_result[i])
+        try:
+            filter_deep_dive_sql_result = []
+            for i in range(len(self.agent_search_result)):
+                each_task_res = get_sql_result_tool(
+                    self.context.database_profile,
+                    self.agent_search_result[i]["sql"])
+                if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
+                    self.agent_search_result[i]["data_result"] = each_task_res["data"].to_json(
+                        orient='records')
+                    filter_deep_dive_sql_result.append(self.agent_search_result[i])
 
-        agent_data_analyse_result = data_analyse_tool(self.context.model_type,
-                                                      self.context.database_profile["prompt_map"],
-                                                      self.context.query_rewrite,
-                                                      json.dumps(filter_deep_dive_sql_result,
-                                                                 ensure_ascii=False), "agent")
-        self.agent_valid_data = filter_deep_dive_sql_result
-        self.agent_data_analyse_result = agent_data_analyse_result
-        self.answer.agent_search_result.agent_summary = agent_data_analyse_result
-        self.answer.agent_search_result.agent_sql_search_result = None
-        self.transition(QueryState.COMPLETE)
+            agent_data_analyse_result = data_analyse_tool(self.context.model_type,
+                                                          self.context.database_profile["prompt_map"],
+                                                          self.context.query_rewrite,
+                                                          json.dumps(filter_deep_dive_sql_result,
+                                                                     ensure_ascii=False), "agent")
+            self.agent_valid_data = filter_deep_dive_sql_result
+            self.agent_data_analyse_result = agent_data_analyse_result
+            self.answer.agent_search_result.agent_summary = agent_data_analyse_result
+            self.answer.agent_search_result.agent_sql_search_result = None
+            self.transition(QueryState.COMPLETE)
+        except Exception as e:
+            self.error_log[QueryState.AGENT_DATA_SUMMARY.name] = str(e)
+            logger.error(f"The context: {self.context.__dict__}, handle_agent_analyze_data encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     @log_execution
     def handle_suggest_question(self):
@@ -438,3 +478,7 @@ class QueryStateMachine:
                 split_strings = generated_sq.split("[generate]")
                 gen_sq_list = [s.strip() for s in split_strings if s.strip()]
                 self.answer.suggested_question = gen_sq_list
+
+    def delete_error_log_entry(self, key):
+        if key in self.error_log:
+            del self.error_log[key]

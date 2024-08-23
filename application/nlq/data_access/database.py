@@ -21,14 +21,25 @@ class RelationDatabase():
 
     @classmethod
     def get_db_url(cls, db_type, user, password, host, port, db_name):
-        db_url = db.engine.URL.create(
-            drivername=cls.db_mapping[db_type],
-            username=user,
-            password=password,
-            host=host,
-            port=port,
-            database=db_name
-        )
+        if db_type == "hive":
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                username=user,
+                password=password,
+                host=host,
+                port=port,
+                database=db_name,
+                query={'auth': 'LDAP'}
+            )
+        else:
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                username=user,
+                password=password,
+                host=host,
+                port=port,
+                database=db_name
+            )
         return db_url
 
     @classmethod
@@ -53,7 +64,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")

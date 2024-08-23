@@ -57,16 +57,48 @@ def main():
     if 'ner_refresh_view' not in st.session_state:
         st.session_state['ner_refresh_view'] = False
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
+    if "profiles_list" not in st.session_state:
+        st.session_state["profiles_list"] = []
+
+    if "entity_sample_search" not in st.session_state:
+        st.session_state["entity_sample_search"] = {}
+
+    if "entity_sample_search" not in st.session_state:
+        st.session_state["entity_sample_search"] = {}
+
+    if 'profiles' not in st.session_state:
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state['profiles'] = all_profiles
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+
+    if st.session_state.update_profile:
+        logger.info("session_state update_profile get_all_profiles_with_info")
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+        st.session_state['profiles'] = all_profiles
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Entity Management")
-        all_profiles_list = ProfileManagement.get_all_profiles()
+        all_profiles_list = st.session_state["profiles_list"]
         if st.session_state.current_profile != "" and st.session_state.current_profile in all_profiles_list:
             profile_index = all_profiles_list.index(st.session_state.current_profile)
             current_profile = st.selectbox("My Data Profiles", all_profiles_list, index=profile_index)
         else:
-            current_profile = st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
+            current_profile = st.selectbox("My Data Profiles", all_profiles_list,
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
+
+        st.session_state["entity_sample_search"][current_profile] = None
+
+        if current_profile is not None:
+            if st.session_state.ner_refresh_view or st.session_state["entity_sample_search"][current_profile] is None:
+                st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(current_profile)
+                st.session_state.ner_refresh_view = False
+
 
     tab_view, tab_add, tab_dimension, tab_search, batch_insert, batch_dimension_entity = st.tabs(
         ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity', 'Batch Dimension Entity'])
@@ -74,11 +106,8 @@ def main():
         st.session_state['current_profile'] = current_profile
         with tab_view:
             if current_profile is not None:
-                if st.session_state.ner_refresh_view:
-                    st.session_state.ner_refresh_view = False
-                    st.rerun()
                 st.write("The display page can show a maximum of 5000 pieces of data")
-                for sample in VectorStore.get_all_entity_samples(current_profile):
+                for sample in st.session_state["entity_sample_search"][current_profile]:
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
                         st.code(sample['comment'])
@@ -94,8 +123,6 @@ def main():
                     if len(entity) > 0 and len(comment) > 0:
                         VectorStore.add_entity_sample(current_profile, entity, comment)
                         st.success('Sample added')
-                        time.sleep(2)
-                        st.rerun()
                     else:
                         st.error('please input valid question and answer')
         with tab_dimension:
@@ -112,8 +139,6 @@ def main():
                         entity_item_table_info["value"] = value
                         VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE, entity_item_table_info)
                         st.success('Sample added')
-                        time.sleep(2)
-                        st.rerun()
                     else:
                         st.error('please input valid question and answer')
 
