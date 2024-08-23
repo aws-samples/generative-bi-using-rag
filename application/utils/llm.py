@@ -290,6 +290,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
     logger.info(f'{system_prompt=}')
     logger.info(f'{messages=}')
     response = ""
+    model_config = {}
     try:
         if model_id.startswith('anthropic.claude-3'):
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
@@ -298,29 +299,23 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         elif model_id.startswith('meta.llama3-70b'):
             response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
         elif model_id.startswith('sagemaker.'):
-            model = ModelManagement.get_model_by_id(model_id)
-            prompt_template = model['prompt_template']
-            extra_params = None
-            try:
-                extra_params = json.loads(model['extra_params'])
-            except Exception as e:
-                print('Invalid extra_params in JSON format, ignored - ', str(e))
-            body = {
-                "prompt": prompt_template.format(system_prompt=system_prompt, user_prompt=user_prompt)
-            }
-            if extra_params:
-                body.update(extra_params)
+            model_config = ModelManagement.get_model_by_id(model_id)
+            prompt_template = model_config['prompt_template']
+            input_payload = model_config['input_payload']
+            prompt = prompt_template.replace("SYSTEM_PROMPT", system_prompt).replace("USER_PROMPT", user_prompt)
+            input_payload = input_payload.replace("INPUT", prompt)
+            logger.info(f'{input_payload=}')
+            body = json.loads(input_payload)
             endpoint_name = model_id[len('sagemaker.'):]
-            response = invoke_model_sagemaker_endpoint(endpoint_name, body, with_response_stream)
+            response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream)
         if with_response_stream:
             return response
         else:
             if model_id.startswith('meta.llama3-70b'):
                 return response["generation"]
             elif model_id.startswith('sagemaker.'):
-                response = json.loads(response)
-                response = response[0]['generated_text']
-                response = response.replace("\\", "")
+                output_format = model_config['output_format']
+                response = eval(output_format)
                 return response
             else:
                 final_response = response.get("content")[0].get("text")
