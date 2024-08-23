@@ -20,3 +20,7 @@ clickhouse-sqlalchemy==0.2.6
 sagemaker
 python-jose
 sqlalchemy-redshift~=0.8.14
+numpy==1.26.4
+pyhive==0.7.0
+thrift==0.20.0
+thrift-sasl==0.4.3
