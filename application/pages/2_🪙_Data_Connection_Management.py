@@ -86,9 +86,12 @@ def main():
         test_connection_view(db_type, user, password, host, port, db_name)
 
         if st.button('Add Connection', type='primary'):
-            ConnectionManagement.add_connection(connection_name, db_type, host, port, user, password, db_name, comment)
-            st.success(f"{connection_name} added successfully!")
-            st.session_state.new_connection_mode = False
+            if db_name == '':
+                st.error("Database name is required!")
+            else:
+                ConnectionManagement.add_connection(connection_name, db_type, host, port, user, password, db_name, comment)
+                st.success(f"{connection_name} added successfully!")
+                st.session_state.new_connection_mode = False
 
     elif st.session_state.update_connection_mode:
         st.subheader("Update Database Connection")
