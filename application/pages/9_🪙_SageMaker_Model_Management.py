@@ -1,4 +1,5 @@
 import json
+import logging
 
 import boto3
 import logger
@@ -9,7 +10,7 @@ from nlq.business.connection import ConnectionManagement
 from nlq.data_access.dynamo_model import ModelConfigEntity, ModelConfigDao
 from utils.navigation import make_sidebar
 
-
+logger = logging.getLogger(__name__)
 def new_connection_clicked():
     st.session_state.new_connection_mode = True
     st.session_state.update_connection_mode = False
