@@ -21,14 +21,25 @@ class RelationDatabase():
 
     @classmethod
     def get_db_url(cls, db_type, user, password, host, port, db_name):
-        db_url = db.engine.URL.create(
-            drivername=cls.db_mapping[db_type],
-            username=user,
-            password=password,
-            host=host,
-            port=port,
-            database=db_name
-        )
+        if db_type == "hive":
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                username=user,
+                password=password,
+                host=host,
+                port=port,
+                database=db_name,
+                query={'auth': 'LDAP'}
+            )
+        else:
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                username=user,
+                password=password,
+                host=host,
+                port=port,
+                database=db_name
+            )
         return db_url
 
     @classmethod
