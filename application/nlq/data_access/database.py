@@ -15,6 +15,7 @@ class RelationDatabase():
         'redshift': 'redshift+psycopg2',
         'starrocks': 'starrocks',
         'clickhouse': 'clickhouse',
+        'hive': 'hive'
         # Add more mappings here for other databases
     }
 
@@ -52,7 +53,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")
