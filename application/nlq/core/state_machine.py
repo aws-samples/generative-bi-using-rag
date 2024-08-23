@@ -267,7 +267,7 @@ class QueryStateMachine:
         except Exception as e:
             self.error_log[QueryState.SQL_GENERATION.name] = str(e)
             logger.error(f"The context: {self.context.__dict__}, _generate_sql encountered an error: {e}")
-            return "", ""
+            return "", "", ""
 
     @log_execution
     def handle_agent_sql_generation(self):
