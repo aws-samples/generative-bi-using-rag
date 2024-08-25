@@ -52,6 +52,17 @@ class ProfileManagement:
         logger.info(f"Profile {profile_name} updated")
 
     @classmethod
+    def update_prompt_map(cls, profile_name, prompt_map):
+        profile_info = ProfileManagement.get_profile_by_name()
+        entity = ProfileConfigEntity(profile_name, profile_info.conn_name, profile_info.schemas, profile_info.tables, profile_info.comments,
+                                     tables_info=profile_info.tables_info, prompt_map=prompt_map,
+                                     db_type=profile_info.db_type,
+                                     enable_row_level_security=profile_info.enable_row_level_security,
+                                     row_level_security_config=profile_info.row_level_security_config)
+        cls.profile_config_dao.update(entity)
+        logger.info(f"Profile {profile_name} updated")
+
+    @classmethod
     def delete_profile(cls, profile_name):
         cls.profile_config_dao.delete(profile_name)
         logger.info(f"Profile {profile_name} updated")

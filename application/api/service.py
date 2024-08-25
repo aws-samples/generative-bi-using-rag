@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from nlq.business.connection import ConnectionManagement
 from nlq.business.datasource.factory import DataSourceFactory
+from nlq.business.model import ModelManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
@@ -35,9 +36,14 @@ load_dotenv()
 
 def get_option() -> Option:
     all_profiles = ProfileManagement.get_all_profiles_with_info()
+    all_sagemaker = ModelManagement.get_all_models()
+    all_model_list = BEDROCK_MODEL_IDS
+    for model_name in all_sagemaker:
+        if model_name not in all_model_list:
+            all_model_list.append(model_name)
     option = Option(
         data_profiles=all_profiles.keys(),
-        bedrock_model_ids=BEDROCK_MODEL_IDS,
+        bedrock_model_ids=all_model_list,
     )
     return option
 

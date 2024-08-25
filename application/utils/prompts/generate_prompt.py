@@ -2224,7 +2224,9 @@ def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, n
             example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
             example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
 
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
     system_prompt = prompt_map.get('text2sql', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('text2sql', {}).get('user_prompt', {}).get(name)
     if long_string == '':
@@ -2358,7 +2360,9 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
             agent_cot_example_str += "train of thought:" + item['_source']['comment'] + "\n"
 
     # fetch system/user prompt from DynamoDB prompt map
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
     system_prompt = prompt_map.get('agent', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('agent', {}).get('user_prompt', {}).get(name)
 
@@ -2375,7 +2379,9 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
 
 
 def generate_intent_prompt(prompt_map, search_box, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('intent', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('intent', {}).get('user_prompt', {}).get(name)
@@ -2386,7 +2392,9 @@ def generate_intent_prompt(prompt_map, search_box, model_id):
 
 
 def generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('query_rewrite', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('query_rewrite', {}).get('user_prompt', {}).get(name)
@@ -2397,7 +2405,9 @@ def generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_quer
 
 
 def generate_knowledge_prompt(prompt_map, search_box, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('knowledge', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('knowledge', {}).get('user_prompt', {}).get(name)
@@ -2408,7 +2418,9 @@ def generate_knowledge_prompt(prompt_map, search_box, model_id):
 
 
 def generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('data_visualization', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('data_visualization', {}).get('user_prompt', {}).get(name)
@@ -2419,7 +2431,9 @@ def generate_data_visualization_prompt(prompt_map, search_box, search_data, mode
 
 
 def generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('agent_analyse', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('agent_analyse', {}).get('user_prompt', {}).get(name)
@@ -2430,7 +2444,9 @@ def generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data):
 
 
 def generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('data_summary', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('data_summary', {}).get('user_prompt', {}).get(name)
@@ -2441,7 +2457,9 @@ def generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data):
 
 
 def generate_suggest_question_prompt(prompt_map, search_box, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('suggestion', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('suggestion', {}).get('user_prompt', {}).get(name)
