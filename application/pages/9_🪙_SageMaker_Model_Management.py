@@ -5,6 +5,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from nlq.business.model import ModelManagement
+from nlq.business.profile import ProfileManagement
 from utils.navigation import make_sidebar
 
 logger = logging.getLogger(__name__)
@@ -130,6 +131,16 @@ def main():
                 st.success(f"{sagemaker_name} added successfully!")
                 st.session_state.samaker_model.append("sagemaker." + sagemaker_name)
                 st.session_state.new_connection_mode = False
+
+                all_profiles = ProfileManagement.get_all_profiles_with_info()
+                for item in all_profiles:
+                    profile_name = item
+                    profile_value = all_profiles[profile_name]
+
+                    ProfileManagement.update_prompt_map(profile_name, profile_value["conn_name"], profile_value[""], selected_tables,
+                                                     comments, old_tables_info, conn_config.db_type, st_enable_rls,
+                                                     rls_config)
+
 
     elif st.session_state.update_sagemaker_mode:
         st.subheader("Update SageMaker Connection")

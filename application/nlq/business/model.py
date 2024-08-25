@@ -3,6 +3,7 @@ from nlq.data_access.dynamo_model import ModelConfigDao, ModelConfigEntity
 
 logger = logging.getLogger(__name__)
 
+
 class ModelManagement:
     model_config_dao = ModelConfigDao()
 
@@ -46,4 +47,3 @@ class ModelManagement:
     def delete_model(cls, model_id):
         cls.model_config_dao.delete(model_id)
         logger.info(f"Model {model_id} updated")
-
