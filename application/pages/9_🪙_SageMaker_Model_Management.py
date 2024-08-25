@@ -132,14 +132,19 @@ def main():
                 st.session_state.samaker_model.append("sagemaker." + sagemaker_name)
                 st.session_state.new_connection_mode = False
 
-                all_profiles = ProfileManagement.get_all_profiles_with_info()
-                for item in all_profiles:
-                    profile_name = item
-                    profile_value = all_profiles[profile_name]
-
-                    ProfileManagement.update_prompt_map(profile_name, profile_value["conn_name"], profile_value[""], selected_tables,
-                                                     comments, old_tables_info, conn_config.db_type, st_enable_rls,
-                                                     rls_config)
+                with st.spinner('Update Prompt...'):
+                    all_profiles = ProfileManagement.get_all_profiles_with_info()
+                    for item in all_profiles:
+                        profile_name = item
+                        profile_value = all_profiles[profile_name]
+                        profile_prompt_map = profile_value["prompt_map"]
+                        update_prompt_map = {}
+                        for each_process in profile_prompt_map:
+                            update_prompt_map[each_process] = profile_prompt_map[each_process]
+                            update_prompt_map[each_process]["system_prompt"][sagemaker_name] = profile_prompt_map[each_process]["system_prompt"]["sonnet-20240229v1-0"]
+                            update_prompt_map[each_process]["user_prompt"][sagemaker_name] = profile_prompt_map[each_process]["user_prompt"]["sonnet-20240229v1-0"]
+                        ProfileManagement.update_prompt_map(profile_name, update_prompt_map)
+                    st.success("Prompt added successfully!")
 
 
     elif st.session_state.update_sagemaker_mode:
@@ -163,6 +168,24 @@ def main():
             if sagemaker_name in st.session_state.samaker_model:
                 st.session_state.samaker_model.remove(sagemaker_name)
             st.session_state.current_model = None
+            with st.spinner('Delete Prompt...'):
+                all_profiles = ProfileManagement.get_all_profiles_with_info()
+                if sagemaker_name.startswith("sagemaker."):
+                    sagemaker_name = sagemaker_name[10:]
+                for item in all_profiles:
+                    profile_name = item
+                    profile_value = all_profiles[profile_name]
+                    profile_prompt_map = profile_value["prompt_map"]
+                    update_prompt_map = {}
+                    for each_process in profile_prompt_map:
+                        update_prompt_map[each_process] = profile_prompt_map[each_process]
+                        if sagemaker_name in update_prompt_map[each_process]["system_prompt"]:
+                            del update_prompt_map[each_process]["system_prompt"][sagemaker_name]
+                        if sagemaker_name in update_prompt_map[each_process]["user_prompt"]:
+                            del update_prompt_map[each_process]["user_prompt"][sagemaker_name]
+                    ProfileManagement.update_prompt_map(profile_name, update_prompt_map)
+                st.success("Prompt added successfully!")
+
 
         st.session_state.update_sagemaker_mode = False
 
