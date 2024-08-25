@@ -201,10 +201,16 @@ def main():
     if "previous_state" not in st.session_state:
         st.session_state.previous_state = {}
 
+    if "samaker_model" not in st.session_state:
+        st.session_state.samaker_model = []
+
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                  'anthropic.claude-3-opus-20240229-v1:0',
                  'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
                  'meta.llama3-70b-instruct-v1:0']
+
+    if len(st.session_state.samaker_model) > 0:
+        model_ids.extend(st.session_state.samaker_model)
 
     session_state_list = list(st.session_state.get('profiles', {}).keys())
 

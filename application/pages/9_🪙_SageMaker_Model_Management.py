@@ -3,10 +3,13 @@ import logging
 import boto3
 import streamlit as st
 from dotenv import load_dotenv
-from nlq.data_access.dynamo_model import ModelConfigEntity, ModelConfigDao
+
+from nlq.business.model import ModelManagement
 from utils.navigation import make_sidebar
 
 logger = logging.getLogger(__name__)
+
+
 def new_connection_clicked():
     st.session_state.new_sagemaker_mode = True
     st.session_state.update_sagemaker_mode = False
@@ -51,7 +54,8 @@ def test_model_connect(sagemaker_name, sagemaker_region, prompt_template, input_
             st.error("Input payload is required!")
         elif output_format == '':
             st.error("Output format is required!")
-        connect_flag, connect_info = model_connect(sagemaker_name, sagemaker_region, prompt_template, input_payload, output_format)
+        connect_flag, connect_info = model_connect(sagemaker_name, sagemaker_region, prompt_template, input_payload,
+                                                   output_format)
         if connect_flag:
             st.success(f"Connected successfully!")
         else:
@@ -74,13 +78,16 @@ def main():
     if 'current_model' not in st.session_state:
         st.session_state['current_model'] = None
 
+    if "samaker_model" not in st.session_state:
+        st.session_state.samaker_model = []
+
     with st.sidebar:
         st.title("SageMaker Model Management")
         st.selectbox("SageMaker Model", [],
                      index=None,
                      placeholder="Please SageMaker Model...", key='current_sagemaker_name')
         if st.session_state.current_sagemaker_name:
-            st.session_state.current_model = ModelConfigDao.get_by_id(st.session_state.current_sagemaker_name)
+            st.session_state.current_model = ModelManagement.get_model_by_id(st.session_state.current_sagemaker_name)
             st.session_state.update_sagemaker_mode = True
             st.session_state.new_sagemaker_mode = False
 
@@ -90,16 +97,18 @@ def main():
         st.subheader("New SageMaker Model")
         sagemaker_name = st.text_input("SageMaker Endpoint Name")
         sagemaker_region = st.text_input("SageMaker Endpoint Region")
-        prompt_template = st.text_area("Prompt Template", placeholder = "Enter prompt template, need contain SYSTEM_PROMPT Placeholder and USER_PROMPT Placeholder. \n For Example: SYSTEM_PROMPT<|im_start|>user\nUSER_PROMPT<|im_end|>\n<|im_start|>assistant\n",
+        prompt_template = st.text_area("Prompt Template",
+                                       placeholder="Enter prompt template, need contain SYSTEM_PROMPT Placeholder and USER_PROMPT Placeholder. \n For Example: SYSTEM_PROMPT<|im_start|>user\nUSER_PROMPT<|im_end|>\n<|im_start|>assistant\n",
                                        height=200,
                                        help="Enter prompt template, need contain SYSTEM_PROMPT Placeholder and USER_PROMPT Placeholder")
         example_input = {"inputs": "INPUT", "parameters": {"max_new_tokens": 256}}
         input_payload = st.text_area("Mode Input Payload",
-                                     placeholder = "Enter input payload in JSON dumps str, The input text use INPUT Placeholder. For Example: " + json.dumps(example_input),
+                                     placeholder="Enter input payload in JSON dumps str, The input text use INPUT Placeholder. For Example: " + json.dumps(
+                                         example_input),
                                      height=200,
                                      help="Enter input payload in JSON dumps str, The input text use INPUT Placeholder")
         output_format = st.text_area("Model Output Format",
-                                     placeholder= "Enter output format, The output value name is response. For Example: response[0]['generated_text']",
+                                     placeholder="Enter output format, The output value name is response. For Example: response[0]['generated_text']",
                                      height=100,
                                      help="Enter output format, The output value name is response")
 
@@ -115,9 +124,11 @@ def main():
             elif output_format == '':
                 st.error("Output format is required!")
             else:
-                model_entity = ModelConfigEntity(model_id="sagemaker." + sagemaker_name, model_region = sagemaker_region, prompt_template=prompt_template, input_payload=input_payload, output_format=output_format)
-                ModelConfigDao.add(model_entity)
+                ModelManagement.add_model(model_id="sagemaker." + sagemaker_name, model_region=sagemaker_region,
+                                          prompt_template=prompt_template, input_payload=input_payload,
+                                          output_format=output_format)
                 st.success(f"{sagemaker_name} added successfully!")
+                st.session_state.samaker_model.append("sagemaker." + sagemaker_name)
                 st.session_state.new_connection_mode = False
 
     elif st.session_state.update_sagemaker_mode:
@@ -125,20 +136,21 @@ def main():
         current_model = st.session_state.current_model
         sagemaker_name = st.text_input("SageMaker Endpoint Name", current_model.model_id, disabled=True)
         sagemaker_region = st.text_input("SageMaker Endpoint Region", current_model.model_region, disabled=True)
-        prompt_template = st.text_area("Prompt Template",  current_model.prompt_template,  height=200)
+        prompt_template = st.text_area("Prompt Template", current_model.prompt_template, height=200)
         input_payload = st.text_area("Mode Input Payload", current_model.input_payload, height=200)
         output_format = st.text_area("Model Output Format", current_model.output_format, height=100)
         test_model_connect(sagemaker_name, sagemaker_region, prompt_template, input_payload, output_format)
         if st.button('Update Model Connection', type='primary'):
-            model_entity = ModelConfigEntity(model_id=sagemaker_name, model_region=sagemaker_region,
-                                             prompt_template=prompt_template, input_payload=input_payload,
-                                             output_format=output_format)
-            ModelConfigDao.update(model_entity)
+            ModelManagement.update_model(model_id=sagemaker_name, model_region=sagemaker_region,
+                                         prompt_template=prompt_template, input_payload=input_payload,
+                                         output_format=output_format)
             st.success(f"{sagemaker_name} updated successfully!")
 
         if st.button('Delete Model Connection'):
-            ModelConfigDao.delete(sagemaker_name)
+            ModelManagement.delete_model(sagemaker_name)
             st.success(f"{sagemaker_name} deleted successfully!")
+            if sagemaker_name in st.session_state.samaker_model:
+                st.session_state.samaker_model.remove(sagemaker_name)
             st.session_state.current_model = None
 
         st.session_state.update_sagemaker_mode = False

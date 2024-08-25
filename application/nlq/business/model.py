@@ -18,16 +18,17 @@ class ModelManagement:
         model_map = {}
         for model in model_list:
             model_map[model.model_id] = {
-                'model_type': model.model_type,
+                'model_region': model.model_region,
                 'prompt_template': model.prompt_template,
-                'extra_params': model.extra_params 
+                'input_payload': model.input_payload,
+                'output_format': model.output_format
             }
 
         return model_map
 
     @classmethod
-    def add_model(cls, model_id, model_type, prompt_template, extra_params):
-        entity = ModelConfigEntity(model_id, model_type, prompt_template, extra_params)
+    def add_model(cls, model_id, model_region, prompt_template, input_payload, output_format):
+        entity = ModelConfigEntity(model_id, model_region, prompt_template, input_payload, output_format)
         cls.model_config_dao.add(entity)
         logger.info(f"Model {model_id} added")
 
@@ -36,9 +37,8 @@ class ModelManagement:
         return cls.model_config_dao.get_by_id(model_id)
 
     @classmethod
-    def update_model(cls, model_id, model_type, prompt_template, extra_params):
-        all_models = ModelManagement.get_all_models_with_info()
-        entity = ModelConfigEntity(model_id, model_type, prompt_template, extra_params)
+    def update_model(cls, model_id, model_region, prompt_template, input_payload, output_format):
+        entity = ModelConfigEntity(model_id, model_region, prompt_template, input_payload, output_format)
         cls.model_config_dao.update(entity)
         logger.info(f"Model {model_id} updated")
 

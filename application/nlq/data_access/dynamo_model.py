@@ -28,7 +28,7 @@ class ModelConfigEntity:
         """Convert to DynamoDB item format"""
         base_props = {
             'model_id': self.model_id,
-            'model': self.model_region,
+            'model_region': self.model_region,
             'prompt_template': self.prompt_template,
             'input_payload': self.input_payload,
             'output_format': self.output_format

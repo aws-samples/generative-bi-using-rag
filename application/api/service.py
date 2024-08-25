@@ -35,6 +35,7 @@ load_dotenv()
 
 def get_option() -> Option:
     all_profiles = ProfileManagement.get_all_profiles_with_info()
+
     option = Option(
         data_profiles=all_profiles.keys(),
         bedrock_model_ids=BEDROCK_MODEL_IDS,
