@@ -6,8 +6,8 @@ import "regenerator-runtime/runtime";
 import { isLoginWithCognito, LOGIN_TYPE } from "./common/constant/constants";
 import { Storage } from "./common/helpers/storage";
 import userReduxStore from "./common/helpers/store";
-import AppConfigured from "./pages/login-page/cognito-login-page";
-import CustomLogin from "./pages/login-page/custom-login-page";
+import AppConfigured from "./components/login-page/cognito-login-page";
+import CustomLogin from "./components/login-page/custom-login-page";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

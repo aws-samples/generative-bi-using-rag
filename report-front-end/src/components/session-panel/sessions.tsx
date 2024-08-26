@@ -1,58 +1,50 @@
-import { SessionPanel } from "./session";
 import { Box, Button } from "@cloudscape-design/components";
-import "./style.scss";
-import { Dispatch, SetStateAction, useEffect } from "react";
-import { Session } from "./types";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
 import { v4 as uuid } from "uuid";
 import { getSessions } from "../../common/api/API";
 import { UserState } from "../../common/helpers/types";
-import { useSelector } from "react-redux";
+import { SessionPanel } from "./session";
+import "./style.scss";
+import useGlobalContext from "../../hooks/useGlobalContext";
 
-export const Sessions = (props: {
-  sessions: Session[];
-  setSessions: Dispatch<SetStateAction<Session[]>>;
-  currentSessionId: string;
-  setCurrentSessionId: Dispatch<SetStateAction<string>>;
-}) => {
-  const userInfo = useSelector<UserState>((state) => state) as UserState;
-
+export const Sessions = () => {
+  const userInfo = useSelector((state: UserState) => state.userInfo);
+  const queryConfig = useSelector((state: UserState) => state.queryConfig);
+  const { setCurrentSessionId, setSessions, sessions, currentSessionId } =
+    useGlobalContext();
   useEffect(() => {
     const sessionItem = {
-      user_id: userInfo.userInfo.userId,
-      profile_name: userInfo.queryConfig.selectedDataPro,
+      user_id: userInfo.userId,
+      profile_name: queryConfig.selectedDataPro,
     };
-    getSessions(sessionItem).then(
-      response => {
-        console.log("Sessions: ", response);
-        const sessionId = uuid();
-        props.setSessions([
-          {
-            session_id: sessionId,
-            title: "New Chat",
-            messages: []
-          }, ...(response.filter((item: any) => item.session_id !== "")
-            .map((item: any) => {
-                return {
-                  session_id: item.session_id,
-                  title: item.title,
-                  messages: []
-                };
-              },
-            ))]);
-        props.setCurrentSessionId(sessionId);
-      });
-  }, [userInfo.queryConfig.selectedDataPro]);
-
-  const addNewSession = () => {
-    const sessionId = uuid();
-    props.setSessions([
-      {
-        session_id: sessionId,
-        title: "New Chat",
-        messages: [],
-      }, ...props.sessions]);
-    props.setCurrentSessionId(sessionId);
-  };
+    getSessions(sessionItem).then((response) => {
+      console.log("Sessions: ", response);
+      const sessionId = uuid();
+      setSessions([
+        {
+          session_id: sessionId,
+          title: "New Chat",
+          messages: [],
+        },
+        ...response
+          .filter((item: any) => item.session_id !== "")
+          .map((item: any) => {
+            return {
+              session_id: item.session_id,
+              title: item.title,
+              messages: [],
+            };
+          }),
+      ]);
+      setCurrentSessionId(sessionId);
+    });
+  }, [
+    queryConfig.selectedDataPro,
+    setCurrentSessionId,
+    setSessions,
+    userInfo.userId,
+  ]);
 
   return (
     <Box margin={{ top: "l" }}>
@@ -60,19 +52,30 @@ export const Sessions = (props: {
         fullWidth
         iconName="add-plus"
         className="new_session_btn"
-        onClick={addNewSession}
+        onClick={() => {
+          const sessionId = uuid();
+          setSessions([
+            {
+              session_id: sessionId,
+              title: "New Chat",
+              messages: [],
+            },
+            ...sessions,
+          ]);
+          setCurrentSessionId(sessionId);
+        }}
       >
         New Chat
       </Button>
       <div style={{ marginTop: 20 }}>
-        {props.sessions.map((session, idx: number) => (
+        {sessions.map((session, idx: number) => (
           <SessionPanel
             key={idx}
             index={idx}
-            currSessionId={props.currentSessionId}
-            setCurrSessionId={props.setCurrentSessionId}
+            currSessionId={currentSessionId}
+            setCurrSessionId={setCurrentSessionId}
             session={session}
-            setSessions={props.setSessions}
+            setSessions={setSessions}
           />
         ))}
       </div>

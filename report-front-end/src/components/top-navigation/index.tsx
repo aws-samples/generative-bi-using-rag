@@ -20,8 +20,7 @@ import "./style.scss";
 
 export default function CustomTopNavigation() {
   // const [theme, setTheme] = useState<Mode>(Storage.getTheme())
-
-  const userState = useSelector<UserState>((state) => state) as UserState;
+  const userInfo = useSelector((state: UserState) => state.userInfo);
 
   const onUserProfileClick = ({
     detail,
@@ -88,7 +87,7 @@ export default function CustomTopNavigation() {
           },
           {
             type: "menu-dropdown",
-            text: userState?.userInfo?.displayName || "Authenticating",
+            text: userInfo?.displayName || "Authenticating",
             iconName: "user-profile",
             onItemClick: onUserProfileClick,
             items: [

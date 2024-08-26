@@ -4,54 +4,48 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { getRecommendQuestions } from "../../common/api/API";
-import { useQueryWithCookies } from "../../common/api/WebSocket";
+import { useQueryWithTokens } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
 import styles from "./chat.module.scss";
-import { ChatBotHistoryItem, ChatInputState } from "./types";
-import { Session } from "../session-panel/types";
+import { ChatBotHistoryItem } from "./types";
 
 export interface RecommendQuestionsProps {
-  setTextValue: Dispatch<SetStateAction<ChatInputState>>;
-  setLoading: Dispatch<SetStateAction<boolean>>;
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
-  sessionId: string;
+  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
 }
 
-export default function CustomQuestions(props: RecommendQuestionsProps) {
+export default function CustomQuestions({
+  sendMessage,
+  setMessageHistory,
+}: RecommendQuestionsProps) {
   const [showMoreQuestions, setShowMoreQuestions] = useState(true);
   const [questions, setQuestions] = useState<string[]>([]);
-  const { queryWithWS } = useQueryWithCookies();
-  const userState = useSelector<UserState>((state) => state) as UserState;
+  const { queryWithWS } = useQueryWithTokens();
+  const queryConfig = useSelector((state: UserState) => state.queryConfig);
 
   useEffect(() => {
-    const data_profile = userState.queryConfig?.selectedDataPro;
+    const data_profile = queryConfig?.selectedDataPro;
     if (data_profile) {
       getRecommendQuestions(data_profile).then((data) => {
         setQuestions(data);
       });
     }
-  }, [userState.queryConfig?.selectedDataPro]);
+  }, [queryConfig?.selectedDataPro]);
 
   const handleSendMessage = (question: string) => {
     // Call Fast API
     /*query({
       query: question,
-      setLoading: props.setLoading,
+      setLoading: setLoading,
       configuration: userState.queryConfig,
-      setMessageHistory: props.setMessageHistory
+      setMessageHistory: setMessageHistory
     }).then();*/
     setShowMoreQuestions(true);
     // Call WebSocket API
     queryWithWS({
       query: question,
-      configuration: userState.queryConfig,
-      sendMessage: props.sendMessage,
-      setMessageHistory: props.setMessageHistory,
-      setSessions: props.setSessions,
-      userId: userState.userInfo.userId,
-      sessionId: props.sessionId
+      sendMessage: sendMessage,
+      setMessageHistory: setMessageHistory,
     });
   };
 

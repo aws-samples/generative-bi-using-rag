@@ -1,9 +1,13 @@
+import { Button as AmplifyBtn } from "@aws-amplify/ui-react";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import {
   BarChart,
   Box,
+  Button,
+  CollectionPreferences,
   ColumnLayout,
   Container,
+  CopyToClipboard,
   ExpandableSection,
   Header,
   Icon,
@@ -16,27 +20,26 @@ import {
   TextContent,
   TextFilter,
 } from "@cloudscape-design/components";
-import Button from "@cloudscape-design/components/button";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useSelector } from "react-redux";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { addUserFeedback } from "../../common/api/API";
+import { useQueryWithTokens } from "../../common/api/WebSocket";
 import { SQL_DISPLAY } from "../../common/constant/constants";
 import { UserState } from "../../common/helpers/types";
 import ExpandableSectionWithDivider from "./ExpandableSectionWithDivider";
 import styles from "./chat.module.scss";
-import SuggestedQuestions from "./suggested-questions";
+
 import {
   ChatBotAnswerItem,
   ChatBotHistoryItem,
   ChatBotMessageType,
-  FeedBackItem,
   FeedBackType,
   SQLSearchResult,
 } from "./types";
 
-export interface ChartTypeProps {
+interface ChartTypeProps {
   data_show_type: string;
   sql_data: any[][];
 }
@@ -131,7 +134,7 @@ function ChartPanel(props: ChartTypeProps) {
   }
 }
 
-export interface SQLResultProps {
+interface SQLResultProps {
   query: string;
   intent: string;
   result: SQLSearchResult;
@@ -141,8 +144,8 @@ export interface SQLResultProps {
  * The display panel of Table, Chart, SQL etc.
  */
 function SQLResultPanel(props: SQLResultProps) {
-  const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
-  const userInfo = useSelector<UserState>((state) => state) as UserState;
+  const [selectedIcon, setSelectedIcon] = useState<FeedBackType>();
+  const queryConfig = useSelector((state: UserState) => state.queryConfig);
 
   const sql_data = props.result?.sql_data ?? [];
   const sql_data_chart = props.result?.sql_data_chart ?? [];
@@ -167,6 +170,7 @@ function SQLResultPanel(props: SQLResultProps) {
     });
   }
 
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   return (
     <div>
       <SpaceBetween size="xxl">
@@ -174,7 +178,7 @@ function SQLResultPanel(props: SQLResultProps) {
           <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
-            headerText="Table"
+            headerText="Table of Retrieved Data"
           >
             <DataTable distributions={content} header={headers} />
           </ExpandableSectionWithDivider>
@@ -184,7 +188,7 @@ function SQLResultPanel(props: SQLResultProps) {
           <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
-            headerText="Chart"
+            headerText="Chart of Retrieved Data"
           >
             <ChartPanel
               data_show_type={props.result.data_show_type}
@@ -198,7 +202,7 @@ function SQLResultPanel(props: SQLResultProps) {
           <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
-            headerText="Chart"
+            headerText="Chart of Retrieved Data"
           >
             <ChartPanel
               data_show_type={sql_data_chart[0].chart_type}
@@ -224,60 +228,77 @@ function SQLResultPanel(props: SQLResultProps) {
           <ExpandableSectionWithDivider
             withDivider={false}
             variant="footer"
-            headerText="SQL"
+            headerText="SQL & Feedbacks"
+            headerActions={
+              <Button
+                variant="inline-link"
+                ariaLabel="Remove security group rule"
+              >
+                Remove
+              </Button>
+            }
           >
-            <SpaceBetween size={"s"}>
-              <div className={styles.sql_container}>
-                <SyntaxHighlighter language="javascript">
+            <SpaceBetween size="xl">
+              <div>
+                <SyntaxHighlighter language="sql" showLineNumbers wrapLines>
                   {props.result.sql}
                 </SyntaxHighlighter>
-                <div style={{ whiteSpace: "pre-line" }}>
-                  {props.result.sql_gen_process}
-                </div>
+                <CopyToClipboard
+                  copyButtonText="Copy SQL"
+                  copyErrorText="SQL failed to copy"
+                  copySuccessText="SQL copied"
+                  textToCopy={props.result.sql}
+                />
+              </div>
+              <div style={{ whiteSpace: "pre-line" }}>
+                {props.result.sql_gen_process}
               </div>
               <ColumnLayout columns={2}>
-                <Button
-                  fullWidth
-                  variant={
-                    selectedIcon === 1 ? "primary" : undefined
+                {[FeedBackType.UPVOTE, FeedBackType.DOWNVOTE].map(
+                  (feedback_type, index) => {
+                    const isUpvote = feedback_type === FeedBackType.UPVOTE;
+                    const isSelected =
+                      (isUpvote && selectedIcon === FeedBackType.UPVOTE) ||
+                      (!isUpvote && selectedIcon === FeedBackType.DOWNVOTE);
+                    return (
+                      <Button
+                        key={index.toString()}
+                        fullWidth
+                        loading={sendingFeedback}
+                        disabled={sendingFeedback}
+                        variant={isSelected ? "primary" : undefined}
+                        onClick={async () => {
+                          setSendingFeedback(true);
+                          try {
+                            const res = await addUserFeedback({
+                              feedback_type,
+                              data_profiles:
+                                queryConfig.selectedDataPro,
+                              query: props.query,
+                              query_intent: props.intent,
+                              query_answer: props.result.sql,
+                            });
+                            if (res === true) {
+                              setSelectedIcon(
+                                isUpvote
+                                  ? FeedBackType.UPVOTE
+                                  : FeedBackType.DOWNVOTE
+                              );
+                            } else {
+                              setSelectedIcon(undefined);
+                            }
+                          } catch (error) {
+                            console.error(error);
+                          } finally {
+                            setSendingFeedback(false);
+                          }
+                        }}
+                      >
+                        {isUpvote ? "👍 Upvote" : "👎 Downvote"}
+                      </Button>
+                    );
                   }
-                  iconName={
-                    selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"
-                  }
-                  onClick={() => {
-                    const feedbackData = {
-                      feedback_type: FeedBackType.UPVOTE,
-                      data_profiles: userInfo.queryConfig.selectedDataPro,
-                      query: props.query,
-                      query_intent: props.intent,
-                      query_answer: props.result.sql,
-                    };
-                    handleFeedback(feedbackData, setSelectedIcon);
-                  }}
-                >
-                  Upvote
-                </Button>
-                <Button
-                  fullWidth
-                  variant={
-                    selectedIcon === 0 ? "primary" : undefined
-                  }
-                  iconName={
-                    selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"
-                  }
-                  onClick={() => {
-                    const feedbackData = {
-                      feedback_type: FeedBackType.DOWNVOTE,
-                      data_profiles: userInfo.queryConfig.selectedDataPro,
-                      query: props.query,
-                      query_intent: props.intent,
-                      query_answer: props.result.sql,
-                    };
-                    handleFeedback(feedbackData, setSelectedIcon);
-                  }}
-                >
-                  Downvote
-                </Button>
+                )}
               </ColumnLayout>
             </SpaceBetween>
           </ExpandableSectionWithDivider>
@@ -286,16 +307,6 @@ function SQLResultPanel(props: SQLResultProps) {
     </div>
   );
 }
-
-const AllDataModalTable = (props: { distributions: []; header: [] }) => {
-  return (
-    <Table
-      variant="embedded"
-      columnDefinitions={props.header}
-      items={props.distributions}
-    />
-  );
-};
 
 const DataTable = (props: { distributions: []; header: [] }) => {
   const {
@@ -321,10 +332,6 @@ const DataTable = (props: { distributions: []; header: [] }) => {
     },
   });
 
-  function filterCounter(count: number | undefined) {
-    return `${count} ${count === 1 ? "match" : "matches"}`;
-  }
-
   const [visible, setVisible] = useState(false);
 
   return (
@@ -336,14 +343,14 @@ const DataTable = (props: { distributions: []; header: [] }) => {
         header={
           <Header
             actions={
-              <Button
-                variant="primary"
-                onClick={() => setVisible(true)}
-              >
-                Open
+              <Button iconName="status-info" onClick={() => setVisible(true)}>
+                Full record
               </Button>
-            }>
-            <TextContent><strong>{"Total Number (" + props.distributions.length + ")"}</strong></TextContent>
+            }
+          >
+            <TextContent>
+              Total:{props.distributions.length} item(s)
+            </TextContent>
           </Header>
         }
         items={items}
@@ -351,11 +358,13 @@ const DataTable = (props: { distributions: []; header: [] }) => {
         filter={
           <TextFilter
             {...filterProps}
-            countText={filterCounter(filteredItemsCount)}
+            countText={`${filteredItemsCount} ${
+              filteredItemsCount === 1 ? "match" : "matches"
+            }`}
             filteringPlaceholder="Search"
           />
         }
-/*        preferences={
+        preferences={
           <CollectionPreferences
             title="Preferences"
             confirmLabel="Confirm"
@@ -369,40 +378,35 @@ const DataTable = (props: { distributions: []; header: [] }) => {
                 { value: 5, label: "5 resources" },
                 { value: 10, label: "10 resources" },
                 { value: 20, label: "20 resources" },
-                { value: 30, label: "30 resources" }
-              ]
+                { value: 30, label: "30 resources" },
+              ],
             }}
           />
-        }*/
+        }
       />
       <Modal
         onDismiss={() => setVisible(false)}
         visible={visible}
-        header={"Table (" + props.distributions.length + ")"}
+        header={`Table - ${props.distributions.length} item(s)`}
         footer={
           <Box float="right">
-            <Button
-              variant="primary"
-              onClick={() => setVisible(false)}
-            >
-              Close</Button>
+            <Button variant="primary" onClick={() => setVisible(false)}>
+              Close
+            </Button>
           </Box>
         }
       >
-        <AllDataModalTable
-          distributions={props.distributions}
-          header={props.header}
+        <Table
+          variant="embedded"
+          columnDefinitions={props.header}
+          items={props.distributions}
         />
       </Modal>
     </>
   );
 };
 
-export interface IntentSearchProps {
-  message: ChatBotAnswerItem;
-}
-
-function IntentSearchPanel(props: IntentSearchProps) {
+function IntentSearchPanel(props: { message: ChatBotAnswerItem }) {
   switch (props.message.query_intent) {
     case "normal_search":
       return (
@@ -465,66 +469,58 @@ function IntentSearchPanel(props: IntentSearchProps) {
   }
 }
 
-function AIChatMessage(props: ChatMessageProps) {
-  const content = props.message.content as ChatBotAnswerItem;
-
-  return (
-    <Container className={styles.answer_area_container}>
-      <SpaceBetween size={"s"}>
-        <IntentSearchPanel message={content} />
-        {content.suggested_question?.length > 0 ? (
-          <ExpandableSection
-            variant="footer"
-            defaultExpanded
-            headerText="Suggested questions"
-          >
-            <SuggestedQuestions
-              questions={content.suggested_question}
-              setLoading={props.setLoading}
-              setMessageHistory={props.setMessageHistory}
-              sendMessage={props.sendMessage}
-            />
-          </ExpandableSection>
-        ) : null}
-      </SpaceBetween>
-    </Container>
-  );
-}
-
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
-  setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   sendMessage: SendJsonMessage;
 }
 
-export default function ChatMessage(props: ChatMessageProps) {
+export default function ChatMessage({
+  message,
+  setMessageHistory,
+  sendMessage,
+}: ChatMessageProps) {
+  const { queryWithWS } = useQueryWithTokens();
   return (
     <SpaceBetween size="xs">
-      {props.message.type === ChatBotMessageType.Human && (
+      {message.type === ChatBotMessageType.Human && (
         <div className={styles.question}>
-          <Icon name="user-profile" /> {props.message.content.toString()}
+          <Icon name="user-profile" /> {message.content.toString()}
         </div>
       )}
-      {props.message.type === ChatBotMessageType.AI && (
-        <AIChatMessage
-          message={props.message}
-          setLoading={props.setLoading}
-          setMessageHistory={props.setMessageHistory}
-          sendMessage={props.sendMessage}
-        />
+      {message.type === ChatBotMessageType.AI && (
+        <Container className={styles.answer_area_container}>
+          <SpaceBetween size={"s"}>
+            <IntentSearchPanel message={message.content} />
+            {message.content.suggested_question?.length > 0 ? (
+              <ExpandableSection
+                variant="footer"
+                defaultExpanded
+                headerText="Suggested questions"
+              >
+                <div className={styles.questions_grid}>
+                  {message.content.suggested_question.map((question, kid) => (
+                    <AmplifyBtn
+                      key={kid}
+                      size="small"
+                      className={styles.button}
+                      onClick={() =>
+                        queryWithWS({
+                          query: question,
+                          sendMessage: sendMessage,
+                          setMessageHistory: setMessageHistory,
+                        })
+                      }
+                    >
+                      {question}
+                    </AmplifyBtn>
+                  ))}
+                </div>
+              </ExpandableSection>
+            ) : null}
+          </SpaceBetween>
+        </Container>
       )}
     </SpaceBetween>
   );
 }
-
-const handleFeedback = (feedbackData: FeedBackItem, setSelectedIcon: Dispatch<SetStateAction<1 | 0 | null>>) => {
-  addUserFeedback(feedbackData).then(
-    response => {
-      if (feedbackData.feedback_type === "upvote") {
-        setSelectedIcon(response ? 1 : null);
-      } else if (feedbackData.feedback_type === "downvote") {
-        setSelectedIcon(response ? 0 : null);
-      }
-    });
-};

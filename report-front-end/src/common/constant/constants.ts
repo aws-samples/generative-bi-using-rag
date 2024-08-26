@@ -6,6 +6,7 @@ export const DEFAULT_USER_INFO = {
   displayName: "",
   loginExpiration: +new Date() + 6000,
   isLogin: false,
+  username: "anonymous"
 };
 
 export const DEFAULT_QUERY_CONFIG = {

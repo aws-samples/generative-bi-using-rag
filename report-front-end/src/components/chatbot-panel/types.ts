@@ -7,16 +7,21 @@ export enum ChatBotMessageType {
   Human = "human",
 }
 
-export interface ChatBotHistoryItem {
-  type: ChatBotMessageType;
-  content: string | ChatBotAnswerItem;
-}
+export type ChatBotHistoryItem =
+  | {
+      type: ChatBotMessageType.Human;
+      content: string;
+    }
+  | {
+      type: ChatBotMessageType.AI;
+      content: ChatBotAnswerItem;
+    };
 
 export interface ChatBotMessageItem {
-  session_id: string,
-  user_id: string,
-  content_type: string,
-  content: StatusMessageItem
+  session_id: string;
+  user_id: string;
+  content_type: string;
+  content: StatusMessageItem;
 }
 
 export interface StatusMessageItem {
@@ -25,13 +30,13 @@ export interface StatusMessageItem {
 }
 
 export interface ChatBotAnswerItem {
-  query: string,
-  query_intent: string,
-  knowledge_search_result: KnowledgeSearchResult,
-  ask_rewrite_result: AskRewriteResult,
-  sql_search_result: SQLSearchResult,
-  agent_search_result: AgentSearchResult,
-  suggested_question: string[]
+  query: string;
+  query_intent: string;
+  knowledge_search_result: KnowledgeSearchResult;
+  ask_rewrite_result: AskRewriteResult;
+  sql_search_result: SQLSearchResult;
+  agent_search_result: AgentSearchResult;
+  suggested_question: string[];
 }
 
 export enum FeedBackType {
@@ -40,20 +45,20 @@ export enum FeedBackType {
 }
 
 export interface FeedBackItem {
-  feedback_type: FeedBackType,
-  data_profiles: string,
-  query: string,
-  query_intent: string,
-  query_answer: string,
+  feedback_type: FeedBackType;
+  data_profiles: string;
+  query: string;
+  query_intent: string;
+  query_answer: string;
 }
 
 export interface SessionItem {
-  user_id: string,
-  profile_name: string,
+  user_id: string;
+  profile_name: string;
 }
 
 export interface HistoryItem {
-  user_id: string,
+  user_id: string;
   session_id: string;
   profile_name: string;
 }

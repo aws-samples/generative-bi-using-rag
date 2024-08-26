@@ -13,19 +13,18 @@ import {
   LLMConfigState,
   UserState,
 } from "../../common/helpers/types";
+import useGlobalContext from "../../hooks/useGlobalContext";
 import ChatInputPanel from "./chat-input-panel";
 import ChatMessage from "./chat-message";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
-import { Session } from "../session-panel/types";
 
-export default function Chat(props: {
+export default function Chat({
+  setToolsHide,
+  toolsHide,
+}: {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   toolsHide: boolean;
-  sessions: Session[];
-  setSessions: Dispatch<SetStateAction<Session[]>>;
-  currentSessionId: string;
-  setCurrentSessionId: Dispatch<SetStateAction<string>>;
 }) {
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
     []
@@ -33,61 +32,58 @@ export default function Chat(props: {
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const sendJsonMessage = useCreateWssClient(setStatusMessage, props.setSessions);
+  const { sessions, setSessions, currentSessionId, setCurrentSessionId } =
+    useGlobalContext();
+  const sendJsonMessage = useCreateWssClient(setStatusMessage, setSessions);
 
   const dispatch = useDispatch();
-  const userState = useSelector<UserState>((state) => state) as UserState;
+  const queryConfig = useSelector((state: UserState) => state.queryConfig);
+  const userInfo = useSelector((state: UserState) => state.userInfo);
 
   useEffect(() => {
-    if (
-      !userState.queryConfig.selectedLLM ||
-      !userState.queryConfig.selectedDataPro
-    ) {
+    if (!queryConfig.selectedLLM || !queryConfig.selectedDataPro) {
       getSelectData().then((response) => {
         if (response) {
-          if (
-            !userState.queryConfig.selectedLLM &&
-            response["bedrock_model_ids"]
-          ) {
+          if (!queryConfig.selectedLLM && response["bedrock_model_ids"]) {
             const configInfo: LLMConfigState = {
-              ...userState.queryConfig,
+              ...queryConfig,
               selectedLLM:
                 response["bedrock_model_ids"].length > 0
                   ? response["bedrock_model_ids"][0]
-                  : userState.queryConfig.selectedLLM,
+                  : queryConfig.selectedLLM,
             };
             dispatch({ type: ActionType.UpdateConfig, state: configInfo });
           } else if (
-            !userState.queryConfig.selectedDataPro &&
+            !queryConfig.selectedDataPro &&
             response["data_profiles"]
           ) {
             const configInfo: LLMConfigState = {
-              ...userState.queryConfig,
+              ...queryConfig,
               selectedDataPro:
                 response["data_profiles"].length > 0
                   ? response["data_profiles"][0]
-                  : userState.queryConfig.selectedDataPro,
+                  : queryConfig.selectedDataPro,
             };
             dispatch({ type: ActionType.UpdateConfig, state: configInfo });
           }
         }
       });
     }
-  }, [userState.queryConfig]);
+  }, [queryConfig]);
 
   useEffect(() => {
-    props.sessions.forEach((session) => {
-      if (session.session_id === props.currentSessionId) {
+    sessions.forEach((session) => {
+      if (session.session_id === currentSessionId) {
         setMessageHistory(session.messages);
         if (session.messages.length === 0 && session.title !== "New Chat") {
           const historyItem = {
             session_id: session.session_id,
-            user_id: userState.userInfo.userId,
-            profile_name: userState.queryConfig.selectedDataPro,
+            user_id: userInfo.userId,
+            profile_name: queryConfig.selectedDataPro,
           };
           getHistoryBySession(historyItem).then((response) => {
             if (response) {
-              props.setSessions((prevState) => {
+              setSessions((prevState) => {
                 return prevState.map((session) => {
                   if (response.session_id !== session.session_id) {
                     return session;
@@ -105,15 +101,15 @@ export default function Chat(props: {
         }
       }
     });
-  }, [props.currentSessionId]);
+  }, [currentSessionId]);
 
   useEffect(() => {
-    props.sessions.forEach((session) => {
-      if (session.session_id === props.currentSessionId) {
+    sessions.forEach((session) => {
+      if (session.session_id === currentSessionId) {
         setMessageHistory(session.messages);
       }
     });
-  }, [props.sessions]);
+  }, [sessions]);
 
   return (
     <div className={styles.chat_container}>
@@ -124,7 +120,6 @@ export default function Chat(props: {
               <ChatMessage
                 key={idx}
                 message={message}
-                setLoading={setLoading}
                 setMessageHistory={(
                   history: SetStateAction<ChatBotHistoryItem[]>
                 ) => setMessageHistory(history)}
@@ -134,14 +129,12 @@ export default function Chat(props: {
           );
         })}
         {statusMessage.filter(
-          (status) => status.session_id === props.currentSessionId
+          (status) => status.session_id === currentSessionId
         ).length === 0 ? null : (
           <div className={styles.status_container}>
             <SpaceBetween size="xxs">
               {statusMessage
-                .filter(
-                  (status) => status.session_id === props.currentSessionId
-                )
+                .filter((status) => status.session_id === currentSessionId)
                 .map((message, idx) => {
                   const displayMessage =
                     idx % 2 === 1 ? true : idx === statusMessage.length - 1;
@@ -162,7 +155,7 @@ export default function Chat(props: {
           </div>
         )}
         {loading && (
-          <div>
+          <div className={styles.status_container}>
             <Box float="left">
               <Spinner />
             </Box>
@@ -176,21 +169,21 @@ export default function Chat(props: {
       </div>
       <div className={styles.input_container}>
         <ChatInputPanel
-          setToolsHide={props.setToolsHide}
-          toolsHide={props.toolsHide}
+          setToolsHide={setToolsHide}
+          toolsHide={toolsHide}
           setLoading={setLoading}
           messageHistory={messageHistory}
           setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
             setMessageHistory(history)
           }
-          sessions={props.sessions}
-          setSessions={props.setSessions}
+          sessions={sessions}
+          setSessions={setSessions}
           setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
             setStatusMessage(message)
           }
           sendMessage={sendJsonMessage}
-          currSessionId={props.currentSessionId}
-          setCurrentSessionId={props.setCurrentSessionId}
+          currSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
         />
       </div>
     </div>

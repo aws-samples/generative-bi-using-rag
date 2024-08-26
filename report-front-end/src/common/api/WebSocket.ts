@@ -13,6 +13,9 @@ import {
 } from "../constant/constants";
 import { logout } from "../helpers/tools";
 import { getBearerTokenObj } from "./API";
+import { useSelector } from "react-redux";
+import { UserState } from "../helpers/types";
+import useGlobalContext from "../../hooks/useGlobalContext";
 
 export function useCreateWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
@@ -72,66 +75,79 @@ export function useCreateWssClient(
   return sendJsonMessage;
 }
 
-export const useQueryWithCookies = () => {
+export const useQueryWithTokens = () => {
+  const userInfo = useSelector((state: UserState) => state.userInfo);
+  const queryConfig = useSelector((state: UserState) => state.queryConfig);
+  const { currentSessionId, setSessions } = useGlobalContext();
+
   const queryWithWS = useCallback(
     (props: {
       query: string;
-      configuration: any;
       sendMessage: SendJsonMessage;
       setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-      setSessions: Dispatch<SetStateAction<Session[]>>;
-      userId: string;
-      sessionId: string;
     }) => {
-      props.setSessions((prevState) => {
-        return prevState.map((session: Session) => {
-          if (props.sessionId !== session.session_id) {
-            return session;
-          } else {
-            return {
-              session_id: session.session_id,
-              title: session.title === "New Chat" ? props.query : session.title,
-              messages: [
-                ...session.messages,
-                {
-                  type: ChatBotMessageType.Human,
-                  content: props.query,
-                },
-              ],
-            };
-          }
+      setSessions((prevState) => {
+        return prevState.map((session) => {
+          if (currentSessionId !== session.session_id) return session;
+          return {
+            session_id: session.session_id,
+            title: session.title === "New Chat" ? props.query : session.title,
+            messages: [
+              ...session.messages,
+              {
+                type: ChatBotMessageType.Human,
+                content: props.query,
+              },
+            ],
+          };
         });
       });
       const extraToken = isLoginWithCognito ? getBearerTokenObj() : {};
       const param = {
         query: props.query,
         bedrock_model_id:
-          props.configuration.selectedLLM || DEFAULT_QUERY_CONFIG.selectedLLM,
+          queryConfig.selectedLLM || DEFAULT_QUERY_CONFIG.selectedLLM,
         use_rag_flag: true,
         visualize_results_flag: true,
-        intent_ner_recognition_flag: props.configuration.intentChecked,
-        agent_cot_flag: props.configuration.complexChecked,
+        intent_ner_recognition_flag: queryConfig.intentChecked,
+        agent_cot_flag: queryConfig.complexChecked,
         profile_name:
-          props.configuration.selectedDataPro ||
-          DEFAULT_QUERY_CONFIG.selectedDataPro,
+          queryConfig.selectedDataPro || DEFAULT_QUERY_CONFIG.selectedDataPro,
         explain_gen_process_flag: true,
-        gen_suggested_question_flag: props.configuration.modelSuggestChecked,
+        gen_suggested_question_flag: queryConfig.modelSuggestChecked,
         answer_with_insights:
-          props.configuration.answerInsightChecked ||
+          queryConfig.answerInsightChecked ||
           DEFAULT_QUERY_CONFIG.answerInsightChecked,
-        top_k: props.configuration.topK,
-        top_p: props.configuration.topP,
-        max_tokens: props.configuration.maxLength,
-        temperature: props.configuration.temperature,
-        context_window: props.configuration.contextWindow,
-        session_id: props.sessionId,
-        user_id: props.userId,
+        top_k: queryConfig.topK,
+        top_p: queryConfig.topP,
+        max_tokens: queryConfig.maxLength,
+        temperature: queryConfig.temperature,
+        context_window: queryConfig.contextWindow,
+        session_id: currentSessionId,
+        user_id: userInfo.userId,
+        username: userInfo.username,
         ...extraToken,
       };
       console.log("Send WebSocketMessage: ", param);
       props.sendMessage(param);
     },
-    []
+    [
+      currentSessionId,
+      queryConfig.answerInsightChecked,
+      queryConfig.complexChecked,
+      queryConfig.contextWindow,
+      queryConfig.intentChecked,
+      queryConfig.maxLength,
+      queryConfig.modelSuggestChecked,
+      queryConfig.selectedDataPro,
+      queryConfig.selectedLLM,
+      queryConfig.temperature,
+      queryConfig.topK,
+      queryConfig.topP,
+      setSessions,
+      userInfo.userId,
+      userInfo.username,
+    ]
   );
   return { queryWithWS };
 };

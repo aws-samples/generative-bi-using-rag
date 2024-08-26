@@ -169,7 +169,7 @@ const ConfigPanel = (props: {
               options={llmOptions}
               selectedOption={selectedLLM}
               onChange={({ detail }) => setSelectedLLM(detail.selectedOption)}
-            ></Select>
+            />
           </FormField>
           <FormField label="Data Profile/Workspace">
             <Select
@@ -178,7 +178,7 @@ const ConfigPanel = (props: {
               onChange={({ detail }) =>
                 setSelectedDataPro(detail.selectedOption)
               }
-            ></Select>
+            />
           </FormField>
         </SpaceBetween>
 
