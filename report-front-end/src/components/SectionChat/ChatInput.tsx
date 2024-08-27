@@ -2,38 +2,27 @@ import { Button, Container, SpaceBetween } from "@cloudscape-design/components";
 import {
   Dispatch,
   SetStateAction,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useState,
 } from "react";
-import { useSelector } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { v4 as uuid } from "uuid";
 import { deleteHistoryBySession } from "../../utils/api/API";
 import { useQueryWithTokens } from "../../utils/api/WebSocket";
-import { UserState } from "../../utils/helpers/types";
-import { Session } from "../PanelSideNav/types";
 import styles from "./chat.module.scss";
 import CustomQuestions from "./CustomQuestions";
-import {
-  ChatBotHistoryItem,
-  ChatBotMessageItem,
-  ChatInputState,
-} from "./types";
+import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
 
 export interface ChatInputPanelProps {
+  toolsHide: boolean;
   setToolsHide: Dispatch<SetStateAction<boolean>>;
-  setLoading: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-  sessions: Session[];
-  setSessions: Dispatch<SetStateAction<Session[]>>;
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
-  sendMessage: SendJsonMessage;
-  toolsHide: boolean;
-  currSessionId: string;
-  setCurrentSessionId: Dispatch<SetStateAction<string>>;
+  sendJsonMessage: SendJsonMessage;
 }
 
 export abstract class ChatScrollState {
@@ -42,60 +31,29 @@ export abstract class ChatScrollState {
   static skipNextHistoryUpdate = false;
 }
 
-export default function ChatInput(props: ChatInputPanelProps) {
-  const { queryWithWS } = useQueryWithTokens();
-  const [state, setTextValue] = useState<ChatInputState>({
-    value: "",
-  });
-  const userInfo = useSelector((state: UserState) => state.userInfo);
-  const queryConfig = useSelector((state: UserState) => state.queryConfig);
+export default function ChatInput({
+  sendJsonMessage,
+  setMessageHistory,
+  setToolsHide,
+  toolsHide,
+  messageHistory,
+}: ChatInputPanelProps) {
+  const {
+    queryWithWS,
+    userInfo,
+    queryConfig,
+    setSessions,
+    currentSessionId,
+    setCurrentSessionId,
+  } = useQueryWithTokens();
 
-  const handleSendMessage = () => {
-    setTextValue({ value: "" });
-    if (state.value !== "") {
-      // Call WebSocket API
-      queryWithWS({
-        query: state.value,
-        sendMessage: props.sendMessage,
-        setMessageHistory: props.setMessageHistory,
-      });
-    }
-  };
+  const [query, setQuery] = useState("");
 
-  const handleSetting = () => {
-    props.setToolsHide((prev) => !prev);
-  };
-
-  const handleClear = () => {
-    const bool = window.confirm(
-      "Are you sure to clear current session history?"
-    );
-    if (bool) {
-      const historyItem = {
-        session_id: props.currSessionId,
-        user_id: userInfo.userId,
-        profile_name: queryConfig.selectedDataPro,
-      };
-      deleteHistoryBySession(historyItem).then((response) => {
-        if (response) {
-          props.setSessions((prevState: Session[]) => {
-            const filterState = prevState.filter((item: Session) => {
-              return item.session_id !== props.currSessionId;
-            });
-            if (filterState.length === 0) {
-              filterState.push({
-                session_id: uuid(),
-                title: "New Chat",
-                messages: [],
-              });
-            }
-            props.setCurrentSessionId(filterState[0].session_id);
-            return filterState;
-          });
-        }
-      });
-    }
-  };
+  const handleSendMessage = useCallback(() => {
+    if (query === "") return;
+    queryWithWS({ query, sendJsonMessage, setMessageHistory });
+    setQuery("");
+  }, [query, queryWithWS, sendJsonMessage, setMessageHistory]);
 
   useEffect(() => {
     const onWindowScroll = () => {
@@ -127,21 +85,21 @@ export default function ChatInput(props: ChatInputPanelProps) {
       return;
     }
 
-    if (!ChatScrollState?.userHasScrolled && props.messageHistory?.length > 0) {
+    if (!ChatScrollState?.userHasScrolled && messageHistory?.length > 0) {
       ChatScrollState.skipNextScrollEvent = true;
       window.scrollTo({
         top: document.documentElement.scrollHeight + 1000,
         behavior: "smooth",
       });
     }
-  }, [props.messageHistory]);
+  }, [messageHistory]);
 
   return (
     <Container className={styles.input_area_container}>
       <SpaceBetween size="s">
         <CustomQuestions
-          setMessageHistory={props.setMessageHistory}
-          sendMessage={props.sendMessage}
+          setMessageHistory={setMessageHistory}
+          sendJsonMessage={sendJsonMessage}
         />
         <div className={styles.input_textarea_container}>
           {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
@@ -153,9 +111,7 @@ export default function ChatInput(props: ChatInputPanelProps) {
             minRows={1}
             spellCheck={true}
             autoFocus
-            onChange={(e) =>
-              setTextValue((state) => ({ ...state, value: e.target.value }))
-            }
+            onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key == "Enter" && !e.shiftKey) {
                 if (!e.nativeEvent.isComposing && e.locale !== "zh-CN") {
@@ -164,25 +120,54 @@ export default function ChatInput(props: ChatInputPanelProps) {
                 }
               }
             }}
-            value={state.value}
+            value={query}
             placeholder={"Press ⇧ + Enter to start a new line"}
           />
           <div className={styles.input_buttons}>
             <SpaceBetween size="s" direction="horizontal">
               <Button
-                disabled={state.value.length === 0}
+                disabled={query.length === 0}
                 onClick={handleSendMessage}
-                // iconName='status-positive'
                 variant="primary"
               >
                 Send
               </Button>
-              <Button iconName="remove" onClick={handleClear}></Button>
+              <Button
+                iconName="remove"
+                onClick={() => {
+                  const bool = window.confirm(
+                    "Are you sure to clear current session history?"
+                  );
+                  if (!bool) return;
+                  const historyItem = {
+                    session_id: currentSessionId,
+                    user_id: userInfo.userId,
+                    profile_name: queryConfig.selectedDataPro,
+                  };
+                  deleteHistoryBySession(historyItem).then((data) => {
+                    if (!data) return;
+                    setSessions((prevList) => {
+                      const filteredList = prevList.filter(
+                        ({ session_id }) => session_id !== currentSessionId
+                      );
+                      if (filteredList.length === 0) {
+                        filteredList.push({
+                          session_id: uuid(),
+                          title: "New Chat",
+                          messages: [],
+                        });
+                      }
+                      setCurrentSessionId(filteredList[0].session_id);
+                      return filteredList;
+                    });
+                  });
+                }}
+              />
               <Button
                 iconName="settings"
-                variant={props.toolsHide ? "normal" : "primary"}
-                onClick={handleSetting}
-              ></Button>
+                variant={toolsHide ? "normal" : "primary"}
+                onClick={() => setToolsHide((prev) => !prev)}
+              />
             </SpaceBetween>
           </div>
         </div>

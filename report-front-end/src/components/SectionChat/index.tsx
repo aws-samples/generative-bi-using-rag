@@ -30,12 +30,10 @@ export default function SectionChat({
     []
   );
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
-  const { sessions, setSessions, currentSessionId, setCurrentSessionId } =
-    useGlobalContext();
+  const { sessions, setSessions, currentSessionId } = useGlobalContext();
   const sendJsonMessage = useCreateWssClient(setStatusMessage, setSessions);
-  console.log({ sessions, messageHistory });
 
   const dispatch = useDispatch();
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
@@ -44,65 +42,58 @@ export default function SectionChat({
   useEffect(() => {
     if (!queryConfig.selectedLLM || !queryConfig.selectedDataPro) {
       getSelectData().then((response) => {
-        if (response) {
-          if (!queryConfig.selectedLLM && response["bedrock_model_ids"]) {
-            const configInfo: LLMConfigState = {
-              ...queryConfig,
-              selectedLLM:
-                response["bedrock_model_ids"].length > 0
-                  ? response["bedrock_model_ids"][0]
-                  : queryConfig.selectedLLM,
-            };
-            dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-          } else if (
-            !queryConfig.selectedDataPro &&
-            response["data_profiles"]
-          ) {
-            const configInfo: LLMConfigState = {
-              ...queryConfig,
-              selectedDataPro:
-                response["data_profiles"].length > 0
-                  ? response["data_profiles"][0]
-                  : queryConfig.selectedDataPro,
-            };
-            dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-          }
+        if (!response) return;
+        if (!queryConfig.selectedLLM && response.bedrock_model_ids?.length) {
+          const configInfo: LLMConfigState = {
+            ...queryConfig,
+            selectedLLM: response.bedrock_model_ids[0],
+          };
+          dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+        } else if (
+          !queryConfig.selectedDataPro &&
+          response.data_profiles?.length
+        ) {
+          const configInfo: LLMConfigState = {
+            ...queryConfig,
+            selectedDataPro: response.data_profiles[0],
+          };
+          dispatch({ type: ActionType.UpdateConfig, state: configInfo });
         }
       });
     }
-  }, [queryConfig]);
+  }, [dispatch, queryConfig]);
 
   useEffect(() => {
-    sessions.forEach((session) => {
-      if (session.session_id === currentSessionId) {
-        setMessageHistory(session.messages);
-        if (session.messages?.length === 0 && session.title !== "New Chat") {
-          const historyItem = {
-            session_id: session.session_id,
-            user_id: userInfo.userId,
-            profile_name: queryConfig.selectedDataPro,
-          };
-          getHistoryBySession(historyItem).then((response) => {
-            if (response) {
-              setSessions((prevState) => {
-                return prevState.map((session) => {
-                  if (response.session_id !== session.session_id) {
-                    return session;
-                  } else {
-                    return {
-                      session_id: session.session_id,
-                      title: session.title,
-                      messages: response.messages,
-                    };
-                  }
-                });
-              });
+    setLoading(true);
+    getHistoryBySession({
+      session_id: currentSessionId,
+      user_id: userInfo.userId,
+      profile_name: queryConfig.selectedDataPro,
+    })
+      .then((data) => {
+        if (!data) return;
+        const { messages, session_id } = data;
+        setSessions((prevList) => {
+          return prevList.map((item) => {
+            if (session_id === item.session_id) {
+              setMessageHistory(messages);
+              return { ...item, messages };
             }
+            return session_id === item.session_id
+              ? { ...item, messages }
+              : item;
           });
-        }
-      }
-    });
-  }, [currentSessionId]);
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [
+    currentSessionId,
+    queryConfig.selectedDataPro,
+    setSessions,
+    userInfo.userId,
+  ]);
 
   useEffect(() => {
     sessions.forEach((session) => {
@@ -110,60 +101,60 @@ export default function SectionChat({
         setMessageHistory(session.messages);
       }
     });
-  }, [sessions]);
+  }, [currentSessionId, sessions]);
 
   return (
     <section className={styles.chat_container}>
       <SpaceBetween size="xxs">
-        {loading && (
-          <div className={styles.status_container}>
-            <Box float="left">
-              <Spinner />
-            </Box>
-          </div>
-        )}
+        {loading ? (
+          <Box variant="h3" margin="xxl" padding="xxl">
+            <Spinner /> Loading latest chat records...
+          </Box>
+        ) : (
+          <>
+            {messageHistory?.map((message, idx) => {
+              return (
+                <div key={idx}>
+                  <MessageRenderer
+                    key={idx}
+                    message={message}
+                    setMessageHistory={(
+                      history: SetStateAction<ChatBotHistoryItem[]>
+                    ) => setMessageHistory(history)}
+                    sendJsonMessage={sendJsonMessage}
+                  />
+                </div>
+              );
+            })}
 
-        {statusMessage?.filter(
-          (status) => status.session_id === currentSessionId
-        ).length === 0 ? null : (
-          <div className={styles.status_container}>
-            <SpaceBetween size="xxs">
-              {statusMessage
-                .filter((status) => status.session_id === currentSessionId)
-                .map((message, idx) => {
-                  const displayMessage =
-                    idx % 2 === 1 ? true : idx === statusMessage.length - 1;
-                  return displayMessage ? (
-                    <StatusIndicator
-                      key={idx}
-                      type={
-                        message.content.status === "end"
-                          ? "success"
-                          : "in-progress"
-                      }
-                    >
-                      {message.content.text}
-                    </StatusIndicator>
-                  ) : null;
-                })}
-            </SpaceBetween>
-          </div>
+            {statusMessage?.filter(
+              ({ session_id }) => session_id === currentSessionId
+            ).length === 0 ? null : (
+              <div className={styles.status_container}>
+                <SpaceBetween size="xxs">
+                  {statusMessage
+                    .filter(({ session_id }) => session_id === currentSessionId)
+                    .map((message, idx) => {
+                      const displayMessage =
+                        idx % 2 === 1 ? true : idx === statusMessage.length - 1;
+                      return displayMessage ? (
+                        <StatusIndicator
+                          key={idx}
+                          type={
+                            message.content.status === "end"
+                              ? "success"
+                              : "in-progress"
+                          }
+                        >
+                          {message.content.text}
+                        </StatusIndicator>
+                      ) : null;
+                    })}
+                </SpaceBetween>
+              </div>
+            )}
+          </>
         )}
-
-        {messageHistory?.map((message, idx) => {
-          return (
-            <div key={idx}>
-              <MessageRenderer
-                key={idx}
-                message={message}
-                setMessageHistory={(
-                  history: SetStateAction<ChatBotHistoryItem[]>
-                ) => setMessageHistory(history)}
-                sendMessage={sendJsonMessage}
-              />
-            </div>
-          );
-        })}
       </SpaceBetween>
 
       <div className={styles.welcome_text}>
@@ -174,21 +165,12 @@ export default function SectionChat({
 
       <div className={styles.input_container}>
         <ChatInput
-          setToolsHide={setToolsHide}
           toolsHide={toolsHide}
-          setLoading={setLoading}
+          setToolsHide={setToolsHide}
           messageHistory={messageHistory}
-          setMessageHistory={(history: SetStateAction<ChatBotHistoryItem[]>) =>
-            setMessageHistory(history)
-          }
-          sessions={sessions}
-          setSessions={setSessions}
-          setStatusMessage={(message: SetStateAction<ChatBotMessageItem[]>) =>
-            setStatusMessage(message)
-          }
-          sendMessage={sendJsonMessage}
-          currSessionId={currentSessionId}
-          setCurrentSessionId={setCurrentSessionId}
+          setMessageHistory={setMessageHistory}
+          setStatusMessage={setStatusMessage}
+          sendJsonMessage={sendJsonMessage}
         />
       </div>
     </section>

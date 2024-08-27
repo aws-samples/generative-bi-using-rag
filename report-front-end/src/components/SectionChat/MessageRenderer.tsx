@@ -4,7 +4,6 @@ import {
   BarChart,
   Box,
   Button,
-  CollectionPreferences,
   ColumnLayout,
   Container,
   CopyToClipboard,
@@ -229,14 +228,6 @@ function SQLResultPanel(props: SQLResultProps) {
             withDivider={false}
             variant="footer"
             headerText="SQL & Feedbacks"
-            headerActions={
-              <Button
-                variant="inline-link"
-                ariaLabel="Remove security group rule"
-              >
-                Remove
-              </Button>
-            }
           >
             <SpaceBetween size="xl">
               <div>
@@ -272,8 +263,7 @@ function SQLResultPanel(props: SQLResultProps) {
                           try {
                             const res = await addUserFeedback({
                               feedback_type,
-                              data_profiles:
-                                queryConfig.selectedDataPro,
+                              data_profiles: queryConfig.selectedDataPro,
                               query: props.query,
                               query_intent: props.intent,
                               query_answer: props.result.sql,
@@ -364,25 +354,23 @@ const DataTable = (props: { distributions: []; header: [] }) => {
             filteringPlaceholder="Search"
           />
         }
-        preferences={
-          <CollectionPreferences
-            title="Preferences"
-            confirmLabel="Confirm"
-            cancelLabel="Cancel"
-            preferences={{
-              pageSize: 5,
-            }}
-            pageSizePreference={{
-              title: "Page size",
-              options: [
-                { value: 5, label: "5 resources" },
-                { value: 10, label: "10 resources" },
-                { value: 20, label: "20 resources" },
-                { value: 30, label: "30 resources" },
-              ],
-            }}
-          />
-        }
+        // preferences={
+        //   <CollectionPreferences
+        //     title="Preferences"
+        //     confirmLabel="Confirm"
+        //     cancelLabel="Cancel"
+        //     preferences={{ pageSize: 5 }}
+        //     pageSizePreference={{
+        //       title: "Page size",
+        //       options: [
+        //         { value: 5, label: "5 resources" },
+        //         { value: 10, label: "10 resources" },
+        //         { value: 20, label: "20 resources" },
+        //         { value: 30, label: "30 resources" },
+        //       ],
+        //     }}
+        //   />
+        // }
       />
       <Modal
         onDismiss={() => setVisible(false)}
@@ -472,13 +460,13 @@ function IntentSearchPanel(props: { message: ChatBotAnswerItem }) {
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-  sendMessage: SendJsonMessage;
+  sendJsonMessage: SendJsonMessage;
 }
 
 export default function MessageRenderer({
   message,
   setMessageHistory,
-  sendMessage,
+  sendJsonMessage,
 }: ChatMessageProps) {
   const { queryWithWS } = useQueryWithTokens();
   return (
@@ -499,20 +487,20 @@ export default function MessageRenderer({
                 headerText="Suggested questions"
               >
                 <div className={styles.questions_grid}>
-                  {message.content.suggested_question.map((question, kid) => (
+                  {message.content.suggested_question.map((query, kid) => (
                     <AmplifyBtn
                       key={kid}
                       size="small"
                       className={styles.button}
                       onClick={() =>
                         queryWithWS({
-                          query: question,
-                          sendMessage: sendMessage,
-                          setMessageHistory: setMessageHistory,
+                          query,
+                          sendJsonMessage,
+                          setMessageHistory,
                         })
                       }
                     >
-                      {question}
+                      {query}
                     </AmplifyBtn>
                   ))}
                 </div>

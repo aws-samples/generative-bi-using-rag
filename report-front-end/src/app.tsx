@@ -106,9 +106,7 @@ function Playground() {
   return (
     <BaseAppLayout
       navigation={<PanelSideNav />}
-      content={
-        <SectionChat toolsHide={toolsHide} setToolsHide={setToolsHide} />
-      }
+      content={<SectionChat {...{ toolsHide, setToolsHide }} />}
       tools={<PanelConfigs setToolsHide={setToolsHide} />}
       toolsHide={toolsHide}
       setToolsHide={setToolsHide}

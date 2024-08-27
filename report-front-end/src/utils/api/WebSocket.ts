@@ -7,10 +7,7 @@ import {
   ChatBotMessageType,
 } from "../../components/SectionChat/types";
 import { Session } from "../../components/PanelSideNav/types";
-import {
-  DEFAULT_QUERY_CONFIG,
-  isLoginWithCognito,
-} from "../constants";
+import { DEFAULT_QUERY_CONFIG, isLoginWithCognito } from "../constants";
 import { logout } from "../helpers/tools";
 import { getBearerTokenObj } from "./API";
 import { useSelector } from "react-redux";
@@ -50,16 +47,16 @@ export function useCreateWssClient(
       setStatusMessage((historyMessage) => [...historyMessage, messageJson]);
     } else {
       setStatusMessage([]);
-      setSessions((prevState) => {
-        return prevState.map((session) => {
-          if (messageJson.session_id !== session.session_id) {
-            return session;
+      setSessions((prevList) => {
+        return prevList.map((item) => {
+          if (messageJson.session_id !== item.session_id) {
+            return item;
           } else {
             return {
-              session_id: session.session_id,
-              title: session.title,
+              session_id: item.session_id,
+              title: item.title,
               messages: [
-                ...session.messages,
+                ...item.messages,
                 {
                   type: ChatBotMessageType.AI,
                   content: messageJson.content,
@@ -78,27 +75,25 @@ export function useCreateWssClient(
 export const useQueryWithTokens = () => {
   const userInfo = useSelector((state: UserState) => state.userInfo);
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
-  const { currentSessionId, setSessions } = useGlobalContext();
+  const globalContext = useGlobalContext();
+  const { currentSessionId, setSessions } = globalContext;
 
   const queryWithWS = useCallback(
     (props: {
       query: string;
-      sendMessage: SendJsonMessage;
+      sendJsonMessage: SendJsonMessage;
       setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
     }) => {
-      setSessions((prevState) => {
-        return prevState.map((session) => {
-          if (currentSessionId !== session.session_id) return session;
+      setSessions((prevList) => {
+        return prevList.map((item) => {
+          if (currentSessionId !== item.session_id) return item;
           return {
-            session_id: session.session_id,
-            title: session.title === "New Chat" ? props.query : session.title,
-            messages: [
-              ...session.messages,
-              {
-                type: ChatBotMessageType.Human,
-                content: props.query,
-              },
-            ],
+            ...item,
+            title: item.title === "New Chat" ? props.query : item.title,
+            messages: item.messages.concat({
+              type: ChatBotMessageType.Human,
+              content: props.query,
+            }),
           };
         });
       });
@@ -129,7 +124,7 @@ export const useQueryWithTokens = () => {
         ...extraToken,
       };
       console.log("Send WebSocketMessage: ", param);
-      props.sendMessage(param);
+      props.sendJsonMessage(param);
     },
     [
       currentSessionId,
@@ -149,5 +144,5 @@ export const useQueryWithTokens = () => {
       userInfo.username,
     ]
   );
-  return { queryWithWS };
+  return { queryWithWS, userInfo, queryConfig, ...globalContext };
 };

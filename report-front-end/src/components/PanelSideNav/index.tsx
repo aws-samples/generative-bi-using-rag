@@ -23,14 +23,14 @@ export const PanelSideNav = () => {
       user_id: userInfo.userId,
       profile_name: queryConfig.selectedDataPro,
     }).then((sessions) => {
-      console.log({ sessions });
       if (sessions?.length) {
+        setCurrentSessionId(sessions[0].session_id);
         return setSessions(sessions);
       }
-      const sessionId = uuid();
+      const newSessionId = uuid();
       setSessions([
         {
-          session_id: sessionId,
+          session_id: newSessionId,
           title: "New Chat",
           messages: [],
         },
@@ -44,7 +44,7 @@ export const PanelSideNav = () => {
             };
           }),
       ]);
-      setCurrentSessionId(sessionId);
+      setCurrentSessionId(newSessionId);
     });
   }, [
     userInfo.userId,
@@ -58,7 +58,7 @@ export const PanelSideNav = () => {
       defaultPadding
       disableOverlap
       headerVariant="divider"
-      header={<Header variant="h3">Chat Sessions</Header>}
+      header={<Header variant="h3">{queryConfig.selectedDataPro}</Header>}
     >
       <Box margin={{ top: "l" }}>
         <Button
