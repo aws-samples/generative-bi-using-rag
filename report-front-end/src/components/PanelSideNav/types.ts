@@ -1,4 +1,4 @@
-import { ChatBotHistoryItem } from "../Chat/types";
+import { ChatBotHistoryItem } from "../SectionChat/types";
 
 export interface Session {
   session_id: string;

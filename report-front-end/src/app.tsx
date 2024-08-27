@@ -6,18 +6,15 @@ import { useDispatch } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import "./app.scss";
-import {
-  isLoginWithCognito,
-  LOCAL_STORAGE_KEYS,
-} from "./utils/constants";
-import { ActionType, UserInfo } from "./utils/helpers/types";
 import BaseAppLayout from "./components/BaseAppLayout";
-import Chat from "./components/Chat";
 import PanelConfigs from "./components/PanelConfigs";
 import { PanelSideNav } from "./components/PanelSideNav";
 import { Session } from "./components/PanelSideNav/types";
+import SectionChat from "./components/SectionChat";
 import TopNav from "./components/TopNav";
 import { GlobalContext } from "./hooks/useGlobalContext";
+import { isLoginWithCognito, LOCAL_STORAGE_KEYS } from "./utils/constants";
+import { ActionType, UserInfo } from "./utils/helpers/types";
 
 export type SignOut = UseAuthenticator["signOut"];
 
@@ -109,8 +106,10 @@ function Playground() {
   return (
     <BaseAppLayout
       navigation={<PanelSideNav />}
+      content={
+        <SectionChat toolsHide={toolsHide} setToolsHide={setToolsHide} />
+      }
       tools={<PanelConfigs setToolsHide={setToolsHide} />}
-      content={<Chat toolsHide={toolsHide} setToolsHide={setToolsHide} />}
       toolsHide={toolsHide}
       setToolsHide={setToolsHide}
     />

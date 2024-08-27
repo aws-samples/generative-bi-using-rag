@@ -5,7 +5,7 @@ import {
   ChatBotHistoryItem,
   ChatBotMessageItem,
   ChatBotMessageType,
-} from "../../components/Chat/types";
+} from "../../components/SectionChat/types";
 import { Session } from "../../components/PanelSideNav/types";
 import {
   DEFAULT_QUERY_CONFIG,

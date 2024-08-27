@@ -19,10 +19,11 @@ export default function BaseAppLayout(props: {
       content={props.content}
       navigation={props.navigation}
       tools={props.tools}
+      toolsOpen
       toolsHide={props.toolsHide}
-      onToolsChange={({ detail }) => {
-        props.setToolsHide(!detail.open);
-      }}
+      // onToolsChange={({ detail }) => {
+      //   props.setToolsHide(!detail.open);
+      // }}
       toolsWidth={450}
       navigationWidth={300}
       navigationHide={false}

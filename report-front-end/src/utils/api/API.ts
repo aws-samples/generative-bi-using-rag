@@ -4,7 +4,7 @@ import {
   FeedBackItem,
   HistoryItem,
   SessionItem,
-} from "../../components/Chat/types";
+} from "../../components/SectionChat/types";
 import {
   BACKEND_URL,
   isLoginWithCognito,

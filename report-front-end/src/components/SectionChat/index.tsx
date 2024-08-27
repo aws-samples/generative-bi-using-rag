@@ -19,7 +19,7 @@ import MessageRenderer from "./MessageRenderer";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
 
-export default function Chat({
+export default function SectionChat({
   setToolsHide,
   toolsHide,
 }: {
@@ -113,22 +113,16 @@ export default function Chat({
   }, [sessions]);
 
   return (
-    <div className={styles.chat_container}>
+    <section className={styles.chat_container}>
       <SpaceBetween size="xxs">
-        {messageHistory?.map((message, idx) => {
-          return (
-            <div key={idx}>
-              <MessageRenderer
-                key={idx}
-                message={message}
-                setMessageHistory={(
-                  history: SetStateAction<ChatBotHistoryItem[]>
-                ) => setMessageHistory(history)}
-                sendMessage={sendJsonMessage}
-              />
-            </div>
-          );
-        })}
+        {loading && (
+          <div className={styles.status_container}>
+            <Box float="left">
+              <Spinner />
+            </Box>
+          </div>
+        )}
+
         {statusMessage?.filter(
           (status) => status.session_id === currentSessionId
         ).length === 0 ? null : (
@@ -155,19 +149,29 @@ export default function Chat({
             </SpaceBetween>
           </div>
         )}
-        {loading && (
-          <div className={styles.status_container}>
-            <Box float="left">
-              <Spinner />
-            </Box>
-          </div>
-        )}
+
+        {messageHistory?.map((message, idx) => {
+          return (
+            <div key={idx}>
+              <MessageRenderer
+                key={idx}
+                message={message}
+                setMessageHistory={(
+                  history: SetStateAction<ChatBotHistoryItem[]>
+                ) => setMessageHistory(history)}
+                sendMessage={sendJsonMessage}
+              />
+            </div>
+          );
+        })}
       </SpaceBetween>
+
       <div className={styles.welcome_text}>
         {messageHistory?.length === 0 &&
           statusMessage?.length === 0 &&
-          !loading && <center>{"GenBI Chatbot"}</center>}
+          !loading && <center>GenBI Chatbot</center>}
       </div>
+
       <div className={styles.input_container}>
         <ChatInput
           setToolsHide={setToolsHide}
@@ -187,6 +191,6 @@ export default function Chat({
           setCurrentSessionId={setCurrentSessionId}
         />
       </div>
-    </div>
+    </section>
   );
 }

@@ -58,7 +58,7 @@ export const PanelSideNav = () => {
       defaultPadding
       disableOverlap
       headerVariant="divider"
-      header={<Header variant="h3">Sessions</Header>}
+      header={<Header variant="h3">Chat Sessions</Header>}
     >
       <Box margin={{ top: "l" }}>
         <Button
