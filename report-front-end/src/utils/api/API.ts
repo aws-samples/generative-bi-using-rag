@@ -4,13 +4,14 @@ import {
   FeedBackItem,
   HistoryItem,
   SessionItem,
-} from "../../components/chatbot-panel/types";
+} from "../../components/Chat/types";
 import {
   BACKEND_URL,
   isLoginWithCognito,
   LOCAL_STORAGE_KEYS,
-} from "../constant/constants";
+} from "../constants";
 import { logout } from "../helpers/tools";
+import { Session } from "../../components/PanelSideNav/types";
 
 export const getLSTokens = () => {
   const accessToken =
@@ -113,9 +114,10 @@ export async function getSessions(sessionItem: SessionItem) {
         console.error("getSessions error: ", error);
       },
     });
-    return data;
+    return data as Session[];
   } catch (error) {
     console.error("getSessions, error: ", error);
+    return [];
   }
 }
 

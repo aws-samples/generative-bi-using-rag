@@ -13,50 +13,46 @@ import {
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { getSelectData } from "../../common/api/API";
+import { getSelectData } from "../../utils/api/API";
 import {
   ActionType,
   LLMConfigState,
   UserState,
-} from "../../common/helpers/types";
+} from "../../utils/helpers/types";
 import "./style.scss";
 
-const ConfigPanel = (props: {
+const PanelConfigs = ({
+  setToolsHide,
+}: {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
 }) => {
   const dispatch = useDispatch();
-  const userState = useSelector<UserState>((state) => state) as UserState;
+  const queryConfig = useSelector((state: UserState) => state.queryConfig);
 
-  const [intentChecked, setIntentChecked] = useState(
-    userState.queryConfig.intentChecked
-  );
+  const [intentChecked, setIntentChecked] = useState(queryConfig.intentChecked);
   const [complexChecked, setComplexChecked] = useState(
-    userState.queryConfig.complexChecked
+    queryConfig.complexChecked
   );
   const [answerInsightChecked, setAnswerInsightChecked] = useState(
-    userState.queryConfig.answerInsightChecked
+    queryConfig.answerInsightChecked
   );
-  const [contextWindow, setContextWindow] = useState(
-    userState.queryConfig.contextWindow
-  );
+  const [contextWindow, setContextWindow] = useState(queryConfig.contextWindow);
   const [modelSuggestChecked, setModelSuggestChecked] = useState(
-    userState.queryConfig.modelSuggestChecked
+    queryConfig.modelSuggestChecked
   );
-  const [temperature, setTemperature] = useState(
-    userState.queryConfig.temperature
-  );
-  const [topP, setTopP] = useState(userState.queryConfig.topP);
-  const [topK, setTopK] = useState(userState.queryConfig.topK);
-  const [maxLength, setMaxLength] = useState(userState.queryConfig.maxLength);
+  const [temperature, setTemperature] = useState(queryConfig.temperature);
+  const [topP, setTopP] = useState(queryConfig.topP);
+  const [topK, setTopK] = useState(queryConfig.topK);
+  const [maxLength, setMaxLength] = useState(queryConfig.maxLength);
   const [llmOptions, setLLMOptions] = useState([] as any[]);
   const [dataProOptions, setDataProOptions] = useState([] as any[]);
   const [selectedLLM, setSelectedLLM] = useState({
-    label: userState.queryConfig.selectedLLM,
-    value: userState.queryConfig.selectedLLM,
+    label: queryConfig.selectedLLM,
+    value: queryConfig.selectedLLM,
   } as any);
   const [selectedDataPro, setSelectedDataPro] = useState({
-    label: userState.queryConfig.selectedDataPro,
-    value: userState.queryConfig.selectedDataPro,
+    label: queryConfig.selectedDataPro,
+    value: queryConfig.selectedDataPro,
   } as any);
 
   useEffect(() => {
@@ -67,7 +63,7 @@ const ConfigPanel = (props: {
         tempDataPro.push({ label: item, value: item });
       });
       setDataProOptions(tempDataPro);
-      if (!userState.queryConfig?.selectedDataPro) {
+      if (!queryConfig?.selectedDataPro) {
         setSelectedDataPro(tempDataPro[0]);
       }
 
@@ -77,16 +73,13 @@ const ConfigPanel = (props: {
       });
 
       setLLMOptions(tempLLM);
-      if (!userState.queryConfig?.selectedLLM) {
+      if (!queryConfig?.selectedLLM) {
         setSelectedLLM(tempLLM[0]);
       }
     });
-  }, [
-    userState.queryConfig?.selectedDataPro,
-    userState.queryConfig?.selectedLLM,
-  ]);
+  }, [queryConfig?.selectedDataPro, queryConfig?.selectedLLM]);
 
-  const onSave = () => {
+  useEffect(() => {
     const configInfo: LLMConfigState = {
       selectedLLM: selectedLLM ? selectedLLM.value : "",
       selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
@@ -101,24 +94,6 @@ const ConfigPanel = (props: {
       maxLength,
     };
     dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-    props.setToolsHide(true);
-    toast.success("Configuration saved");
-  };
-
-  useEffect(() => {
-    updateCache(
-      selectedLLM,
-      selectedDataPro,
-      intentChecked,
-      complexChecked,
-      answerInsightChecked,
-      modelSuggestChecked,
-      temperature,
-      topP,
-      topK,
-      maxLength
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedLLM,
     selectedDataPro,
@@ -130,35 +105,9 @@ const ConfigPanel = (props: {
     topP,
     topK,
     maxLength,
+    contextWindow,
+    dispatch,
   ]);
-
-  const updateCache = (
-    selectedLLM: any,
-    selectedDataPro: any,
-    intentChecked: boolean,
-    complexChecked: boolean,
-    answerInsightChecked: boolean,
-    modelSuggestChecked: boolean,
-    temperature: number,
-    topP: number,
-    topK: number,
-    maxLength: number
-  ) => {
-    const configInfo: LLMConfigState = {
-      selectedLLM: selectedLLM ? selectedLLM.value : "",
-      selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
-      intentChecked,
-      complexChecked,
-      answerInsightChecked,
-      contextWindow,
-      modelSuggestChecked,
-      temperature,
-      topP,
-      topK,
-      maxLength,
-    };
-    dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-  };
 
   return (
     <Drawer header="Configurations">
@@ -388,14 +337,35 @@ const ConfigPanel = (props: {
           </Grid>
         </SpaceBetween>
 
-        <Button variant="primary" iconName="status-positive" onClick={onSave}>
+        <Button
+          variant="primary"
+          iconName="status-positive"
+          onClick={() => {
+            const configInfo: LLMConfigState = {
+              selectedLLM: selectedLLM ? selectedLLM.value : "",
+              selectedDataPro: selectedDataPro ? selectedDataPro.value : "",
+              intentChecked,
+              complexChecked,
+              answerInsightChecked,
+              contextWindow,
+              modelSuggestChecked,
+              temperature,
+              topP,
+              topK,
+              maxLength,
+            };
+            dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+            setToolsHide(true);
+            toast.success("Configuration saved");
+          }}
+        >
           Save
         </Button>
       </SpaceBetween>
     </Drawer>
   );
 };
-export default ConfigPanel;
+export default PanelConfigs;
 
 function VerticalDivider() {
   return (

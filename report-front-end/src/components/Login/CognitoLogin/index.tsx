@@ -14,11 +14,11 @@ import {
   APP_LOGO,
   APP_LOGO_DISPLAY_ON_LOGIN_PAGE,
   isLoginWithCognito,
-} from "../../../common/constant/constants";
-import { Storage } from "../../../common/helpers/storage";
+} from "../../../utils/constants";
+import { Storage } from "../../../utils/helpers/storage";
 import { awsConfig } from "./aws-config";
 
-export default function AppConfigured() {
+export default function CognitoLogin() {
   const [theme, setTheme] = useState(Storage.getTheme());
 
   useEffect(() => {

@@ -4,13 +4,17 @@ import {
   Density,
   Mode,
 } from "@cloudscape-design/global-styles";
-import { NavigationPanelState } from "../types";
-import { APP_STYLE_DEFAULT_COMPACT } from "../constant/constants";
+import { APP_STYLE_DEFAULT_COMPACT } from "../constants";
 
 const PREFIX = "genai-chatbot";
 const THEME_STORAGE_NAME = `${PREFIX}-themes`;
 const DENSITY_STORAGE_NAME = `${PREFIX}-density`;
 const NAVIGATION_PANEL_STATE_STORAGE_NAME = `${PREFIX}-navigation-panel-state`;
+
+interface NavigationPanelState {
+  collapsed?: boolean;
+  collapsedSections?: Record<number, boolean>;
+}
 
 export abstract class Storage {
   static getTheme() {

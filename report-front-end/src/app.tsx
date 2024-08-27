@@ -1,6 +1,5 @@
 import { AmplifyUser } from "@aws-amplify/ui";
 import { UseAuthenticator } from "@aws-amplify/ui-react-core";
-import { ContentLayout, Header } from "@cloudscape-design/components";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useDispatch } from "react-redux";
@@ -10,14 +9,14 @@ import "./app.scss";
 import {
   isLoginWithCognito,
   LOCAL_STORAGE_KEYS,
-} from "./common/constant/constants";
-import { ActionType, UserInfo } from "./common/helpers/types";
-import BaseAppLayout from "./components/app-layout";
-import Chat from "./components/chatbot-panel";
-import ConfigPanel from "./components/config-panel";
-import { Sessions } from "./components/session-panel/sessions";
-import { Session } from "./components/session-panel/types";
-import CustomTopNavigation from "./components/top-navigation";
+} from "./utils/constants";
+import { ActionType, UserInfo } from "./utils/helpers/types";
+import BaseAppLayout from "./components/BaseAppLayout";
+import Chat from "./components/Chat";
+import PanelConfigs from "./components/PanelConfigs";
+import { PanelSideNav } from "./components/PanelSideNav";
+import { Session } from "./components/PanelSideNav/types";
+import TopNav from "./components/TopNav";
 import { GlobalContext } from "./hooks/useGlobalContext";
 
 export type SignOut = UseAuthenticator["signOut"];
@@ -82,7 +81,7 @@ const App: React.FC<{
       <div style={{ height: "100%" }}>
         <BrowserRouter>
           <Toaster />
-          <CustomTopNavigation />
+          <TopNav />
           <div style={{ height: "56px", backgroundColor: "#000716" }}>
             &nbsp;
           </div>
@@ -109,17 +108,8 @@ function Playground() {
   const [toolsHide, setToolsHide] = useState(true);
   return (
     <BaseAppLayout
-      tools={<ConfigPanel setToolsHide={setToolsHide} />}
-      navigation={
-        <ContentLayout
-          defaultPadding
-          disableOverlap
-          headerVariant="divider"
-          header={<Header variant="h3">Sessions</Header>}
-        >
-          <Sessions />
-        </ContentLayout>
-      }
+      navigation={<PanelSideNav />}
+      tools={<PanelConfigs setToolsHide={setToolsHide} />}
       content={<Chat toolsHide={toolsHide} setToolsHide={setToolsHide} />}
       toolsHide={toolsHide}
       setToolsHide={setToolsHide}

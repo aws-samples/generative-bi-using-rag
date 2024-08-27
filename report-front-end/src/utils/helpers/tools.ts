@@ -1,6 +1,6 @@
 import { Auth } from "aws-amplify";
 import toast from "react-hot-toast";
-import { LOCAL_STORAGE_KEYS } from "../constant/constants";
+import { LOCAL_STORAGE_KEYS } from "../constants";
 
 export const logout = () => {
   console.warn("Not authorized! Logging out");

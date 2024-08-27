@@ -13,12 +13,12 @@ import {
   APP_TITLE,
   CHATBOT_NAME,
   isLoginWithCognito,
-} from "../../common/constant/constants";
-import { Storage } from "../../common/helpers/storage";
-import { UserState } from "../../common/helpers/types";
+} from "../../utils/constants";
+import { Storage } from "../../utils/helpers/storage";
+import { UserState } from "../../utils/helpers/types";
 import "./style.scss";
 
-export default function CustomTopNavigation() {
+export default function TopNav() {
   // const [theme, setTheme] = useState<Mode>(Storage.getTheme())
   const userInfo = useSelector((state: UserState) => state.userInfo);
 

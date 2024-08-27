@@ -3,9 +3,9 @@ import { Link, SpaceBetween } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { getRecommendQuestions } from "../../common/api/API";
-import { useQueryWithTokens } from "../../common/api/WebSocket";
-import { UserState } from "../../common/helpers/types";
+import { getRecommendQuestions } from "../../utils/api/API";
+import { useQueryWithTokens } from "../../utils/api/WebSocket";
+import { UserState } from "../../utils/helpers/types";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem } from "./types";
 

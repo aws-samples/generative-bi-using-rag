@@ -6,16 +6,16 @@ import {
 } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getHistoryBySession, getSelectData } from "../../common/api/API";
-import { useCreateWssClient } from "../../common/api/WebSocket";
+import { getHistoryBySession, getSelectData } from "../../utils/api/API";
+import { useCreateWssClient } from "../../utils/api/WebSocket";
 import {
   ActionType,
   LLMConfigState,
   UserState,
-} from "../../common/helpers/types";
+} from "../../utils/helpers/types";
 import useGlobalContext from "../../hooks/useGlobalContext";
-import ChatInputPanel from "./chat-input-panel";
-import ChatMessage from "./chat-message";
+import ChatInput from "./ChatInput";
+import MessageRenderer from "./MessageRenderer";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
 
@@ -35,6 +35,7 @@ export default function Chat({
   const { sessions, setSessions, currentSessionId, setCurrentSessionId } =
     useGlobalContext();
   const sendJsonMessage = useCreateWssClient(setStatusMessage, setSessions);
+  console.log({ sessions, messageHistory });
 
   const dispatch = useDispatch();
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
@@ -75,7 +76,7 @@ export default function Chat({
     sessions.forEach((session) => {
       if (session.session_id === currentSessionId) {
         setMessageHistory(session.messages);
-        if (session.messages.length === 0 && session.title !== "New Chat") {
+        if (session.messages?.length === 0 && session.title !== "New Chat") {
           const historyItem = {
             session_id: session.session_id,
             user_id: userInfo.userId,
@@ -114,10 +115,10 @@ export default function Chat({
   return (
     <div className={styles.chat_container}>
       <SpaceBetween size="xxs">
-        {messageHistory.map((message, idx) => {
+        {messageHistory?.map((message, idx) => {
           return (
             <div key={idx}>
-              <ChatMessage
+              <MessageRenderer
                 key={idx}
                 message={message}
                 setMessageHistory={(
@@ -128,7 +129,7 @@ export default function Chat({
             </div>
           );
         })}
-        {statusMessage.filter(
+        {statusMessage?.filter(
           (status) => status.session_id === currentSessionId
         ).length === 0 ? null : (
           <div className={styles.status_container}>
@@ -163,12 +164,12 @@ export default function Chat({
         )}
       </SpaceBetween>
       <div className={styles.welcome_text}>
-        {messageHistory.length === 0 &&
-          statusMessage.length === 0 &&
+        {messageHistory?.length === 0 &&
+          statusMessage?.length === 0 &&
           !loading && <center>{"GenBI Chatbot"}</center>}
       </div>
       <div className={styles.input_container}>
-        <ChatInputPanel
+        <ChatInput
           setToolsHide={setToolsHide}
           toolsHide={toolsHide}
           setLoading={setLoading}

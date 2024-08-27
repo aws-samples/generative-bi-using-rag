@@ -1,5 +1,5 @@
 import { createStore } from "redux";
-import { DEFAULT_QUERY_CONFIG, DEFAULT_USER_INFO, LOCALSTORAGE_KEY } from "../constant/constants";
+import { DEFAULT_QUERY_CONFIG, DEFAULT_USER_INFO, LOCALSTORAGE_KEY } from "../constants";
 import { ActionType, UserAction, UserState } from "./types";
 
 const defaultUserState: UserState = {

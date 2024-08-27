@@ -24,10 +24,10 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { useSelector } from "react-redux";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { addUserFeedback } from "../../common/api/API";
-import { useQueryWithTokens } from "../../common/api/WebSocket";
-import { SQL_DISPLAY } from "../../common/constant/constants";
-import { UserState } from "../../common/helpers/types";
+import { addUserFeedback } from "../../utils/api/API";
+import { useQueryWithTokens } from "../../utils/api/WebSocket";
+import { SQL_DISPLAY } from "../../utils/constants";
+import { UserState } from "../../utils/helpers/types";
 import ExpandableSectionWithDivider from "./ExpandableSectionWithDivider";
 import styles from "./chat.module.scss";
 
@@ -475,7 +475,7 @@ export interface ChatMessageProps {
   sendMessage: SendJsonMessage;
 }
 
-export default function ChatMessage({
+export default function MessageRenderer({
   message,
   setMessageHistory,
   sendMessage,

@@ -10,12 +10,12 @@ import { useSelector } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { v4 as uuid } from "uuid";
-import { deleteHistoryBySession } from "../../common/api/API";
-import { useQueryWithTokens } from "../../common/api/WebSocket";
-import { UserState } from "../../common/helpers/types";
-import { Session } from "../session-panel/types";
+import { deleteHistoryBySession } from "../../utils/api/API";
+import { useQueryWithTokens } from "../../utils/api/WebSocket";
+import { UserState } from "../../utils/helpers/types";
+import { Session } from "../PanelSideNav/types";
 import styles from "./chat.module.scss";
-import CustomQuestions from "./custom-questions";
+import CustomQuestions from "./CustomQuestions";
 import {
   ChatBotHistoryItem,
   ChatBotMessageItem,
@@ -42,7 +42,7 @@ export abstract class ChatScrollState {
   static skipNextHistoryUpdate = false;
 }
 
-export default function ChatInputPanel(props: ChatInputPanelProps) {
+export default function ChatInput(props: ChatInputPanelProps) {
   const { queryWithWS } = useQueryWithTokens();
   const [state, setTextValue] = useState<ChatInputState>({
     value: "",
@@ -127,7 +127,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       return;
     }
 
-    if (!ChatScrollState.userHasScrolled && props.messageHistory.length > 0) {
+    if (!ChatScrollState?.userHasScrolled && props.messageHistory?.length > 0) {
       ChatScrollState.skipNextScrollEvent = true;
       window.scrollTo({
         top: document.documentElement.scrollHeight + 1000,

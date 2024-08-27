@@ -1,5 +1,5 @@
 import { createContext, Dispatch, SetStateAction, useContext } from "react";
-import { Session } from "../components/session-panel/types";
+import { Session } from "../components/PanelSideNav/types";
 
 export interface IGlobalContext {
   sessions: Session[];

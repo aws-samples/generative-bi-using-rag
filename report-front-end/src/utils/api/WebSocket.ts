@@ -5,12 +5,12 @@ import {
   ChatBotHistoryItem,
   ChatBotMessageItem,
   ChatBotMessageType,
-} from "../../components/chatbot-panel/types";
-import { Session } from "../../components/session-panel/types";
+} from "../../components/Chat/types";
+import { Session } from "../../components/PanelSideNav/types";
 import {
   DEFAULT_QUERY_CONFIG,
   isLoginWithCognito,
-} from "../constant/constants";
+} from "../constants";
 import { logout } from "../helpers/tools";
 import { getBearerTokenObj } from "./API";
 import { useSelector } from "react-redux";

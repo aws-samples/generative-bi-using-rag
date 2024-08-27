@@ -1,6 +1,6 @@
 import { AppLayout, AppLayoutProps } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useState } from "react";
-import { Storage } from "../../common/helpers/storage";
+import { Storage } from "../utils/helpers/storage";
 
 export default function BaseAppLayout(props: {
   content: AppLayoutProps["content"];
