@@ -88,9 +88,30 @@ export default function TopNav() {
           {
             type: "menu-dropdown",
             text: userInfo?.displayName || "Authenticating",
+            // description: `username: ${userInfo?.username}`,
             iconName: "user-profile",
             onItemClick: onUserProfileClick,
             items: [
+              {
+                itemType: "group",
+                id: "user-info",
+                text: "User Information",
+                items: [
+                  {
+                    id: "0",
+                    text: `username: ${userInfo?.username}`,
+                  },
+                  {
+                    id: "1",
+                    text: `userId: ${userInfo?.userId}`,
+                  },
+                  {
+                    id: "2",
+                    text: `loginExpiration: ${userInfo?.loginExpiration}`,
+                    disabled: true,
+                  },
+                ],
+              },
               {
                 id: "signout",
                 text: "Sign out",
