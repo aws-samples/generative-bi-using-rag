@@ -31,13 +31,13 @@ export default function CustomQuestions({
 
   const queries = showMoreQuestions
     ? questions
-    : questions.slice(0, Math.min(3, questions.length));
+    : questions?.slice(0, Math.min(3, questions.length));
   return (
     <div>
-      {!queries.length ? null : (
+      {!queries?.length ? null : (
         <SpaceBetween size={"xxs"}>
           <div className={styles.questions_grid}>
-            {queries.map((query, idx) => (
+            {queries?.map((query, idx) => (
               <Button
                 key={idx}
                 size="small"

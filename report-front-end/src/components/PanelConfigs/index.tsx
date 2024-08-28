@@ -243,7 +243,7 @@ const PanelConfigs = ({
                     }
                     setTopP(Number(detail.value));
                   }}
-                  controlId="topp-input"
+                  controlId="top-input"
                   step={0.001}
                 />
               </div>
@@ -379,4 +379,3 @@ function VerticalDivider() {
     />
   );
 }
-2;
