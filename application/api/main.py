@@ -5,6 +5,7 @@ import logging
 
 from nlq.business.log_store import LogManagement
 from nlq.business.profile import ProfileManagement
+from utils.tool import serialize_timestamp
 from .enum import ContentEnum
 from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest, HistorySessionRequest, \
     Message, HistoryMessage
@@ -226,5 +227,5 @@ async def response_websocket(websocket: WebSocket, session_id: str, content,
         "content": content,
     }
     logger.info(content_obj)
-    final_content = json.dumps(content_obj)
+    final_content = json.dumps(content_obj, default=serialize_timestamp)
     await websocket.send_text(final_content)

@@ -20,7 +20,7 @@ from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
 from utils.text_search import normal_text_search, agent_text_search
 from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
-    change_class_to_str
+    change_class_to_str, serialize_timestamp
 from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
     TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage, AskEntitySelect
 from .exception_handler import BizException
@@ -884,5 +884,5 @@ async def response_websocket(websocket: WebSocket, session_id: str, content,
         "content": content,
     }
     logger.info(content_obj)
-    final_content = json.dumps(content_obj)
+    final_content = json.dumps(content_obj, default=serialize_timestamp)
     await websocket.send_text(final_content)
