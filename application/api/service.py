@@ -10,6 +10,9 @@ from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from nlq.business.log_store import LogManagement
+from nlq.core.chat_context import ProcessingContext
+from nlq.core.state import QueryState
+from nlq.core.state_machine import QueryStateMachine
 from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
 from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
@@ -435,10 +438,14 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     entity_slot = []
 
     query_rewrite_result = {"intent": "original_problem", "query": search_box}
+
+    user_query_history = []
     if context_window > 0:
         user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id,
                                                                   session_id=session_id, size=context_window,
                                                                   log_type='chat_history')
+
+
         if len(user_query_history) >= 0:
             user_query_history.append("user:" + search_box)
             logger.info("The Chat history is {history}".format(history="\n".join(user_query_history)))
@@ -704,6 +711,104 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                                           log_info=agent_answer_info,
                                           log_type="chat_history",
                                           time_str=current_time)
+        user_query_history = []
+        previous_state = ""
+        processing_context = ProcessingContext(
+            search_box=search_box,
+            query_rewrite="",
+            session_id="",
+            user_id="",
+            selected_profile=selected_profile,
+            database_profile=database_profile,
+            model_type=model_type,
+            use_rag_flag=use_rag_flag,
+            intent_ner_recognition_flag=intent_ner_recognition_flag,
+            agent_cot_flag=agent_cot_flag,
+            explain_gen_process_flag=explain_gen_process_flag,
+            visualize_results_flag=True,
+            data_with_analyse=answer_with_insights,
+            gen_suggested_question_flag=gen_suggested_question_flag,
+            auto_correction_flag=True,
+            context_window=context_window,
+            entity_same_name_select={},
+            user_query_history=user_query_history,
+            opensearch_info=opensearch_info,
+            previous_state=previous_state)
+
+        state_machine = QueryStateMachine(processing_context)
+        while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
+            if state_machine.get_state() == QueryState.INITIAL:
+                state_machine.handle_initial()
+
+                if state_machine.get_answer().query_intent == "ask_in_reply":
+                    pass
+                    # to do log and response
+            elif state_machine.get_state() == QueryState.REJECT_INTENT:
+                state_machine.handle_reject_intent()
+            elif state_machine.get_state() == QueryState.KNOWLEDGE_SEARCH:
+                state_machine.handle_knowledge_search()
+            elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
+                await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start",
+                                         user_id)
+                state_machine.handle_entity_retrieval()
+                await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "end",
+                                         user_id)
+            elif state_machine.get_state() == QueryState.QA_RETRIEVAL:
+                await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start",
+                                         user_id)
+                state_machine.handle_qa_retrieval()
+                await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end",
+                                         user_id)
+            elif state_machine.get_state() == QueryState.SQL_GENERATION:
+                await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start", user_id)
+                state_machine.handle_sql_generation()
+                await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
+            elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
+                await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "start", user_id)
+                state_machine.handle_intent_recognition()
+                await response_websocket(websocket, session_id, "Query Intent Analyse", ContentEnum.STATE, "end", user_id)
+            elif state_machine.get_state() == QueryState.EXECUTE_QUERY:
+                await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "start",
+                                         user_id)
+                state_machine.handle_execute_query()
+                await response_websocket(websocket, session_id, "Database SQL Execution", ContentEnum.STATE, "end",
+                                         user_id)
+            elif state_machine.get_state() == QueryState.ANALYZE_DATA:
+                await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                         "start", user_id)
+                state_machine.handle_analyze_data()
+                await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                         "end", user_id)
+            elif state_machine.get_state() == QueryState.ASK_ENTITY_SELECT:
+                state_machine.handle_entity_selection()
+            elif state_machine.get_state() == QueryState.AGENT_TASK:
+                await response_websocket(websocket, session_id, "Agent Task Split", ContentEnum.STATE,
+                                         "start", user_id)
+                state_machine.handle_agent_task()
+                await response_websocket(websocket, session_id, "Agent Task Split", ContentEnum.STATE,
+                                         "end", user_id)
+            elif state_machine.get_state() == QueryState.AGENT_SEARCH:
+                await response_websocket(websocket, session_id, "Agent SQL Generating", ContentEnum.STATE,
+                                         "start", user_id)
+                state_machine.handle_agent_sql_generation()
+                await response_websocket(websocket, session_id, "Agent SQL Generating", ContentEnum.STATE,
+                                         "end", user_id)
+            elif state_machine.get_state() == QueryState.AGENT_DATA_SUMMARY:
+                await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                         "start", user_id)
+                state_machine.handle_agent_analyze_data()
+                await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                         "end", user_id)
+            else:
+                state_machine.state = QueryState.ERROR
+        if state_machine.get_state() == QueryState.COMPLETE:
+            state_machine.handle_data_visualization()
+        elif state_machine.get_state() == QueryState.ERROR:
+            pass
+
+        if processing_context.gen_suggested_question_flag:
+            if state_machine.search_intent_flag or state_machine.agent_intent_flag:
+                state_machine.handle_suggest_question()
         return answer
 
 

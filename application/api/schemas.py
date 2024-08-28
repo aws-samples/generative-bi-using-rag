@@ -21,6 +21,9 @@ class Question(BaseModel):
     session_id: str = "-1"
     user_id: str = "admin"
     username: str = ''
+    previous_intent: str = ""
+    entity_user_select: list = []
+    entity_retrieval: list = []
 
 
 class Example(BaseModel):
@@ -100,7 +103,8 @@ class AskReplayResult(BaseModel):
 
 class AskEntitySelect(BaseModel):
     entity_select: str
-    entity_info: dict[str, Any]
+    entity_select_info: dict[str, Any]
+    entity_retrieval: list[Any]
 
 
 class Answer(BaseModel):

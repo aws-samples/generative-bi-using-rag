@@ -6,13 +6,13 @@ import logging
 import pandas as pd
 
 from api.schemas import Answer, KnowledgeSearchResult, SQLSearchResult, AgentSearchResult, AskReplayResult, \
-    AskEntitySelect
+    AskEntitySelect, ChartEntity
 from nlq.business.datasource.factory import DataSourceFactory
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from utils.apis import get_sql_result_tool
 from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, text_to_sql, data_analyse_tool, \
-    generate_suggested_question, get_agent_cot_task
+    generate_suggested_question, get_agent_cot_task, data_visualization
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search
 from utils.tool import get_generated_sql, get_generated_sql_explain
@@ -45,7 +45,7 @@ class QueryStateMachine:
             sql_search_result=SQLSearchResult(
                 sql="",
                 sql_data=[],
-                data_show_type="",
+                data_show_type="table",
                 sql_gen_process="",
                 data_analyse="",
                 sql_data_chart=[]
@@ -131,6 +131,10 @@ class QueryStateMachine:
                 self.handle_agent_analyze_data()
             else:
                 self.state = QueryState.ERROR
+        if self.state == QueryState.COMPLETE:
+            self.handle_data_visualization()
+        if self.context.gen_suggested_question_flag:
+            self.handle_suggest_question()
 
     @log_execution
     def handle_initial(self):
@@ -175,7 +179,8 @@ class QueryStateMachine:
                     same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
             if len(same_name_entity) > 0:
                 if self.context.previous_state != "ASK_ENTITY_SELECT":
-                    self.answer.ask_entity_select.entity_info = same_name_entity
+                    self.answer.ask_entity_select.entity_select_info = same_name_entity
+                    self.answer.ask_entity_select.entity_retrieval = []
                     self.transition(QueryState.ASK_ENTITY_SELECT)
                 else:
                     self.transition(QueryState.QA_RETRIEVAL)
@@ -223,11 +228,11 @@ class QueryStateMachine:
 
     def _apply_row_level_security_for_sql(self, sql):
         post_sql = DataSourceFactory.apply_row_level_security_for_sql(
-                        self.context.database_profile['db_type'],
-                        sql,
-                        self.context.database_profile['row_level_security_config'],
-                        self.context.user_id
-                    )
+            self.context.database_profile['db_type'],
+            sql,
+            self.context.database_profile['row_level_security_config'],
+            self.context.user_id
+        )
         return post_sql
 
     def _generate_sql(self):
@@ -452,11 +457,20 @@ class QueryStateMachine:
                         orient='records')
                     filter_deep_dive_sql_result.append(self.agent_search_result[i])
 
+                    show_select_data = [list(each_task_res["data"].columns)] + each_task_res["data"].values.tolist()
+                    each_task_sql_response = get_generated_sql_explain(self.agent_search_result[i]["response"])
+                    sub_task_sql_result = SQLSearchResult(sql_data=show_select_data, sql=self.agent_search_result[i]["sql"],
+                                                          data_show_type="table",
+                                                          sql_gen_process=each_task_sql_response,
+                                                          data_analyse="", sql_data_chart=[])
+
             agent_data_analyse_result = data_analyse_tool(self.context.model_type,
                                                           self.context.database_profile["prompt_map"],
                                                           self.context.query_rewrite,
                                                           json.dumps(filter_deep_dive_sql_result,
                                                                      ensure_ascii=False), "agent")
+
+
             self.agent_valid_data = filter_deep_dive_sql_result
             self.agent_data_analyse_result = agent_data_analyse_result
             self.answer.agent_search_result.agent_summary = agent_data_analyse_result
@@ -482,3 +496,24 @@ class QueryStateMachine:
     def delete_error_log_entry(self, key):
         if key in self.error_log:
             del self.error_log[key]
+
+    def handle_data_visualization(self):
+        if self.answer.query_intent == "normal_search":
+            model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(
+                self.context.model_type,
+                self.context.query_rewrite,
+                self.get_answer().sql_search_result.sql_data,
+                self.context.database_profile['prompt_map'])
+            if select_chart_type != "-1":
+                sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                sql_chart_data.chart_type = select_chart_type
+                sql_chart_data.chart_data = show_chart_data
+                self.get_answer().sql_search_result.sql_data_chart = [sql_chart_data]
+            self.get_answer().sql_search_result.data_show_type = select_chart_type
+            self.get_answer().sql_search_result.sql_data = show_select_data
+        elif self.answer.query_intent == "agent_search":
+            pass
+
+
+    def handle_add_to_log(self):
+        pass

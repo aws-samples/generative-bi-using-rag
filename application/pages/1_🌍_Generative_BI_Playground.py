@@ -417,12 +417,12 @@ def main():
                                                key="upvote",
                                                use_container_width=True,
                                                on_click=upvote_clicked,
-                                               args=[search_box,
+                                               args=[state_machine.get_answer().query_rewrite,
                                                      sql])
                             feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
                                                key="downvote",
                                                on_click=downvote_clicked,
-                                               args=[search_box, sql])
+                                               args=[state_machine.get_answer().query_rewrite, sql])
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
@@ -458,12 +458,12 @@ def main():
                                                    key="upvote_again",
                                                    use_container_width=True,
                                                    on_click=upvote_clicked,
-                                                   args=[search_box,
+                                                   args=[state_machine.get_answer().query_rewrite,
                                                          sql])
                                 feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
                                                    key="downcote_again",
                                                    on_click=downvote_clicked,
-                                                   args=[search_box, sql])
+                                                   args=[state_machine.get_answer().query_rewrite, sql])
                                 status_text.update(
                                     label=f"Generating SQL Done",
                                     state="complete", expanded=True)
