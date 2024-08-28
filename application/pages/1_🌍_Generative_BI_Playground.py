@@ -357,7 +357,7 @@ def main():
                     previous_state=previous_state)
                 st.session_state.previous_state[selected_profile] = "INITIAL"
                 state_machine = QueryStateMachine(processing_context)
-                while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
+                while state_machine.get_state() != QueryState.COMPLETE or state_machine.get_state() != QueryState.ERROR:
                     if state_machine.get_state() == QueryState.INITIAL:
                         with st.status("Query Context Understanding") as status_text:
                             state_machine.handle_initial()

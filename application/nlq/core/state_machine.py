@@ -146,7 +146,7 @@ class QueryStateMachine:
                 self.transition(QueryState.INTENT_RECOGNITION)
         except Exception as e:
             self.error_log[QueryState.INITIAL.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_initial encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_initial encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     def _handle_query_rewrite(self):
@@ -188,7 +188,7 @@ class QueryStateMachine:
                 self.transition(QueryState.QA_RETRIEVAL)
         except Exception as e:
             self.error_log[QueryState.ENTITY_RETRIEVAL.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_entity_retrieval encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_entity_retrieval encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     def _perform_entity_retrieval(self):
@@ -204,7 +204,7 @@ class QueryStateMachine:
             self.transition(QueryState.SQL_GENERATION)
         except Exception as e:
             self.error_log[QueryState.QA_RETRIEVAL.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_qa_retrieval encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_qa_retrieval encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     def _perform_qa_retrieval(self):
@@ -248,7 +248,7 @@ class QueryStateMachine:
             return post_sql, response, sql
         except Exception as e:
             self.error_log[QueryState.SQL_GENERATION.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, _generate_sql encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, _generate_sql encountered an error: {e}")
             return "", "", ""
 
     def _generate_sql_again(self):
@@ -271,7 +271,7 @@ class QueryStateMachine:
             return post_sql, response, sql
         except Exception as e:
             self.error_log[QueryState.SQL_GENERATION.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, _generate_sql encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, _generate_sql encountered an error: {e}")
             return "", "", ""
 
     @log_execution
@@ -298,7 +298,7 @@ class QueryStateMachine:
             self._transition_based_on_intent()
         except Exception as e:
             self.error_log[QueryState.INTENT_RECOGNITION.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_intent_recognition encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_intent_recognition encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     def _process_intent_response(self, intent_response):
@@ -404,7 +404,7 @@ class QueryStateMachine:
                 self.transition(QueryState.ERROR)
         except Exception as e:
             self.error_log[QueryState.EXECUTE_QUERY.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_execute_query encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_execute_query encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     def _execute_sql(self, sql):
@@ -427,7 +427,7 @@ class QueryStateMachine:
             self.transition(QueryState.COMPLETE)
         except Exception as e:
             self.error_log[QueryState.ANALYZE_DATA.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_analyze_data encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_analyze_data encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     @log_execution
@@ -478,7 +478,7 @@ class QueryStateMachine:
             self.transition(QueryState.COMPLETE)
         except Exception as e:
             self.error_log[QueryState.AGENT_DATA_SUMMARY.name] = str(e)
-            logger.error(f"The context: {self.context.__dict__}, handle_agent_analyze_data encountered an error: {e}")
+            logger.error(f"The context: {self.context.__dict__.get("search_box")}, handle_agent_analyze_data encountered an error: {e}")
             self.transition(QueryState.ERROR)
 
     @log_execution
