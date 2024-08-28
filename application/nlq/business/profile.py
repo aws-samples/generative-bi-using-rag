@@ -53,7 +53,7 @@ class ProfileManagement:
 
     @classmethod
     def update_prompt_map(cls, profile_name, prompt_map):
-        profile_info = ProfileManagement.get_profile_by_name()
+        profile_info = ProfileManagement.get_profile_by_name(profile_name)
         entity = ProfileConfigEntity(profile_name, profile_info.conn_name, profile_info.schemas, profile_info.tables, profile_info.comments,
                                      tables_info=profile_info.tables_info, prompt_map=prompt_map,
                                      db_type=profile_info.db_type,
