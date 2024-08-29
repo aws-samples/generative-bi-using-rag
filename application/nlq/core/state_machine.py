@@ -61,7 +61,7 @@ class QueryStateMachine:
             suggested_question=[],
             ask_entity_select=AskEntitySelect(
                 entity_select="",
-                entity_info={},
+                entity_select_info={},
                 entity_retrieval=[]
             ),
             error_log={}
