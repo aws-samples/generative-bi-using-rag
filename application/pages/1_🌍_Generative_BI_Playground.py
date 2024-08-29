@@ -359,7 +359,7 @@ def main():
                     previous_state=previous_state)
                 st.session_state.previous_state[selected_profile] = "INITIAL"
                 state_machine = QueryStateMachine(processing_context)
-                while state_machine.get_state() != QueryState.COMPLETE or state_machine.get_state() != QueryState.ERROR:
+                while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
                     if state_machine.get_state() == QueryState.INITIAL:
                         with st.status("Query Context Understanding") as status_text:
                             state_machine.handle_initial()
@@ -530,15 +530,18 @@ def main():
                                 {"role": "assistant", "content": state_machine.get_answer().agent_search_result.agent_summary, "type": "text"})
                     else:
                         state_machine.state = QueryState.ERROR
+
+                logger.info(f'{state_machine.get_state()}')
+                logger.info("state_machine is done")
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
-                            st.session_state.current_sql_result = \
-                                state_machine.intent_search_result["sql_execute_result"]["data"]
-                            do_visualize_results()
+                            st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]["data"]
+                            if visualize_results_flag:
+                                do_visualize_results()
                 elif state_machine.get_state() == QueryState.ERROR:
                     with st.status("The Error Info Please Check") as status_text:
-                        st.write(state_machine.error_log)
+                        st.write(state_machine.get_answer().error_log)
                     status_text.update(label=f"The Error Info Please Check",
                                        state="error", expanded=False)
 
