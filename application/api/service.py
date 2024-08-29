@@ -529,16 +529,21 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         return answer
 
     else:
+        await response_websocket(websocket, session_id, "Agent Retrieve", ContentEnum.STATE, "start", user_id)
+
         agent_cot_retrieve = get_retrieve_opensearch(opensearch_info, query_rewrite, "agent",
                                                      selected_profile, 2, 0.5)
         agent_cot_task_result = get_agent_cot_task(model_type, prompt_map, query_rewrite,
                                                    database_profile['tables_info'],
                                                    agent_cot_retrieve)
+        await response_websocket(websocket, session_id, "Agent Retrieve", ContentEnum.STATE, "end", user_id)
 
+        await response_websocket(websocket, session_id, "Agent SQL Generated", ContentEnum.STATE, "start", user_id)
         agent_search_result = agent_text_search(query_rewrite, model_type,
                                                 database_profile,
                                                 entity_slot, opensearch_info,
                                                 selected_profile, use_rag_flag, agent_cot_task_result)
+        await response_websocket(websocket, session_id, "Agent SQL Generated", ContentEnum.STATE, "end", user_id)
 
     if gen_suggested_question_flag and (search_intent_flag or agent_intent_flag):
         active_prompt = sqm.get_prompt_by_name(ACTIVE_PROMPT_NAME).prompt
@@ -623,14 +628,6 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                 sql_search_result.sql_data = show_select_data
                 sql_search_result.data_show_type = model_select_type
 
-        log_info = str(search_intent_result["error_info"]) + ";" + sql_search_result.data_analyse
-        LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
-                                          profile_name=selected_profile, sql=sql_search_result.sql,
-                                          query=search_box,
-                                          intent="normal_search",
-                                          log_info=log_info,
-                                          log_type="normal_log",
-                                          time_str=current_time)
         answer = Answer(query=search_box, query_rewrite=query_rewrite, query_intent="normal_search", knowledge_search_result=knowledge_search_result,
                         sql_search_result=sql_search_result, agent_search_result=agent_search_response,
                         suggested_question=generate_suggested_question_list, ask_rewrite_result=ask_result, ask_entity_select=ask_entity_select)
@@ -645,6 +642,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         return answer
     else:
         sub_search_task = []
+
         for i in range(len(agent_search_result)):
             each_task_res = get_sql_result_tool(database_profile, agent_search_result[i]["sql"])
             if each_task_res["status_code"] == 200 and len(each_task_res["data"]) > 0:
@@ -679,18 +677,17 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
                 sub_search_task.append(agent_search_result[i]["query"])
                 log_info = ""
-            else:
-                log_info = agent_search_result[i]["query"] + "The SQL error Info: "
-            log_id = generate_log_id()
-            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
-                                              profile_name=selected_profile, sql=each_task_res["sql"],
-                                              query=search_box + "; The sub task is " + agent_search_result[i]["query"],
-                                              intent="agent_search",
-                                              log_info=log_info,
-                                              time_str=current_time)
+
+
+        await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                 "start", user_id)
         agent_data_analyse_result = data_analyse_tool(model_type, prompt_map, query_rewrite,
                                                       json.dumps(filter_deep_dive_sql_result, ensure_ascii=False),
                                                       "agent")
+
+        await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                 "end", user_id)
+
         logger.info("agent_data_analyse_result")
         logger.info(agent_data_analyse_result)
         agent_search_response.agent_summary = agent_data_analyse_result
