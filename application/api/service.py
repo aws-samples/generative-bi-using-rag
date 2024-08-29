@@ -266,15 +266,15 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         else:
             state_machine.state = QueryState.ERROR
 
-        if processing_context.gen_suggested_question_flag:
-            if state_machine.search_intent_flag or state_machine.agent_intent_flag:
-                state_machine.handle_suggest_question()
+    if processing_context.gen_suggested_question_flag:
+        if state_machine.search_intent_flag or state_machine.agent_intent_flag:
+            state_machine.handle_suggest_question()
 
-        if state_machine.get_state() == QueryState.COMPLETE:
-            state_machine.handle_data_visualization()
-            state_machine.handle_add_to_log(log_id=log_id)
+    if state_machine.get_state() == QueryState.COMPLETE:
+        state_machine.handle_data_visualization()
+        state_machine.handle_add_to_log(log_id=log_id)
 
-        return state_machine.get_answer()
+    return state_machine.get_answer()
 
 
 def user_feedback_upvote(data_profiles: str, user_id: str, session_id: str, query: str, query_intent: str,

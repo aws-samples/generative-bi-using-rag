@@ -135,6 +135,7 @@ class QueryStateMachine:
                 self.handle_user_select_entity()
             else:
                 self.state = QueryState.ERROR
+
         if self.state == QueryState.COMPLETE:
             self.handle_data_visualization()
         if self.context.gen_suggested_question_flag:
