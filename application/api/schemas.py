@@ -103,7 +103,6 @@ class AskReplayResult(BaseModel):
 
 
 class AskEntitySelect(BaseModel):
-    entity_select: str
     entity_select_info: dict[str, Any]
     entity_retrieval: list[Any]
 

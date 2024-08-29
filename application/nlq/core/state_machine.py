@@ -60,7 +60,6 @@ class QueryStateMachine:
             ),
             suggested_question=[],
             ask_entity_select=AskEntitySelect(
-                entity_select="",
                 entity_select_info={},
                 entity_retrieval=[]
             ),
@@ -387,7 +386,6 @@ class QueryStateMachine:
                     index = index + 1
             entity_select_format += entity_desc
         self.answer.query_intent = "entity_select"
-        self.answer.ask_entity_select.entity_select = entity_select_format
         self.transition(QueryState.COMPLETE)
 
     @log_execution
