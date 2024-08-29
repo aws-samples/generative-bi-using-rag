@@ -80,7 +80,7 @@ def main():
         st.session_state['current_model'] = None
 
     if "samaker_model" not in st.session_state:
-        st.session_state.samaker_model = []
+        st.session_state.samaker_model = ModelManagement.get_all_models()
 
     with st.sidebar:
         st.title("SageMaker Model Management")

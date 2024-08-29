@@ -21,6 +21,10 @@ class Question(BaseModel):
     session_id: str = "-1"
     user_id: str = "admin"
     username: str = ''
+    query_rewrite: str = ""
+    previous_intent: str = ""
+    entity_user_select: list = []
+    entity_retrieval: list = []
 
 
 class Example(BaseModel):
@@ -99,8 +103,8 @@ class AskReplayResult(BaseModel):
 
 
 class AskEntitySelect(BaseModel):
-    entity_select: str
-    entity_info: dict[str, Any]
+    entity_select_info: dict[str, Any]
+    entity_retrieval: list[Any]
 
 
 class Answer(BaseModel):
@@ -113,6 +117,7 @@ class Answer(BaseModel):
     ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
     ask_entity_select: AskEntitySelect
+    error_log: dict[str, Any]
 
 
 class Message(BaseModel):

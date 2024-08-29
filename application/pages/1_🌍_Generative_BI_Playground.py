@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import logging
 from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
+from nlq.business.model import ModelManagement
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from nlq.core.chat_context import ProcessingContext
@@ -202,7 +203,8 @@ def main():
         st.session_state.previous_state = {}
 
     if "samaker_model" not in st.session_state:
-        st.session_state.samaker_model = []
+        st.session_state.samaker_model = ModelManagement.get_all_models()
+
 
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                  'anthropic.claude-3-opus-20240229-v1:0',
@@ -417,12 +419,12 @@ def main():
                                                key="upvote",
                                                use_container_width=True,
                                                on_click=upvote_clicked,
-                                               args=[search_box,
+                                               args=[state_machine.get_answer().query_rewrite,
                                                      sql])
                             feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
                                                key="downvote",
                                                on_click=downvote_clicked,
-                                               args=[search_box, sql])
+                                               args=[state_machine.get_answer().query_rewrite, sql])
                             status_text.update(
                                 label=f"Generating SQL Done",
                                 state="complete", expanded=True)
@@ -458,12 +460,12 @@ def main():
                                                    key="upvote_again",
                                                    use_container_width=True,
                                                    on_click=upvote_clicked,
-                                                   args=[search_box,
+                                                   args=[state_machine.get_answer().query_rewrite,
                                                          sql])
                                 feedback[1].button('👎 Downvote', type='secondary', use_container_width=True,
                                                    key="downcote_again",
                                                    on_click=downvote_clicked,
-                                                   args=[search_box, sql])
+                                                   args=[state_machine.get_answer().query_rewrite, sql])
                                 status_text.update(
                                     label=f"Generating SQL Done",
                                     state="complete", expanded=True)
@@ -528,15 +530,18 @@ def main():
                                 {"role": "assistant", "content": state_machine.get_answer().agent_search_result.agent_summary, "type": "text"})
                     else:
                         state_machine.state = QueryState.ERROR
+
+                logger.info(f'{state_machine.get_state()}')
+                logger.info("state_machine is done")
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
-                            st.session_state.current_sql_result = \
-                                state_machine.intent_search_result["sql_execute_result"]["data"]
-                            do_visualize_results()
+                            st.session_state.current_sql_result = state_machine.intent_search_result["sql_execute_result"]["data"]
+                            if visualize_results_flag:
+                                do_visualize_results()
                 elif state_machine.get_state() == QueryState.ERROR:
                     with st.status("The Error Info Please Check") as status_text:
-                        st.write(state_machine.error_log)
+                        st.write(state_machine.get_answer().error_log)
                     status_text.update(label=f"The Error Info Please Check",
                                        state="error", expanded=False)
 
