@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Union
 from dotenv import load_dotenv
 
@@ -13,22 +12,16 @@ from nlq.business.log_store import LogManagement
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from nlq.core.state_machine import QueryStateMachine
-from utils.apis import get_sql_result_tool
 from utils.database import get_db_url_dialect
-from nlq.business.suggested_question import SuggestedQuestionManagement as sqm
 from utils.domain import SearchTextSqlResult
-from utils.llm import text_to_sql, get_query_intent, knowledge_search, get_agent_cot_task, \
-    data_analyse_tool, generate_suggested_question, data_visualization, get_query_rewrite
+from utils.llm import text_to_sql, get_query_intent
 from utils.logging import getLogger
 from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
-from utils.text_search import normal_text_search, agent_text_search
-from utils.tool import generate_log_id, get_current_time, get_generated_sql_explain, get_generated_sql, \
-    change_class_to_str, serialize_timestamp
-from .schemas import Question, Answer, Example, Option, SQLSearchResult, AgentSearchResult, KnowledgeSearchResult, \
-    TaskSQLSearchResult, ChartEntity, AskReplayResult, ChatHistory, Message, HistoryMessage, AskEntitySelect
+from utils.tool import generate_log_id, get_current_time, get_generated_sql, serialize_timestamp
+from .schemas import Question, Example, Option,  Message, HistoryMessage
 from .exception_handler import BizException
-from utils.constant import BEDROCK_MODEL_IDS, ACTIVE_PROMPT_NAME
+from utils.constant import BEDROCK_MODEL_IDS
 from .enum import ErrorEnum, ContentEnum
 from fastapi import WebSocket
 

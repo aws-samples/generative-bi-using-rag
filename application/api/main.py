@@ -1,13 +1,13 @@
 import json
 import traceback
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
-import logging
 
 from nlq.business.log_store import LogManagement
 from nlq.business.profile import ProfileManagement
+from utils.logging import getLogger
 from utils.tool import serialize_timestamp
 from .enum import ContentEnum
-from .schemas import Question, Answer, Option, CustomQuestion, FeedBackInput, HistoryRequest, HistorySessionRequest, \
+from .schemas import Question, Option, CustomQuestion, FeedBackInput, HistoryRequest, HistorySessionRequest, \
     Message, HistoryMessage
 from . import service
 from nlq.business.nlq_chain import NLQChain
@@ -17,7 +17,7 @@ from utils.auth import authenticate, skipAuthentication
 
 from .service import ask_websocket
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 router = APIRouter(prefix="/qa", tags=["qa"])
 load_dotenv()
 
@@ -54,20 +54,24 @@ def get_sessions(history_request: HistoryRequest):
 
 @router.post("/get_history_by_session")
 def get_history_by_session(history_request: HistorySessionRequest):
-    user_id = history_request.user_id
-    history_list = LogManagement.get_all_history_by_session(profile_name=history_request.profile_name, user_id=user_id,
-                                                            session_id=history_request.session_id,
-                                                            size=1000, log_type=history_request.log_type)
-    chat_history = format_chat_history(history_list, history_request.log_type)
-    empty_history = {
-        "session_id": history_request.session_id,
-        "messages": [],
-        "title": ""
-    }
-    if len(chat_history) > 0:
-        return chat_history[0]
-    else:
-        return empty_history
+    try:
+        user_id = history_request.user_id
+        history_list = LogManagement.get_all_history_by_session(profile_name=history_request.profile_name, user_id=user_id,
+                                                                session_id=history_request.session_id,
+                                                                size=1000, log_type=history_request.log_type)
+        chat_history = format_chat_history(history_list, history_request.log_type)
+        empty_history = {
+            "session_id": history_request.session_id,
+            "messages": [],
+            "title": ""
+        }
+        if len(chat_history) > 0:
+            return chat_history[0]
+        else:
+            return empty_history
+    except Exception as e:
+        logger.error(f"get_history_by_session error: {e}")
+        return {"session_id": history_request.session_id, "messages": [], "title": ""}
 
 
 @router.post("/delete_history_by_session")
@@ -123,7 +127,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            print('---WEBSOCKET MESSAGE---', data)
+            # print('---WEBSOCKET MESSAGE---', data)
             question_json = json.loads(data)
             question = Question(**question_json)
             session_id = question.session_id
@@ -151,6 +155,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await response_websocket(websocket, session_id, answer, ContentEnum.END)
             else:
                 try:
+                    logger.info(f'{question=}')
                     ask_result = await ask_websocket(websocket, question)
                     logger.info(ask_result)
                     answer = ask_result.dict()

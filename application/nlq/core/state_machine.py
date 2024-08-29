@@ -144,6 +144,9 @@ class QueryStateMachine:
     @log_execution
     def handle_initial(self):
         try:
+            self.answer.query = self.context.search_box
+            self.answer.query_rewrite = self.context.search_box
+            self.answer.query_intent = "normal_search"
             if self.context.context_window > 0:
                 self._handle_query_rewrite()
             else:
