@@ -17,5 +17,7 @@ class QueryState(Enum):
     AGENT_DATA_SUMMARY = auto()
     ASK_ENTITY_SELECT = auto()
     ASK_QUERY_REWRITE = auto()
+    QUERY_REWRITE = auto()
+    USER_SELECT_ENTITY = auto()
     ERROR = auto()
     COMPLETE = auto()

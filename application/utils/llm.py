@@ -300,12 +300,15 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
             response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
         elif model_id.startswith('sagemaker.'):
             model_config = ModelManagement.get_model_by_id(model_id)
-            prompt_template = model_config['prompt_template']
-            input_payload = model_config['input_payload']
+
+            prompt_template = model_config.prompt_template
+            input_payload = model_config.input_payload
+
             prompt = prompt_template.replace("SYSTEM_PROMPT", system_prompt).replace("USER_PROMPT", user_prompt)
-            input_payload = input_payload.replace("INPUT", prompt)
-            logger.info(f'{input_payload=}')
-            body = json.loads(input_payload)
+            input_payload = json.loads(input_payload)
+            input_payload_text = json.dumps(input_payload, ensure_ascii=False)
+            body = input_payload_text.replace("\"INPUT\"", json.dumps(prompt,  ensure_ascii=False))
+            logger.info(f'{body=}')
             endpoint_name = model_id[len('sagemaker.'):]
             response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream)
         if with_response_stream:
@@ -314,7 +317,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
             if model_id.startswith('meta.llama3-70b'):
                 return response["generation"]
             elif model_id.startswith('sagemaker.'):
-                output_format = model_config['output_format']
+                output_format = model_config.output_format
                 response = eval(output_format)
                 return response
             else:
@@ -366,31 +369,25 @@ def data_analyse_tool(model_id, prompt_map, search_box, sql_data, search_type):
 
 def get_query_intent(model_id, search_box, prompt_map):
     default_intent = {"intent": "normal_search"}
-    try:
-        user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
-        max_tokens = 2048
-        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
-        logger.info(f'{final_response=}')
-        intent_result_dict = json_parse.parse(final_response)
-        return intent_result_dict
-    except Exception as e:
-        logger.error("get_query_intent is error:{}".format(e))
-        return default_intent
+
+    user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
+    max_tokens = 2048
+    final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    logger.info(f'{final_response=}')
+    intent_result_dict = json_parse.parse(final_response)
+    return intent_result_dict
 
 
 def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
     query_rewrite = {"intent": "original_problem", "query": search_box}
     history_query = "\n".join(chat_history)
-    try:
-        user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
-        max_tokens = 2048
-        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
-        query_rewrite_result = json_parse.parse(final_response)
-        logger.info(f'{final_response=}')
-        return query_rewrite_result
-    except Exception as e:
-        logger.error("get_query_rewrite is error:{}".format(e))
-        return query_rewrite
+    user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
+    max_tokens = 2048
+    final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    logger.info(f'{final_response=}')
+    query_rewrite_result = json_parse.parse(final_response)
+    return query_rewrite_result
+
 
 
 def knowledge_search(model_id, search_box, prompt_map):

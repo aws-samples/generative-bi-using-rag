@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import logging
 from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
+from nlq.business.model import ModelManagement
 from nlq.business.profile import ProfileManagement
 from nlq.business.vector_store import VectorStore
 from nlq.core.chat_context import ProcessingContext
@@ -202,7 +203,8 @@ def main():
         st.session_state.previous_state = {}
 
     if "samaker_model" not in st.session_state:
-        st.session_state.samaker_model = []
+        st.session_state.samaker_model = ModelManagement.get_all_models()
+
 
     model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                  'anthropic.claude-3-opus-20240229-v1:0',

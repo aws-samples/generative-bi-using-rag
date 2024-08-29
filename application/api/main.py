@@ -39,11 +39,6 @@ def get_custom_question(data_profile: str):
     return custom_question
 
 
-@router.post("/ask", response_model=Answer)
-def ask(question: Question):
-    return service.ask(question)
-
-
 @router.post("/get_history_by_user_profile")
 def get_history_by_user_profile(history_request: HistoryRequest):
     user_id = history_request.user_id
