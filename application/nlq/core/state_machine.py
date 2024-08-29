@@ -514,21 +514,27 @@ class QueryStateMachine:
             del self.answer.error_log[key]
 
     def handle_data_visualization(self):
-        if self.answer.query_intent == "normal_search":
-            model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(
-                self.context.model_type,
-                self.context.query_rewrite,
-                self.get_answer().sql_search_result.sql_data,
-                self.context.database_profile['prompt_map'])
-            if select_chart_type != "-1":
-                sql_chart_data = ChartEntity(chart_type="", chart_data=[])
-                sql_chart_data.chart_type = select_chart_type
-                sql_chart_data.chart_data = show_chart_data
-                self.get_answer().sql_search_result.sql_data_chart = [sql_chart_data]
-            self.get_answer().sql_search_result.data_show_type = select_chart_type
-            self.get_answer().sql_search_result.sql_data = show_select_data
-        elif self.answer.query_intent == "agent_search":
-            pass
+        try:
+            if self.answer.query_intent == "normal_search":
+                model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(
+                    self.context.model_type,
+                    self.context.query_rewrite,
+                    self.get_answer().sql_search_result.sql_data,
+                    self.context.database_profile['prompt_map'])
+                if select_chart_type != "-1":
+                    sql_chart_data = ChartEntity(chart_type="", chart_data=[])
+                    sql_chart_data.chart_type = select_chart_type
+                    sql_chart_data.chart_data = show_chart_data
+                    self.get_answer().sql_search_result.sql_data_chart = [sql_chart_data]
+                self.get_answer().sql_search_result.data_show_type = model_select_type
+                self.get_answer().sql_search_result.sql_data = show_select_data
+            elif self.answer.query_intent == "agent_search":
+                pass
+        except Exception as e:
+            self.answer.error_log[QueryState.DATA_VISUALIZATION.name] = str(e)
+            logger.error(
+                f"The context is {self.context.search_box}, handle_data_visualization encountered an error: {e}")
+            self.transition(QueryState.ERROR)
 
     def handle_user_select_entity(self):
         try:

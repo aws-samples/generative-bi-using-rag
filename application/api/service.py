@@ -271,7 +271,11 @@ async def ask_websocket(websocket: WebSocket, question: Question):
             state_machine.handle_suggest_question()
 
     if state_machine.get_state() == QueryState.COMPLETE:
+        await response_websocket(websocket, session_id, "Data Visualization", ContentEnum.STATE,
+                                 "start", user_id)
         state_machine.handle_data_visualization()
+        await response_websocket(websocket, session_id, "Data Visualization", ContentEnum.STATE,
+                                 "end", user_id)
         state_machine.handle_add_to_log(log_id=log_id)
 
     return state_machine.get_answer()
