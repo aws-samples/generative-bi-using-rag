@@ -553,9 +553,16 @@ class QueryStateMachine:
             self.answer.query_rewrite = self.context.query_rewrite
             self.answer.query_intent = "normal_search"
 
-            self.normal_search_entity_slot = []
-
-
+            normal_search_entity_slot = self.context.entity_retrieval
+            entity_user_select = self.context.entity_user_select
+            entity_retrieval = []
+            for each_entity in normal_search_entity_slot:
+                entity = each_entity["_source"]["entity"]
+                if entity in entity_user_select:
+                    each_entity["_source"]["entity_table_info"] = [entity_user_select[entity]]
+                    entity_retrieval.append(each_entity)
+            self.normal_search_entity_slot = entity_retrieval
+            logger.info(entity_retrieval)
             self.transition(QueryState.QA_RETRIEVAL)
         except Exception as e:
             self.answer.error_log[QueryState.USER_SELECT_ENTITY.name] = str(e)
