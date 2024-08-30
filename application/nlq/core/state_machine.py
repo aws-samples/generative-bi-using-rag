@@ -100,7 +100,7 @@ class QueryStateMachine:
             return QueryState.USER_SELECT_ENTITY
 
     def run(self):
-        if self.context.previous_state == QueryState.USER_SELECT_ENTITY:
+        if self.previous_state == QueryState.USER_SELECT_ENTITY:
             self.transition(QueryState.USER_SELECT_ENTITY)
 
         while self.state != QueryState.COMPLETE and self.state != QueryState.ERROR:
