@@ -23,7 +23,7 @@ class Question(BaseModel):
     username: str = ''
     query_rewrite: str = ""
     previous_intent: str = ""
-    entity_user_select: list = []
+    entity_user_select: dict = {}
     entity_retrieval: list = []
 
 

@@ -185,6 +185,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         previous_state=previous_state)
 
     state_machine = QueryStateMachine(processing_context)
+    if state_machine.context.previous_state == QueryState.USER_SELECT_ENTITY:
+        state_machine.transition(QueryState.COMPLETE)
     while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
         if state_machine.get_state() == QueryState.INITIAL:
             await response_websocket(websocket, session_id, "Query Rewrite", ContentEnum.STATE, "start",
@@ -255,6 +257,12 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                                      "start", user_id)
             state_machine.handle_agent_analyze_data()
             await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
+                                     "end", user_id)
+        elif state_machine.get_state() == QueryState.USER_SELECT_ENTITY:
+            await response_websocket(websocket, session_id, "User Entity Select", ContentEnum.STATE,
+                                     "start", user_id)
+            state_machine.handle_user_select_entity()
+            await response_websocket(websocket, session_id, "User Entity Select", ContentEnum.STATE,
                                      "end", user_id)
         else:
             state_machine.state = QueryState.ERROR

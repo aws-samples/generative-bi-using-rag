@@ -96,12 +96,12 @@ class QueryStateMachine:
     def get_state_from_name(self, state_name):
         if state_name == QueryState.INITIAL.name:
             return QueryState.INITIAL
-        elif state_name == QueryState.ASK_ENTITY_SELECT:
-            return QueryState.ASK_ENTITY_SELECT
+        elif state_name == "entity_select":
+            return QueryState.USER_SELECT_ENTITY
 
     def run(self):
-        if self.context.previous_state == QueryState.ASK_ENTITY_SELECT.name:
-            self.transition(QueryState.COMPLETE)
+        if self.context.previous_state == QueryState.USER_SELECT_ENTITY:
+            self.transition(QueryState.USER_SELECT_ENTITY)
 
         while self.state != QueryState.COMPLETE and self.state != QueryState.ERROR:
             if self.state == QueryState.INITIAL:
@@ -197,6 +197,16 @@ class QueryStateMachine:
                 if each_entity['_source']['entity_count'] > 1 and each_entity['_score'] > 0.98:
                     same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
             if len(same_name_entity) > 0 and self.answer.query_intent == "normal_search":
+                for key, value in same_name_entity.items():
+                    change_value = []
+                    for each_value in value:
+                        new_each_value = each_value
+                        new_each_value["id"] = new_each_value["table_name"] + "#" + new_each_value["column_name"] + "#" + new_each_value["value"]
+                        new_each_value["text"] = "实体名称：" + key + ", 数据表：" + each_value["table_name"] + "，" + "列名是：" + each_value[
+                        "column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
+                        change_value.append(new_each_value)
+                    same_name_entity[key] = change_value
+
                 self.answer.ask_entity_select.entity_select_info = same_name_entity
                 self.answer.ask_entity_select.entity_retrieval = entity_retrieve
                 self.transition(QueryState.ASK_ENTITY_SELECT)
@@ -374,8 +384,8 @@ class QueryStateMachine:
         entity_select_format = "根据您的描述，检索到多个相同名称的实体，请选择您想要查询的实体。\n"
         alphabet_list = list(string.ascii_uppercase)
         index = 0
-        for entity in self.answer.ask_entity_select.entity_info:
-            entity_value = self.answer.ask_entity_select.entity_info[entity]
+        for entity in self.answer.ask_entity_select.entity_select_info:
+            entity_value = self.answer.ask_entity_select.entity_select_info[entity]
             entity_name = entity
             entity_desc = "实体：" + entity_name + "，有如下维度值：\n"
             for each_value in entity_value:
@@ -542,10 +552,21 @@ class QueryStateMachine:
             self.answer.query = self.context.search_box
             self.answer.query_rewrite = self.context.query_rewrite
             self.answer.query_intent = "normal_search"
-
-            self.normal_search_entity_slot = []
-
-
+            comment_format = "{entity} is located in table {table_name}, column {column_name}, the dimension value is {value}"
+            normal_search_entity_slot = self.context.entity_retrieval
+            entity_user_select = self.context.entity_user_select
+            entity_retrieval = []
+            for each_entity in normal_search_entity_slot:
+                entity = each_entity["_source"]["entity"]
+                if entity in entity_user_select:
+                    each_entity["_source"]["entity_table_info"] = [entity_user_select[entity]]
+                    each_entity["_source"]["comment"] = comment_format.format(entity=entity,
+                                                                              table_name=entity_user_select[entity]["table_name"],
+                                                                              comment_format=entity_user_select[entity]["column_name"],
+                                                                              value=entity_user_select[entity]["value"])
+                    entity_retrieval.append(each_entity)
+            self.normal_search_entity_slot = entity_retrieval
+            logger.info(entity_retrieval)
             self.transition(QueryState.QA_RETRIEVAL)
         except Exception as e:
             self.answer.error_log[QueryState.USER_SELECT_ENTITY.name] = str(e)
