@@ -197,6 +197,16 @@ class QueryStateMachine:
                 if each_entity['_source']['entity_count'] > 1 and each_entity['_score'] > 0.98:
                     same_name_entity[each_entity['_source']['entity']] = each_entity['_source']['entity_table_info']
             if len(same_name_entity) > 0 and self.answer.query_intent == "normal_search":
+                for key, value in same_name_entity.items():
+                    change_value = []
+                    for each_value in value:
+                        new_each_value = each_value
+                        new_each_value["id"] = new_each_value["table_name"] + "#" + new_each_value["column_name"] + "#" + new_each_value["value"]
+                        new_each_value["text"] = "实体名称：" + key + ", 数据表：" + each_value["table_name"] + "，" + "列名是：" + each_value[
+                        "column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
+                        change_value.append(new_each_value)
+                    same_name_entity[key] = change_value
+
                 self.answer.ask_entity_select.entity_select_info = same_name_entity
                 self.answer.ask_entity_select.entity_retrieval = entity_retrieve
                 self.transition(QueryState.ASK_ENTITY_SELECT)
