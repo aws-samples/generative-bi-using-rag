@@ -186,7 +186,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
     state_machine = QueryStateMachine(processing_context)
     if state_machine.context.previous_state == QueryState.USER_SELECT_ENTITY:
-        state_machine.transition(QueryState.COMPLETE)
+        state_machine.transition(QueryState.USER_SELECT_ENTITY)
     while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
         if state_machine.get_state() == QueryState.INITIAL:
             await response_websocket(websocket, session_id, "Query Rewrite", ContentEnum.STATE, "start",
