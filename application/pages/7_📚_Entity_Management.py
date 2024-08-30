@@ -24,14 +24,6 @@ def delete_entity_sample(profile_name, id):
     st.success(f'Sample {id} deleted.')
 
 
-def add_comment_entity(profile_name, entity, comment):
-    if len(entity) > 0 and len(comment) > 0:
-        VectorStore.add_entity_sample(profile_name, entity, comment)
-        st.success('Sample added')
-    else:
-        st.error('please input valid question and answer')
-
-
 def read_file(uploaded_file):
     """
     read upload csv file
@@ -132,11 +124,19 @@ def main():
                 entity = st.text_input('Entity', key='index_question')
                 comment = st.text_area('Comment', key='index_answer', height=300)
 
-                st.button('Add Metrics Entity', type='primary', on_click=add_comment_entity,
-                          args=[current_profile, entity, comment])
-                with st.spinner('Update Index ...'):
-                    time.sleep(2)
-                st.success('Update Index')
+                if st.button('Add Metrics Entity', type='primary'):
+                    if len(entity) > 0 and len(comment) > 0:
+                        VectorStore.add_entity_sample(current_profile, entity, comment)
+                        with st.spinner('Update Index ...'):
+                            time.sleep(2)
+                        st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(
+                            current_profile)
+
+                        st.success('Update Index')
+                        st.success('Sample added')
+                        st.rerun()
+                    else:
+                        st.error('please input valid question and answer')
         with tab_dimension:
             if current_profile is not None:
                 entity = st.text_input('Entity', key='index_entity')
