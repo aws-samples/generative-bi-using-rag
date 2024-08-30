@@ -579,7 +579,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
                                               entity_slot_retrieve=normal_search_result.entity_slot_retrieve,
                                               retrieve_result=normal_search_result.retrieve_result, additional_info=additional_info)
 
-            await response_websocket(websocket, session_id, "Regenerating SQL ", ContentEnum.STATE, "start", user_id)
+            await response_websocket(websocket, session_id, "Regenerating SQL ", ContentEnum.STATE, "end", user_id)
             if normal_search_result.sql != "":
                 current_nlq_chain.set_generated_sql(normal_search_result.sql)
                 sql_search_result.sql = normal_search_result.sql.strip()
