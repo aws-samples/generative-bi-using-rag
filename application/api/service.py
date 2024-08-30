@@ -256,6 +256,12 @@ async def ask_websocket(websocket: WebSocket, question: Question):
             state_machine.handle_agent_analyze_data()
             await response_websocket(websocket, session_id, "Generating Data Insights", ContentEnum.STATE,
                                      "end", user_id)
+        elif state_machine.get_state() == QueryState.USER_SELECT_ENTITY:
+            await response_websocket(websocket, session_id, "User Entity Select", ContentEnum.STATE,
+                                     "start", user_id)
+            state_machine.handle_user_select_entity()
+            await response_websocket(websocket, session_id, "User Entity Select", ContentEnum.STATE,
+                                     "end", user_id)
         else:
             state_machine.state = QueryState.ERROR
 
