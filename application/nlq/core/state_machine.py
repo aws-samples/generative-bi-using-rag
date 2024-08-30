@@ -96,11 +96,11 @@ class QueryStateMachine:
     def get_state_from_name(self, state_name):
         if state_name == QueryState.INITIAL.name:
             return QueryState.INITIAL
-        elif state_name == "entity_select":
+        elif state_name == QueryState.USER_SELECT_ENTITY.name:
             return QueryState.USER_SELECT_ENTITY
 
     def run(self):
-        if self.context.previous_state == QueryState.USER_SELECT_ENTITY:
+        if self.previous_state == QueryState.USER_SELECT_ENTITY:
             self.transition(QueryState.USER_SELECT_ENTITY)
 
         while self.state != QueryState.COMPLETE and self.state != QueryState.ERROR:

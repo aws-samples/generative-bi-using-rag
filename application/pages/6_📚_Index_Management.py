@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 def delete_sample(profile_name, id):
     VectorStore.delete_sample(profile_name, id)
+    new_value = []
+    for item in st.session_state["sql_sample_search"][profile_name]:
+        if item["id"] != id:
+            new_value.append(item)
+    st.session_state["sql_sample_search"][profile_name] = new_value
     st.success(f'Sample {id} deleted.')
 
 
@@ -57,6 +62,12 @@ def main():
     if "profiles_list" not in st.session_state:
         st.session_state["profiles_list"] = []
 
+    if "sql_sample_search" not in st.session_state:
+        st.session_state["sql_sample_search"] = {}
+
+    if 'sql_refresh_view' not in st.session_state:
+        st.session_state['sql_refresh_view'] = False
+
     if 'profiles' not in st.session_state:
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         st.session_state['profiles'] = all_profiles
@@ -80,6 +91,14 @@ def main():
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
 
+        if current_profile not in st.session_state["sql_sample_search"]:
+            st.session_state["sql_sample_search"][current_profile] = None
+
+    if current_profile is not None:
+        if st.session_state.sql_refresh_view or st.session_state["sql_sample_search"][current_profile] is None:
+            st.session_state["sql_sample_search"][current_profile] = VectorStore.get_all_samples(current_profile)
+            st.session_state.sql_refresh_view = False
+
     tab_view, tab_add, tab_search, batch_insert = st.tabs(
         ['View Samples', 'Add New Sample', 'Sample Search', 'Batch Insert Samples'])
 
@@ -88,7 +107,7 @@ def main():
         with tab_view:
             if current_profile is not None:
                 st.write("The display page can show a maximum of 5000 pieces of data")
-                for sample in VectorStore.get_all_samples(current_profile):
+                for sample in st.session_state["sql_sample_search"][current_profile]:
                     with st.expander(sample['text']):
                         st.code(sample['sql'])
                         st.button('Delete ' + sample['id'], on_click=delete_sample,

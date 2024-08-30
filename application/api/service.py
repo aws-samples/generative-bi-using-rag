@@ -164,7 +164,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         previous_state = QueryState.INITIAL.name
     processing_context = ProcessingContext(
         search_box=search_box,
-        query_rewrite="",
+        query_rewrite=question.query_rewrite,
         session_id="",
         user_id="",
         selected_profile=selected_profile,
@@ -185,8 +185,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         previous_state=previous_state)
 
     state_machine = QueryStateMachine(processing_context)
-    if state_machine.context.previous_state == QueryState.USER_SELECT_ENTITY:
-        state_machine.transition(QueryState.COMPLETE)
+    if state_machine.previous_state == QueryState.USER_SELECT_ENTITY:
+        state_machine.transition(QueryState.USER_SELECT_ENTITY)
     while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
         if state_machine.get_state() == QueryState.INITIAL:
             await response_websocket(websocket, session_id, "Query Rewrite", ContentEnum.STATE, "start",

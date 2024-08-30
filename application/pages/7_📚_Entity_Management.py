@@ -12,10 +12,16 @@ from utils.env_var import opensearch_info
 logger = logging.getLogger(__name__)
 
 DIMENSION_VALUE = "dimension"
+
+
 def delete_entity_sample(profile_name, id):
     VectorStore.delete_entity_sample(profile_name, id)
+    new_value = []
+    for item in st.session_state["entity_sample_search"][profile_name]:
+        if item["id"] != id:
+            new_value.append(item)
+    st.session_state["entity_sample_search"][profile_name] = new_value
     st.success(f'Sample {id} deleted.')
-    st.session_state.ner_refresh_view = True
 
 
 def read_file(uploaded_file):
@@ -66,9 +72,6 @@ def main():
     if "entity_sample_search" not in st.session_state:
         st.session_state["entity_sample_search"] = {}
 
-    if "entity_sample_search" not in st.session_state:
-        st.session_state["entity_sample_search"] = {}
-
     if 'profiles' not in st.session_state:
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         st.session_state['profiles'] = all_profiles
@@ -92,16 +95,18 @@ def main():
                                            index=None,
                                            placeholder="Please select data profile...", key='current_profile_name')
 
-        st.session_state["entity_sample_search"][current_profile] = None
+        if current_profile not in st.session_state["entity_sample_search"]:
+            st.session_state["entity_sample_search"][current_profile] = None
 
-        if current_profile is not None:
-            if st.session_state.ner_refresh_view or st.session_state["entity_sample_search"][current_profile] is None:
-                st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(current_profile)
-                st.session_state.ner_refresh_view = False
-
+    if current_profile is not None:
+        if st.session_state.ner_refresh_view or st.session_state["entity_sample_search"][current_profile] is None:
+            st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(
+                current_profile)
+            st.session_state.ner_refresh_view = False
 
     tab_view, tab_add, tab_dimension, tab_search, batch_insert, batch_dimension_entity = st.tabs(
-        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity', 'Batch Dimension Entity'])
+        ['View Entity Info', 'Add Metrics Entity', 'Add Dimension Entity', 'Entity Search', 'Batch Metrics Entity',
+         'Batch Dimension Entity'])
     if current_profile is not None:
         st.session_state['current_profile'] = current_profile
         with tab_view:
@@ -116,15 +121,22 @@ def main():
 
         with tab_add:
             if current_profile is not None:
-                entity = st.text_input('Entity', key='index_question')
-                comment = st.text_area('Comment', key='index_answer', height=300)
+                with st.form(key='add_form'):
+                    entity = st.text_input('Entity', key='index_question')
+                    comment = st.text_area('Comment', key='index_answer', height=300)
 
-                if st.button('Add Metrics Entity', type='primary'):
-                    if len(entity) > 0 and len(comment) > 0:
-                        VectorStore.add_entity_sample(current_profile, entity, comment)
-                        st.success('Sample added')
-                    else:
-                        st.error('please input valid question and answer')
+                    if st.form_submit_button('Add Metrics Entity', type='primary'):
+                        if len(entity) > 0 and len(comment) > 0:
+                            VectorStore.add_entity_sample(current_profile, entity, comment)
+                            st.success('Sample added')
+                            st.success('Update Index')
+                            with st.spinner('Update Index ...'):
+                                time.sleep(2)
+                            st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(
+                                current_profile)
+                            st.rerun()
+                        else:
+                            st.error('please input valid question and answer')
         with tab_dimension:
             if current_profile is not None:
                 entity = st.text_input('Entity', key='index_entity')
@@ -137,7 +149,8 @@ def main():
                         entity_item_table_info["table_name"] = table
                         entity_item_table_info["column_name"] = column
                         entity_item_table_info["value"] = value
-                        VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE, [entity_item_table_info])
+                        VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE,
+                                                                      [entity_item_table_info])
                         st.success('Sample added')
                     else:
                         st.error('please input valid question and answer')
@@ -164,7 +177,7 @@ def main():
                 st.write("This page support CSV or Excel files batch insert entity samples.")
                 st.write("**The Column Name need contain 'entity' and 'comment'**")
                 uploaded_files = st.file_uploader("Choose CSV or Excel files", accept_multiple_files=True,
-                                              type=['csv', 'xls', 'xlsx'], key="add metrics value")
+                                                  type=['csv', 'xls', 'xlsx'], key="add metrics value")
                 if uploaded_files:
                     for i, uploaded_file in enumerate(uploaded_files):
                         status_text = st.empty()
@@ -233,7 +246,8 @@ def main():
                                 VectorStore.add_entity_dimension_batch_sample(current_profile, key, "", DIMENSION_VALUE,
                                                                               value["value_list"])
                                 progress = (k * 1.0) / unique_total_row
-                                upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(str(k))
+                                upload_text = "Batch insert in progress. {} entities have been uploaded. Please wait.".format(
+                                    str(k))
                                 progress_bar.progress(progress, text=upload_text)
 
                             progress_bar.empty()
