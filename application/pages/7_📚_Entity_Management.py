@@ -27,9 +27,6 @@ def delete_entity_sample(profile_name, id):
 def add_comment_entity(profile_name, entity, comment):
     if len(entity) > 0 and len(comment) > 0:
         VectorStore.add_entity_sample(profile_name, entity, comment)
-        with st.status("Update Index ...") as status_text:
-            time.sleep(2)
-            status_text.success("Index Updated", state="complete", expanded=False)
         st.success('Sample added')
     else:
         st.error('please input valid question and answer')
@@ -137,6 +134,9 @@ def main():
 
                 st.button('Add Metrics Entity', type='primary', on_click=add_comment_entity,
                           args=[current_profile, entity, comment])
+                with st.spinner('Update Index ...'):
+                    time.sleep(2)
+                st.success('Update Index')
         with tab_dimension:
             if current_profile is not None:
                 entity = st.text_input('Entity', key='index_entity')
