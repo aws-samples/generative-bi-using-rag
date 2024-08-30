@@ -384,8 +384,8 @@ class QueryStateMachine:
         entity_select_format = "根据您的描述，检索到多个相同名称的实体，请选择您想要查询的实体。\n"
         alphabet_list = list(string.ascii_uppercase)
         index = 0
-        for entity in self.answer.ask_entity_select.entity_info:
-            entity_value = self.answer.ask_entity_select.entity_info[entity]
+        for entity in self.answer.ask_entity_select.entity_select_info:
+            entity_value = self.answer.ask_entity_select.entity_select_info[entity]
             entity_name = entity
             entity_desc = "实体：" + entity_name + "，有如下维度值：\n"
             for each_value in entity_value:
