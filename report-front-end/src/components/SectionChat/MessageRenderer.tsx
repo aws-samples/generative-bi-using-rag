@@ -130,8 +130,9 @@ function AiMessageRenderer({
       return (
         <SectionSQLResult
           query={content.query}
-          intent={content.query_intent}
+          query_intent={content.query_intent}
           result={content.sql_search_result}
+          query_rewrite={content.query_rewrite}
         />
       );
 
@@ -142,16 +143,17 @@ function AiMessageRenderer({
       return (
         <SpaceBetween size={"m"}>
           {content.agent_search_result.agent_sql_search_result.map(
-            (content, idx) => (
+            (cnt, idx) => (
               <SpaceBetween key={idx} size={"s"}>
                 <TextContent>
-                  <h4>{content.sub_task_query}</h4>
+                  <h4>{cnt.sub_task_query}</h4>
                 </TextContent>
 
                 <SectionSQLResult
-                  query={content.sub_task_query}
-                  intent={content.query_intent}
-                  result={content.sql_search_result}
+                  query={cnt.sub_task_query}
+                  query_intent={content.query_intent}
+                  result={cnt.sql_search_result}
+                  query_rewrite={content.query_rewrite}
                 />
               </SpaceBetween>
             )

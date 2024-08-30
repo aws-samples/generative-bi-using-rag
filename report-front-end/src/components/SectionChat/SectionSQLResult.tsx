@@ -24,19 +24,28 @@ import SectionChart from "./SectionChart";
 
 interface SQLResultProps {
   query: string;
-  intent: string;
-  result: SQLSearchResult;
+  query_rewrite?: string;
+  query_intent: string;
+  result?: SQLSearchResult;
 }
 
 /**
  * The display panel of Table, Chart, SQL etc.
  */
-export default function SectionSQLResult(props: SQLResultProps) {
+export default function SectionSQLResult({
+  query,
+  query_rewrite,
+  query_intent,
+  result,
+}: SQLResultProps) {
   const [selectedIcon, setSelectedIcon] = useState<FeedBackType>();
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
 
-  const sql_data = props.result?.sql_data ?? [];
-  const sql_data_chart = props.result?.sql_data_chart ?? [];
+  if (!result) return "No SQL result in Component: <SectionSQLResult />";
+
+  const sql_data = result.sql_data ?? [];
+  const sql_data_chart = result.sql_data_chart ?? [];
   let headers: any = [];
   let content: any = [];
   if (sql_data.length > 0) {
@@ -58,7 +67,6 @@ export default function SectionSQLResult(props: SQLResultProps) {
     });
   }
 
-  const [sendingFeedback, setSendingFeedback] = useState(false);
   return (
     <div>
       <SpaceBetween size="xxl">
@@ -72,21 +80,20 @@ export default function SectionSQLResult(props: SQLResultProps) {
           </ExpandableSectionWithDivider>
         ) : null}
 
-        {props.result.data_show_type !== "table" && sql_data.length > 0 ? (
+        {result.data_show_type !== "table" && sql_data.length > 0 ? (
           <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
             headerText="Chart of Retrieved Data"
           >
             <SectionChart
-              data_show_type={props.result.data_show_type}
-              sql_data={props.result.sql_data}
+              data_show_type={result.data_show_type}
+              sql_data={result.sql_data}
             />
           </ExpandableSectionWithDivider>
         ) : null}
 
-        {props.result.data_show_type === "table" &&
-        sql_data_chart.length > 0 ? (
+        {result.data_show_type === "table" && sql_data_chart.length > 0 ? (
           <ExpandableSectionWithDivider
             variant="footer"
             defaultExpanded
@@ -99,16 +106,14 @@ export default function SectionSQLResult(props: SQLResultProps) {
           </ExpandableSectionWithDivider>
         ) : null}
 
-        {props.result?.data_analyse ? (
+        {result?.data_analyse ? (
           <ExpandableSectionWithDivider
             withDivider={SQL_DISPLAY === "yes"}
             variant="footer"
             defaultExpanded
             headerText="Answer with insights"
           >
-            <div style={{ whiteSpace: "pre-line" }}>
-              {props.result.data_analyse}
-            </div>
+            <div style={{ whiteSpace: "pre-line" }}>{result.data_analyse}</div>
           </ExpandableSectionWithDivider>
         ) : null}
 
@@ -121,17 +126,17 @@ export default function SectionSQLResult(props: SQLResultProps) {
             <SpaceBetween size="xl">
               <div>
                 <SyntaxHighlighter language="sql" showLineNumbers wrapLines>
-                  {props.result.sql}
+                  {result.sql}
                 </SyntaxHighlighter>
                 <CopyToClipboard
                   copyButtonText="Copy SQL"
                   copyErrorText="SQL failed to copy"
                   copySuccessText="SQL copied"
-                  textToCopy={props.result.sql}
+                  textToCopy={result.sql}
                 />
               </div>
               <div style={{ whiteSpace: "pre-line" }}>
-                {props.result.sql_gen_process}
+                {result.sql_gen_process}
               </div>
               <ColumnLayout columns={2}>
                 {[FeedBackType.UPVOTE, FeedBackType.DOWNVOTE].map(
@@ -153,9 +158,9 @@ export default function SectionSQLResult(props: SQLResultProps) {
                             const res = await addUserFeedback({
                               feedback_type,
                               data_profiles: queryConfig.selectedDataPro,
-                              query: props.query,
-                              query_intent: props.intent,
-                              query_answer: props.result.sql,
+                              query: query_rewrite || query,
+                              query_intent,
+                              query_answer: result.sql,
                             });
                             if (res === true) {
                               setSelectedIcon(
@@ -186,7 +191,13 @@ export default function SectionSQLResult(props: SQLResultProps) {
     </div>
   );
 }
-const DataTable = (props: { distributions: []; header: [] }) => {
+const DataTable = ({
+  distributions,
+  header,
+}: {
+  distributions: [];
+  header: [];
+}) => {
   const {
     items,
     actions,
@@ -194,7 +205,7 @@ const DataTable = (props: { distributions: []; header: [] }) => {
     filterProps,
     paginationProps,
     filteredItemsCount,
-  } = useCollection(props.distributions, {
+  } = useCollection(distributions, {
     pagination: { pageSize: 5 },
     sorting: {},
     filtering: {
@@ -217,7 +228,7 @@ const DataTable = (props: { distributions: []; header: [] }) => {
       <Table
         {...collectionProps}
         variant="embedded"
-        columnDefinitions={props.header}
+        columnDefinitions={header}
         header={
           <Header
             actions={
@@ -226,9 +237,7 @@ const DataTable = (props: { distributions: []; header: [] }) => {
               </Button>
             }
           >
-            <TextContent>
-              Total:{props.distributions.length} item(s)
-            </TextContent>
+            <TextContent>Total:{distributions.length} item(s)</TextContent>
           </Header>
         }
         items={items}
@@ -263,7 +272,7 @@ const DataTable = (props: { distributions: []; header: [] }) => {
       <Modal
         onDismiss={() => setVisible(false)}
         visible={visible}
-        header={`Table - ${props.distributions.length} item(s)`}
+        header={`Table - ${distributions.length} item(s)`}
         footer={
           <Box float="right">
             <Button variant="primary" onClick={() => setVisible(false)}>
@@ -274,8 +283,8 @@ const DataTable = (props: { distributions: []; header: [] }) => {
       >
         <Table
           variant="embedded"
-          columnDefinitions={props.header}
-          items={props.distributions}
+          columnDefinitions={header}
+          items={distributions}
         />
       </Modal>
     </>

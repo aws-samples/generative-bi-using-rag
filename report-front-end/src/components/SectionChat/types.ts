@@ -112,7 +112,6 @@ export interface SQLDataChart {
 export interface AgentSQLSearchResult {
   sub_task_query: string;
   sql_search_result: SQLSearchResult;
-  query_intent: QUERY_INTENT;
 
   // 'sub_search_task': any[],
   // 'agent_sql_search_result': any[],
