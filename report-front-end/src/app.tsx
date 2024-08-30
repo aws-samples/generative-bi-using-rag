@@ -66,30 +66,19 @@ const App: React.FC<{
     }
   }, [dispatch, user]);
 
-  const [sessions, setSessions] = useState<Session[]>([initSession()]);
-  const [currentSessionId, setCurrentSessionId] = useState(
-    sessions[0].session_id
-  );
-
   return (
-    <GlobalContext.Provider
-      value={{ sessions, setSessions, currentSessionId, setCurrentSessionId }}
-    >
-      <div style={{ height: "100%" }}>
-        <BrowserRouter>
-          <Toaster />
-          <TopNav />
-          <div style={{ height: "56px", backgroundColor: "#000716" }}>
-            &nbsp;
-          </div>
-          <div>
-            <Routes>
-              <Route index path="/" element={<Playground />} />
-            </Routes>
-          </div>
-        </BrowserRouter>
-      </div>
-    </GlobalContext.Provider>
+    <div style={{ height: "100%" }}>
+      <BrowserRouter>
+        <Toaster />
+        <TopNav />
+        <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
+        <div>
+          <Routes>
+            <Route index path="/" element={<Playground />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </div>
   );
 };
 
@@ -103,13 +92,21 @@ const initSession = () => ({
 
 function Playground() {
   const [toolsHide, setToolsHide] = useState(true);
+  const [sessions, setSessions] = useState<Session[]>([initSession()]);
+  const [currentSessionId, setCurrentSessionId] = useState(
+    sessions[0].session_id
+  );
   return (
-    <BaseAppLayout
-      navigation={<PanelSideNav />}
-      content={<SectionChat {...{ toolsHide, setToolsHide }} />}
-      tools={<PanelConfigs setToolsHide={setToolsHide} />}
-      toolsHide={toolsHide}
-      setToolsHide={setToolsHide}
-    />
+    <GlobalContext.Provider
+      value={{ sessions, setSessions, currentSessionId, setCurrentSessionId }}
+    >
+      <BaseAppLayout
+        navigation={<PanelSideNav />}
+        content={<SectionChat {...{ toolsHide, setToolsHide }} />}
+        tools={<PanelConfigs setToolsHide={setToolsHide} />}
+        toolsHide={toolsHide}
+        setToolsHide={setToolsHide}
+      />
+    </GlobalContext.Provider>
   );
 }

@@ -51,9 +51,9 @@ export default function ChatInput({
 
   const handleSendMessage = useCallback(() => {
     if (query === "") return;
-    queryWithWS({ query, sendJsonMessage, setMessageHistory });
+    queryWithWS({ query, sendJsonMessage });
     setQuery("");
-  }, [query, queryWithWS, sendJsonMessage, setMessageHistory]);
+  }, [query, queryWithWS, sendJsonMessage]);
 
   useEffect(() => {
     const onWindowScroll = () => {

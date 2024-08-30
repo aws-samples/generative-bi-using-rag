@@ -1,18 +1,17 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
+import { useSelector } from "react-redux";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
+import { Session } from "../../components/PanelSideNav/types";
 import {
-  ChatBotHistoryItem,
   ChatBotMessageItem,
   ChatBotMessageType,
 } from "../../components/SectionChat/types";
-import { Session } from "../../components/PanelSideNav/types";
+import useGlobalContext from "../../hooks/useGlobalContext";
 import { DEFAULT_QUERY_CONFIG, isLoginWithCognito } from "../constants";
 import { logout } from "../helpers/tools";
-import { getBearerTokenObj } from "./API";
-import { useSelector } from "react-redux";
 import { UserState } from "../helpers/types";
-import useGlobalContext from "../../hooks/useGlobalContext";
+import { getBearerTokenObj } from "./API";
 
 export function useCreateWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
@@ -72,6 +71,16 @@ export function useCreateWssClient(
   return sendJsonMessage;
 }
 
+export type IWSQueryParams = {
+  query: string;
+  sendJsonMessage: SendJsonMessage;
+  extraParams?: {
+    query_rewrite?: string;
+    previous_intent?: string;
+    entity_user_select?: Record<string, Record<string, string>>;
+    entity_retrieval?: unknown[];
+  };
+};
 export const useQueryWithTokens = () => {
   const userInfo = useSelector((state: UserState) => state.userInfo);
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
@@ -79,27 +88,23 @@ export const useQueryWithTokens = () => {
   const { currentSessionId, setSessions } = globalContext;
 
   const queryWithWS = useCallback(
-    (props: {
-      query: string;
-      sendJsonMessage: SendJsonMessage;
-      setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-    }) => {
+    ({ query, sendJsonMessage, extraParams = {} }: IWSQueryParams) => {
       setSessions((prevList) => {
         return prevList.map((item) => {
           if (currentSessionId !== item.session_id) return item;
           return {
             ...item,
-            title: item.title === "New Chat" ? props.query : item.title,
+            title: item.title === "New Chat" ? query : item.title,
             messages: item.messages.concat({
               type: ChatBotMessageType.Human,
-              content: props.query,
+              content: query,
             }),
           };
         });
       });
       const extraToken = isLoginWithCognito ? getBearerTokenObj() : {};
-      const param = {
-        query: props.query,
+      const params = {
+        query: query,
         bedrock_model_id:
           queryConfig.selectedLLM || DEFAULT_QUERY_CONFIG.selectedLLM,
         use_rag_flag: true,
@@ -121,10 +126,11 @@ export const useQueryWithTokens = () => {
         session_id: currentSessionId,
         user_id: userInfo.userId,
         username: userInfo.username,
+        ...extraParams,
         ...extraToken,
       };
-      console.log("Send WebSocketMessage: ", param);
-      props.sendJsonMessage(param);
+      console.log("Send WebSocketMessage: ", params);
+      sendJsonMessage(params);
     },
     [
       currentSessionId,
