@@ -267,7 +267,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         else:
             state_machine.state = QueryState.ERROR
 
-    if processing_context.gen_suggested_question_flag:
+    if processing_context.gen_suggested_question_flag and state_machine.get_answer().query_intent != "entity_select":
         if state_machine.search_intent_flag or state_machine.agent_intent_flag:
             state_machine.handle_suggest_question()
 
