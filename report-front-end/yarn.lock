@@ -2050,6 +2050,15 @@
     "@babel/helper-validator-identifier" "^7.24.7"
     to-fast-properties "^2.0.0"
 
+"@cloudscape-design/chat-components@^1.0.10":
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/@cloudscape-design/chat-components/-/chat-components-1.0.10.tgz#0c57f907b33f79c7e3f64dccf7659e2c9b6e7771"
+  integrity sha512-j9txtflQT6snHuFmuPEz9twtr2HBfgDV3EXeQf5F99rBk4QHGpN7SYTLniBpxURoEWTU5Jfi0kz7jABzB+va1Q==
+  dependencies:
+    "@cloudscape-design/component-toolkit" "^1.0.0-beta"
+    "@cloudscape-design/test-utils-core" "^1.0.0"
+    clsx "^1.2.1"
+
 "@cloudscape-design/collection-hooks@^1.0.0":
   version "1.0.50"
   resolved "https://registry.yarnpkg.com/@cloudscape-design/collection-hooks/-/collection-hooks-1.0.50.tgz#5e40a5a2d7e180148baf4a601b817874f3e0b8dc"
@@ -3432,7 +3441,7 @@ cliui@^6.0.0:
     strip-ansi "^6.0.0"
     wrap-ansi "^6.2.0"
 
-clsx@^1.1.0:
+clsx@^1.1.0, clsx@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/clsx/-/clsx-1.2.1.tgz#0ddc4a20a549b59c93a4116bb26f5294ca17dc12"
   integrity sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==
