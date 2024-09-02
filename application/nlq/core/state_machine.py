@@ -552,6 +552,7 @@ class QueryStateMachine:
             self.answer.query = self.context.search_box
             self.answer.query_rewrite = self.context.query_rewrite
             self.answer.query_intent = "normal_search"
+            self.search_intent_flag = True
             comment_format = "{entity} is located in table {table_name}, column {column_name}, the dimension value is {value}"
             normal_search_entity_slot = self.context.entity_retrieval
             entity_user_select = self.context.entity_user_select
