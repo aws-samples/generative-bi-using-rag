@@ -1,3 +1,4 @@
+import { LoadingBar } from "@cloudscape-design/chat-components";
 import {
   Box,
   SpaceBetween,
@@ -6,6 +7,7 @@ import {
 } from "@cloudscape-design/components";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import useGlobalContext from "../../hooks/useGlobalContext";
 import { getHistoryBySession, getSelectData } from "../../utils/api/API";
 import { useCreateWssClient } from "../../utils/api/WebSocket";
 import {
@@ -13,7 +15,6 @@ import {
   LLMConfigState,
   UserState,
 } from "../../utils/helpers/types";
-import useGlobalContext from "../../hooks/useGlobalContext";
 import ChatInput from "./ChatInput";
 import MessageRenderer from "./MessageRenderer";
 import styles from "./chat.module.scss";
@@ -29,11 +30,16 @@ export default function SectionChat({
   const [messageHistory, setMessageHistory] = useState<ChatBotHistoryItem[]>(
     []
   );
-  const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
 
+  const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { sessions, setSessions, currentSessionId } = useGlobalContext();
-  const sendJsonMessage = useCreateWssClient(setStatusMessage, setSessions);
+  const sendJsonMessage = useCreateWssClient(
+    setStatusMessage,
+    setSessions,
+    setIsSearching
+  );
 
   const dispatch = useDispatch();
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
@@ -64,7 +70,7 @@ export default function SectionChat({
   }, [dispatch, queryConfig]);
 
   useEffect(() => {
-    setLoading(true);
+    setIsLoadingSessionHistory(true);
     getHistoryBySession({
       session_id: currentSessionId,
       user_id: userInfo.userId,
@@ -86,7 +92,7 @@ export default function SectionChat({
         });
       })
       .finally(() => {
-        setLoading(false);
+        setIsLoadingSessionHistory(false);
       });
   }, [
     currentSessionId,
@@ -102,11 +108,11 @@ export default function SectionChat({
       }
     });
   }, [currentSessionId, sessions]);
-
+  console.log({ isSearching });
   return (
     <section className={styles.chat_container}>
       <SpaceBetween size="xxs">
-        {loading ? (
+        {isLoadingSessionHistory ? (
           <Box variant="h3" margin="xxl" padding="xxl">
             <Spinner /> Loading latest chat records...
           </Box>
@@ -118,38 +124,35 @@ export default function SectionChat({
                   <MessageRenderer
                     key={idx}
                     message={message}
-                    setMessageHistory={(
-                      history: SetStateAction<ChatBotHistoryItem[]>
-                    ) => setMessageHistory(history)}
+                    setMessageHistory={setMessageHistory}
                     sendJsonMessage={sendJsonMessage}
                   />
                 </div>
               );
             })}
 
-            {statusMessage?.filter(
-              ({ session_id }) => session_id === currentSessionId
-            ).length === 0 ? null : (
+            {!isSearching ? null : (
               <div className={styles.status_container}>
+                <div style={{ position: "absolute", top: 0, width: "100%" }}>
+                  <LoadingBar variant="gen-ai-masked" />
+                </div>
                 <SpaceBetween size="xxs">
-                  {statusMessage
-                    .filter(({ session_id }) => session_id === currentSessionId)
-                    .map((message, idx) => {
-                      const displayMessage =
-                        idx % 2 === 1 ? true : idx === statusMessage.length - 1;
-                      return displayMessage ? (
-                        <StatusIndicator
-                          key={idx}
-                          type={
-                            message.content.status === "end"
-                              ? "success"
-                              : "in-progress"
-                          }
-                        >
-                          {message.content.text}
-                        </StatusIndicator>
-                      ) : null;
-                    })}
+                  {statusMessage.map((message, idx) => {
+                    const displayMessage =
+                      idx % 2 === 1 ? true : idx === statusMessage.length - 1;
+                    return displayMessage ? (
+                      <StatusIndicator
+                        key={idx}
+                        type={
+                          message.content.status === "end"
+                            ? "success"
+                            : "in-progress"
+                        }
+                      >
+                        {message.content.text}
+                      </StatusIndicator>
+                    ) : null;
+                  })}
                 </SpaceBetween>
               </div>
             )}
@@ -160,7 +163,7 @@ export default function SectionChat({
       <div className={styles.welcome_text}>
         {messageHistory?.length === 0 &&
           statusMessage?.length === 0 &&
-          !loading && <center>GenBI Chatbot</center>}
+          !isLoadingSessionHistory && <center>GenBI Chatbot</center>}
       </div>
 
       <div className={styles.input_container}>
@@ -168,9 +171,10 @@ export default function SectionChat({
           toolsHide={toolsHide}
           setToolsHide={setToolsHide}
           messageHistory={messageHistory}
-          setMessageHistory={setMessageHistory}
           setStatusMessage={setStatusMessage}
           sendJsonMessage={sendJsonMessage}
+          isSearching={isSearching}
+          setIsSearching={setIsSearching}
         />
       </div>
     </section>

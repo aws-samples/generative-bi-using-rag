@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from "react";
 import TextareaAutosize from "react-textarea-autosize";
@@ -20,9 +21,10 @@ export interface ChatInputPanelProps {
   toolsHide: boolean;
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendJsonMessage: SendJsonMessage;
+  isSearching: boolean;
+  setIsSearching: Dispatch<SetStateAction<boolean>>;
 }
 
 export abstract class ChatScrollState {
@@ -33,10 +35,11 @@ export abstract class ChatScrollState {
 
 export default function ChatInput({
   sendJsonMessage,
-  setMessageHistory,
   setToolsHide,
   toolsHide,
   messageHistory,
+  isSearching,
+  setIsSearching,
 }: ChatInputPanelProps) {
   const {
     queryWithWS,
@@ -51,9 +54,10 @@ export default function ChatInput({
 
   const handleSendMessage = useCallback(() => {
     if (query === "") return;
+    setIsSearching(true);
     queryWithWS({ query, sendJsonMessage });
     setQuery("");
-  }, [query, queryWithWS, sendJsonMessage]);
+  }, [query, queryWithWS, sendJsonMessage, setIsSearching]);
 
   useEffect(() => {
     const onWindowScroll = () => {
@@ -94,23 +98,29 @@ export default function ChatInput({
     }
   }, [messageHistory]);
 
+  const refInput = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!isSearching) refInput.current?.focus();
+  }, [isSearching]);
   return (
     <Container className={styles.input_area_container}>
       <SpaceBetween size="s">
         <CustomQuestions
-          setMessageHistory={setMessageHistory}
           sendJsonMessage={sendJsonMessage}
+          setIsSearching={setIsSearching}
         />
         <div className={styles.input_textarea_container}>
           {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
             <Icon name="microphone" variant="disabled"/>
           </SpaceBetween> */}
           <TextareaAutosize
+            ref={refInput}
             className={styles.input_textarea}
             maxRows={6}
             minRows={1}
             spellCheck={true}
             autoFocus
+            disabled={isSearching}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key == "Enter" && !e.shiftKey) {
@@ -126,13 +136,15 @@ export default function ChatInput({
           <div className={styles.input_buttons}>
             <SpaceBetween size="s" direction="horizontal">
               <Button
-                disabled={query.length === 0}
+                loading={isSearching}
+                disabled={query.length === 0 || isSearching}
                 onClick={handleSendMessage}
                 variant="primary"
               >
                 Send
               </Button>
               <Button
+                disabled={isSearching}
                 iconName="remove"
                 onClick={() => {
                   const bool = window.confirm(

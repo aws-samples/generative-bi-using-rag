@@ -5,16 +5,15 @@ import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { getRecommendQuestions } from "../../utils/api/API";
 import { useQueryWithTokens } from "../../utils/api/WebSocket";
 import styles from "./chat.module.scss";
-import { ChatBotHistoryItem } from "./types";
 
 export interface RecommendQuestionsProps {
   sendJsonMessage: SendJsonMessage;
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setIsSearching: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function CustomQuestions({
   sendJsonMessage,
-  setMessageHistory,
+  setIsSearching,
 }: RecommendQuestionsProps) {
   const [showMoreQuestions, setShowMoreQuestions] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
@@ -43,7 +42,8 @@ export default function CustomQuestions({
                 size="small"
                 className={styles.button}
                 onClick={() => {
-                  queryWithWS({ query, sendJsonMessage, setMessageHistory });
+                  setIsSearching(true);
+                  queryWithWS({ query, sendJsonMessage });
                 }}
               >
                 {query}

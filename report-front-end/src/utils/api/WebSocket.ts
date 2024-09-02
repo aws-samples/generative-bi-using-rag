@@ -15,7 +15,8 @@ import { getBearerTokenObj } from "./API";
 
 export function useCreateWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setSessions: Dispatch<SetStateAction<Session[]>>
+  setSessions: Dispatch<SetStateAction<Session[]>>,
+  setIsSearching: Dispatch<SetStateAction<boolean>>
 ) {
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
   const { sendJsonMessage } = useWebSocket(socketUrl, {
@@ -30,43 +31,49 @@ export function useCreateWssClient(
     onMessage: (message) => handleWebSocketMessage(message),
   });
 
-  const handleWebSocketMessage = (message: MessageEvent) => {
-    console.log("Received WebSocketMessage: ", message.data);
-    const messageJson = JSON.parse(message.data);
+  const handleWebSocketMessage = useCallback(
+    (message: MessageEvent) => {
+      console.log("Received WebSocketMessage: ", message.data);
+      const messageJson = JSON.parse(message.data);
 
-    if (isLoginWithCognito) {
-      if (messageJson.content["X-Status-Code"] === 401) {
-        return logout();
-      } else if (messageJson.content["X-Status-Code"] === 200) {
-        // Do something extra here
+      if (isLoginWithCognito) {
+        if (messageJson.content["X-Status-Code"] === 401) {
+          setIsSearching(false);
+          return logout();
+        } else if (messageJson.content["X-Status-Code"] === 200) {
+          setIsSearching(false);
+          // Do something extra here
+        }
       }
-    }
 
-    if (messageJson.content_type === "state") {
-      setStatusMessage((historyMessage) => [...historyMessage, messageJson]);
-    } else {
-      setStatusMessage([]);
-      setSessions((prevList) => {
-        return prevList.map((item) => {
-          if (messageJson.session_id !== item.session_id) {
-            return item;
-          } else {
-            return {
-              session_id: item.session_id,
-              title: item.title,
-              messages: [
-                ...item.messages,
-                {
-                  type: ChatBotMessageType.AI,
-                  content: messageJson.content,
-                },
-              ],
-            };
-          }
+      if (messageJson.content_type === "state") {
+        setStatusMessage((prevMsgs) => [...prevMsgs, messageJson]);
+      } else {
+        setIsSearching(false);
+        setStatusMessage([]);
+        setSessions((prevList) => {
+          return prevList.map((item) => {
+            if (messageJson.session_id !== item.session_id) {
+              return item;
+            } else {
+              return {
+                session_id: item.session_id,
+                title: item.title,
+                messages: [
+                  ...item.messages,
+                  {
+                    type: ChatBotMessageType.AI,
+                    content: messageJson.content,
+                  },
+                ],
+              };
+            }
+          });
         });
-      });
-    }
-  };
+      }
+    },
+    [setSessions, setStatusMessage]
+  );
 
   return sendJsonMessage;
 }
