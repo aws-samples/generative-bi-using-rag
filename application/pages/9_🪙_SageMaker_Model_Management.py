@@ -84,7 +84,7 @@ def main():
 
     with st.sidebar:
         st.title("SageMaker Model Management")
-        st.selectbox("SageMaker Model", [],
+        st.selectbox("SageMaker Model", st.session_state.samaker_model,
                      index=None,
                      placeholder="Please SageMaker Model...", key='current_sagemaker_name')
         if st.session_state.current_sagemaker_name:
