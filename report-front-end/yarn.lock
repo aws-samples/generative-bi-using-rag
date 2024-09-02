@@ -2063,10 +2063,10 @@
     "@juggle/resize-observer" "^3.3.1"
     tslib "^2.3.1"
 
-"@cloudscape-design/components@^3.0.648":
-  version "3.0.727"
-  resolved "https://registry.yarnpkg.com/@cloudscape-design/components/-/components-3.0.727.tgz#a96e21c1a8b9a87dc3702413417945acbec24949"
-  integrity sha512-pkVVtQW0pPQhH+wtJJ+tm9rW+Pg86NIj1GURltgm+UkWSabfybBzs4UHywiQPKSOIGizedSlehDFrmuUVXiYEw==
+"@cloudscape-design/components@^3.0.733":
+  version "3.0.733"
+  resolved "https://registry.yarnpkg.com/@cloudscape-design/components/-/components-3.0.733.tgz#328ba622be9bc87c7437540a530d30a3a9db60c5"
+  integrity sha512-U7BkrU2YIvgd5ifsXSleyVuLlS0RokNzYS3w5dx6Oo5evM5Igt3aTx865Uyv0dzPkh61CECPnfU1mFQeP8FEMg==
   dependencies:
     "@cloudscape-design/collection-hooks" "^1.0.0"
     "@cloudscape-design/component-toolkit" "^1.0.0-beta"
@@ -2088,12 +2088,12 @@
     tslib "^2.4.0"
     weekstart "^1.1.0"
 
-"@cloudscape-design/design-tokens@^3.0.28":
+"@cloudscape-design/design-tokens@^3.0.43":
   version "3.0.43"
   resolved "https://registry.yarnpkg.com/@cloudscape-design/design-tokens/-/design-tokens-3.0.43.tgz#dfdfa74aeaf4d2c314efb65b1bf55b515439270f"
   integrity sha512-TsfO58A3Q9Ad8Tc8Cbh6UbH4uJXiPpa1/HlTh78ArPcqhfjtfqJ/YIorNRwVUt56hh44C+QoMYgTNqTS7wa2Gg==
 
-"@cloudscape-design/global-styles@^1.0.13":
+"@cloudscape-design/global-styles@^1.0.32":
   version "1.0.32"
   resolved "https://registry.yarnpkg.com/@cloudscape-design/global-styles/-/global-styles-1.0.32.tgz#7ae14287f7ea6e6ebf2cdc558d4228ebd1fc5193"
   integrity sha512-3X7YEnzB7U0HeWS2iGIXWgdUAfloWVm+skzJlFkj0MNGIZ7jpI5rH9u9jLFsS021a4WrpK12FM+cwgLjzAq03A==

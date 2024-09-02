@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^5.3.2",
-    "@cloudscape-design/components": "^3.0.648",
-    "@cloudscape-design/design-tokens": "^3.0.28",
-    "@cloudscape-design/global-styles": "^1.0.13",
+    "@cloudscape-design/components": "^3.0.733",
+    "@cloudscape-design/design-tokens": "^3.0.43",
+    "@cloudscape-design/global-styles": "^1.0.32",
     "aws-amplify": "^5.3.12",
     "dotenv": "^16.4.5",
     "react": "^18.2.0",
