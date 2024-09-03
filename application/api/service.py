@@ -165,8 +165,8 @@ async def ask_websocket(websocket: WebSocket, question: Question):
     processing_context = ProcessingContext(
         search_box=search_box,
         query_rewrite=question.query_rewrite,
-        session_id="",
-        user_id="",
+        session_id=session_id,
+        user_id=user_id,
         selected_profile=selected_profile,
         database_profile=database_profile,
         model_type=model_type,
