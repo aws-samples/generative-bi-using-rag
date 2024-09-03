@@ -12,8 +12,8 @@ export interface SuggestedQuestionsProps {
   questions: string[];
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
-  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sessionId: string;
 }
 

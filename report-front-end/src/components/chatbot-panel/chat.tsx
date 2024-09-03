@@ -33,7 +33,10 @@ export default function Chat(props: {
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const sendJsonMessage = useCreateWssClient(setStatusMessage, props.setSessions);
+  const sendJsonMessage = useCreateWssClient(
+    setStatusMessage,
+    props.setSessions
+  );
 
   const dispatch = useDispatch();
   const userState = useSelector<UserState>((state) => state) as UserState;
@@ -122,6 +125,8 @@ export default function Chat(props: {
           return (
             <div key={idx}>
               <ChatMessage
+                setSessions={props.setSessions}
+                sessionId={props.currentSessionId}
                 key={idx}
                 message={message}
                 setLoading={setLoading}
