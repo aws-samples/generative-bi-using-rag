@@ -1,6 +1,6 @@
 import { Button } from "@aws-amplify/ui-react";
 import { Link, SpaceBetween } from "@cloudscape-design/components";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import { getRecommendQuestions } from "../../utils/api/API";
 import { useQueryWithTokens } from "../../utils/api/WebSocket";
@@ -8,12 +8,10 @@ import styles from "./chat.module.scss";
 
 export interface RecommendQuestionsProps {
   sendJsonMessage: SendJsonMessage;
-  setIsSearching: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function CustomQuestions({
   sendJsonMessage,
-  setIsSearching,
 }: RecommendQuestionsProps) {
   const [showMoreQuestions, setShowMoreQuestions] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
@@ -42,7 +40,6 @@ export default function CustomQuestions({
                 size="small"
                 className={styles.button}
                 onClick={() => {
-                  setIsSearching(true);
                   queryWithWS({ query, sendJsonMessage });
                 }}
               >

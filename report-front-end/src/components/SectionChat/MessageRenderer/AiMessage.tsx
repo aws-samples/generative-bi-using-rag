@@ -9,10 +9,10 @@ import {
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import { ChatMessageProps } from ".";
 import { useQueryWithTokens } from "../../../utils/api/WebSocket";
-import ExpandableSectionWithDivider from "../ExpandableSectionWithDivider";
-import SectionSQLResult from "../SectionSQLResult";
-import { ChatBotAnswerItem, ChatBotMessageType, QUERY_INTENT } from "../types";
 import styles from "../chat.module.scss";
+import ExpandableSectionWithDivider from "../ExpandableSectionWithDivider";
+import ResultRenderer from "../ResultRenderer";
+import { ChatBotAnswerItem, ChatBotMessageType, QUERY_INTENT } from "../types";
 import EntitySelect from "./EntitySelect";
 
 const AiMessage: React.FC<
@@ -72,7 +72,9 @@ const AiMessage: React.FC<
                   key={kid}
                   size="small"
                   className={styles.button}
-                  onClick={() => queryWithWS({ query, sendJsonMessage })}
+                  onClick={() => {
+                    queryWithWS({ query, sendJsonMessage });
+                  }}
                 >
                   {query}
                 </AmplifyBtn>
@@ -100,7 +102,7 @@ function AiMessageRenderer({
 
     case QUERY_INTENT.normal_search:
       return (
-        <SectionSQLResult
+        <ResultRenderer
           query={content.query}
           query_intent={content.query_intent}
           result={content.sql_search_result}
@@ -121,7 +123,7 @@ function AiMessageRenderer({
                   <h4>{cnt.sub_task_query}</h4>
                 </TextContent>
 
-                <SectionSQLResult
+                <ResultRenderer
                   query={cnt.sub_task_query}
                   query_intent={content.query_intent}
                   result={cnt.sql_search_result}

@@ -2,7 +2,6 @@ import { Dispatch, SetStateAction, useCallback } from "react";
 import { useSelector } from "react-redux";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { Session } from "../../components/PanelSideNav/types";
 import {
   ChatBotMessageItem,
   ChatBotMessageType,
@@ -14,10 +13,9 @@ import { UserState } from "../helpers/types";
 import { getBearerTokenObj } from "./API";
 
 export function useCreateWssClient(
-  setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setSessions: Dispatch<SetStateAction<Session[]>>,
-  setIsSearching: Dispatch<SetStateAction<boolean>>
+  setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>
 ) {
+  const { setIsSearching, setSessions } = useGlobalContext();
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
   const { sendJsonMessage } = useWebSocket(socketUrl, {
     onOpen: (openMessage) =>
@@ -72,7 +70,7 @@ export function useCreateWssClient(
         });
       }
     },
-    [setSessions, setStatusMessage]
+    [setIsSearching, setSessions, setStatusMessage]
   );
 
   return sendJsonMessage;
@@ -92,10 +90,11 @@ export const useQueryWithTokens = () => {
   const userInfo = useSelector((state: UserState) => state.userInfo);
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
   const globalContext = useGlobalContext();
-  const { currentSessionId, setSessions } = globalContext;
+  const { currentSessionId, setSessions, setIsSearching } = globalContext;
 
   const queryWithWS = useCallback(
     ({ query, sendJsonMessage, extraParams = {} }: IWSQueryParams) => {
+      setIsSearching(true);
       setSessions((prevList) => {
         return prevList.map((item) => {
           if (currentSessionId !== item.session_id) return item;
@@ -152,6 +151,7 @@ export const useQueryWithTokens = () => {
       queryConfig.temperature,
       queryConfig.topK,
       queryConfig.topP,
+      setIsSearching,
       setSessions,
       userInfo.userId,
       userInfo.username,

@@ -33,13 +33,10 @@ export default function SectionChat({
   const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
 
   const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const { sessions, setSessions, currentSessionId } = useGlobalContext();
-  const sendJsonMessage = useCreateWssClient(
-    setStatusMessage,
-    setSessions,
-    setIsSearching
-  );
+  const { sessions, setSessions, currentSessionId, isSearching } =
+    useGlobalContext();
+
+  const sendJsonMessage = useCreateWssClient(setStatusMessage);
 
   const dispatch = useDispatch();
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
@@ -137,22 +134,26 @@ export default function SectionChat({
                   <LoadingBar variant="gen-ai-masked" />
                 </div>
                 <SpaceBetween size="xxs">
-                  {statusMessage.map((message, idx) => {
-                    const displayMessage =
-                      idx % 2 === 1 ? true : idx === statusMessage.length - 1;
-                    return displayMessage ? (
-                      <StatusIndicator
-                        key={idx}
-                        type={
-                          message.content.status === "end"
-                            ? "success"
-                            : "in-progress"
-                        }
-                      >
-                        {message.content.text}
-                      </StatusIndicator>
-                    ) : null;
-                  })}
+                  {statusMessage?.length ? (
+                    statusMessage.map((message, idx) => {
+                      const displayMessage =
+                        idx % 2 === 1 ? true : idx === statusMessage.length - 1;
+                      return displayMessage ? (
+                        <StatusIndicator
+                          key={idx}
+                          type={
+                            message.content.status === "end"
+                              ? "success"
+                              : "in-progress"
+                          }
+                        >
+                          {message.content.text}
+                        </StatusIndicator>
+                      ) : null;
+                    })
+                  ) : (
+                    <Spinner />
+                  )}
                 </SpaceBetween>
               </div>
             )}
@@ -173,8 +174,6 @@ export default function SectionChat({
           messageHistory={messageHistory}
           setStatusMessage={setStatusMessage}
           sendJsonMessage={sendJsonMessage}
-          isSearching={isSearching}
-          setIsSearching={setIsSearching}
         />
       </div>
     </section>

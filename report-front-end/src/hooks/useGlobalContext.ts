@@ -6,6 +6,8 @@ export interface IGlobalContext {
   setSessions: Dispatch<SetStateAction<Session[]>>;
   currentSessionId: string;
   setCurrentSessionId: Dispatch<SetStateAction<string>>;
+  isSearching: boolean;
+  setIsSearching: Dispatch<SetStateAction<boolean>>;
 }
 export const GlobalContext = createContext<IGlobalContext | null>(null);
 

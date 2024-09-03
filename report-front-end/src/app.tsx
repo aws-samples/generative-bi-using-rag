@@ -92,13 +92,21 @@ const initSession = () => ({
 
 function Playground() {
   const [toolsHide, setToolsHide] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([initSession()]);
   const [currentSessionId, setCurrentSessionId] = useState(
     sessions[0].session_id
   );
   return (
     <GlobalContext.Provider
-      value={{ sessions, setSessions, currentSessionId, setCurrentSessionId }}
+      value={{
+        sessions,
+        setSessions,
+        currentSessionId,
+        setCurrentSessionId,
+        isSearching,
+        setIsSearching,
+      }}
     >
       <BaseAppLayout
         navigation={<PanelSideNav />}

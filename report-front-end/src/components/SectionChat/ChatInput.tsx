@@ -23,8 +23,6 @@ export interface ChatInputPanelProps {
   messageHistory: ChatBotHistoryItem[];
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendJsonMessage: SendJsonMessage;
-  isSearching: boolean;
-  setIsSearching: Dispatch<SetStateAction<boolean>>;
 }
 
 export abstract class ChatScrollState {
@@ -38,8 +36,6 @@ export default function ChatInput({
   setToolsHide,
   toolsHide,
   messageHistory,
-  isSearching,
-  setIsSearching,
 }: ChatInputPanelProps) {
   const {
     queryWithWS,
@@ -48,16 +44,16 @@ export default function ChatInput({
     setSessions,
     currentSessionId,
     setCurrentSessionId,
+    isSearching,
   } = useQueryWithTokens();
 
   const [query, setQuery] = useState("");
 
   const handleSendMessage = useCallback(() => {
     if (query === "") return;
-    setIsSearching(true);
     queryWithWS({ query, sendJsonMessage });
     setQuery("");
-  }, [query, queryWithWS, sendJsonMessage, setIsSearching]);
+  }, [query, queryWithWS, sendJsonMessage]);
 
   useEffect(() => {
     const onWindowScroll = () => {
@@ -102,13 +98,11 @@ export default function ChatInput({
   useEffect(() => {
     if (!isSearching) refInput.current?.focus();
   }, [isSearching]);
+
   return (
     <Container className={styles.input_area_container}>
       <SpaceBetween size="s">
-        <CustomQuestions
-          sendJsonMessage={sendJsonMessage}
-          setIsSearching={setIsSearching}
-        />
+        <CustomQuestions sendJsonMessage={sendJsonMessage} />
         <div className={styles.input_textarea_container}>
           {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
             <Icon name="microphone" variant="disabled"/>

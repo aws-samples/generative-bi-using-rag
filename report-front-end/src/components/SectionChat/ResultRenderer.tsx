@@ -25,7 +25,7 @@ import { postUserFeedback } from "../../utils/api/API";
 import { SQL_DISPLAY } from "../../utils/constants";
 import { UserState } from "../../utils/helpers/types";
 import ExpandableSectionWithDivider from "./ExpandableSectionWithDivider";
-import SectionChart from "./SectionChart";
+import ChartRenderer from "./ChartRenderer";
 import { FeedBackType, SQLSearchResult } from "./types";
 import { Divider } from "@aws-amplify/ui-react";
 
@@ -50,7 +50,7 @@ const OPTIONS_ERROR_CAT = (
 /**
  * The display panel of Table, Chart, SQL etc.
  */
-export default function SectionSQLResult({
+export default function ResultRenderer({
   query,
   query_rewrite,
   query_intent,
@@ -71,7 +71,7 @@ export default function SectionSQLResult({
   const [correctSQL, setCorrectSQL] = useState("");
   const [isValidating, setIsValidating] = useState(false);
 
-  if (!result) return "No SQL result in Component: <SectionSQLResult />";
+  if (!result) return "No SQL result in Component: <ResultRenderer />";
 
   const sql_data = result.sql_data ?? [];
   const sql_data_chart = result.sql_data_chart ?? [];
@@ -115,7 +115,7 @@ export default function SectionSQLResult({
             defaultExpanded
             headerText="Chart of Retrieved Data"
           >
-            <SectionChart
+            <ChartRenderer
               data_show_type={result.data_show_type}
               sql_data={result.sql_data}
             />
@@ -128,7 +128,7 @@ export default function SectionSQLResult({
             defaultExpanded
             headerText="Chart of Retrieved Data"
           >
-            <SectionChart
+            <ChartRenderer
               data_show_type={sql_data_chart[0].chart_type}
               sql_data={sql_data_chart[0].chart_data}
             />
