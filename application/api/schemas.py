@@ -59,9 +59,6 @@ class FeedBackInput(BaseModel):
     query_answer: str
     session_id: str = "-1"
     user_id: str = "admin"
-    error_description: str = ""
-    error_categories: str = ""
-    correct_sql_reference: str = ""
 
 
 class Option(BaseModel):
