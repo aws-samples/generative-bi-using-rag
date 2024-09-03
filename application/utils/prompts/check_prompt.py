@@ -245,7 +245,7 @@ def check_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id):
     system_prompt_required_syntax = required_syntax_map.get(prompt_type, {}).get('system_prompt', {}).get(model_id)
     user_prompt_required_syntax = required_syntax_map.get(prompt_type, {}).get('user_prompt', {}).get(model_id)
 
-    if "model_id".startswith("sagemaker."):
+    if model_id.startswith("sagemaker."):
         return True
 
     for system_syntax in system_prompt_required_syntax:
