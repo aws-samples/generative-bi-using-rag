@@ -108,7 +108,7 @@ export default function SectionChat({
       }
     });
   }, [currentSessionId, sessions]);
-  console.log({ isSearching });
+
   return (
     <section className={styles.chat_container}>
       <SpaceBetween size="xxs">

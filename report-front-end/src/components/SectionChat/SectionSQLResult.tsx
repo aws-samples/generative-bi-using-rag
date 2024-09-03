@@ -4,23 +4,30 @@ import {
   Button,
   ColumnLayout,
   CopyToClipboard,
+  Form,
+  FormField,
   Header,
   Modal,
   Pagination,
+  Select,
   SpaceBetween,
   Table,
+  Textarea,
   TextContent,
   TextFilter,
 } from "@cloudscape-design/components";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import SyntaxHighlighter from "react-syntax-highlighter";
-import { addUserFeedback } from "../../utils/api/API";
+import useGlobalContext from "../../hooks/useGlobalContext";
+import { postUserFeedback } from "../../utils/api/API";
 import { SQL_DISPLAY } from "../../utils/constants";
 import { UserState } from "../../utils/helpers/types";
 import ExpandableSectionWithDivider from "./ExpandableSectionWithDivider";
-import { FeedBackType, SQLSearchResult } from "./types";
 import SectionChart from "./SectionChart";
+import { FeedBackType, SQLSearchResult } from "./types";
+import { Divider } from "@aws-amplify/ui-react";
 
 interface SQLResultProps {
   query: string;
@@ -28,6 +35,17 @@ interface SQLResultProps {
   query_intent: string;
   result?: SQLSearchResult;
 }
+
+const OPTIONS_ERROR_CAT = (
+  [
+    "SQL语法错误",
+    "表名错误",
+    "列名错误",
+    "查询值错误",
+    "计算逻辑错误",
+    "其他错误",
+  ] as const
+).map((v) => ({ value: v, label: v }));
 
 /**
  * The display panel of Table, Chart, SQL etc.
@@ -38,9 +56,20 @@ export default function SectionSQLResult({
   query_intent,
   result,
 }: SQLResultProps) {
+  const { currentSessionId } = useGlobalContext();
   const [selectedIcon, setSelectedIcon] = useState<FeedBackType>();
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
+  const userInfo = useSelector((state: UserState) => state.userInfo);
+  const [isDownvoteModalVisible, setIsDownvoteModalVisible] = useState(false);
+  // Downvote modal hooks
+  // Error description: error_description
+  const [errDesc, setErrDesc] = useState("");
+  // Error category: error_categories
+  const [errCatOpt, setErrCatOpt] = useState(OPTIONS_ERROR_CAT[0]);
+  // Correct SQL ref: correct_sql_reference
+  const [correctSQL, setCorrectSQL] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
 
   if (!result) return "No SQL result in Component: <SectionSQLResult />";
 
@@ -153,28 +182,33 @@ export default function SectionSQLResult({
                         disabled={sendingFeedback}
                         variant={isSelected ? "primary" : undefined}
                         onClick={async () => {
-                          setSendingFeedback(true);
-                          try {
-                            const res = await addUserFeedback({
-                              feedback_type,
-                              data_profiles: queryConfig.selectedDataPro,
-                              query: query_rewrite || query,
-                              query_intent,
-                              query_answer: result.sql,
-                            });
-                            if (res === true) {
-                              setSelectedIcon(
-                                isUpvote
-                                  ? FeedBackType.UPVOTE
-                                  : FeedBackType.DOWNVOTE
-                              );
-                            } else {
-                              setSelectedIcon(undefined);
+                          if (isUpvote) {
+                            setSendingFeedback(true);
+                            try {
+                              const res = await postUserFeedback({
+                                feedback_type,
+                                data_profiles: queryConfig.selectedDataPro,
+                                query: query_rewrite || query,
+                                query_intent,
+                                query_answer: result.sql,
+                              });
+                              if (res === true) {
+                                setSelectedIcon(
+                                  isUpvote
+                                    ? FeedBackType.UPVOTE
+                                    : FeedBackType.DOWNVOTE
+                                );
+                              } else {
+                                setSelectedIcon(undefined);
+                              }
+                            } catch (error) {
+                              console.error(error);
+                            } finally {
+                              setSendingFeedback(false);
                             }
-                          } catch (error) {
-                            console.error(error);
-                          } finally {
-                            setSendingFeedback(false);
+                          } else {
+                            // is downvoting
+                            setIsDownvoteModalVisible(true);
                           }
                         }}
                       >
@@ -184,6 +218,113 @@ export default function SectionSQLResult({
                   }
                 )}
               </ColumnLayout>
+
+              <Modal
+                onDismiss={() => {
+                  setIsDownvoteModalVisible(false);
+                  setIsValidating(false);
+                }}
+                visible={isDownvoteModalVisible}
+                header="Downvote Questionnaire"
+                footer={
+                  <Box float="right">
+                    <Button
+                      variant="primary"
+                      onClick={async () => {
+                        setIsValidating(true);
+                        if (!errDesc)
+                          return toast.error(
+                            "Please provide the missing information in the form before submission..."
+                          );
+                        setSendingFeedback(true);
+                        try {
+                          const res = await postUserFeedback({
+                            feedback_type: FeedBackType.DOWNVOTE,
+                            data_profiles: queryConfig.selectedDataPro,
+                            query: query_rewrite || query,
+                            query_intent: query_intent,
+                            query_answer: result.sql,
+                            session_id: currentSessionId,
+                            user_id: userInfo.userId,
+                            error_description: errDesc,
+                            error_categories: errCatOpt.value,
+                            correct_sql_reference: correctSQL,
+                          });
+                          if (res === true) {
+                            setSelectedIcon(FeedBackType.DOWNVOTE);
+                            toast.success("Thanks for your feedback!");
+                            // resetting form
+                            setIsValidating(false);
+                            setErrCatOpt(OPTIONS_ERROR_CAT[0]);
+                            setErrDesc("");
+                            setCorrectSQL("");
+                          }
+                        } catch (error) {
+                          console.error("Error on sending feedback...", error);
+                          toast.error("Error on sending feedback...");
+                        } finally {
+                          setSendingFeedback(false);
+                        }
+                      }}
+                    >
+                      Submit
+                    </Button>
+                  </Box>
+                }
+              >
+                <Box padding={{ top: "l", bottom: "m" }}>
+                  <Divider label="Existing Information" />
+                </Box>
+                <form onSubmit={(e) => e.preventDefault()}>
+                  <Form>
+                    <SpaceBetween size="l">
+                      <FormField label="Query">{query_rewrite}</FormField>
+                      <FormField label="Answer">
+                        <SyntaxHighlighter
+                          language="sql"
+                          showLineNumbers
+                          wrapLines
+                        >
+                          {result.sql.replace(/^\n/, "").replace(/\n$/, "")}
+                        </SyntaxHighlighter>
+                      </FormField>
+
+                      <Divider label="Feedback Form" />
+                      <FormField label="Error category *">
+                        <Select
+                          options={OPTIONS_ERROR_CAT}
+                          selectedOption={errCatOpt}
+                          onChange={({ detail }) =>
+                            // options are fixed values, no need for type checking
+                            setErrCatOpt(detail.selectedOption as any)
+                          }
+                        />
+                      </FormField>
+                      <FormField
+                        label="Error description *"
+                        warningText={
+                          isValidating &&
+                          !errDesc &&
+                          "This field can NOT be empty"
+                        }
+                      >
+                        <Textarea
+                          placeholder="Please provide a brief description of the error occurred"
+                          value={errDesc}
+                          onChange={({ detail }) => setErrDesc(detail.value)}
+                        />
+                      </FormField>
+                      <FormField label="Correct SQL ref">
+                        <Textarea
+                          onChange={({ detail }) => setCorrectSQL(detail.value)}
+                          value={correctSQL}
+                          placeholder="Please provide a correct SQL for reference"
+                        />
+                      </FormField>
+                    </SpaceBetween>
+                  </Form>
+                </form>
+              </Modal>
             </SpaceBetween>
           </ExpandableSectionWithDivider>
         )}

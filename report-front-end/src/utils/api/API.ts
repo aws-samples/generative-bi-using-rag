@@ -88,7 +88,7 @@ export const getRecommendQuestions = async (data_profile: string) => {
     console.error("getCustomQuestions Error", error);
   }
 };
-export async function addUserFeedback(feedbackData: FeedBackItem) {
+export async function postUserFeedback(feedbackData: FeedBackItem) {
   try {
     const data = await request.post("qa/user_feedback", {
       data: feedbackData,

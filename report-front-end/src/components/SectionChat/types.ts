@@ -68,6 +68,12 @@ export interface FeedBackItem {
   query: string;
   query_intent: string;
   query_answer: string;
+  // downvote feedback only ⬇️
+  session_id?: string;
+  user_id?: string;
+  error_description?: string;
+  error_categories?: string;
+  correct_sql_reference?: string;
 }
 
 export interface SessionItem {
