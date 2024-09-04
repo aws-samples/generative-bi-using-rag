@@ -3,11 +3,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import "regenerator-runtime/runtime";
-import { isLoginWithCognito, LOGIN_TYPE } from "./common/constant/constants";
-import { Storage } from "./common/helpers/storage";
-import userReduxStore from "./common/helpers/store";
-import AppConfigured from "./pages/login-page/cognito-login-page";
-import CustomLogin from "./pages/login-page/custom-login-page";
+import Login from "./components/Login";
+import { isLoginWithCognito, LOGIN_TYPE } from "./utils/constants";
+import { Storage } from "./utils/helpers/storage";
+import userReduxStore from "./utils/helpers/store";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -22,7 +21,7 @@ console.log("Login type: ", LOGIN_TYPE);
 root.render(
   <React.StrictMode>
     <Provider store={userReduxStore}>
-      {isLoginWithCognito ? <AppConfigured /> : <CustomLogin />}
+      {isLoginWithCognito ? <Login.Cognito /> : <Login.Custom />}
     </Provider>
   </React.StrictMode>
 );
