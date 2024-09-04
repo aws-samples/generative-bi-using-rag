@@ -245,7 +245,7 @@ class QueryStateMachine:
         self.intent_search_result["response"] = response
         self.intent_search_result["original_sql"] = original_sql
         self.answer.sql_search_result.sql = sql
-        self.answer.sql_search_result.sql_gen_process = get_generated_sql(response)
+        self.answer.sql_search_result.sql_gen_process = get_generated_sql_explain(response)
         if self.context.visualize_results_flag:
             self.transition(QueryState.EXECUTE_QUERY)
         else:
