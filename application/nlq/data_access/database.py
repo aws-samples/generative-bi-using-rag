@@ -15,7 +15,8 @@ class RelationDatabase():
         'redshift': 'redshift+psycopg2',
         'starrocks': 'starrocks',
         'clickhouse': 'clickhouse',
-        'hive': 'hive'
+        'hive': 'hive',
+        'athena': 'awsathena+rest'
         # Add more mappings here for other databases
     }
 
@@ -31,6 +32,12 @@ class RelationDatabase():
                 database=db_name,
                 query={'auth': 'LDAP'}
             )
+        elif db_type == "athena":
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                query={'s3_staging_dir': db_name}
+            )
+            logger.info(f"db_url: {db_url}")
         else:
             db_url = db.engine.URL.create(
                 drivername=cls.db_mapping[db_type],
@@ -45,7 +52,16 @@ class RelationDatabase():
     @classmethod
     def test_connection(cls, db_type, user, password, host, port, db_name) -> bool:
         try:
-            engine = db.create_engine(cls.get_db_url(db_type, user, password, host, port, db_name))
+            if db_type == 'athena':
+                engine = db.create_engine(
+                    'awsathena+rest://@athena.{region_name}.amazonaws.com/{database_name}'.format(
+                        region_name='us-west-2',
+                        database_name=db_name
+                    ),
+                    connect_args={'s3_staging_dir': db_name}
+                )
+            else:
+                engine = db.create_engine(cls.get_db_url(db_type, user, password, host, port, db_name))
             connection = engine.connect()
             return True
         except Exception as e:
@@ -64,7 +80,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")

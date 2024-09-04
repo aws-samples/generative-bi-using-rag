@@ -14,12 +14,12 @@ db_type_mapping = {
     'redshift': 'Redshift',
     'starrocks': 'StarRocks',
     'clickhouse': 'Clickhouse',
-    'hive': 'Hive'
+    'hive': 'Hive',
+    'athena': 'Athena'
 }
 
 
 # global functions
-
 def index_of_db_type(db_type):
     index = 0
     for k, v in db_type_mapping.items():
@@ -76,6 +76,8 @@ def main():
         connection_name = st.text_input("Database Connection Name")
         db_type = st.selectbox("Database type", db_type_mapping.values(), index=0)  # Add more options as needed
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
+        if db_type == 'athena':
+            st.info("Please enter S3 staging directory in the database name field. You can leave other fields empty. Please also make sure that IAM role is able to access Athena and S3.")
         host = st.text_input("Enter host")
         port = st.text_input("Enter port")
         user = st.text_input("Enter username")
@@ -100,6 +102,8 @@ def main():
         db_type = st.selectbox("Database type", db_type_mapping.values(), index=index_of_db_type(current_conn.db_type),
                                disabled=True)  # Add more options as needed
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
+        if db_type == 'athena':
+            st.info("Please enter S3 staging directory in the database name field. You can leave other fields empty. Please also make sure that IAM role is able to access Athena and S3.")
         host = st.text_input("Enter host", current_conn.db_host)
         port = st.text_input("Enter port", current_conn.db_port)
         user = st.text_input("Enter username", current_conn.db_user)
