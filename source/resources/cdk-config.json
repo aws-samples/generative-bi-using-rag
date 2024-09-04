@@ -1,6 +1,6 @@
 {
   "vpc" : {
-    "vpc_id" : ""
+    "existing_vpc_id" : ""
   },
   "rds": {
     "deploy": false
@@ -21,5 +21,8 @@
   },
   "ecs": {
     "bedrock_region": ""
+  },
+  "cognito": {
+    "sign_in_aliases_username": false
   }
 }
