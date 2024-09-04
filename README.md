@@ -6,7 +6,7 @@ The deployment guide here is CDK only. For manual deployment or detailed guide, 
 
 ## Introduction
 
-A NLQ(Natural Language Query) demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
+A Generative BI  demo using Amazon Bedrock, Amazon OpenSearch with RAG technique.
 
 ![Screenshot](./assets/aws_architecture.png)
 *Reference Architecture on AWS*

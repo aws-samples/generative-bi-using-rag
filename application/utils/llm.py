@@ -3,7 +3,7 @@ import boto3
 from botocore.config import Config
 
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, BIGQUERY_DIALECT_PROMPT_CLAUDE3
+    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
@@ -13,7 +13,10 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_sagemake
     generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
     generate_query_rewrite_prompt
 
-from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL
+from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL, SAGEMAKER_EMBEDDING_REGION, \
+    SAGEMAKER_SQL_REGION, SAGEMAKER_ENDPOINT_EMBEDDING, SAGEMAKER_ENDPOINT_SQL
+from utils.tool import convert_timestamps_to_str
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -31,6 +34,7 @@ config = Config(
 
 bedrock = None
 json_parse = JsonOutputParser()
+embedding_sagemaker_client = None
 sagemaker_client = None
 
 
@@ -41,7 +45,7 @@ def get_bedrock_client():
             bedrock = boto3.client(service_name='bedrock-runtime', config=config)
         else:
             bedrock = boto3.client(
-                service_name='bedrock-runtime',  config=config,
+                service_name='bedrock-runtime', config=config,
                 aws_access_key_id=bedrock_ak_sk_info['access_key_id'],
                 aws_secret_access_key=bedrock_ak_sk_info['secret_access_key'])
     return bedrock
@@ -105,6 +109,43 @@ def invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_resp
         logger.error(e)
 
 
+def invoke_mixtral_8x7b_sagemaker(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
+    """
+        Invokes the Mixtral 8c7B model to run an inference using the input
+        provided in the request body.
+
+        :param prompt: The prompt that you want Mixtral to complete.
+        :return: List of inference responses from the model.
+        """
+
+    try:
+        instruction = f"<s>[INST] {system_prompt} \n The question you need to answer is: <question> {messages[0]['content']} </question>[/INST]"
+
+        body = {
+            "inputs": instruction,
+            "parameters": {
+                "max_new_tokens": max_tokens,
+                "do_sample": True,
+                "temperature": 0.1,
+                "top_p": 0.95,
+                "top_k":  50,
+                "repetition_penalty": 1.0
+            }
+        }
+
+        response = invoke_model_sagemaker_endpoint(
+            endpoint_name=model_id,
+            body=json.dumps(body),
+            model_type="LLM",
+            with_response_stream=with_response_stream
+        )
+        response = str(response, 'utf-8')
+        return response
+
+    except Exception as e:
+        logger.error("Couldn't invoke Mixtral 8x7B on SageMaker")
+        logger.error(e)
+
 def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream=False):
     """
     Invokes the Mixtral 8c7B model to run an inference using the input
@@ -140,29 +181,60 @@ def invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_resp
         raise
 
 
+def get_embedding_sagemaker_client():
+    global embedding_sagemaker_client
+    if not embedding_sagemaker_client:
+        if SAGEMAKER_EMBEDDING_REGION is not None and SAGEMAKER_EMBEDDING_REGION != "":
+            embedding_sagemaker_client = boto3.client(service_name='sagemaker-runtime',
+                                                      region_name=SAGEMAKER_EMBEDDING_REGION)
+        else:
+            embedding_sagemaker_client = boto3.client(service_name='sagemaker-runtime')
+    return embedding_sagemaker_client
+
+
 def get_sagemaker_client():
     global sagemaker_client
     if not sagemaker_client:
-        sagemaker_client = boto3.client(service_name='sagemaker-runtime')
+        if SAGEMAKER_SQL_REGION is not None and SAGEMAKER_SQL_REGION != "":
+            sagemaker_client = boto3.client(service_name='sagemaker-runtime',
+                                            region_name=SAGEMAKER_SQL_REGION)
+        else:
+            sagemaker_client = boto3.client(service_name='sagemaker-runtime')
     return sagemaker_client
 
-
-def invoke_model_sagemaker_endpoint(endpoint_name, body, with_response_stream=False):
+def invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="LLM", with_response_stream=False):
     if with_response_stream:
-        response = get_sagemaker_client().invoke_endpoint_with_response_stream(
-            EndpointName=endpoint_name,
-            Body=body,
-            ContentType="application/json",
-        )
+        if model_type == "LLM":
+            response = get_sagemaker_client().invoke_endpoint_with_response_stream(
+                EndpointName=endpoint_name,
+                Body=body,
+                ContentType="application/json",
+            )
+            return response
+        else:
+            response = get_embedding_sagemaker_client().invoke_endpoint_with_response_stream(
+                EndpointName=endpoint_name,
+                Body=body,
+                ContentType="application/json",
+            )
         return response
     else:
-        response = get_sagemaker_client().invoke_endpoint(
-            EndpointName=endpoint_name,
-            Body=body,
-            ContentType="application/json",
-        )
-        response_body = json.loads(response.get('Body').read())
-        return response_body
+        if model_type == "LLM":
+            response = get_sagemaker_client().invoke_endpoint(
+                EndpointName=endpoint_name,
+                Body=body,
+                ContentType="application/json",
+            )
+            response_body = json.loads(response.get('Body').read())
+            return response_body
+        else:
+            response = get_embedding_sagemaker_client().invoke_endpoint(
+                EndpointName=endpoint_name,
+                Body=body,
+                ContentType="application/json",
+            )
+            response_body = json.loads(response.get('Body').read())
+            return response_body
 
 
 def claude_select_table():
@@ -187,8 +259,6 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
         dialect_prompt = MYSQL_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'redshift':
         dialect_prompt = AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
-    elif dialect == 'bigquery':
-        dialect_prompt = BIGQUERY_DIALECT_PROMPT_CLAUDE3
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
@@ -260,7 +330,10 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         if model_id.startswith('anthropic.claude-3'):
             response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('mistral.mixtral-8x7b'):
-            response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
+            if SAGEMAKER_ENDPOINT_SQL is not None and SAGEMAKER_ENDPOINT_SQL != "":
+                response = invoke_mixtral_8x7b_sagemaker(SAGEMAKER_ENDPOINT_SQL, system_prompt, messages, max_tokens, with_response_stream)
+            else:
+                response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
         elif model_id.startswith('meta.llama3-70b'):
             response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
         if with_response_stream:
@@ -268,6 +341,15 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         else:
             if model_id.startswith('meta.llama3-70b'):
                 return response["generation"]
+            elif model_id.startswith('mistral.mixtral'):
+                if SAGEMAKER_ENDPOINT_SQL is not None and SAGEMAKER_ENDPOINT_SQL != "":
+                    response = json.loads(response)
+                    response = response['generated_text']
+                    response = response.replace("\\", "")
+                    return response
+                else:
+                    final_response = response.get("content")[0].get("text")
+                    return final_response
             else:
                 final_response = response.get("content")[0].get("text")
                 return final_response
@@ -277,11 +359,11 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
 
 
 def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
-                model_provider=None, with_response_stream=False):
+                model_provider=None, with_response_stream=False, additional_info=''):
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
                                                      model_id, dialect=dialect)
     max_tokens = 4096
-    response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
+    response = invoke_llm_model(model_id, system_prompt, user_prompt + additional_info, max_tokens, with_response_stream)
     return response
 
 
@@ -383,10 +465,8 @@ def get_query_intent(model_id, search_box, prompt_map):
 
 
 def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
-    query_rewrite = {"query_rewrite": search_box}
-    history_query = ""
-    for item in chat_history:
-        history_query = history_query + "user : " + item + "\n"
+    query_rewrite = {"intent": "original_problem", "query": search_box}
+    history_query = "\n".join(chat_history)
     try:
         intent_endpoint = os.getenv("SAGEMAKER_ENDPOINT_INTENT")
         if intent_endpoint:
@@ -401,8 +481,9 @@ def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
             user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
             max_tokens = 2048
             final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+            query_rewrite_result = json_parse.parse(final_response)
             logger.info(f'{final_response=}')
-            return final_response
+            return query_rewrite_result
     except Exception as e:
         logger.error("get_query_rewrite is error:{}".format(e))
         return query_rewrite
@@ -440,6 +521,7 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     columns = list(search_data.columns)
     data_list = search_data.values.tolist()
     all_columns_data = [columns] + data_list
+    all_columns_data = convert_timestamps_to_str(all_columns_data)
     try:
         if len(all_columns_data) < 1:
             return "table", all_columns_data, "-1", []
@@ -490,14 +572,15 @@ def create_vector_embedding_with_bedrock(text, index_name):
 
 
 def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
-    model_kwargs = {}
-    model_kwargs["batch_size"] = 12
-    model_kwargs["max_length"] = 512
-    model_kwargs["return_type"] = "dense"
-    body = json.dumps({"inputs": [text], **model_kwargs})
-    response = invoke_model_sagemaker_endpoint(endpoint_name, body)
-    embeddings = response["sentence_embeddings"]
-    return {"_index": index_name, "text": text, "vector_field": embeddings["dense_vecs"][0]}
+    body = json.dumps(
+        {
+            "inputs": text,
+            "is_query": True
+        }
+    )
+    response = invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="embedding")
+    embeddings = response[0]
+    return {"_index": index_name, "text": text, "vector_field": embeddings}
 
 
 def generate_suggested_question(prompt_map, search_box, model_id=None):

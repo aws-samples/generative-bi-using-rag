@@ -9,7 +9,7 @@ import {
 import { useSelector } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { queryWithWS } from "../../common/api/WebSocket";
+import { useQueryWithCookies } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
 import {
   ChatBotHistoryItem,
@@ -18,15 +18,22 @@ import {
 } from "./types";
 import styles from "./chat.module.scss";
 import CustomQuestions from "./custom-questions";
+import { Session } from "../session-panel/types";
+import { deleteHistoryBySession } from "../../common/api/API";
+import { v4 as uuid } from "uuid";
 
 export interface ChatInputPanelProps {
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  sessions: Session[];
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
   sendMessage: SendJsonMessage;
   toolsHide: boolean;
+  currSessionId: string;
+  setCurrentSessionId: Dispatch<SetStateAction<string>>;
 }
 
 export abstract class ChatScrollState {
@@ -36,6 +43,7 @@ export abstract class ChatScrollState {
 }
 
 export default function ChatInputPanel(props: ChatInputPanelProps) {
+  const { queryWithWS } = useQueryWithCookies();
   const [state, setTextValue] = useState<ChatInputState>({
     value: "",
   });
@@ -43,22 +51,16 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
   const handleSendMessage = () => {
     setTextValue({ value: "" });
-    // Call Fast API
-    /*    query({
-      query: state.value,
-      setLoading: props.setLoading,
-      configuration: userState.queryConfig,
-      setMessageHistory: props.setMessageHistory,
-    }).then();*/
-
     if (state.value !== "") {
       // Call WebSocket API
       queryWithWS({
         query: state.value,
         configuration: userState.queryConfig,
         sendMessage: props.sendMessage,
+        setSessions: props.setSessions,
         setMessageHistory: props.setMessageHistory,
-        userId: userState.userInfo.userId
+        userId: userState.userInfo.userId,
+        sessionId: props.currSessionId,
       });
     }
   };
@@ -68,8 +70,34 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   };
 
   const handleClear = () => {
-    const bool = window.confirm("Are you sure to clear the chat history?");
-    if (bool) props.setMessageHistory([]);
+    const bool = window.confirm("Are you sure to clear current session history?");
+    if (bool) {
+      const historyItem = {
+        session_id: props.currSessionId,
+        user_id: userState.userInfo.userId,
+        profile_name: userState.queryConfig.selectedDataPro,
+      };
+      deleteHistoryBySession(historyItem).then(
+        response => {
+          if (response) {
+            props.setSessions((prevState: Session[]) => {
+              const filterState = prevState.filter((item: Session) => {
+                return item.session_id !== props.currSessionId;
+              });
+              if (filterState.length === 0) {
+                filterState.push({
+                  session_id: uuid(),
+                  title: "New Chat",
+                  messages: [],
+                });
+              }
+              props.setCurrentSessionId(filterState[0].session_id);
+              return filterState;
+            });
+          }
+        },
+      );
+    }
   };
 
   useEffect(() => {
@@ -118,8 +146,10 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           setTextValue={setTextValue}
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
+          setSessions={props.setSessions}
           sendMessage={props.sendMessage}
-        ></CustomQuestions>
+          sessionId={props.currSessionId}
+        />
         <div className={styles.input_textarea_container}>
           {/* <SpaceBetween size='xxs' direction='horizontal' alignItems='center'>
             <Icon name="microphone" variant="disabled"/>

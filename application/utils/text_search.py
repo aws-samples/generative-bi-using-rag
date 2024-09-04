@@ -10,7 +10,39 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def normal_text_search(search_box, model_type, database_profile, entity_slot, opensearch_info, selected_profile, use_rag,
+def entity_retrieve_search(entity_slot, opensearch_info, selected_profile):
+    entity_slot_retrieve = []
+    entity_name_set = set()
+    try:
+        for each_entity in entity_slot:
+            entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
+                                                      selected_profile, 1, 0.7)
+            if len(entity_retrieve) > 0:
+                for each_entity_retrieve in entity_retrieve:
+                    if each_entity_retrieve['_source']['entity'] not in entity_name_set:
+                        entity_name_set.add(each_entity_retrieve['_source']['entity'])
+                        entity_slot_retrieve.append(each_entity_retrieve)
+        return entity_slot_retrieve
+    except Exception as e:
+        logger.error("entity_search is error")
+        logger.error(e)
+    return entity_slot_retrieve
+
+
+def qa_retrieve_search(search_box, opensearch_info, selected_profile):
+    qa_retrieve = []
+    try:
+        qa_retrieve = get_retrieve_opensearch(opensearch_info, search_box, "query",
+                                                  selected_profile, 3, 0.5)
+        return qa_retrieve
+    except Exception as e:
+        logger.error("qa_retrieve_search is error")
+        logger.error(e)
+    return qa_retrieve
+
+
+def normal_text_search(search_box, model_type, database_profile, entity_slot, opensearch_info, selected_profile,
+                       use_rag,
                        model_provider=None):
     entity_slot_retrieve = []
     retrieve_result = []

@@ -162,13 +162,30 @@ class OpenSearchDao:
         success, failed = put_bulk_in_opensearch([record], self.opensearch_client)
         return success == 1
 
-    def add_entity_sample(self, index_name, profile_name, entity, comment, embedding):
+    def add_entity_sample(self, index_name, profile_name, entity, comment, embedding, entity_type="", entity_table_info=[]):
+        entity_count = len(entity_table_info)
+        comment_value = []
+        item_comment_format = "{entity} is located in table {table_name}, column {column_name},  the dimension value is {value}."
+        if entity_type == "dimension":
+            if entity_count > 0:
+                for item in entity_table_info:
+                    table_name = item["table_name"]
+                    column_name = item["column_name"]
+                    value = item["value"]
+                    comment_format = item_comment_format.format(entity=entity, table_name=table_name,
+                                                                column_name=column_name, value=value)
+                    comment_value.append(comment_format)
+            comment = ";".join(comment_value)
+
         record = {
             '_index': index_name,
             'entity': entity,
             'comment': comment,
             'profile': profile_name,
-            'vector_field': embedding
+            'vector_field': embedding,
+            'entity_type': entity_type,
+            'entity_count': entity_count,
+            'entity_table_info': entity_table_info
         }
 
         success, failed = put_bulk_in_opensearch([record], self.opensearch_client)

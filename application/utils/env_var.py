@@ -46,6 +46,13 @@ BEDROCK_EMBEDDING_MODEL = os.getenv('BEDROCK_EMBEDDING_MODEL', '')
 
 SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING', '')
 
+SAGEMAKER_ENDPOINT_SQL = os.getenv('SAGEMAKER_ENDPOINT_SQL', '')
+
+SAGEMAKER_EMBEDDING_REGION = os.getenv('SAGEMAKER_EMBEDDING_REGION', '')
+
+SAGEMAKER_SQL_REGION = os.getenv('SAGEMAKER_SQL_REGION', '')
+
+
 def get_opensearch_parameter():
     try:
         session = boto3.session.Session()
@@ -107,5 +114,7 @@ opensearch_info = {
     'agent_index': AOS_INDEX_AGENT,
     'embedding_dimension': EMBEDDING_DIMENSION
 }
+
+query_log_name = os.getenv("QUERY_LOG_INDEX_NAME", "genbi_query_logging")
 
 bedrock_ak_sk_info = get_bedrock_parameter()

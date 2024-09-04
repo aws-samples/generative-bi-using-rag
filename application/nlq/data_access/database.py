@@ -12,20 +12,24 @@ class RelationDatabase():
     db_mapping = {
         'mysql': 'mysql+pymysql',
         'postgresql': 'postgresql+psycopg2',
-        'redshift': 'postgresql+psycopg2',
+        'redshift': 'redshift+psycopg2',
         'starrocks': 'starrocks',
         'clickhouse': 'clickhouse',
-        'bigquery': 'bigquery',
+        'hive': 'hive'
         # Add more mappings here for other databases
     }
 
     @classmethod
     def get_db_url(cls, db_type, user, password, host, port, db_name):
-        if db_type == 'bigquery':
+        if db_type == "hive":
             db_url = db.engine.URL.create(
                 drivername=cls.db_mapping[db_type],
-                host=host,  # BigQuery project. Note: without dataset
-                query={'credentials_path': password}
+                username=user,
+                password=password,
+                host=host,
+                port=port,
+                database=db_name,
+                query={'auth': 'LDAP'}
             )
         else:
             db_url = db.engine.URL.create(
@@ -60,7 +64,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'bigquery'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")
@@ -81,12 +85,9 @@ class RelationDatabase():
         engine = db.create_engine(db_url)
         # connection = engine.connect()
         metadata = db.MetaData()
-        # For bigquery, the schema should be empty
-        if connection.db_type == 'bigquery':
-            schemas = []
         for s in schemas:
-            metadata.reflect(bind=engine, schema=s)
-        metadata.reflect(bind=engine)
+            metadata.reflect(bind=engine, schema=s, views=True)
+        # metadata.reflect(bind=engine)
         return metadata
 
     @classmethod

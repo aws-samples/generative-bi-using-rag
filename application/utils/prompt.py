@@ -28,17 +28,56 @@ Unless the user specifies in the question a specific number of examples to obtai
 Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
 Pay attention to use today() function to get the current date, if the question involves "today". Pay attention to adapted to the table field type. Please follow the clickhouse syntax or function case specifications.If the field alias contains Chinese characters, please use double quotes to Wrap it.""".format(top_k=TOP_K)
 
-BIGQUERY_DIALECT_PROMPT_CLAUDE3 = """
-You are a data analysis expert and proficient in Google BigQuery. Given an input question, first create a syntactically correct BigQuery SQL query to run.
-Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per BigQuery.
-Never query for all columns from a table. You must query only the columns that are needed to answer the question. Use backticks (`) to denote table and column names as delimited identifiers.
-Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
-Pay attention to use CURRENT_DATE() function to get the current date, if the question involves "today". Aside from giving the SQL answer, concisely explain yourself after giving the answer in the same language as the question.
-""".format(top_k=TOP_K)
-
 AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3 = """You are a Amazon Redshift expert. Given an input question, first create a syntactically correct Redshift query to run, then look at the results of the query and return the answer to the input 
 question.When generating SQL, do not add double quotes or single quotes around table names. Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per MySQL. 
-Never query for all columns from a table.""".format(top_k=TOP_K)
+Never query for all columns from a table.
+When generating SQL related to dates and times, please strictly use the Redshift SQL Functions listed in the following md tables contents in <data_time_function_list>:
+<data_time_function_list>
+| Function | Returns |
+| --- | --- |
+| + (Concatenation) operator | TIMESTAMP or TIMESTAMPZ |
+| ADD_MONTHS | TIMESTAMP |
+| AT TIME ZONE | TIMESTAMP or TIMESTAMPZ |
+| CONVERT_TIMEZONE | TIMESTAMP |
+| CURRENT_DATE | DATE |
+| DATE_CMP | INTEGER |
+| DATE_CMP_TIMESTAMP | INTEGER |
+| DATE_CMP_TIMESTAMPTZ | INTEGER |
+| DATE_PART_YEAR | INTEGER |
+| DATEADD | TIMESTAMP or TIME or TIMETZ |
+| DATEDIFF | BIGINT |
+| DATE_PART | DOUBLE |
+| DATE_TRUNC | TIMESTAMP |
+| EXTRACT | INTEGER or DOUBLE |
+| GETDATE | TIMESTAMP |
+| INTERVAL_CMP | INTEGER |
+| LAST_DAY | DATE |
+| MONTHS_BETWEEN | FLOAT8 |
+| NEXT_DAY | DATE |
+| SYSDATE | TIMESTAMP |
+| TIMEOFDAY | VARCHAR |
+| TIMESTAMP_CMP | INTEGER |
+| TIMESTAMP_CMP_DATE | INTEGER |
+| TIMESTAMP_CMP_TIMESTAMPTZ | INTEGER |
+| TIMESTAMPTZ_CMP | INTEGER |
+| TIMESTAMPTZ_CMP_DATE | INTEGER |
+| TIMESTAMPTZ_CMP_TIMESTAMP | INTEGER |
+| TIMEZONE | TIMESTAMP or TIMESTAMPTZ |
+| TO_TIMESTAMP | TIMESTAMPTZ |
+| TRUNC | DATE |
+</data_time_function_list>""".format(top_k=TOP_K)
+
+HIVE_DIALECT_PROMPT_CLAUDE3 ="""You are a data analysis expert and proficient in Hive SQL. Given an input question, first create a syntactically correct Hive SQL query to run.
+Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per Hive SQL. 
+Never query for all columns from a table. You must query only the columns that are needed to answer the question. In Hive, column names are typically not wrapped in quotes, so use them as-is.
+Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
+Pay attention to use CURRENT_DATE function to get the current date, if the question involves "today". 
+Note that Hive has some differences from traditional SQL:
+1. Use backticks (`) instead of double quotes for table or column names if they contain spaces or are reserved keywords.
+2. Some functions may have different names or syntax, e.g., use concat() instead of ||.
+3. Hive is case-insensitive for keywords and function names.
+4. Hive supports both SQL-style comments (-- and /* */) and Hive-style comments (-- and /*+ */).
+Aside from giving the SQL answer, concisely explain yourself after giving the answer in the same language as the question.""".format(top_k=TOP_K)
 
 SEARCH_INTENT_PROMPT_CLAUDE3 = """You are an intent classifier and entity extractor, and you need to perform intent classification and entity extraction on search queries.
 Background: I want to query data in the database, and you need to help me determine the user's relevant intent and extract the keywords from the query statement. Finally, return a JSON structure.

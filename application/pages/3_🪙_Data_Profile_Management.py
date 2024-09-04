@@ -19,15 +19,34 @@ def main():
     st.set_page_config(page_title="Data Profile Management", )
     make_sidebar()
 
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
     if 'profile_page_mode' not in st.session_state:
         st.session_state['profile_page_mode'] = 'default'
 
     if 'current_profile' not in st.session_state:
         st.session_state['current_profile'] = ''
 
+    if "profiles_list" not in st.session_state:
+        st.session_state["profiles_list"] = []
+
+    if 'profiles' not in st.session_state:
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state['profiles'] = all_profiles
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+
+    if st.session_state.update_profile:
+        logger.info("session_state update_profile get_all_profiles_with_info")
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        st.session_state["profiles_list"] = list(all_profiles.keys())
+        st.session_state['profiles'] = all_profiles
+        st.session_state.update_profile = False
+
     with st.sidebar:
         st.title("Data Profile Management")
-        st.selectbox("My Data Profiles", ProfileManagement.get_all_profiles(),
+        all_profiles = st.session_state["profiles_list"]
+        st.selectbox("My Data Profiles", all_profiles,
                      index=None,
                      placeholder="Please select data profile...", key='current_profile_name')
         if st.session_state.current_profile_name:
@@ -49,6 +68,7 @@ def main():
             comments = st.text_input("Comments")
 
             if st.button('Create Profile', type='primary'):
+                st.session_state.update_profile = True
                 if not selected_tables:
                     st.error('Please select at least one table.')
                     return
@@ -89,6 +109,7 @@ def main():
                                 "Your sample question 2")
 
         if st.button('Update Profile', type='primary'):
+            st.session_state.update_profile = True
             if not selected_tables:
                 st.error('Please select at least one table.')
                 return
@@ -99,6 +120,7 @@ def main():
                 st.success('Profile updated. Please click "Fetch table definition" button to continue.')
 
         if st.button('Fetch table definition'):
+            st.session_state.update_profile = True
             if not selected_tables:
                 st.error('Please select at least one table.')
             with st.spinner('fetching...'):
@@ -109,6 +131,7 @@ def main():
                 st.session_state.profile_page_mode = 'default'
 
         if st.button('Delete Profile'):
+            st.session_state.update_profile = True
             ProfileManagement.delete_profile(profile_name)
             st.success(f"{profile_name} deleted successfully!")
             st.session_state.profile_page_mode = 'default'

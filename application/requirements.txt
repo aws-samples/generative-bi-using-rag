@@ -1,5 +1,5 @@
 streamlit~=1.33.0
-streamlit-authenticator~=0.3.2
+streamlit-authenticator~=0.3.3
 boto3~=1.33.4
 psycopg2-binary==2.9.9
 SQLAlchemy==1.4.52
@@ -16,4 +16,10 @@ pandas==2.0.3
 openpyxl
 starrocks==1.0.6
 clickhouse-sqlalchemy==0.2.6
-sqlalchemy-bigquery==1.11.0
+sagemaker
+fastapi~=0.110.1
+sqlalchemy-redshift~=0.8.14
+numpy==1.26.4
+pyhive==0.7.0
+thrift==0.20.0
+thrift-sasl==0.4.3
