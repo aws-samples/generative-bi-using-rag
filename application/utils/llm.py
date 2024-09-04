@@ -225,6 +225,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         logger.info(f'{body=}')
         endpoint_name = model_id[len('sagemaker.'):]
         response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream)
+    logger.info(f'{response=}')
     if with_response_stream:
         return response
     else:
