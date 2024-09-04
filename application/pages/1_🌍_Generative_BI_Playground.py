@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
-import logging
 from api.service import user_feedback_downvote
 from nlq.business.connection import ConnectionManagement
 from nlq.business.model import ModelManagement
@@ -12,10 +11,11 @@ from nlq.business.vector_store import VectorStore
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from nlq.core.state_machine import QueryStateMachine
+from utils.logging import getLogger
 from utils.navigation import make_sidebar
 from utils.env_var import opensearch_info
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 
 def sample_question_clicked(sample):

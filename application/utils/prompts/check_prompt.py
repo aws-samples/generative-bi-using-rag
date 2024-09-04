@@ -1,6 +1,7 @@
-import logging
 
-logger = logging.getLogger(__name__)
+from utils.logging import getLogger
+
+logger = getLogger()
 
 required_syntax_map = {
     'text2sql': {

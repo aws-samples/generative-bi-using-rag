@@ -1,14 +1,13 @@
 import json
-import logging
 import time
 import random
 import datetime
 
 import pandas as pd
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from utils.logging import getLogger
 
+logger = getLogger()
 
 def get_generated_sql(generated_sql_response):
     sql = ""

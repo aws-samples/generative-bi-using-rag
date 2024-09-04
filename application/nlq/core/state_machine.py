@@ -1,8 +1,6 @@
 import json
-import logging
 import string
 import functools
-import logging
 import pandas as pd
 
 from api.schemas import Answer, KnowledgeSearchResult, SQLSearchResult, AgentSearchResult, AskReplayResult, \
@@ -14,11 +12,12 @@ from nlq.core.state import QueryState
 from utils.apis import get_sql_result_tool
 from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, text_to_sql, data_analyse_tool, \
     generate_suggested_question, get_agent_cot_task, data_visualization
+from utils.logging import getLogger
 from utils.opensearch import get_retrieve_opensearch
 from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search
 from utils.tool import get_generated_sql, get_generated_sql_explain, change_class_to_str, get_current_time
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 
 def log_execution(func):

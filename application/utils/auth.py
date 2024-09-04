@@ -1,10 +1,12 @@
-import logging
+
 
 from fastapi import status, Request
 from fastapi.responses import Response
 from jose import jwt
 import requests
 import os
+
+from utils.logging import getLogger
 
 VITE_COGNITO_REGION = os.getenv("VITE_COGNITO_REGION")
 USER_POOL_ID = os.getenv("VITE_COGNITO_USER_POOL_ID")
@@ -19,7 +21,7 @@ JWKS_URL = os.getenv("JWKS_URL",
 
 TOKEN_URL = f"{AUTH_PATH}/oauth2/token"
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 def jwt_decode(token, audience=None, access_token=None):
     return jwt.decode(

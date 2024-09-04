@@ -1,12 +1,11 @@
-import logging
 
-import sqlalchemy
 import sqlalchemy as db
 from sqlalchemy import text, Column, inspect
 
 from nlq.data_access.dynamo_connection import ConnectConfigEntity
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 class RelationDatabase():
     db_mapping = {

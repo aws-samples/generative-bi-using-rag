@@ -1,14 +1,14 @@
 import json
-import logging
 import boto3
 import streamlit as st
 from dotenv import load_dotenv
 
 from nlq.business.model import ModelManagement
 from nlq.business.profile import ProfileManagement
+from utils.logging import getLogger
 from utils.navigation import make_sidebar
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 
 def new_connection_clicked():

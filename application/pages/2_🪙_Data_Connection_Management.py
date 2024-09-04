@@ -1,5 +1,4 @@
 import streamlit as st
-import sqlalchemy as db
 from dotenv import load_dotenv
 from nlq.business.connection import ConnectionManagement
 from nlq.data_access.database import RelationDatabase

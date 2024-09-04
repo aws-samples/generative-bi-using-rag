@@ -1,15 +1,14 @@
 import streamlit as st
-import sqlalchemy as db
 from dotenv import load_dotenv
-import logging
 from nlq.business.connection import ConnectionManagement
 from nlq.business.datasource.base import DataSourceBase
 from nlq.business.datasource.factory import DataSourceFactory
 from nlq.business.profile import ProfileManagement
+from utils.logging import getLogger
 from utils.navigation import make_sidebar
 
-logger = logging.getLogger(__name__)
 
+logger = getLogger()
 
 def new_profile_clicked():
     st.session_state.profile_page_mode = 'new'

@@ -2,11 +2,11 @@ import sqlalchemy as db
 from sqlalchemy import text
 from utils.env_var import RDS_MYSQL_HOST, RDS_MYSQL_PORT, RDS_MYSQL_USERNAME, RDS_MYSQL_PASSWORD, RDS_MYSQL_DBNAME, RDS_PQ_SCHEMA
 import pandas as pd
-import logging
 import sqlparse
 from nlq.business.connection import ConnectionManagement
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 ALLOWED_QUERY_TYPES = ['SELECT']
 def query_from_database(p_db_url: str, query, schema=None):
