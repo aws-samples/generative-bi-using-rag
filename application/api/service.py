@@ -157,6 +157,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id,
                                                                   session_id=session_id, size=context_window,
                                                                   log_type='chat_history')
+        user_query_history.append("user:" + search_box)
 
     if question.previous_intent == "entity_select":
         previous_state = QueryState.USER_SELECT_ENTITY.name
