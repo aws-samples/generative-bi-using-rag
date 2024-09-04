@@ -126,6 +126,8 @@ cd generative-bi-using-rag/source/resources
 Deploy the CDK stack, change the region to your own region if needed, for example, us-west-2, us-east-1, etc.:
 ```
 export AWS_DEFAULT_REGION=us-west-1
+# avoid 403 Forbidden of the public ECR
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 cdk bootstrap
 cdk deploy GenBiMainStack --require-approval never
 ```

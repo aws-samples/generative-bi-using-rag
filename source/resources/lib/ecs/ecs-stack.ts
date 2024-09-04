@@ -9,7 +9,7 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 
 interface ECSStackProps extends cdk.StackProps {
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   subnets: ec2.ISubnet[];
   cognitoUserPoolId: string;
   authenticationType: string;
@@ -146,7 +146,7 @@ export class ECSStack extends cdk.Stack {
                     "bedrock:InvokeModelWithResponseStream"
                 ],
                 resources: [
-                    `arn:${this.partition}:bedrock:${cdk.Aws.REGION}::foundation-model/*`
+                    `arn:${this.partition}:bedrock:${props.bedrock_region || cdk.Aws.REGION}::foundation-model/*`
                 ]
             });
             taskRole.addToPolicy(bedrockAccessPolicy);
