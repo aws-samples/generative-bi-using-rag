@@ -8,12 +8,15 @@ import { useQueryWithCookies } from "../../common/api/WebSocket";
 import { UserState } from "../../common/helpers/types";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatInputState } from "./types";
+import { Session } from "../session-panel/types";
 
 export interface RecommendQuestionsProps {
   setTextValue: Dispatch<SetStateAction<ChatInputState>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
   sendMessage: SendJsonMessage;
+  sessionId: string;
 }
 
 export default function CustomQuestions(props: RecommendQuestionsProps) {
@@ -46,7 +49,9 @@ export default function CustomQuestions(props: RecommendQuestionsProps) {
       configuration: userState.queryConfig,
       sendMessage: props.sendMessage,
       setMessageHistory: props.setMessageHistory,
+      setSessions: props.setSessions,
       userId: userState.userInfo.userId,
+      sessionId: props.sessionId
     });
   };
 

@@ -1,6 +1,4 @@
-import { Auth } from "aws-amplify";
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useState } from "react";
 import { v4 as uuid } from "uuid";
 import BaseAppLayout from "../../components/app-layout";
 import Chat from "../../components/chatbot-panel/chat";
@@ -18,37 +16,9 @@ export default function Playground() {
       messages: [],
     },
   ]);
-  const [currentSession, setCurrentSession] = useState<number>(0);
-
-  const dispatch = useDispatch();
-  // const userState = useSelector<UserState>((state) => state) as UserState;
-
-  useEffect(() => {
-    const handleUnAuthorized = () => {
-      console.info("handleUnAuthorized fired!");
-      Auth.signOut().then();
-    };
-
-    const handleAuthorized = (event: Event) => {
-      const e = event as CustomEvent;
-      if (e.detail) {
-        // const userInfo: UserInfo = {
-        //   ...userState.userInfo,
-        //   userId: e.detail.userId,
-        //   displayName: e.detail.userName,
-        // };
-        // dispatch({ type: ActionType.UpdateUserInfo, state: userInfo });
-      }
-    };
-    window.addEventListener("unauthorized", () => handleUnAuthorized());
-    window.addEventListener("authorized", (event) => handleAuthorized(event));
-    return () => {
-      window.removeEventListener("unauthorized", () => handleUnAuthorized());
-      window.removeEventListener("authorized", (event) =>
-        handleAuthorized(event)
-      );
-    };
-  }, [dispatch]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>(
+    sessions[0].session_id
+  );
 
   return (
     <BaseAppLayout
@@ -57,8 +27,8 @@ export default function Playground() {
         <NavigationPanel
           sessions={sessions}
           setSessions={setSessions}
-          currentSession={currentSession}
-          setCurrentSession={setCurrentSession}
+          currentSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
         />
       }
       content={
@@ -67,7 +37,8 @@ export default function Playground() {
           setToolsHide={setToolsHide}
           sessions={sessions}
           setSessions={setSessions}
-          currentSession={currentSession}
+          currentSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
         />
       }
       toolsHide={toolsHide}

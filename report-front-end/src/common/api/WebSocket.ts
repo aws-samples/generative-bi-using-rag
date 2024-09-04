@@ -1,5 +1,4 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
-import toast from "react-hot-toast";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
 import {
@@ -7,36 +6,30 @@ import {
   ChatBotMessageItem,
   ChatBotMessageType,
 } from "../../components/chatbot-panel/types";
+import { Session } from "../../components/session-panel/types";
 import {
   DEFAULT_QUERY_CONFIG,
   isLoginWithCognito,
 } from "../constant/constants";
-import { Global } from "../constant/global";
-import { getBearerTokenObj, getLSTokens } from "./API";
+import { logout } from "../helpers/tools";
+import { getBearerTokenObj } from "./API";
 
-export function createWssClient(
+export function useCreateWssClient(
   setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>,
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>
+  setSessions: Dispatch<SetStateAction<Session[]>>
 ) {
   const socketUrl = process.env.VITE_WEBSOCKET_URL as string;
-  const { sendJsonMessage } =
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useWebSocket(socketUrl, {
-      onOpen: (openMessage) =>
-        console.log("websocket connection opened, ", openMessage),
-      onClose: (closeMessage) =>
-        console.error("websocket connection closed, ", closeMessage),
-      onError: (errorMessage) =>
-        console.error("websocket connection error, ", errorMessage),
-      //Will attempt to reconnect on all close events, such as server shutting down
-      shouldReconnect: () => true,
-      onMessage: (message) => handleWebSocketMessage(message),
-    });
-
-  const { noToken } = getLSTokens();
-  if (noToken && isLoginWithCognito) {
-    toast.error("Please login first!");
-  }
+  const { sendJsonMessage } = useWebSocket(socketUrl, {
+    onOpen: (openMessage) =>
+      console.log("websocket connection opened, ", openMessage),
+    onClose: (closeMessage) =>
+      console.error("websocket connection closed, ", closeMessage),
+    onError: (errorMessage) =>
+      console.error("websocket connection error, ", errorMessage),
+    //Will attempt to reconnect on all close events, such as server shutting down
+    shouldReconnect: () => true,
+    onMessage: (message) => handleWebSocketMessage(message),
+  });
 
   const handleWebSocketMessage = (message: MessageEvent) => {
     console.log("Received WebSocketMessage: ", message.data);
@@ -44,21 +37,9 @@ export function createWssClient(
 
     if (isLoginWithCognito) {
       if (messageJson.content["X-Status-Code"] === 401) {
-        const patchEvent = new CustomEvent("unauthorized", {
-          detail: {},
-        });
-        window.dispatchEvent(patchEvent);
-        return;
+        return logout();
       } else if (messageJson.content["X-Status-Code"] === 200) {
-        // if (messageJson.content["X-User-Id"]) {
-        //   const patchEvent = new CustomEvent("authorized", {
-        //     detail: {
-        //       userId: messageJson.content["X-User-Id"],
-        //       userName: messageJson.content["X-User-Name"],
-        //     },
-        //   });
-        //   window.dispatchEvent(patchEvent);
-        // }
+        // Do something extra here
       }
     }
 
@@ -66,14 +47,24 @@ export function createWssClient(
       setStatusMessage((historyMessage) => [...historyMessage, messageJson]);
     } else {
       setStatusMessage([]);
-      setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [
-          ...history,
-          {
-            type: ChatBotMessageType.AI,
-            content: messageJson.content,
-          },
-        ];
+      setSessions((prevState) => {
+        return prevState.map((session) => {
+          if (messageJson.session_id !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: session.session_id,
+              title: session.title,
+              messages: [
+                ...session.messages,
+                {
+                  type: ChatBotMessageType.AI,
+                  content: messageJson.content,
+                },
+              ],
+            };
+          }
+        });
       });
     }
   };
@@ -88,16 +79,28 @@ export const useQueryWithCookies = () => {
       configuration: any;
       sendMessage: SendJsonMessage;
       setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
+      setSessions: Dispatch<SetStateAction<Session[]>>;
       userId: string;
+      sessionId: string;
     }) => {
-      props.setMessageHistory((history: ChatBotHistoryItem[]) => {
-        return [
-          ...history,
-          {
-            type: ChatBotMessageType.Human,
-            content: props.query,
-          },
-        ];
+      props.setSessions((prevState) => {
+        return prevState.map((session: Session) => {
+          if (props.sessionId !== session.session_id) {
+            return session;
+          } else {
+            return {
+              session_id: session.session_id,
+              title: session.title === "New Chat" ? props.query : session.title,
+              messages: [
+                ...session.messages,
+                {
+                  type: ChatBotMessageType.Human,
+                  content: props.query,
+                },
+              ],
+            };
+          }
+        });
       });
       const extraToken = isLoginWithCognito ? getBearerTokenObj() : {};
       const param = {
@@ -121,7 +124,7 @@ export const useQueryWithCookies = () => {
         max_tokens: props.configuration.maxLength,
         temperature: props.configuration.temperature,
         context_window: props.configuration.contextWindow,
-        session_id: Global.sessionId,
+        session_id: props.sessionId,
         user_id: props.userId,
         ...extraToken,
       };

@@ -35,6 +35,7 @@ import {
   FeedBackType,
   SQLSearchResult,
 } from "./types";
+import { Session } from "../session-panel/types";
 
 export interface ChartTypeProps {
   data_show_type: string;
@@ -238,9 +239,7 @@ function SQLResultPanel(props: SQLResultProps) {
               <ColumnLayout columns={2}>
                 <Button
                   fullWidth
-                  variant={
-                    selectedIcon === 1 ? "primary" : undefined
-                  }
+                  variant={selectedIcon === 1 ? "primary" : undefined}
                   iconName={
                     selectedIcon === 1 ? "thumbs-up-filled" : "thumbs-up"
                   }
@@ -259,9 +258,7 @@ function SQLResultPanel(props: SQLResultProps) {
                 </Button>
                 <Button
                   fullWidth
-                  variant={
-                    selectedIcon === 0 ? "primary" : undefined
-                  }
+                  variant={selectedIcon === 0 ? "primary" : undefined}
                   iconName={
                     selectedIcon === 0 ? "thumbs-down-filled" : "thumbs-down"
                   }
@@ -336,14 +333,16 @@ const DataTable = (props: { distributions: []; header: [] }) => {
         header={
           <Header
             actions={
-              <Button
-                variant="primary"
-                onClick={() => setVisible(true)}
-              >
+              <Button variant="primary" onClick={() => setVisible(true)}>
                 Open
               </Button>
-            }>
-            <TextContent><strong>{"Total Number (" + props.distributions.length + ")"}</strong></TextContent>
+            }
+          >
+            <TextContent>
+              <strong>
+                {"Total Number (" + props.distributions.length + ")"}
+              </strong>
+            </TextContent>
           </Header>
         }
         items={items}
@@ -355,7 +354,7 @@ const DataTable = (props: { distributions: []; header: [] }) => {
             filteringPlaceholder="Search"
           />
         }
-/*        preferences={
+        /*        preferences={
           <CollectionPreferences
             title="Preferences"
             confirmLabel="Confirm"
@@ -381,11 +380,9 @@ const DataTable = (props: { distributions: []; header: [] }) => {
         header={"Table (" + props.distributions.length + ")"}
         footer={
           <Box float="right">
-            <Button
-              variant="primary"
-              onClick={() => setVisible(false)}
-            >
-              Close</Button>
+            <Button variant="primary" onClick={() => setVisible(false)}>
+              Close
+            </Button>
           </Box>
         }
       >
@@ -467,7 +464,7 @@ function IntentSearchPanel(props: IntentSearchProps) {
 
 function AIChatMessage(props: ChatMessageProps) {
   const content = props.message.content as ChatBotAnswerItem;
-
+  console.log({ sq: content.suggested_question });
   return (
     <Container className={styles.answer_area_container}>
       <SpaceBetween size={"s"}>
@@ -483,6 +480,8 @@ function AIChatMessage(props: ChatMessageProps) {
               setLoading={props.setLoading}
               setMessageHistory={props.setMessageHistory}
               sendMessage={props.sendMessage}
+              setSessions={props.setSessions}
+              sessionId={props.sessionId}
             />
           </ExpandableSection>
         ) : null}
@@ -496,6 +495,8 @@ export interface ChatMessageProps {
   setLoading: Dispatch<SetStateAction<boolean>>;
   setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   sendMessage: SendJsonMessage;
+  setSessions: Dispatch<SetStateAction<Session[]>>;
+  sessionId: string;
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
@@ -512,19 +513,23 @@ export default function ChatMessage(props: ChatMessageProps) {
           setLoading={props.setLoading}
           setMessageHistory={props.setMessageHistory}
           sendMessage={props.sendMessage}
+          setSessions={props.setSessions}
+          sessionId={props.sessionId}
         />
       )}
     </SpaceBetween>
   );
 }
 
-const handleFeedback = (feedbackData: FeedBackItem, setSelectedIcon: Dispatch<SetStateAction<1 | 0 | null>>) => {
-  addUserFeedback(feedbackData).then(
-    response => {
-      if (feedbackData.feedback_type === "upvote") {
-        setSelectedIcon(response ? 1 : null);
-      } else if (feedbackData.feedback_type === "downvote") {
-        setSelectedIcon(response ? 0 : null);
-      }
-    });
+const handleFeedback = (
+  feedbackData: FeedBackItem,
+  setSelectedIcon: Dispatch<SetStateAction<1 | 0 | null>>
+) => {
+  addUserFeedback(feedbackData).then((response) => {
+    if (feedbackData.feedback_type === "upvote") {
+      setSelectedIcon(response ? 1 : null);
+    } else if (feedbackData.feedback_type === "downvote") {
+      setSelectedIcon(response ? 0 : null);
+    }
+  });
 };
