@@ -40,8 +40,9 @@ This is a comprehensive framework designed to enable Generative BI capabilities 
 - Simple agent design interface for handling complex queries through a conversational approach.
 
 ### Cost
+This section presents an estimation of the AWS infrastructure costs to run this prototype on AWS. lt's important to note that the we've only used standard publit AWS pricing for the cost estimation. AWS offers enterprise discounts its large-spend clients via a Private Pricing. Your AWS Account team can support you throught this exercise. Hence the absolute cost numbers provided in this simulation are less relevant, the main purpose of this cost simulation exercise is to highlight the main cost drivers of the solution and how you can optimize the cost by tuning various cost elements. 
 
-As of May, 2024, the cost for running this Guidance with the default settings in the _us-west-2_ is approximately $1337.8 per month for processing 2000 requests.
+As of May, 2024, the cost for running this Guidance with the default settings in the _us-west-2_ is approximately $219.21 per month for processing 2000 requests.
 
 ### Sample Cost Table
 

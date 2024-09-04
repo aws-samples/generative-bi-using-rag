@@ -3,7 +3,7 @@ import boto3
 from botocore.config import Config
 
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
+    DEFAULT_DIALECT_PROMPT, SEARCH_INTENT_PROMPT_CLAUDE3, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, BIGQUERY_DIALECT_PROMPT_CLAUDE3
 import os
 import logging
 from langchain_core.output_parsers import JsonOutputParser
@@ -259,6 +259,8 @@ def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None,
         dialect_prompt = MYSQL_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'redshift':
         dialect_prompt = AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
+    elif dialect == 'bigquery':
+        dialect_prompt = BIGQUERY_DIALECT_PROMPT_CLAUDE3
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
