@@ -15,7 +15,8 @@ class RelationDatabase():
         'starrocks': 'starrocks',
         'clickhouse': 'clickhouse',
         'hive': 'hive',
-        'athena': 'awsathena+rest'
+        'athena': 'awsathena+rest',
+        'bigquery': 'bigquery',
         # Add more mappings here for other databases
     }
 
@@ -37,6 +38,12 @@ class RelationDatabase():
                 query={'s3_staging_dir': db_name}
             )
             logger.info(f"db_url: {db_url}")
+        elif db_type == 'bigquery':
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                host=host,  # BigQuery project. Note: without dataset
+                query={'credentials_path': password}
+            )
         else:
             db_url = db.engine.URL.create(
                 drivername=cls.db_mapping[db_type],
@@ -79,7 +86,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena', 'bigquery'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")
@@ -100,10 +107,14 @@ class RelationDatabase():
         engine = db.create_engine(db_url)
         # connection = engine.connect()
         metadata = db.MetaData()
-        for s in schemas:
-            metadata.reflect(bind=engine, schema=s, views=True)
-        # metadata.reflect(bind=engine)
-        return metadata
+        if connection.db_type == 'bigquery':
+            metadata.reflect(bind=engine)
+            return metadata
+        else:
+            for s in schemas:
+                metadata.reflect(bind=engine, schema=s, views=True)
+            # metadata.reflect(bind=engine)
+            return metadata
 
     @classmethod
     def get_table_definition_by_connection(cls, connection: ConnectConfigEntity, schemas, table_names):

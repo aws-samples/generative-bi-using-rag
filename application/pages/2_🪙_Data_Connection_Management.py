@@ -14,7 +14,8 @@ db_type_mapping = {
     'starrocks': 'StarRocks',
     'clickhouse': 'Clickhouse',
     'hive': 'Hive',
-    'athena': 'Athena'
+    'athena': 'Athena',
+    'bigquery': 'BigQuery'
 }
 
 
