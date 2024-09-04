@@ -1,10 +1,7 @@
 import json
 import boto3
 from botocore.config import Config
-
 from utils.logging import getLogger
-from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
-    DEFAULT_DIALECT_PROMPT, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
 
 from langchain_core.output_parsers import JsonOutputParser
 from utils.prompts.generate_prompt import generate_llm_prompt, generate_agent_cot_system_prompt, \
@@ -18,9 +15,7 @@ from utils.tool import convert_timestamps_to_str
 
 from nlq.business.model import ModelManagement
 
-
 logger = getLogger()
-
 
 config = Config(
     region_name=BEDROCK_REGION,
@@ -167,6 +162,7 @@ def get_sagemaker_client():
             sagemaker_client = boto3.client(service_name='sagemaker-runtime')
     return sagemaker_client
 
+
 def invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="LLM", with_response_stream=False):
     if with_response_stream:
         if model_type == "LLM":
@@ -202,88 +198,6 @@ def invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="LLM", with_
             return response_body
 
 
-def claude_select_table():
-    pass
-
-
-def generate_prompt(ddl, hints, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql'):
-    long_string = ""
-    for table_name, table_data in ddl.items():
-        ddl_string = table_data["col_a"] if 'col_a' in table_data else table_data["ddl"]
-        long_string += "-- {}表：{}\n".format(table_name, table_data["tbl_a"] if 'tbl_a' in table_data else table_data[
-            "description"])
-        long_string += ddl_string
-        long_string += "\n"
-
-    ddl = long_string
-
-    logger.info(f'{dialect=}')
-    if dialect == 'postgresql':
-        dialect_prompt = POSTGRES_DIALECT_PROMPT_CLAUDE3
-    elif dialect == 'mysql':
-        dialect_prompt = MYSQL_DIALECT_PROMPT_CLAUDE3
-    elif dialect == 'redshift':
-        dialect_prompt = AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3
-    else:
-        dialect_prompt = DEFAULT_DIALECT_PROMPT
-
-    example_sql_prompt = ""
-    example_ner_prompt = ""
-    if sql_examples:
-        for item in sql_examples:
-            example_sql_prompt += "Q: " + item['_source']['text'] + "\n"
-            example_sql_prompt += "A: ```sql\n" + item['_source']['sql'] + "```\n"
-
-    if ner_example:
-        for item in sql_examples:
-            example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
-            example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
-
-    if example_sql_prompt == "" and example_ner_prompt == "":
-        claude_prompt = '''Here is DDL of the database you are working on: 
-        ```
-        {ddl} 
-        ```
-        Here are some hints: {hints}
-        You need to answer the question: "{question}" in SQL. 
-        '''.format(ddl=ddl, hints=hints, question=search_box)
-    elif example_sql_prompt != "" and example_ner_prompt == "":
-        claude_prompt = '''Here is DDL of the database you are working on:
-        ```
-        {ddl}
-        ```
-        Here are some hints: {hints}
-        Also, here are some examples of generating SQL using natural language: 
-        {examples}
-        Now, you need to answer the question: "{question}" in SQL. 
-        '''.format(ddl=ddl, hints=hints, examples=example_sql_prompt, question=search_box)
-    elif example_sql_prompt == "" and example_ner_prompt != "":
-        claude_prompt = '''Here is DDL of the database you are working on:
-        ```
-        {ddl}
-        ```
-        Here are some hints: {hints}
-        Also, here are some ner info: 
-        {examples}
-        Now, you need to answer the question: "{question}" in SQL. 
-        '''.format(ddl=ddl, hints=hints, examples=example_ner_prompt, question=search_box)
-    else:
-        claude_prompt = '''Here is DDL of the database you are working on:
-        ```
-        {ddl}
-        ```
-        Here are some hints: {hints}
-        Here here are some ner info: {examples_ner}
-        Also, here are some examples of generating SQL using natural language: 
-        {examples_sql}
-        Now, you need to answer the question: "{question}" in SQL. 
-        '''.format(ddl=ddl, hints=hints, examples_sql=example_sql_prompt, examples_ner=example_ner_prompt,
-                   question=search_box)
-    print('claude_prompt')
-
-    return claude_prompt, dialect_prompt
-
-
 def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with_response_stream=False):
     # Prompt with user turn only.
     user_message = {"role": "user", "content": user_prompt}
@@ -307,7 +221,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         prompt = prompt_template.replace("SYSTEM_PROMPT", system_prompt).replace("USER_PROMPT", user_prompt)
         input_payload = json.loads(input_payload)
         input_payload_text = json.dumps(input_payload, ensure_ascii=False)
-        body = input_payload_text.replace("\"INPUT\"", json.dumps(prompt,  ensure_ascii=False))
+        body = input_payload_text.replace("\"INPUT\"", json.dumps(prompt, ensure_ascii=False))
         logger.info(f'{body=}')
         endpoint_name = model_id[len('sagemaker.'):]
         response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream)
@@ -325,13 +239,13 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
             return final_response
 
 
-
 def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
                 model_provider=None, with_response_stream=False, additional_info=''):
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
                                                      model_id, dialect=dialect)
     max_tokens = 4096
-    response = invoke_llm_model(model_id, system_prompt, user_prompt + additional_info, max_tokens, with_response_stream)
+    response = invoke_llm_model(model_id, system_prompt, user_prompt + additional_info, max_tokens,
+                                with_response_stream)
     return response
 
 
@@ -385,7 +299,6 @@ def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
     logger.info(f'{final_response=}')
     query_rewrite_result = json_parse.parse(final_response)
     return query_rewrite_result
-
 
 
 def knowledge_search(model_id, search_box, prompt_map):
