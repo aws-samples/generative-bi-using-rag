@@ -256,7 +256,7 @@ class QueryStateMachine:
             self.context.database_profile['db_type'],
             sql,
             self.context.database_profile['row_level_security_config'],
-            self.context.user_id
+            self.context.username
         )
         return post_sql
 

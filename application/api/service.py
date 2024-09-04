@@ -167,6 +167,7 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         query_rewrite=question.query_rewrite,
         session_id=session_id,
         user_id=user_id,
+        username=username,
         selected_profile=selected_profile,
         database_profile=database_profile,
         model_type=model_type,
