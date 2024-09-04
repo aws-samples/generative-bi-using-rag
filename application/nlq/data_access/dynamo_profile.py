@@ -1,13 +1,13 @@
 import os
 
 import boto3
-import logging
 from typing import List
-from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+
+from utils.logging import getLogger
 from utils.prompts.generate_prompt import prompt_map_dict
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 # DynamoDB table name
 PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'

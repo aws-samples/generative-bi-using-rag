@@ -1,11 +1,11 @@
+from utils.logging import getLogger
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, STARROCKS_DIALECT_PROMPT_CLAUDE3, \
     CLICKHOUSE_DIALECT_PROMPT_CLAUDE3, HIVE_DIALECT_PROMPT_CLAUDE3
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
-import logging
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 support_model_ids_map = {
     "anthropic.claude-3-haiku-20240307-v1:0": "haiku-20240307v1-0",

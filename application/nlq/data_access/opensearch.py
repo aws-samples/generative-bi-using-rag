@@ -1,12 +1,12 @@
-import logging
 
 from opensearchpy import OpenSearch
 from opensearchpy.helpers import bulk
 
 from utils.env_var import SAGEMAKER_ENDPOINT_EMBEDDING
 from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 def put_bulk_in_opensearch(list, client):
     logger.info(f"Putting {len(list)} documents in OpenSearch")

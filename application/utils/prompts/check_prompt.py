@@ -1,6 +1,10 @@
-import logging
 
-logger = logging.getLogger(__name__)
+from utils.logging import getLogger
+
+logger = getLogger()
+
+model_id_list = ['mixtral-8x7b-instruct-0',  'llama3-70b-instruct-0', 'haiku-20240307v1-0', 'sonnet-20240229v1-0',
+                 'sonnet-3-5-20240620v1-0']
 
 required_syntax_map = {
     'text2sql': {
@@ -242,11 +246,12 @@ required_syntax_map = {
 
 
 def check_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id):
+
+    if model_id not in model_id_list:
+        model_id = "sonnet-20240229v1-0"
+
     system_prompt_required_syntax = required_syntax_map.get(prompt_type, {}).get('system_prompt', {}).get(model_id)
     user_prompt_required_syntax = required_syntax_map.get(prompt_type, {}).get('user_prompt', {}).get(model_id)
-
-    if model_id.startswith("sagemaker."):
-        return True
 
     for system_syntax in system_prompt_required_syntax:
         if f'{{{system_syntax}}}' not in system_prompt:
@@ -260,6 +265,10 @@ def check_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id):
 
 
 def find_missing_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id):
+
+    if model_id not in model_id_list:
+        model_id = "sonnet-20240229v1-0"
+
     system_prompt_required_syntax = required_syntax_map.get(prompt_type, {}).get('system_prompt', {}).get(model_id)
     user_prompt_required_syntax = required_syntax_map.get(prompt_type, {}).get('user_prompt', {}).get(model_id)
 

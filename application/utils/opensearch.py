@@ -1,11 +1,11 @@
 import boto3
-from opensearchpy import OpenSearch, RequestsHttpConnection
+from opensearchpy import OpenSearch
 from opensearchpy.helpers import bulk
-import logging
 from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
 from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING, AOS_INDEX_NER, query_log_name
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 
 def get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password, region_name):

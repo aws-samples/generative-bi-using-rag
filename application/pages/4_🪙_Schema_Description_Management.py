@@ -1,10 +1,10 @@
 import streamlit as st
 from dotenv import load_dotenv
-import logging
 from nlq.business.profile import ProfileManagement
+from utils.logging import getLogger
 from utils.navigation import make_sidebar
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 def main():
     load_dotenv()
