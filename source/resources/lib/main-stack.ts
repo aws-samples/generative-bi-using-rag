@@ -11,10 +11,11 @@ import {VPCStack} from './vpc/vpc-stack';
 
 interface MainStackProps extends StackProps {
     deployRds?: boolean;
+    bedrock_region: string;
 }
 
 export class MainStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, props: MainStackProps = {deployRds: false}) {
+    constructor(scope: Construct, id: string, props: MainStackProps = {deployRds: false, bedrock_region: cdk.Aws.region}) {
         super(scope, id, props);
 
         const _deployRds = props.deployRds || false;
@@ -94,6 +95,7 @@ export class MainStack extends cdk.Stack {
                 _AosStack.OSMasterUserSecretName,
                 OSHostSecretName:
                 _AosStack.OSHostSecretName,
+                bedrock_region: props.bedrock_region
             })
         ;
 

@@ -18,5 +18,8 @@
     "sql_index" : "uba",
     "ner_index" : "uba_ner",
     "cot_index" : "uba_agent"
+  },
+  "ecs": {
+    "bedrock_region": ""
   }
 }

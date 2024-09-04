@@ -16,6 +16,7 @@ interface ECSStackProps extends cdk.StackProps {
   cognitoUserPoolClientId: string;
   OSMasterUserSecretName: string;
   OSHostSecretName: string;
+  bedrock_region: string;
 }
 
 export class ECSStack extends cdk.Stack {
@@ -206,7 +207,7 @@ export class ECSStack extends cdk.Stack {
         // containerStreamlit.addEnvironment('SAGEMAKER_SQL_REGION', cdk.Aws.REGION);
         // containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', '');
         // containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_SQL', '');
-        containerStreamlit.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
+        containerStreamlit.addEnvironment('BEDROCK_REGION', props.bedrock_region || cdk.Aws.REGION);
         containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
         containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
         containerStreamlit.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
@@ -260,7 +261,7 @@ export class ECSStack extends cdk.Stack {
         containerAPI.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION)
         containerAPI.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId)
         containerAPI.addEnvironment('VITE_COGNITO_USER_POOL_WEB_CLIENT_ID', props.cognitoUserPoolClientId)
-        containerAPI.addEnvironment('BEDROCK_REGION', cdk.Aws.REGION);
+        containerAPI.addEnvironment('BEDROCK_REGION', props.bedrock_region || cdk.Aws.REGION);
         containerAPI.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
         containerAPI.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
         containerAPI.addEnvironment('DYNAMODB_AWS_REGION', cdk.Aws.REGION);
