@@ -1,5 +1,4 @@
-import logging
-import os
+
 import boto3
 import json
 from nlq.data_access.opensearch import OpenSearchDao
@@ -7,8 +6,9 @@ from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASS
     SAGEMAKER_ENDPOINT_EMBEDDING
 from utils.env_var import bedrock_ak_sk_info
 from utils.llm import invoke_model_sagemaker_endpoint
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 
 class VectorStore:

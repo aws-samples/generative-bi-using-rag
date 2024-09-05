@@ -1,7 +1,8 @@
-import logging
-from nlq.data_access.dynamo_model import ModelConfigDao, ModelConfigEntity
 
-logger = logging.getLogger(__name__)
+from nlq.data_access.dynamo_model import ModelConfigDao, ModelConfigEntity
+from utils.logging import getLogger
+
+logger = getLogger()
 
 
 class ModelManagement:
