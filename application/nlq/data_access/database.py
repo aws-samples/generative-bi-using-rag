@@ -121,6 +121,10 @@ class RelationDatabase():
         metadata = cls.get_metadata_by_connection(connection, schemas)
         tables = metadata.tables
         table_info = {}
+        if connection.db_type == 'hive':
+            tables_comment = cls.get_hive_table_comment(connection, table_names)
+        else:
+            tables_comment = {}
 
         for table_name, table in tables.items():
             # If table name is provided, only generate DDL for those tables. Otherwise, generate DDL for all tables.
@@ -129,19 +133,46 @@ class RelationDatabase():
             # Start the DDL statement
             table_comment = f'-- {table.comment}' if table.comment else ''
             ddl = f"CREATE TABLE {table_name} {table_comment} \n (\n"
+
+            if table_name in tables_comment:
+                column_comment_value = tables_comment[table_name]
+            else:
+                column_comment_value = {}
             for column in table.columns:
                 column: Column
                 # get column description
-                column_comment = f'-- {column.comment}' if column.comment else ''
+                if column.comment is None:
+                    if column.name in column_comment_value:
+                        column.comment = column_comment_value[column.name]
+                column_comment = f'COMMENT {column.comment}' if column.comment else ''
                 ddl += f"  {column.name} {column.type.__visit_name__} {column_comment},\n"
             ddl = ddl.rstrip(',\n') + "\n)"  # Remove the last comma and close the CREATE TABLE statement
             table_info[table_name] = {}
             table_info[table_name]['ddl'] = ddl
             table_info[table_name]['description'] = table.comment
-
             logger.info(f'added table {table_name} to table_info dict')
 
         return table_info
+
+    @classmethod
+    def get_hive_table_comment(cls, connection, table_names):
+        table_name_comment = {}
+        try:
+            db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
+                                    connection.db_port, connection.db_name)
+            engine = db.create_engine(db_url)
+            for each_table in table_names:
+                table_name_comment[each_table] = {}
+                with engine.connect() as connection:
+                    sql = "describe " + each_table
+                    result = connection.execute(sql)
+                    for row in result:
+                        if len(row) == 3:
+                            table_name_comment[each_table][row[0]] = row[2]
+            return table_name_comment
+        except Exception as e:
+            logger.error(f"Failed to get table comment: {str(e)}")
+            return table_name_comment
 
     @classmethod
     def get_db_url_by_connection(cls, connection: ConnectConfigEntity):
