@@ -168,7 +168,7 @@ class RelationDatabase():
                     result = connection.execute(sql)
                     for row in result:
                         if len(row) == 3:
-                            table_name_comment[each_table][row[0]] = row[2]
+                            table_name_comment[each_table][row[0]] = "'" + row[2] + "'"
             return table_name_comment
         except Exception as e:
             logger.error(f"Failed to get table comment: {str(e)}")
