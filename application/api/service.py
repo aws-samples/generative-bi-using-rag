@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 from nlq.business.connection import ConnectionManagement
 from nlq.business.datasource.factory import DataSourceFactory
+from nlq.business.log_feedback import FeedBackManagement
 from nlq.business.model import ModelManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
@@ -298,26 +299,32 @@ def user_feedback_upvote(data_profiles: str, user_id: str, session_id: str, quer
 
 
 def user_feedback_downvote(data_profiles: str, user_id: str, session_id: str, query: str, query_intent: str,
-                           query_answer):
+                           query_answer, error_description="", error_categories="", correct_sql_reference=""):
     try:
+        error_info_dict = {
+            "error_description": error_description,
+            "error_categories": error_categories,
+            "correct_sql_reference": correct_sql_reference
+        }
+        error_info = json.dumps(error_info_dict, ensure_ascii=False)
         if query_intent == "normal_search":
             log_id = generate_log_id()
             current_time = get_current_time()
-            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
+            FeedBackManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                               profile_name=data_profiles,
                                               sql=query_answer, query=query,
                                               intent="normal_search_user_downvote",
-                                              log_info="",
+                                              log_info=error_info,
                                               time_str=current_time,
                                               log_type="feedback_downvote")
         elif query_intent == "agent_search":
             log_id = generate_log_id()
             current_time = get_current_time()
-            LogManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
+            FeedBackManagement.add_log_to_database(log_id=log_id, user_id=user_id, session_id=session_id,
                                               profile_name=data_profiles,
                                               sql=query_answer, query=query,
                                               intent="agent_search_user_downvote",
-                                              log_info="",
+                                              log_info=error_info,
                                               time_str=current_time,
                                               log_type="feedback_downvote")
         return True
