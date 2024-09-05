@@ -27,6 +27,8 @@ def getLogger():
     # 设置日志处理器格式
     console_handler.setFormatter(formatter)
 
+    # 清理旧的日志处理器
+    logger.handlers.clear()
     # 添加日志处理器
     logger.addHandler(console_handler)
 

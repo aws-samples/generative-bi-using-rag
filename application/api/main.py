@@ -117,7 +117,9 @@ def user_feedback(input_data: FeedBackInput):
         return upvote_res
     else:
         downvote_res = service.user_feedback_downvote(input_data.data_profiles, user_id, session_id, input_data.query,
-                                                      input_data.query_intent, input_data.query_answer)
+                                                      input_data.query_intent, input_data.query_answer,
+                                                      input_data.error_description, input_data.error_categories,
+                                                      input_data.correct_sql_reference)
         return downvote_res
 
 

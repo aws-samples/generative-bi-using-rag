@@ -7,6 +7,7 @@ class ProcessingContext:
     query_rewrite: str
     session_id: str
     user_id: str
+    username: str
     selected_profile: str
     database_profile: Dict[str, Any]
     model_type: str

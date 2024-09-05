@@ -149,7 +149,8 @@ def main():
     # Title and Description
     st.subheader('Generative BI Playground')
 
-    demo_profile_suffix = '(demo)'
+    st.write('Current Username: ' + st.session_state['auth_username'])
+
     # Initialize or set up state variables
 
     if "update_profile" not in st.session_state:
@@ -340,7 +341,8 @@ def main():
                     search_box=search_box,
                     query_rewrite="",
                     session_id="",
-                    user_id="",
+                    user_id=st.session_state['auth_username'],
+                    username=st.session_state['auth_username'],
                     selected_profile=selected_profile,
                     database_profile=database_profile,
                     model_type=model_type,
