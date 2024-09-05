@@ -1,6 +1,6 @@
 {
   "vpc" : {
-    "vpc_id" : ""
+    "existing_vpc_id" : ""
   },
   "rds": {
     "deploy": false
@@ -18,5 +18,11 @@
     "sql_index" : "uba",
     "ner_index" : "uba_ner",
     "cot_index" : "uba_agent"
+  },
+  "ecs": {
+    "bedrock_region": ""
+  },
+  "cognito": {
+    "sign_in_aliases_username": false
   }
 }
