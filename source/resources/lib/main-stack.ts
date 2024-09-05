@@ -11,10 +11,14 @@ import {VPCStack} from './vpc/vpc-stack';
 
 interface MainStackProps extends StackProps {
     deployRds?: boolean;
+    bedrock_region: string;
+    existing_vpc_id: string;
+    cognito_sign_in_aliases_username?: boolean;
 }
 
 export class MainStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, props: MainStackProps = {deployRds: false}) {
+    constructor(scope: Construct, id: string, props: MainStackProps = {deployRds: false,
+        bedrock_region: cdk.Aws.REGION, existing_vpc_id: ""}) {
         super(scope, id, props);
 
         const _deployRds = props.deployRds || false;
@@ -22,6 +26,7 @@ export class MainStack extends cdk.Stack {
         // ======== Step 0. Define the VPC =========
         const _VpcStack = new VPCStack(this, 'vpc-Stack', {
             env: props.env,
+            existing_vpc_id: props.existing_vpc_id
         });
 
         // ======== Step 1. Define the LLMStack =========
@@ -61,7 +66,8 @@ export class MainStack extends cdk.Stack {
         let _CognitoStack: CognitoStack | undefined;
         if (!isChinaRegion) {
             _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
-                env: props.env
+                env: props.env,
+                sign_in_aliases_username: props.cognito_sign_in_aliases_username
             });
         }
 
@@ -94,6 +100,7 @@ export class MainStack extends cdk.Stack {
                 _AosStack.OSMasterUserSecretName,
                 OSHostSecretName:
                 _AosStack.OSHostSecretName,
+            bedrock_region: props.bedrock_region
             })
         ;
 

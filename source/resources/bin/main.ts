@@ -31,7 +31,9 @@ const cdkConfig = {
     opensearch_sql_index : opensearch.sql_index,
     opensearch_ner_index : opensearch.ner_index,
     opensearch_cot_index : opensearch.cot_index,
-    vpc_id : vpc.id
+    existing_vpc_id : vpc.existing_vpc_id,
+    bedrock_region: config.ecs.bedrock_region,
+    cognito_sign_in_aliases_username: config.cognito.sign_in_aliases_username
 };
 
 new MainStack(app, 'GenBiMainStack', cdkConfig); // Pass deployRDS flag to MainStack constructor

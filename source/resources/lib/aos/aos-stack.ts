@@ -12,7 +12,7 @@ export class AOSStack extends cdk.Stack {
   public readonly OSMasterUserSecretName: string;
   public readonly OSHostSecretName: string;
 
-  constructor(scope: Construct, id: string, props: cdk.StackProps & {vpc: ec2.Vpc} & { subnets: cdk.aws_ec2.ISubnet[] }) {
+  constructor(scope: Construct, id: string, props: cdk.StackProps & {vpc: ec2.IVpc} & { subnets: cdk.aws_ec2.ISubnet[] }) {
     super(scope, id, props);
 
     // Create a Security Group for OpenSearch
