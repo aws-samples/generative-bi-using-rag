@@ -1,6 +1,8 @@
 import json
 import boto3
 from botocore.config import Config
+
+from utils.domain import ModelResponse
 from utils.logging import getLogger
 
 from langchain_core.output_parsers import JsonOutputParser
@@ -205,6 +207,8 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
     logger.info(f'{system_prompt=}')
     logger.info(f'{messages=}')
     response = ""
+    model_response = ModelResponse()
+
     model_config = {}
     if model_id.startswith('anthropic.claude-3'):
         response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
@@ -226,18 +230,23 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         endpoint_name = model_id[len('sagemaker.'):]
         response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream)
     logger.info(f'{response=}')
-    if with_response_stream:
-        return response
+    model_response.response = response
+    if model_id.startswith('anthropic.claude-3'):
+        model_response.token_info = response.get("usage", {})
     else:
-        if model_id.startswith('meta.llama3-70b'):
-            return response["generation"]
-        elif model_id.startswith('sagemaker.'):
-            output_format = model_config.output_format
-            response = eval(output_format)
-            return response
-        else:
-            final_response = response.get("content")[0].get("text")
-            return final_response
+        model_response.token_info = {}
+    if model_id.startswith('meta.llama3-70b'):
+        model_response.text = response["generation"]
+        return model_response
+    elif model_id.startswith('sagemaker.'):
+        output_format = model_config.output_format
+        response = eval(output_format)
+        model_response.text = response
+        return model_response
+    else:
+        final_response = response.get("content")[0].get("text")
+        model_response.text = final_response
+        return model_response
 
 
 def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_example=None, model_id=None, dialect='mysql',
@@ -245,9 +254,9 @@ def text_to_sql(ddl, hints, prompt_map, search_box, sql_examples=None, ner_examp
     user_prompt, system_prompt = generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples, ner_example,
                                                      model_id, dialect=dialect)
     max_tokens = 4096
-    response = invoke_llm_model(model_id, system_prompt, user_prompt + additional_info, max_tokens,
-                                with_response_stream)
-    return response
+    model_response = invoke_llm_model(model_id, system_prompt, user_prompt + additional_info, max_tokens,
+                                      with_response_stream)
+    return model_response.text, model_response
 
 
 def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=None):
@@ -256,10 +265,11 @@ def get_agent_cot_task(model_id, prompt_map, search_box, ddl, agent_cot_example=
                                                                   agent_cot_example)
     try:
         max_tokens = 2048
-        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        final_response = model_response.text
         logger.info(f'{final_response=}')
         intent_result_dict = json_parse.parse(final_response)
-        return intent_result_dict
+        return intent_result_dict, model_response
     except Exception as e:
         logger.error("get_agent_cot_task is error:{}".format(e))
         return default_agent_cot_task
@@ -272,12 +282,12 @@ def data_analyse_tool(model_id, prompt_map, search_box, sql_data, search_type):
             user_prompt, system_prompt = generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data)
         else:
             user_prompt, system_prompt = generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data)
-        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        final_response = model_response.text
         logger.info(f'{final_response=}')
-        return final_response
+        return final_response, model_response
     except Exception as e:
         logger.error("data_analyse_tool is error")
-    return ""
 
 
 def get_query_intent(model_id, search_box, prompt_map):
@@ -285,10 +295,11 @@ def get_query_intent(model_id, search_box, prompt_map):
 
     user_prompt, system_prompt = generate_intent_prompt(prompt_map, search_box, model_id)
     max_tokens = 2048
-    final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    final_response = model_response.text
     logger.info(f'{final_response=}')
     intent_result_dict = json_parse.parse(final_response)
-    return intent_result_dict
+    return intent_result_dict, model_response
 
 
 def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
@@ -296,21 +307,19 @@ def get_query_rewrite(model_id, search_box, prompt_map, chat_history):
     history_query = "\n".join(chat_history)
     user_prompt, system_prompt = generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query)
     max_tokens = 2048
-    final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    final_response = model_response.text
     logger.info(f'{final_response=}')
     query_rewrite_result = json_parse.parse(final_response)
-    return query_rewrite_result
+    return query_rewrite_result, model_response
 
 
 def knowledge_search(model_id, search_box, prompt_map):
-    try:
-        user_prompt, system_prompt = generate_knowledge_prompt(prompt_map, search_box, model_id)
-        max_tokens = 2048
-        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
-        return final_response
-    except Exception as e:
-        logger.error("knowledge_search is error")
-    return ""
+    user_prompt, system_prompt = generate_knowledge_prompt(prompt_map, search_box, model_id)
+    max_tokens = 2048
+    model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+    final_response = model_response.text
+    return final_response, model_response
 
 
 def select_data_visualization_type(model_id, search_box, search_data, prompt_map):
@@ -321,9 +330,10 @@ def select_data_visualization_type(model_id, search_box, search_data, prompt_map
     try:
         user_prompt, system_prompt = generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id)
         max_tokens = 2048
-        final_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens, False)
+        final_response = model_response.text
         data_visualization_dict = json_parse.parse(final_response)
-        return data_visualization_dict
+        return data_visualization_dict, model_response
     except Exception as e:
         logger.error("select_data_visualization_type is error {}", e)
         return default_data_visualization
@@ -337,14 +347,15 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     all_columns_data = convert_timestamps_to_str(all_columns_data)
     try:
         if len(all_columns_data) < 1:
-            return "table", all_columns_data, "-1", []
+            return "table", all_columns_data, "-1", [], None
         else:
             if len(all_columns_data) > 10:
                 all_columns_data_sample = all_columns_data[0:5]
             else:
                 all_columns_data_sample = all_columns_data
-            model_select_type_dict = select_data_visualization_type(model_id, search_box, all_columns_data_sample,
-                                                                    prompt_map)
+            model_select_type_dict, model_response = select_data_visualization_type(model_id, search_box,
+                                                                                    all_columns_data_sample,
+                                                                                    prompt_map)
             model_select_type = model_select_type_dict["show_type"]
             model_select_type_columns = model_select_type_dict["format_data"][0]
             data_list = search_data[model_select_type_columns].values.tolist()
@@ -352,20 +363,20 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
             # 返回格式校验
             if len(columns) != 2:
                 if model_select_type == "table":
-                    return "table", all_columns_data, "-1", []
+                    return "table", all_columns_data, "-1", [], model_response
                 else:
                     if len(model_select_type_columns) == 2:
-                        return "table", all_columns_data, model_select_type, [model_select_type_columns] + data_list
+                        return "table", all_columns_data, model_select_type, [model_select_type_columns] + data_list, model_response
                     else:
-                        return "table", all_columns_data, "-1", []
+                        return "table", all_columns_data, "-1", [], model_response
             else:
                 if model_select_type == "table":
-                    return "table", all_columns_data, "-1", []
+                    return "table", all_columns_data, "-1", [], model_response
                 else:
-                    return model_select_type, [model_select_type_columns] + data_list, "-1", []
+                    return model_select_type, [model_select_type_columns] + data_list, "-1", [], model_response
     except Exception as e:
         logger.error("data_visualization is error {}", e)
-        return "table", all_columns_data, "-1", []
+        return "table", all_columns_data, "-1", [], None
 
 
 def create_vector_embedding_with_bedrock(text, index_name):

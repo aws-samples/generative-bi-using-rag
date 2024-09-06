@@ -157,9 +157,9 @@ class QueryStateMachine:
 
     def _handle_query_rewrite(self):
         try:
-            query_rewrite_result = get_query_rewrite(self.context.model_type, self.context.search_box,
-                                                     self.context.database_profile['prompt_map'],
-                                                     self.context.user_query_history)
+            query_rewrite_result, model_response = get_query_rewrite(self.context.model_type, self.context.search_box,
+                                                                     self.context.database_profile['prompt_map'],
+                                                                     self.context.user_query_history)
             query_rewrite_intent = query_rewrite_result.get("intent")
             self.context.query_rewrite = query_rewrite_result.get("query")
             if query_rewrite_intent == "ask_in_reply":
@@ -200,9 +200,11 @@ class QueryStateMachine:
                     change_value = []
                     for each_value in value:
                         new_each_value = each_value
-                        new_each_value["id"] = new_each_value["table_name"] + "#" + new_each_value["column_name"] + "#" + new_each_value["value"]
-                        new_each_value["text"] = "实体名称：" + key + ", 数据表：" + each_value["table_name"] + "，" + "列名是：" + each_value[
-                        "column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
+                        new_each_value["id"] = new_each_value["table_name"] + "#" + new_each_value[
+                            "column_name"] + "#" + new_each_value["value"]
+                        new_each_value["text"] = "实体名称：" + key + ", 数据表：" + each_value[
+                            "table_name"] + "，" + "列名是：" + each_value[
+                                                     "column_name"] + "，" + "查询值是：" + each_value["value"] + "\n"
                         change_value.append(new_each_value)
                     same_name_entity[key] = change_value
 
@@ -262,11 +264,14 @@ class QueryStateMachine:
 
     def _generate_sql(self):
         try:
-            response = text_to_sql(self.context.database_profile['tables_info'], self.context.database_profile['hints'],
-                                   self.context.database_profile['prompt_map'], self.context.query_rewrite,
-                                   model_id=self.context.model_type, sql_examples=self.normal_search_qa_retrival,
-                                   ner_example=self.normal_search_entity_slot,
-                                   dialect=self.context.database_profile['db_type'])
+            response, model_response = text_to_sql(self.context.database_profile['tables_info'],
+                                                   self.context.database_profile['hints'],
+                                                   self.context.database_profile['prompt_map'],
+                                                   self.context.query_rewrite,
+                                                   model_id=self.context.model_type,
+                                                   sql_examples=self.normal_search_qa_retrival,
+                                                   ner_example=self.normal_search_entity_slot,
+                                                   dialect=self.context.database_profile['db_type'])
             sql = get_generated_sql(response)
             # post-processing the sql
             post_sql = self._apply_row_level_security_for_sql(sql)
@@ -278,18 +283,19 @@ class QueryStateMachine:
 
     def _generate_sql_again(self):
         try:
-            response = text_to_sql(self.context.database_profile['tables_info'],
-                                   self.context.database_profile['hints'],
-                                   self.context.database_profile['prompt_map'],
-                                   self.context.query_rewrite,
-                                   model_id=self.context.model_type,
-                                   sql_examples=self.normal_search_qa_retrival,
-                                   ner_example=self.normal_search_entity_slot,
-                                   dialect=self.context.database_profile['db_type'],
-                                   model_provider=None,
-                                   additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
-                                       sql_statement=self.intent_search_result["original_sql"],
-                                       error=self.intent_search_result["sql_execute_result"]["error_info"]))
+            response, model_response = text_to_sql(self.context.database_profile['tables_info'],
+                                                   self.context.database_profile['hints'],
+                                                   self.context.database_profile['prompt_map'],
+                                                   self.context.query_rewrite,
+                                                   model_id=self.context.model_type,
+                                                   sql_examples=self.normal_search_qa_retrival,
+                                                   ner_example=self.normal_search_entity_slot,
+                                                   dialect=self.context.database_profile['db_type'],
+                                                   model_provider=None,
+                                                   additional_info='''\n NOTE: when I try to write a SQL <sql>{sql_statement}</sql>, I got an error <error>{error}</error>. Please consider and avoid this problem. '''.format(
+                                                       sql_statement=self.intent_search_result["original_sql"],
+                                                       error=self.intent_search_result["sql_execute_result"][
+                                                           "error_info"]))
             sql = get_generated_sql(response)
             post_sql = self._apply_row_level_security_for_sql(sql)
             self.delete_error_log_entry(QueryState.SQL_GENERATION.name)
@@ -314,8 +320,8 @@ class QueryStateMachine:
     def handle_intent_recognition(self):
         try:
             if self.context.intent_ner_recognition_flag:
-                intent_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
-                                                   self.context.database_profile['prompt_map'])
+                intent_response, model_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
+                                                                   self.context.database_profile['prompt_map'])
                 self.intent_response = intent_response
                 self._process_intent_response(intent_response)
             else:
@@ -369,8 +375,9 @@ class QueryStateMachine:
 
     @log_execution
     def handle_knowledge_search(self):
-        response = knowledge_search(search_box=self.context.query_rewrite, model_id=self.context.model_type,
-                                    prompt_map=self.context.database_profile["prompt_map"])
+        response, model_response = knowledge_search(search_box=self.context.query_rewrite,
+                                                    model_id=self.context.model_type,
+                                                    prompt_map=self.context.database_profile["prompt_map"])
         self.answer.query = self.context.search_box
         self.answer.query_rewrite = self.context.query_rewrite
         self.answer.query_intent = "knowledge_search"
@@ -441,7 +448,7 @@ class QueryStateMachine:
     def handle_analyze_data(self):
         # Analyze the data
         try:
-            search_intent_analyse_result = data_analyse_tool(self.context.model_type,
+            search_intent_analyse_result, model_response = data_analyse_tool(self.context.model_type,
                                                              self.context.database_profile['prompt_map'],
                                                              self.context.query_rewrite,
                                                              self.intent_search_result["sql_execute_result"][
@@ -462,10 +469,11 @@ class QueryStateMachine:
             self.agent_cot_retrieve = get_retrieve_opensearch(self.context.opensearch_info, self.context.query_rewrite,
                                                               "agent", self.context.selected_profile, 2, 0.5)
 
-            agent_cot_task_result = get_agent_cot_task(self.context.model_type, self.context.database_profile["prompt_map"],
-                                                       self.context.query_rewrite,
-                                                       self.context.database_profile['tables_info'],
-                                                       self.agent_cot_retrieve)
+            agent_cot_task_result, model_response = get_agent_cot_task(self.context.model_type,
+                                                                       self.context.database_profile["prompt_map"],
+                                                                       self.context.query_rewrite,
+                                                                       self.context.database_profile['tables_info'],
+                                                                       self.agent_cot_retrieve)
             self.agent_task_split = agent_cot_task_result
             self.transition(QueryState.AGENT_SEARCH)
         except Exception as e:
@@ -495,11 +503,12 @@ class QueryStateMachine:
                                                           data_show_type="table",
                                                           sql_gen_process=each_task_sql_response,
                                                           data_analyse="", sql_data_chart=[])
-                    each_task_sql_search_result = TaskSQLSearchResult(sub_task_query=self.agent_search_result[i]["query"],
-                                                                      sql_search_result=sub_task_sql_result)
+                    each_task_sql_search_result = TaskSQLSearchResult(
+                        sub_task_query=self.agent_search_result[i]["query"],
+                        sql_search_result=sub_task_sql_result)
                     agent_sql_search_result.append(each_task_sql_search_result)
 
-            agent_data_analyse_result = data_analyse_tool(self.context.model_type,
+            agent_data_analyse_result, model_response = data_analyse_tool(self.context.model_type,
                                                           self.context.database_profile["prompt_map"],
                                                           self.context.query_rewrite,
                                                           json.dumps(filter_deep_dive_sql_result,
@@ -535,7 +544,7 @@ class QueryStateMachine:
     def handle_data_visualization(self):
         try:
             if self.answer.query_intent == "normal_search":
-                model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(
+                model_select_type, show_select_data, select_chart_type, show_chart_data, model_response = data_visualization(
                     self.context.model_type,
                     self.context.query_rewrite,
                     self.get_answer().sql_search_result.sql_data,
@@ -551,7 +560,7 @@ class QueryStateMachine:
                 agent_sql_search_result = self.answer.agent_search_result.agent_sql_search_result
                 agent_sql_search_result_with_visualization = []
                 for each in agent_sql_search_result:
-                    model_select_type, show_select_data, select_chart_type, show_chart_data = data_visualization(
+                    model_select_type, show_select_data, select_chart_type, show_chart_data, model_response = data_visualization(
                         self.context.model_type,
                         each.sub_task_query,
                         each.sql_search_result.sql_data,
@@ -586,8 +595,10 @@ class QueryStateMachine:
                 if entity in entity_user_select:
                     each_entity["_source"]["entity_table_info"] = [entity_user_select[entity]]
                     each_entity["_source"]["comment"] = comment_format.format(entity=entity,
-                                                                              table_name=entity_user_select[entity]["table_name"],
-                                                                              comment_format=entity_user_select[entity]["column_name"],
+                                                                              table_name=entity_user_select[entity][
+                                                                                  "table_name"],
+                                                                              comment_format=entity_user_select[entity][
+                                                                                  "column_name"],
                                                                               value=entity_user_select[entity]["value"])
                     entity_retrieval.append(each_entity)
             self.normal_search_entity_slot = entity_retrieval
