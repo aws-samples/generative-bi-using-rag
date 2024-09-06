@@ -54,6 +54,11 @@ class ConnectionManagement:
         return RelationDatabase.get_db_url_by_connection(conn_config)
 
     @classmethod
+    def get_db_password_host_by_name(cls, conn_name):
+        conn_config = cls.get_conn_config_by_name(conn_name)
+        return RelationDatabase.get_password_host_by_connection(conn_config)
+
+    @classmethod
     def get_db_type_by_name(cls, conn_name):
         conn_config = cls.get_conn_config_by_name(conn_name)
         return conn_config.db_type

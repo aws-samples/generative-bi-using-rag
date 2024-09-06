@@ -193,3 +193,7 @@ class RelationDatabase():
         db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
                                 connection.db_port, connection.db_name)
         return db_url
+
+    @classmethod
+    def get_password_host_by_connection(cls, connection: ConnectConfigEntity):
+        return connection.db_pwd, connection.db_host
