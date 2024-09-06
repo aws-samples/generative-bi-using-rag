@@ -1,3 +1,4 @@
+import json
 
 import sqlalchemy as db
 from sqlalchemy import text, Column, inspect
@@ -39,6 +40,7 @@ class RelationDatabase():
             )
             logger.info(f"db_url: {db_url}")
         elif db_type == 'bigquery':
+            password = json.loads(password)
             db_url = db.engine.URL.create(
                 drivername=cls.db_mapping[db_type],
                 host=host,  # BigQuery project. Note: without dataset
