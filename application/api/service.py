@@ -1,9 +1,7 @@
 import json
-from typing import Union
 from dotenv import load_dotenv
 
 from nlq.business.connection import ConnectionManagement
-from nlq.business.datasource.factory import DataSourceFactory
 from nlq.business.log_feedback import FeedBackManagement
 from nlq.business.model import ModelManagement
 from nlq.business.nlq_chain import NLQChain
@@ -13,13 +11,9 @@ from nlq.business.log_store import LogManagement
 from nlq.core.chat_context import ProcessingContext
 from nlq.core.state import QueryState
 from nlq.core.state_machine import QueryStateMachine
-from utils.database import get_db_url_dialect
-from utils.domain import SearchTextSqlResult
-from utils.llm import text_to_sql, get_query_intent
 from utils.logging import getLogger
-from utils.opensearch import get_retrieve_opensearch
 from utils.env_var import opensearch_info
-from utils.tool import generate_log_id, get_current_time, get_generated_sql, serialize_timestamp
+from utils.tool import generate_log_id, get_current_time, serialize_timestamp
 from .schemas import Question, Example, Option,  Message, HistoryMessage
 from .exception_handler import BizException
 from utils.constant import BEDROCK_MODEL_IDS
@@ -81,47 +75,6 @@ def get_history_by_user_profile(user_id: str, profile_name: str):
         each_session_history = HistoryMessage(session_id=key, messages=value)
         chat_history.append(each_session_history)
     return chat_history
-
-
-def get_result_from_llm(question: Question, current_nlq_chain: NLQChain, with_response_stream=False) -> Union[
-    str, dict]:
-    logger.info('try to get generated sql from LLM')
-
-    entity_slot_retrieve = []
-    all_profiles = ProfileManagement.get_all_profiles_with_info()
-    database_profile = all_profiles[question.profile_name]
-    if question.intent_ner_recognition:
-        intent_response = get_query_intent(question.bedrock_model_id, question.keywords, database_profile['prompt_map'])
-        intent = intent_response.get("intent", "normal_search")
-        if intent == "reject_search":
-            raise BizException(ErrorEnum.NOT_SUPPORTED)
-        entity_slot = intent_response.get("slot", [])
-        if entity_slot:
-            for each_entity in entity_slot:
-                entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner", question.profile_name, 1,
-                                                          0.7)
-                if entity_retrieve:
-                    entity_slot_retrieve.extend(entity_retrieve)
-
-    # Whether Retrieving Few Shots from Database
-    logger.info('Sending request...')
-    # fix db url is Empty
-    if database_profile['db_url'] == '':
-        conn_name = database_profile['conn_name']
-        db_url = ConnectionManagement.get_db_url_by_name(conn_name)
-        database_profile['db_url'] = db_url
-
-    response = text_to_sql(database_profile['tables_info'],
-                            database_profile['hints'],
-                            database_profile['prompt_map'],
-                            question.keywords,
-                            model_id=question.bedrock_model_id,
-                            sql_examples=current_nlq_chain.get_retrieve_samples(),
-                            ner_example=entity_slot_retrieve,
-                            dialect=get_db_url_dialect(database_profile['db_url']),
-                            model_provider=None,
-                            with_response_stream=with_response_stream, )
-    return response
 
 
 async def ask_websocket(websocket: WebSocket, question: Question):
@@ -330,134 +283,6 @@ def user_feedback_downvote(data_profiles: str, user_id: str, session_id: str, qu
         return True
     except Exception as e:
         return False
-
-
-def ask_with_response_stream(question: Question, current_nlq_chain: NLQChain) -> dict:
-    logger.info('try to get generated sql from LLM')
-    response = get_result_from_llm(question, current_nlq_chain, True)
-    logger.info("got llm response")
-    return response
-
-
-def get_executed_result(current_nlq_chain: NLQChain) -> str:
-    all_profiles = ProfileManagement.get_all_profiles_with_info()
-    sql_query_result = current_nlq_chain.get_executed_result_df(all_profiles[current_nlq_chain.profile])
-    final_sql_query_result = sql_query_result.to_markdown()
-    return final_sql_query_result
-
-
-async def normal_text_search_websocket(websocket: WebSocket, session_id: str, search_box, model_type, database_profile,
-                                       entity_slot, opensearch_info, selected_profile, use_rag, user_id,
-                                       model_provider=None, username=None):
-    entity_slot_retrieve = []
-    retrieve_result = []
-    response = ""
-    sql = ""
-    search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                                        retrieve_result=retrieve_result, response=response, sql=sql)
-    try:
-        if database_profile['db_url'] == '':
-            conn_name = database_profile['conn_name']
-            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
-            database_profile['db_url'] = db_url
-            # TODO: db_type already set in profile
-            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
-
-        if len(entity_slot) > 0 and use_rag:
-            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "start",
-                                     user_id)
-            for each_entity in entity_slot:
-                entity_retrieve = get_retrieve_opensearch(opensearch_info, each_entity, "ner",
-                                                          selected_profile, 1, 0.7)
-                if len(entity_retrieve) > 0:
-                    entity_slot_retrieve.extend(entity_retrieve)
-            await response_websocket(websocket, session_id, "Entity Info Retrieval", ContentEnum.STATE, "end", user_id)
-
-        if use_rag:
-            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "start", user_id)
-            retrieve_result = get_retrieve_opensearch(opensearch_info, search_box, "query",
-                                                      selected_profile, 3, 0.5)
-            await response_websocket(websocket, session_id, "QA Info Retrieval", ContentEnum.STATE, "end", user_id)
-
-        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "start", user_id)
-
-        response = text_to_sql(database_profile['tables_info'],
-                               database_profile['hints'],
-                               database_profile['prompt_map'],
-                               search_box,
-                               model_id=model_type,
-                               sql_examples=retrieve_result,
-                               ner_example=entity_slot_retrieve,
-                               dialect=database_profile['db_type'],
-                               model_provider=model_provider)
-        logger.info(f'{response=}')
-        await response_websocket(websocket, session_id, "Generating SQL", ContentEnum.STATE, "end", user_id)
-        sql = get_generated_sql(response)
-        # post-processing the sql for row level security
-        post_sql = DataSourceFactory.apply_row_level_security_for_sql(
-                        database_profile['db_type'],
-                        sql,
-                        database_profile['row_level_security_config'],
-                        username
-                    )
-
-        search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                                            retrieve_result=retrieve_result, response=response, sql="")
-        search_result.entity_slot_retrieve = entity_slot_retrieve
-        search_result.retrieve_result = retrieve_result
-        search_result.response = response
-        search_result.sql = post_sql
-        search_result.original_sql = sql
-    except Exception as e:
-        logger.exception(e)
-    return search_result
-
-
-async def normal_sql_regenerating_websocket(websocket: WebSocket, session_id: str, search_box, model_type,
-                                            database_profile, entity_slot_retrieve, retrieve_result, additional_info,
-                                            username: str):
-    entity_slot_retrieve = entity_slot_retrieve
-    retrieve_result = retrieve_result
-    response = ""
-    sql = ""
-    search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                                        retrieve_result=retrieve_result, response=response, sql=sql)
-    try:
-        if database_profile['db_url'] == '':
-            conn_name = database_profile['conn_name']
-            db_url = ConnectionManagement.get_db_url_by_name(conn_name)
-            database_profile['db_url'] = db_url
-            database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
-
-        response = text_to_sql(database_profile['tables_info'],
-                               database_profile['hints'],
-                               database_profile['prompt_map'],
-                               search_box,
-                               model_id=model_type,
-                               sql_examples=retrieve_result,
-                               ner_example=entity_slot_retrieve,
-                               dialect=database_profile['db_type'],
-                               model_provider=None,
-                               additional_info=additional_info)
-        logger.info("normal_sql_regenerating_websocket")
-        logger.info(f'{response=}')
-        sql = get_generated_sql(response)
-        post_sql = DataSourceFactory.apply_row_level_security_for_sql(
-                        database_profile['db_type'],
-                        sql,
-                        database_profile['row_level_security_config'],
-                        username
-                    )
-        search_result = SearchTextSqlResult(search_query=search_box, entity_slot_retrieve=entity_slot_retrieve,
-                                            retrieve_result=retrieve_result, response=response, sql="")
-        search_result.entity_slot_retrieve = entity_slot_retrieve
-        search_result.retrieve_result = retrieve_result
-        search_result.response = response
-        search_result.sql = post_sql
-        search_result.original_sql = sql
-    except Exception as e:
-        logger.error(e)
-    return search_result
 
 
 async def response_websocket(websocket: WebSocket, session_id: str, content,
