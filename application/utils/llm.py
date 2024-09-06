@@ -410,11 +410,6 @@ def create_vector_embedding_with_sagemaker(endpoint_name, text, index_name):
 def generate_suggested_question(prompt_map, search_box, model_id=None):
     max_tokens = 2048
     user_prompt, system_prompt = generate_suggest_question_prompt(prompt_map, search_box, model_id)
-    user_message = {"role": "user", "content": user_prompt}
-    messages = [user_message]
-    logger.info(f'{system_prompt=}')
-    logger.info(f'{messages=}')
-    response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens)
-    final_response = response.get("content")[0].get("text")
-
-    return final_response
+    model_response = invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens)
+    final_response = model_response.text
+    return final_response, model_response

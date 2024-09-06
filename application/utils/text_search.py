@@ -84,6 +84,9 @@ def agent_text_search(search_box, model_type, database_profile, entity_slot, ope
     default_each_res_dict["query"] = search_box
     default_each_res_dict["response"] = ""
     default_each_res_dict["sql"] = "-1"
+    token_info = {}
+    token_info["input_tokens"] = 0
+    token_info["output_tokens"] = 0
     try:
         for each_task in agent_cot_task_result:
             each_res_dict = {}
@@ -106,12 +109,18 @@ def agent_text_search(search_box, model_type, database_profile, entity_slot, ope
                                                              ner_example=entity_slot_retrieve,
                                                              dialect=database_profile['db_type'],
                                                              model_provider=None)
+            if model_response.token_info is not None and len(model_response.token_info) > 0:
+                sub_token_info = model_response.token_info
+                if "input_tokens" in sub_token_info:
+                    token_info["input_tokens"] = token_info["input_tokens"] + sub_token_info["input_tokens"]
+                if "output_tokens" in sub_token_info:
+                    token_info["output_tokens"] = token_info["output_tokens"] + sub_token_info["output_tokens"]
             each_task_sql = get_generated_sql(each_task_response)
             each_res_dict["response"] = each_task_response
             each_res_dict["sql"] = each_task_sql
             if each_res_dict["sql"] != "":
                 agent_search_results.append(each_res_dict)
-        return agent_search_results
+        return agent_search_results, token_info
     except Exception as e:
         logger.error(e)
-    return default_agent_search_results
+    return default_agent_search_results, token_info

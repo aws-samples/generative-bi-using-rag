@@ -82,6 +82,7 @@ class QueryStateMachine:
         self.agent_valid_data = []
         self.use_auto_correction_flag = False
         self.first_sql_execute_info = {}
+        self.token_info = {}
 
     def transition(self, new_state):
         self.state = new_state
@@ -160,6 +161,7 @@ class QueryStateMachine:
             query_rewrite_result, model_response = get_query_rewrite(self.context.model_type, self.context.search_box,
                                                                      self.context.database_profile['prompt_map'],
                                                                      self.context.user_query_history)
+            self.token_info[QueryState.QUERY_REWRITE.name] = model_response.token_info
             query_rewrite_intent = query_rewrite_result.get("intent")
             self.context.query_rewrite = query_rewrite_result.get("query")
             if query_rewrite_intent == "ask_in_reply":
@@ -272,6 +274,7 @@ class QueryStateMachine:
                                                    sql_examples=self.normal_search_qa_retrival,
                                                    ner_example=self.normal_search_entity_slot,
                                                    dialect=self.context.database_profile['db_type'])
+            self.token_info[QueryState.SQL_GENERATION.name] = model_response.token_info
             sql = get_generated_sql(response)
             # post-processing the sql
             post_sql = self._apply_row_level_security_for_sql(sql)
@@ -296,6 +299,7 @@ class QueryStateMachine:
                                                        sql_statement=self.intent_search_result["original_sql"],
                                                        error=self.intent_search_result["sql_execute_result"][
                                                            "error_info"]))
+            self.token_info[QueryState.SQL_GENERATION.name + "_AGAIN"] = model_response.token_info
             sql = get_generated_sql(response)
             post_sql = self._apply_row_level_security_for_sql(sql)
             self.delete_error_log_entry(QueryState.SQL_GENERATION.name)
@@ -307,12 +311,12 @@ class QueryStateMachine:
 
     @log_execution
     def handle_agent_sql_generation(self):
-        agent_search_result = agent_text_search(self.context.query_rewrite, self.context.model_type,
-                                                self.context.database_profile,
-                                                self.entity_slot, self.context.opensearch_info,
-                                                self.context.selected_profile, self.context.use_rag_flag,
-                                                self.agent_task_split)
-
+        agent_search_result, token_info = agent_text_search(self.context.query_rewrite, self.context.model_type,
+                                                            self.context.database_profile,
+                                                            self.entity_slot, self.context.opensearch_info,
+                                                            self.context.selected_profile, self.context.use_rag_flag,
+                                                            self.agent_task_split)
+        self.token_info[QueryState.SQL_GENERATION.name + "AGENT"] = token_info
         self.agent_search_result = agent_search_result
         self.transition(QueryState.AGENT_DATA_SUMMARY)
 
@@ -322,6 +326,7 @@ class QueryStateMachine:
             if self.context.intent_ner_recognition_flag:
                 intent_response, model_response = get_query_intent(self.context.model_type, self.context.query_rewrite,
                                                                    self.context.database_profile['prompt_map'])
+                self.token_info[QueryState.INTENT_RECOGNITION.name] = model_response.token_info
                 self.intent_response = intent_response
                 self._process_intent_response(intent_response)
             else:
@@ -378,6 +383,7 @@ class QueryStateMachine:
         response, model_response = knowledge_search(search_box=self.context.query_rewrite,
                                                     model_id=self.context.model_type,
                                                     prompt_map=self.context.database_profile["prompt_map"])
+        self.token_info[QueryState.KNOWLEDGE_SEARCH.name] = model_response.token_info
         self.answer.query = self.context.search_box
         self.answer.query_rewrite = self.context.query_rewrite
         self.answer.query_intent = "knowledge_search"
@@ -449,12 +455,15 @@ class QueryStateMachine:
         # Analyze the data
         try:
             search_intent_analyse_result, model_response = data_analyse_tool(self.context.model_type,
-                                                             self.context.database_profile['prompt_map'],
-                                                             self.context.query_rewrite,
-                                                             self.intent_search_result["sql_execute_result"][
-                                                                 "data"].to_json(
-                                                                 orient='records',
-                                                                 force_ascii=False), "query")
+                                                                             self.context.database_profile[
+                                                                                 'prompt_map'],
+                                                                             self.context.query_rewrite,
+                                                                             self.intent_search_result[
+                                                                                 "sql_execute_result"][
+                                                                                 "data"].to_json(
+                                                                                 orient='records',
+                                                                                 force_ascii=False), "query")
+            self.token_info[QueryState.ANALYZE_DATA.name] = model_response.token_info
             self.answer.sql_search_result.data_analyse = search_intent_analyse_result
             self.transition(QueryState.COMPLETE)
         except Exception as e:
@@ -474,6 +483,7 @@ class QueryStateMachine:
                                                                        self.context.query_rewrite,
                                                                        self.context.database_profile['tables_info'],
                                                                        self.agent_cot_retrieve)
+            self.token_info[QueryState.AGENT_TASK.name] = model_response.token_info
             self.agent_task_split = agent_cot_task_result
             self.transition(QueryState.AGENT_SEARCH)
         except Exception as e:
@@ -509,10 +519,11 @@ class QueryStateMachine:
                     agent_sql_search_result.append(each_task_sql_search_result)
 
             agent_data_analyse_result, model_response = data_analyse_tool(self.context.model_type,
-                                                          self.context.database_profile["prompt_map"],
-                                                          self.context.query_rewrite,
-                                                          json.dumps(filter_deep_dive_sql_result,
-                                                                     ensure_ascii=False), "agent")
+                                                                          self.context.database_profile["prompt_map"],
+                                                                          self.context.query_rewrite,
+                                                                          json.dumps(filter_deep_dive_sql_result,
+                                                                                     ensure_ascii=False), "agent")
+            self.token_info[QueryState.AGENT_DATA_SUMMARY.name] = model_response.token_info
 
             self.agent_valid_data = filter_deep_dive_sql_result
             self.agent_data_analyse_result = agent_data_analyse_result
@@ -530,9 +541,10 @@ class QueryStateMachine:
         # Handle suggest question
         if self.context.gen_suggested_question_flag:
             if self.search_intent_flag or self.agent_intent_flag:
-                generated_sq = generate_suggested_question(self.context.database_profile['prompt_map'],
-                                                           self.context.query_rewrite,
-                                                           model_id=self.context.model_type)
+                generated_sq, model_response = generate_suggested_question(self.context.database_profile['prompt_map'],
+                                                                           self.context.query_rewrite,
+                                                                           model_id=self.context.model_type)
+                self.token_info["SUGGEST_QUESTION"] = model_response.token_info
                 split_strings = generated_sq.split("[generate]")
                 gen_sq_list = [s.strip() for s in split_strings if s.strip()]
                 self.answer.suggested_question = gen_sq_list
@@ -549,6 +561,7 @@ class QueryStateMachine:
                     self.context.query_rewrite,
                     self.get_answer().sql_search_result.sql_data,
                     self.context.database_profile['prompt_map'])
+                self.token_info[QueryState.DATA_VISUALIZATION.name] = model_response.token_info
                 if select_chart_type != "-1":
                     sql_chart_data = ChartEntity(chart_type="", chart_data=[])
                     sql_chart_data.chart_type = select_chart_type
@@ -565,6 +578,7 @@ class QueryStateMachine:
                         each.sub_task_query,
                         each.sql_search_result.sql_data,
                         self.context.database_profile['prompt_map'])
+                    self.token_info[QueryState.DATA_VISUALIZATION.name] = model_response.token_info
                     if select_chart_type != "-1":
                         sql_chart_data = ChartEntity(chart_type="", chart_data=[])
                         sql_chart_data.chart_type = select_chart_type

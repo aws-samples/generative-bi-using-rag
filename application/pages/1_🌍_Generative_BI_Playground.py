@@ -264,6 +264,7 @@ def main():
         data_with_analyse = st.checkbox("Answer With Insights", False)
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
         auto_correction_flag = st.checkbox("Auto Correcting SQL", True)
+        show_token_cost = st.checkbox("Show Token Cost", False)
         context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 5)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
@@ -535,6 +536,11 @@ def main():
 
                 logger.info(f'{state_machine.get_state()}')
                 logger.info("state_machine is done")
+                if show_token_cost:
+                    with st.status("Show Token Cost") as status_text:
+                        st.write(state_machine.token_info)
+                    status_text.update(label=f"Show Token Cost",
+                                       state="complete", expanded=False)
                 if state_machine.get_state() == QueryState.COMPLETE:
                     if state_machine.get_answer().query_intent == "normal_search":
                         if state_machine.intent_search_result["sql_execute_result"]["status_code"] == 200:
