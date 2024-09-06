@@ -1,3 +1,4 @@
+import json
 
 import sqlalchemy as db
 from sqlalchemy import text, Column, inspect
@@ -39,10 +40,11 @@ class RelationDatabase():
             )
             logger.info(f"db_url: {db_url}")
         elif db_type == 'bigquery':
+            password = json.loads(password)
             db_url = db.engine.URL.create(
                 drivername=cls.db_mapping[db_type],
                 host=host,  # BigQuery project. Note: without dataset
-                query={'credentials_path': password}
+                query={'credentials_path': json.dumps(password)}
             )
         else:
             db_url = db.engine.URL.create(
@@ -67,7 +69,11 @@ class RelationDatabase():
                     connect_args={'s3_staging_dir': db_name}
                 )
             else:
-                engine = db.create_engine(cls.get_db_url(db_type, user, password, host, port, db_name))
+                if db_type == "bigquery":
+                    password = json.loads(password)
+                    engine = db.create_engine(url=host, credentials_info=password)
+                else:
+                    engine = db.create_engine(cls.get_db_url(db_type, user, password, host, port, db_name))
             connection = engine.connect()
             return True
         except Exception as e:
@@ -80,7 +86,11 @@ class RelationDatabase():
         db_type = connection.db_type
         db_url = cls.get_db_url(db_type, connection.db_user, connection.db_pwd, connection.db_host, connection.db_port,
                                 connection.db_name)
-        engine = db.create_engine(db_url)
+        if db_type == "bigquery":
+            password = json.loads(connection.db_pwd)
+            engine = db.create_engine(url=connection.db_host, credentials_info=password)
+        else:
+            engine = db.create_engine(db_url)
         inspector = inspect(engine)
 
         if db_type == 'postgresql':
@@ -104,7 +114,11 @@ class RelationDatabase():
     def get_metadata_by_connection(cls, connection, schemas):
         db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
                                 connection.db_port, connection.db_name)
-        engine = db.create_engine(db_url)
+        if connection.db_type == "bigquery":
+            password = json.loads(connection.db_pwd)
+            engine = db.create_engine(url=connection.db_host, credentials_info=password)
+        else:
+            engine = db.create_engine(db_url)
         # connection = engine.connect()
         metadata = db.MetaData()
         if connection.db_type == 'bigquery':
@@ -179,3 +193,7 @@ class RelationDatabase():
         db_url = cls.get_db_url(connection.db_type, connection.db_user, connection.db_pwd, connection.db_host,
                                 connection.db_port, connection.db_name)
         return db_url
+
+    @classmethod
+    def get_password_host_by_connection(cls, connection: ConnectConfigEntity):
+        return connection.db_pwd, connection.db_host
