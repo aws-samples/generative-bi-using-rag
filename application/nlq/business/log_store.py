@@ -56,10 +56,3 @@ class LogManagement:
     @classmethod
     def delete_history_by_session(cls, user_id, profile_name, session_id, log_type="chat_history"):
         return cls.query_log_dao.delete_history_by_session(user_id, profile_name, session_id)
-
-    @classmethod
-    def add_token_log_to_database(cls, log_id, user_id, session_id, profile_name, sql, query, intent, log_info, time_str,
-                            log_type='chat_history'):
-        cls.query_log_dao.add_log(log_id=log_id, profile_name=profile_name, user_id=user_id, session_id=session_id,
-                                  sql=sql, query=query, intent=intent, log_info=log_info, time_str=time_str,
-                                  log_type=log_type)
