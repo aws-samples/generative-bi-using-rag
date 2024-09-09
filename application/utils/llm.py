@@ -12,7 +12,7 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_agent_co
     generate_query_rewrite_prompt
 
 from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, SAGEMAKER_EMBEDDING_REGION, \
-    SAGEMAKER_SQL_REGION, embedding_info
+    SAGEMAKER_SQL_REGION, embedding_info, AWS_DEFAULT_REGION
 from utils.tool import convert_timestamps_to_str
 
 from nlq.business.model import ModelManagement
@@ -154,8 +154,12 @@ def get_embedding_sagemaker_client():
     return embedding_sagemaker_client
 
 
-def get_sagemaker_client():
+def get_sagemaker_client(model_region=""):
     global sagemaker_client
+    if model_region != "" and model_region != AWS_DEFAULT_REGION:
+        sagemaker_client = boto3.client(service_name='sagemaker-runtime',
+                                        region_name=model_region)
+        return sagemaker_client
     if not sagemaker_client:
         if SAGEMAKER_SQL_REGION is not None and SAGEMAKER_SQL_REGION != "":
             sagemaker_client = boto3.client(service_name='sagemaker-runtime',
@@ -165,10 +169,10 @@ def get_sagemaker_client():
     return sagemaker_client
 
 
-def invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="LLM", with_response_stream=False):
+def invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="LLM", with_response_stream=False, model_region=""):
     if with_response_stream:
         if model_type == "LLM":
-            response = get_sagemaker_client().invoke_endpoint_with_response_stream(
+            response = get_sagemaker_client(model_region).invoke_endpoint_with_response_stream(
                 EndpointName=endpoint_name,
                 Body=body,
                 ContentType="application/json",
@@ -183,7 +187,7 @@ def invoke_model_sagemaker_endpoint(endpoint_name, body, model_type="LLM", with_
         return response
     else:
         if model_type == "LLM":
-            response = get_sagemaker_client().invoke_endpoint(
+            response = get_sagemaker_client(model_region).invoke_endpoint(
                 EndpointName=endpoint_name,
                 Body=body,
                 ContentType="application/json",
@@ -221,14 +225,14 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
 
         prompt_template = model_config.prompt_template
         input_payload = model_config.input_payload
-
+        llm_region = model_config.model_region
         prompt = prompt_template.replace("SYSTEM_PROMPT", system_prompt).replace("USER_PROMPT", user_prompt)
         input_payload = json.loads(input_payload)
         input_payload_text = json.dumps(input_payload, ensure_ascii=False)
         body = input_payload_text.replace("\"INPUT\"", json.dumps(prompt, ensure_ascii=False))
         logger.info(f'{body=}')
         endpoint_name = model_id[len('sagemaker.'):]
-        response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream)
+        response = invoke_model_sagemaker_endpoint(endpoint_name, body, "LLM", with_response_stream, llm_region)
     logger.info(f'{response=}')
     model_response.response = response
     if model_id.startswith('anthropic.claude-3'):
