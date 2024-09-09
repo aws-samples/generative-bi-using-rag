@@ -578,7 +578,21 @@ class QueryStateMachine:
                         each.sub_task_query,
                         each.sql_search_result.sql_data,
                         self.context.database_profile['prompt_map'])
-                    self.token_info[QueryState.DATA_VISUALIZATION.name] = model_response.token_info
+                    if QueryState.DATA_VISUALIZATION.name not in self.token_info:
+                        self.token_info[QueryState.DATA_VISUALIZATION.name] = model_response.token_info
+                    else:
+                        if "input_tokens" in model_response.token_info:
+                            self.token_info[QueryState.DATA_VISUALIZATION.name]["input_tokens"] = self.token_info[
+                                                                                                     QueryState.DATA_VISUALIZATION.name][
+                                                                                                     "input_tokens"] + \
+                                                                                                 model_response.token_info[
+                                                                                                     "input_tokens"]
+                        if "output_tokens" in model_response.token_info:
+                            self.token_info[QueryState.DATA_VISUALIZATION.name]["output_tokens"] = self.token_info[
+                                                                                                      QueryState.DATA_VISUALIZATION.name][
+                                                                                                      "output_tokens"] + \
+                                                                                                  model_response.token_info[
+                                                                                                      "output_tokens"]
                     if select_chart_type != "-1":
                         sql_chart_data = ChartEntity(chart_type="", chart_data=[])
                         sql_chart_data.chart_type = select_chart_type
