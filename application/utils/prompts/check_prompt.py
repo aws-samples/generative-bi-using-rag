@@ -1,6 +1,9 @@
 
 from utils.logging import getLogger
 
+from nlq.business.profile import ProfileManagement
+from utils.prompts.generate_prompt import support_model_ids_map, prompt_map_dict
+
 logger = getLogger()
 
 model_id_list = ['mixtral-8x7b-instruct-0',  'llama3-70b-instruct-0', 'haiku-20240307v1-0', 'sonnet-20240229v1-0',
@@ -284,3 +287,43 @@ def find_missing_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id
             missing_user_prompt_syntax.append(f'{{{user_syntax}}}')
 
     return missing_system_prompt_syntax, missing_user_prompt_syntax
+
+def check_model_id_prompt():
+    """
+    check model id in prompt in dynamoDB
+    :return:
+    """
+    try:
+        model_ids = []
+        for key, value in support_model_ids_map.items():
+            model_ids.append(value)
+        all_profiles = ProfileManagement.get_all_profiles_with_info()
+        for profile_name, profile_value_dict in all_profiles.items():
+            prompt_map = profile_value_dict.get('prompt_map')
+            prompt_map_flag = False
+            for prompt_type in prompt_map_dict:
+                if prompt_type not in prompt_map:
+                    prompt_map[prompt_type] = prompt_map_dict[prompt_type]
+                    prompt_map_flag = True
+
+            for prompt_type in prompt_map_dict:
+                origin_system_prompt = prompt_map_dict[prompt_type].get('system_prompt')
+                origin_user_prompt = prompt_map_dict[prompt_type].get('user_prompt')
+
+                db_system_prompt = prompt_map[prompt_type].get('system_prompt', {})
+                db_user_prompt = prompt_map[prompt_type].get('user_prompt', {})
+
+                for model_id in model_ids:
+                    if model_id not in db_system_prompt:
+                        prompt_map[prompt_type]['system_prompt'][model_id] = origin_system_prompt[model_id]
+                        prompt_map_flag = True
+                        logger.warning(f"Model ID {model_id} is missing in system prompt of {prompt_type}")
+                    if model_id not in db_user_prompt:
+                        prompt_map[prompt_type]['user_prompt'][model_id] = origin_user_prompt[model_id]
+                        prompt_map_flag = True
+                        logger.warning(f"Model ID {model_id} is missing in user prompt of {prompt_type}")
+
+            if prompt_map_flag:
+                ProfileManagement.update_table_prompt_map(profile_name, prompt_map)
+    except Exception as e:
+        logger.error("check prompt is error %s", e)
