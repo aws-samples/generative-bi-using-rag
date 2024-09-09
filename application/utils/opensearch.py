@@ -1,8 +1,8 @@
 import boto3
 from opensearchpy import OpenSearch
 from opensearchpy.helpers import bulk
-from utils.llm import create_vector_embedding_with_bedrock, create_vector_embedding_with_sagemaker
-from utils.env_var import opensearch_info, SAGEMAKER_ENDPOINT_EMBEDDING, AOS_INDEX_NER, query_log_name
+from utils.llm import create_vector_embedding
+from utils.env_var import opensearch_info, AOS_INDEX_NER, query_log_name
 from utils.logging import getLogger
 
 logger = getLogger()
@@ -211,11 +211,7 @@ def get_retrieve_opensearch(opensearch_info, query, search_type, selected_profil
         index_name = opensearch_info['ner_index']
     else:
         index_name = opensearch_info['agent_index']
-
-    if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-        records_with_embedding = create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING, query, index_name=index_name)
-    else:
-        records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
+    records_with_embedding = create_vector_embedding(query, index_name=index_name)
     retrieve_result = retrieve_results_from_opensearch(
         index_name=index_name,
         region_name=opensearch_info['region'],
@@ -357,26 +353,7 @@ def create_log_index(opensearch_client):
             }
         }
     }
-    opensearch_client.indices.create(index="genbi_query_logging", body=mapping)
-
-
-def upload_results_to_opensearch(region_name, domain, opensearch_user, opensearch_password, index_name, query, sql,
-                                 host='', port=443):
-
-    opensearch_client = get_opensearch_cluster_client(domain, host, port, opensearch_user, opensearch_password, region_name)
-
-    # Vector embedding using Amazon Bedrock Titan text embedding
-    logger.info(f"Creating embeddings for records")
-    record_with_embedding = create_vector_embedding_with_bedrock(query, index_name)
-
-    record_with_embedding['sql'] = sql
-    success, failed = put_bulk_in_opensearch([record_with_embedding], opensearch_client)
-    if success == 1:
-        logger.info("Finished creating records using Amazon Bedrock Titan text embedding")
-        return True
-    else:
-        logger.error("Failed to create records using Amazon Bedrock Titan text embedding")
-        return False
+    opensearch_client.indices.create(index=query_log_name, body=mapping)
 
 
 def opensearch_index_init():

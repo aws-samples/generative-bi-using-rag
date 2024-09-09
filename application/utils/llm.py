@@ -11,8 +11,8 @@ from utils.prompts.generate_prompt import generate_llm_prompt, generate_agent_co
     generate_agent_analyse_prompt, generate_data_summary_prompt, generate_suggest_question_prompt, \
     generate_query_rewrite_prompt
 
-from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, BEDROCK_EMBEDDING_MODEL, SAGEMAKER_EMBEDDING_REGION, \
-    SAGEMAKER_SQL_REGION
+from utils.env_var import bedrock_ak_sk_info, BEDROCK_REGION, SAGEMAKER_EMBEDDING_REGION, \
+    SAGEMAKER_SQL_REGION, embedding_info
 from utils.tool import convert_timestamps_to_str
 
 from nlq.business.model import ModelManagement
@@ -366,7 +366,8 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
                     return "table", all_columns_data, "-1", [], model_response
                 else:
                     if len(model_select_type_columns) == 2:
-                        return "table", all_columns_data, model_select_type, [model_select_type_columns] + data_list, model_response
+                        return "table", all_columns_data, model_select_type, [
+                                                                                 model_select_type_columns] + data_list, model_response
                     else:
                         return "table", all_columns_data, "-1", [], model_response
             else:
@@ -379,10 +380,18 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
         return "table", all_columns_data, "-1", [], None
 
 
-def create_vector_embedding_with_bedrock(text, index_name):
+def create_vector_embedding(text, index_name):
+    model_name = embedding_info["embedding_model"]
+    if embedding_info["embedding_platform"] == "bedrock":
+        return create_vector_embedding_with_bedrock(text, index_name, model_name)
+    else:
+        return create_vector_embedding_with_sagemaker(model_name, text, index_name)
+
+
+def create_vector_embedding_with_bedrock(text, index_name, model_name):
     payload = {"inputText": f"{text}"}
     body = json.dumps(payload)
-    modelId = BEDROCK_EMBEDDING_MODEL
+    modelId = model_name
     accept = "application/json"
     contentType = "application/json"
 

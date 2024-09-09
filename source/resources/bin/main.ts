@@ -26,7 +26,8 @@ const vpc = config.vpc
 const cdkConfig = {
     env: devEnv,
     deployRds: rds.deploy,
-    bedrock_embedding_name: embedding.bedrock_embedding_name,
+    embedding_platform: embedding.embedding_platform,
+    embedding_name: embedding.embedding_name,
     embedding_dimension: embedding.embedding_dimension,
     opensearch_sql_index : opensearch.sql_index,
     opensearch_ner_index : opensearch.ner_index,

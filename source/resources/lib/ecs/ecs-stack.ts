@@ -9,14 +9,23 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as path from 'path';
 
 interface ECSStackProps extends cdk.StackProps {
-  vpc: ec2.IVpc;
-  subnets: ec2.ISubnet[];
-  cognitoUserPoolId: string;
-  authenticationType: string;
-  cognitoUserPoolClientId: string;
-  OSMasterUserSecretName: string;
-  OSHostSecretName: string;
-  bedrock_region: string;
+    vpc: ec2.IVpc;
+    subnets: ec2.ISubnet[];
+    cognitoUserPoolId: string;
+    authenticationType: string;
+    cognitoUserPoolClientId: string;
+    OSMasterUserSecretName: string;
+    OSHostSecretName: string;
+    bedrock_region: string;
+    bedrock_ak_sk: string;
+    embedding_platform: string;
+    embedding_name: string;
+    embedding_dimension: number;
+    sql_index: string;
+    ner_index: string;
+    cot_index: string;
+    log_index: string;
+    embedding_region: string;
 }
 
 export class ECSStack extends cdk.Stack {
@@ -200,13 +209,15 @@ export class ECSStack extends cdk.Stack {
         });
 
         containerStreamlit.addEnvironment('OPENSEARCH_TYPE', 'service');
-        containerStreamlit.addEnvironment('AOS_INDEX', 'uba');
-        containerStreamlit.addEnvironment('AOS_INDEX_NER', 'uba_ner');
-        containerStreamlit.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
-        // containerStreamlit.addEnvironment('SAGEMAKER_EMBEDDING_REGION', cdk.Aws.REGION);
-        // containerStreamlit.addEnvironment('SAGEMAKER_SQL_REGION', cdk.Aws.REGION);
-        // containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', '');
-        // containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_SQL', '');
+        containerStreamlit.addEnvironment('AOS_INDEX', props.sql_index);
+        containerStreamlit.addEnvironment('AOS_INDEX_NER', props.ner_index);
+        containerStreamlit.addEnvironment('AOS_INDEX_AGENT', props.cot_index);
+        containerStreamlit.addEnvironment('QUERY_LOG_INDEX', props.log_index);
+        containerStreamlit.addEnvironment('BEDROCK_SECRETS_AK_SK', props.bedrock_ak_sk);
+        containerStreamlit.addEnvironment('EMBEDDING_PLATFORM', props.embedding_platform);
+        containerStreamlit.addEnvironment('EMBEDDING_NAME', props.embedding_name);
+        containerStreamlit.addEnvironment('EMBEDDING_DIMENSION', String(props.embedding_dimension));
+        containerStreamlit.addEnvironment('EMBEDDING_REGION', props.embedding_region || cdk.Aws.REGION);
         containerStreamlit.addEnvironment('BEDROCK_REGION', props.bedrock_region || cdk.Aws.REGION);
         containerStreamlit.addEnvironment('RDS_REGION_NAME', cdk.Aws.REGION);
         containerStreamlit.addEnvironment('AWS_DEFAULT_REGION', cdk.Aws.REGION);
@@ -250,13 +261,15 @@ export class ECSStack extends cdk.Stack {
         });
 
         containerAPI.addEnvironment('OPENSEARCH_TYPE', 'service');
-        containerAPI.addEnvironment('AOS_INDEX', 'uba');
-        containerAPI.addEnvironment('AOS_INDEX_NER', 'uba_ner');
-        containerAPI.addEnvironment('AOS_INDEX_AGENT', 'uba_agent');
-        // containerAPI.addEnvironment('SAGEMAKER_EMBEDDING_REGION', cdk.Aws.REGION);
-        // containerAPI.addEnvironment('SAGEMAKER_SQL_REGION', cdk.Aws.REGION);
-        // containerAPI.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', '');
-        // containerAPI.addEnvironment('SAGEMAKER_ENDPOINT_SQL', '');
+        containerAPI.addEnvironment('AOS_INDEX', props.sql_index);
+        containerAPI.addEnvironment('AOS_INDEX_NER', props.ner_index);
+        containerAPI.addEnvironment('AOS_INDEX_AGENT', props.cot_index);
+        containerAPI.addEnvironment('QUERY_LOG_INDEX', props.log_index);
+        containerAPI.addEnvironment('BEDROCK_SECRETS_AK_SK', props.bedrock_ak_sk);
+        containerAPI.addEnvironment('EMBEDDING_PLATFORM', props.embedding_platform);
+        containerAPI.addEnvironment('EMBEDDING_NAME', props.embedding_name);
+        containerAPI.addEnvironment('EMBEDDING_DIMENSION', String(props.embedding_dimension));
+        containerAPI.addEnvironment('EMBEDDING_REGION', props.embedding_region || cdk.Aws.REGION);
         containerAPI.addEnvironment('VITE_LOGIN_TYPE', props.authenticationType)
         containerAPI.addEnvironment('VITE_COGNITO_REGION', cdk.Aws.REGION)
         containerAPI.addEnvironment('VITE_COGNITO_USER_POOL_ID', props.cognitoUserPoolId)
