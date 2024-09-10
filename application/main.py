@@ -51,13 +51,8 @@ async def http_authenticate(request: Request, call_next):
         response_error.headers["Access-Control-Allow-Headers"] = "*"
         return response_error
     else:
-        if not skipAuthentication:
-            username = response["X-User-Name"]
-        else:
-            username = "admin"
         response = await call_next(request)
         if not skipAuthentication:
-            response.headers["X-User-Name"] = username
             response.headers["Access-Control-Allow-Origin"] = "*"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
             response.headers["Access-Control-Allow-Headers"] = "*"

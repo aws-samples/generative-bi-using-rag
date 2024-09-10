@@ -8,18 +8,12 @@ import os
 
 from utils.logging import getLogger
 
-VITE_COGNITO_REGION = os.getenv("VITE_COGNITO_REGION")
-USER_POOL_ID = os.getenv("VITE_COGNITO_USER_POOL_ID")
-CLIENT_ID = os.getenv("VITE_COGNITO_USER_POOL_WEB_CLIENT_ID")
-AUTH_PATH = os.getenv("COGNITO_AUTH_PATH")
-USER_ROLES_CLAIM = os.getenv("USER_ROLES_CLAIM", "cognito:groups")
+CLIENT_ID = os.getenv("OIDC_CLIENT_ID")
+TOKEN_URL = os.getenv("OIDC_TOKEN_URL")
+JWKS_URL = os.getenv("OIDC_JWKS_URL")
+
 AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
 skipAuthentication = AWS_DEFAULT_REGION.startswith("cn")
-
-JWKS_URL = os.getenv("JWKS_URL",
-                        f"https://cognito-idp.{VITE_COGNITO_REGION}.amazonaws.com/{USER_POOL_ID}/" ".well-known/jwks.json")
-
-TOKEN_URL = f"{AUTH_PATH}/oauth2/token"
 
 logger = getLogger()
 
@@ -56,20 +50,6 @@ def refresh_tokens(refresh_token):
 
     return {'accessToken': access_token, 'idToken': id_token}
 
-def get_cognito_identity_from_token(decoded, claims):
-    identity = {"attributes": {}}
-
-    if USER_ROLES_CLAIM in decoded:
-        identity["user_roles"] = decoded[USER_ROLES_CLAIM]
-    if "username" in decoded:
-        identity["username"] = decoded["username"]
-
-    for claim in claims:
-        if claim in decoded:
-            identity["attributes"][claim] = decoded[claim]
-
-    return identity
-
 def authenticate(access_token, id_token, refresh_token):
     if access_token and access_token.startswith("Bearer "):
         access_token = access_token[len("Bearer "):]
@@ -100,8 +80,7 @@ def authenticate(access_token, id_token, refresh_token):
         response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
         return response
     try:
-        decoded = jwt_decode(access_token)
-        # print('Token decoded:', decoded)
+        jwt_decode(access_token)
 
     except Exception as e:
         logger.error('Token decode exception: ', str(e))
@@ -112,16 +91,4 @@ def authenticate(access_token, id_token, refresh_token):
     response = {}
     response['X-Status-Code'] = status.HTTP_200_OK
 
-    claims = ["email"]
-    identity = get_cognito_identity_from_token(decoded=decoded, claims=claims)
-
-    print("Identity:", identity)
-
-    if id_token:
-        decoded_id = jwt_decode(id_token, audience=CLIENT_ID, access_token=access_token)
-        identity_from_id_token = get_cognito_identity_from_token(decoded=decoded_id, claims=claims)
-        identity.update(identity_from_id_token)
-
-    response["X-User-Name"] = identity["username"]
-    #response["X-Email"] = identity["attributes"]["email"]
     return response
