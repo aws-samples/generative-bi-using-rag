@@ -12,11 +12,27 @@ FROM customer c
 JOIN orders o ON c.`id` = o.`customer_id`
 LIMIT 100'''
 
+        self.two_table_join_sql_with_schema = '''SELECT c.`name`, o.`product`, o.`quantity`, o.`territory`
+FROM someschema.customer c
+JOIN someschema.orders o ON c.`id` = o.`customer_id`
+LIMIT 100'''
+
+        self.two_table_join_sql_with_schema_output = '''SELECT c.`name`, o.`product`, o.`quantity`, o.`territory`
+FROM someschema__customer c
+JOIN someschema__orders o ON c.`id` = o.`customer_id`
+LIMIT 100'''
+
         self.expected_rls_enabled_sql = (
             "WITH\n"
             "/* rls applied */ customer AS (SELECT * FROM customer WHERE created_by = 'admin'),\n"
             "/* rls applied */ orders AS (SELECT * FROM orders WHERE territory = 'Asia')\n"
             f"{self.two_table_join_sql}")
+
+        self.expected_rls_enabled_sql_with_schema = (
+            "WITH\n"
+            "/* rls applied */ someschema__customer AS (SELECT * FROM someschema.customer WHERE created_by = 'admin'),\n"
+            "/* rls applied */ someschema__orders AS (SELECT * FROM someschema.orders WHERE territory = 'Asia')\n"
+            f"{self.two_table_join_sql_with_schema_output}")
 
         self.base = MySQLDataSource()
 
@@ -33,6 +49,24 @@ LIMIT 100'''
         rls_modified_sql = self.base.row_level_security_control(self.two_table_join_sql, test_yaml, LoginUser('admin'))
 
         self.assertEqual(self.expected_rls_enabled_sql, rls_modified_sql)
+
+    def test_row_level_security_control_with_schema(self):
+        test_yaml = '''tables:
+    - table_name: someschema.customer
+      columns:
+        - column_name: created_by
+          column_value: $login_user.username
+    - table_name: someschema.orders
+      columns:
+        - column_name: territory
+          column_value: Asia'''
+        rls_modified_sql = self.base.row_level_security_control(self.two_table_join_sql_with_schema, test_yaml, LoginUser('admin'))
+
+        self.assertEqual(self.expected_rls_enabled_sql_with_schema, rls_modified_sql)
+
+        # 测试不带schema的表名的兼容性
+        rls_modified_sql2 = self.base.row_level_security_control(self.two_table_join_sql, test_yaml, LoginUser('admin'))
+        self.assertEqual(self.expected_rls_enabled_sql_with_schema, rls_modified_sql2)
 
     def test_cte_replace1(self):
         original_sql = """SELECT
