@@ -1,6 +1,6 @@
 import json
 import traceback
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, Request
 
 from nlq.business.log_store import LogManagement
 from nlq.business.profile import ProfileManagement
@@ -16,15 +16,25 @@ from dotenv import load_dotenv
 from utils.auth import authenticate, skipAuthentication
 
 from .service import ask_websocket
+import os
 
 logger = getLogger()
 router = APIRouter(prefix="/qa", tags=["qa"])
 load_dotenv()
 
+ENABLE_USER_PROFILE_MAP = os.getenv("ENABLE_USER_PROFILE_MAP")
 
-@router.get("/option", response_model=Option)
-def option():
-    return service.get_option()
+@router.get("/option")
+def option(request: Request):
+    if not skipAuthentication:
+        access_token = request.headers.get("X-Access-Token")
+        id_token = request.headers.get("X-Id-Token")
+        refresh_token = request.headers.get("X-Refresh-Token")
+        response = authenticate(access_token, id_token, refresh_token)
+        identity = response['X-User-Name']
+    else:
+        identity = 'admin'
+    return service.get_option(identity)
 
 
 @router.get("/get_custom_question", response_model=CustomQuestion)
