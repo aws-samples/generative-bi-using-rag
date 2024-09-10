@@ -1,4 +1,5 @@
 import yaml
+import re
 from abc import ABC, abstractmethod
 
 from nlq.business.login_user import LoginUser
@@ -102,6 +103,18 @@ class DataSourceBase(ABC):
             sql_splits.append(sql)
 
         for table_name, sub_query in table_config.items():
+            if '.' in table_name:
+                # 如果表名包含schema name(格式: schema.table), 则将.替换成__
+                schema_name, table_name_alone = table_name.split('.')
+                table_name_replaced = table_name.replace('.', '__')
+                if table_name in sql_splits[1]:
+                    # 替换带schema的表名
+                    sql_splits[1] = re.sub(r'\b{}\b'.format(table_name), table_name_replaced, sql_splits[1])
+                elif table_name_alone in sql_splits[1]:
+                    # 替换不带schema的表名
+                    sql_splits[1] = re.sub(r'\b{}\b'.format(table_name_alone), table_name_replaced, sql_splits[1])
+
+                table_name = table_name_replaced
             cte_sql += f"/* rls applied */ {table_name} AS {sub_query},\n"
         if origin_sql_has_cte:
             cte_sql = cte_sql[:-1]
