@@ -22,7 +22,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def http_authenticate(request: Request, call_next):
-    # print('---HTTP REQUEST---', vars(request), request.headers)
+    print('---HTTP REQUEST---', vars(request), request.headers)
 
     if request.url.path == "/":
         return await call_next(request)
@@ -35,9 +35,9 @@ async def http_authenticate(request: Request, call_next):
         return response
 
     if not skipAuthentication:
-        access_token = request.headers.get("X-Access-Token")
-        id_token = request.headers.get("X-Id-Token")
-        refresh_token = request.headers.get("X-Refresh-Token")
+        access_token = request.headers.get("x-access-token")
+        id_token = request.headers.get("x-id-token")
+        refresh_token = request.headers.get("x-refresh-token")
 
         response = authenticate(access_token, id_token, refresh_token)
     else:

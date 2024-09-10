@@ -51,6 +51,11 @@ def refresh_tokens(refresh_token):
     return {'accessToken': access_token, 'idToken': id_token}
 
 def authenticate(access_token, id_token, refresh_token):
+    print("---------")
+    print("access-token:", access_token)
+    print("id-token:", id_token)
+    print("refresh-token:", refresh_token)
+
     if access_token and access_token.startswith("Bearer "):
         access_token = access_token[len("Bearer "):]
 
