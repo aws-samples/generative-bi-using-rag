@@ -24,8 +24,10 @@ export class AOSStack extends cdk.Stack {
     this._securityGroup.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
 
     const OSMasterUserSecretNamePrefix = 'opensearch-master-user'; // Add the secret name here
-    const guid = crypto.randomBytes(3).toString('hex');
-    this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${guid}`;
+    // const guid = crypto.randomBytes(3).toString('hex');
+    // this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${guid}`;
+    const vpcIdSuffix = props.vpc.vpcId.slice(-6);
+    this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${vpcIdSuffix}`;
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
       secretName: this.OSMasterUserSecretName,
       description: 'Templated secret used for OpenSearch master user password',
