@@ -225,7 +225,11 @@ async def ask_websocket(websocket: WebSocket, question: Question):
 
     if processing_context.gen_suggested_question_flag and state_machine.get_answer().query_intent != "entity_select":
         if state_machine.search_intent_flag or state_machine.agent_intent_flag:
+            await response_websocket(websocket, session_id, "Generating Suggested Questions", ContentEnum.STATE,
+                                     "start", user_id)
             state_machine.handle_suggest_question()
+            await response_websocket(websocket, session_id, "Generating Suggested Questions", ContentEnum.STATE,
+                                     "end", user_id)
 
     if state_machine.get_state() == QueryState.COMPLETE:
         await response_websocket(websocket, session_id, "Data Visualization", ContentEnum.STATE,
