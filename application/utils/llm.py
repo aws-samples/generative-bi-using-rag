@@ -333,9 +333,11 @@ def select_data_visualization_type(model_id, search_box, search_data, prompt_map
 def data_visualization(model_id, search_box, search_data, prompt_map):
     if isinstance(search_data, pd.DataFrame):
         search_data = search_data.fillna("")
-    columns = list(search_data.columns)
-    data_list = search_data.values.tolist()
-    all_columns_data = [columns] + data_list
+        columns = list(search_data.columns)
+        data_list = search_data.values.tolist()
+        all_columns_data = [columns] + data_list
+    else:
+        all_columns_data = search_data
     all_columns_data = convert_timestamps_to_str(all_columns_data)
     try:
         if len(all_columns_data) < 1:
