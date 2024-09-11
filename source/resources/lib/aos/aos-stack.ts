@@ -101,7 +101,7 @@ export class AOSStack extends cdk.Stack {
     this.endpoint = domain.domainEndpoint.toString();
     
     const OSHostSecretNamePrefix = 'opensearch-host-url'; // Add the secret name here
-    this.OSHostSecretName = `${OSHostSecretNamePrefix}-${guid}`;
+    this.OSHostSecretName = `${OSHostSecretNamePrefix}-${vpcIdSuffix}`;
 
     const hostSecret = new secretsmanager.Secret(this, 'HostSecret', {
       secretName: this.OSHostSecretName,
