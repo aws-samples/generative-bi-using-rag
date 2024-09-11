@@ -47,6 +47,7 @@ def make_sidebar():
             st.page_link("pages/7_📚_Entity_Management.py", label="Entity Management", icon="📚")
             st.page_link("pages/8_📚_Agent_Cot_Management.py", label="Agent Cot Management", icon="📚")
             st.page_link("pages/9_🪙_SageMaker_Model_Management.py", label="SageMaker Model Management", icon="🪙")
+            st.page_link("pages/10_📚_User_Authorization.py", label="User Authorization Management", icon="📚")
 
             if st.button("Log out"):
                 logout()

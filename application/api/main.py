@@ -16,15 +16,18 @@ from dotenv import load_dotenv
 from utils.auth import authenticate, skipAuthentication
 
 from .service import ask_websocket
+import os
 
 logger = getLogger()
 router = APIRouter(prefix="/qa", tags=["qa"])
 load_dotenv()
 
+ENABLE_USER_PROFILE_MAP = os.getenv("ENABLE_USER_PROFILE_MAP")
 
 @router.get("/option", response_model=Option)
-def option():
-    return service.get_option()
+def option(id: str=None):
+    identity = id
+    return service.get_option(identity)
 
 
 @router.get("/get_custom_question", response_model=CustomQuestion)
