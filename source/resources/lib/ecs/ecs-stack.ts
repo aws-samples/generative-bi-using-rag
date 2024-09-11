@@ -192,6 +192,9 @@ export class ECSStack extends cdk.Stack {
             }),
         });
 
+        containerStreamlit.addEnvironment('EMBEDDING_DIMENSION', '1024');
+        containerStreamlit.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', 'bge-zh-15-2024-08-17-03-56-58-281-endpoint');
+
         containerStreamlit.addEnvironment('OPENSEARCH_TYPE', 'service');
         containerStreamlit.addEnvironment('AOS_INDEX', 'uba');
         containerStreamlit.addEnvironment('AOS_INDEX_NER', 'uba_ner');
@@ -242,6 +245,8 @@ export class ECSStack extends cdk.Stack {
             }),
         });
 
+        containerAPI.addEnvironment('EMBEDDING_DIMENSION', '1024');
+        containerAPI.addEnvironment('SAGEMAKER_ENDPOINT_EMBEDDING', 'bge-zh-15-2024-08-17-03-56-58-281-endpoint');
         containerAPI.addEnvironment('OPENSEARCH_TYPE', 'service');
         containerAPI.addEnvironment('AOS_INDEX', 'uba');
         containerAPI.addEnvironment('AOS_INDEX_NER', 'uba_ner');

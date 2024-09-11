@@ -3,8 +3,9 @@ import logging
 from opensearchpy import OpenSearch
 from opensearchpy.helpers import bulk
 
-from utils.llm import create_vector_embedding_with_bedrock
-
+from utils.llm import create_vector_embedding_with_bedrock,create_vector_embedding_with_sagemaker
+from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info, \
+    SAGEMAKER_ENDPOINT_EMBEDDING
 logger = logging.getLogger(__name__)
 
 def put_bulk_in_opensearch(list, client):
@@ -190,8 +191,14 @@ class OpenSearchDao:
         return self.opensearch_client.delete(index=index_name, id=doc_id)
 
     def search_sample(self, profile_name, top_k, index_name, query):
-        records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
-        return self.search_sample_with_embedding(profile_name, top_k, index_name,  records_with_embedding['vector_field'])
+        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
+            records_with_embedding = create_vector_embedding_with_sagemaker(SAGEMAKER_ENDPOINT_EMBEDDING, query, index_name)
+            return self.search_sample_with_embedding(profile_name, top_k, index_name,  records_with_embedding['vector_field'])
+        else:
+            records_with_embedding = create_vector_embedding_with_bedrock(query, index_name=index_name)
+            return self.search_sample_with_embedding(profile_name, top_k, index_name,  records_with_embedding['vector_field'])
+
+
 
 
     def search_sample_with_embedding(self, profile_name, top_k, index_name, query_embedding):
