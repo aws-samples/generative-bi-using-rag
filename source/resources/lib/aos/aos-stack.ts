@@ -27,7 +27,9 @@ export class AOSStack extends cdk.Stack {
     // const guid = crypto.randomBytes(3).toString('hex');
     // this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${guid}`;
     const vpcIdSuffix = props.vpc.vpcId.slice(-6);
+    console.log(`VPC ID Suffix: ${vpcIdSuffix}`);
     this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${vpcIdSuffix}`;
+    console.log(`OSMasterUserSecretName: ${this.OSMasterUserSecretName}`);
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
       secretName: this.OSMasterUserSecretName,
       description: 'Templated secret used for OpenSearch master user password',
