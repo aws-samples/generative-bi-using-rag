@@ -7,8 +7,6 @@ import os
 
 from utils.logging import getLogger
 
-CLIENT_ID = os.getenv("OIDC_CLIENT_ID")
-TOKEN_URL = os.getenv("OIDC_TOKEN_URL")
 JWKS_URL = os.getenv("OIDC_JWKS_URL")
 AUDIENCE = os.getenv("OIDC_AUDIENCE")
 if AUDIENCE:
@@ -57,18 +55,18 @@ def authenticate(access_token):
 
     if access_token is None:
         response = {}
-        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        response['x-status-code'] = status.HTTP_401_UNAUTHORIZED
         return response
 
     if len(access_token.strip()) < 2:
         response = {}
-        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        response['x-status-code'] = status.HTTP_401_UNAUTHORIZED
         return response
 
     if not access_token:
         print('Token: one of token is none')
         response = {}
-        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        response['x-status-code'] = status.HTTP_401_UNAUTHORIZED
         return response
     try:
         jwt_decode(access_token)
@@ -76,10 +74,10 @@ def authenticate(access_token):
     except Exception as e:
         logger.error('Token decode exception: ', str(e))
         response = {}
-        response['X-Status-Code'] = status.HTTP_401_UNAUTHORIZED
+        response['x-status-code'] = status.HTTP_401_UNAUTHORIZED
         return response
 
     response = {}
-    response['X-Status-Code'] = status.HTTP_200_OK
+    response['x-status-code'] = status.HTTP_200_OK
 
     return response
