@@ -18,7 +18,7 @@ openpyxl
 starrocks==1.0.6
 clickhouse-sqlalchemy==0.2.6
 sagemaker
-jwt
+PyJWT
 cryptography
 sqlalchemy-redshift~=0.8.14
 numpy==1.26.4
