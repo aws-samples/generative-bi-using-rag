@@ -389,7 +389,7 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
 
 
 def create_vector_embedding(text, index_name):
-    model_name = embedding_info["embedding_model"]
+    model_name = embedding_info["embedding_name"]
     if embedding_info["embedding_platform"] == "bedrock":
         return create_vector_embedding_with_bedrock(text, index_name, model_name)
     else:

@@ -125,7 +125,7 @@ class VectorStore:
 
     @classmethod
     def create_vector_embedding(cls, text):
-        model_name = embedding_info["embedding_model"]
+        model_name = embedding_info["embedding_name"]
         if embedding_info["embedding_platform"] == "bedrock":
             return cls.create_vector_embedding_with_bedrock(text, model_name)
         else:
