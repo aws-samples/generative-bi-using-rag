@@ -36,16 +36,13 @@ async def http_authenticate(request: Request, call_next):
 
     if not skipAuthentication:
         access_token = request.headers.get("x-access-token")
-        id_token = request.headers.get("x-id-token")
-        refresh_token = request.headers.get("x-refresh-token")
 
-        response = authenticate(access_token, id_token, refresh_token)
+        response = authenticate(access_token)
     else:
-        response = {'X-Status-Code': status.HTTP_200_OK}
+        response = {'x-status-code': status.HTTP_200_OK}
 
-    if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
-
-        response_error = Response(status_code=response["X-Status-Code"])
+    if not skipAuthentication and response["x-status-code"] != status.HTTP_200_OK:
+        response_error = Response(status_code=response["x-status-code"])
         response_error.headers["Access-Control-Allow-Origin"] = "*"
         response_error.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response_error.headers["Access-Control-Allow-Headers"] = "*"
