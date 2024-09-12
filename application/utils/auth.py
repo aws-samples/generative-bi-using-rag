@@ -1,6 +1,6 @@
 from fastapi import status
 from cryptography.hazmat.primitives import serialization
-from jose import jwt
+import jwt
 import requests
 import json
 import os
