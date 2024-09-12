@@ -11,6 +11,11 @@ CLIENT_ID = os.getenv("OIDC_CLIENT_ID")
 TOKEN_URL = os.getenv("OIDC_TOKEN_URL")
 JWKS_URL = os.getenv("OIDC_JWKS_URL")
 AUDIENCE = os.getenv("OIDC_AUDIENCE")
+if AUDIENCE:
+    AUDIENCE = json.loads(AUDIENCE)
+OPTIONS = os.getenv("OIDC_OPTIONS")
+if OPTIONS:
+    OPTIONS = json.loads(OPTIONS)
 
 AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
 skipAuthentication = AWS_DEFAULT_REGION.startswith("cn")
@@ -40,7 +45,7 @@ def jwt_decode(token):
         algorithms=[alg],
         verify=True,
         audience=AUDIENCE,
-        options={"verify_signature": True}
+        options=OPTIONS
     )
 
 def authenticate(access_token):
