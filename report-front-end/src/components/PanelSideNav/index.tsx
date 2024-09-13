@@ -56,7 +56,11 @@ export const PanelSideNav = () => {
       defaultPadding
       disableOverlap
       headerVariant="divider"
-      header={<Header variant="h3">{queryConfig.selectedDataPro}</Header>}
+      header={
+        <Header variant="h3">
+          {queryConfig.selectedDataPro || "Sessions of a profile"}
+        </Header>
+      }
     >
       {loadingSessions ? (
         <Box variant="h4" margin="m" padding="m">

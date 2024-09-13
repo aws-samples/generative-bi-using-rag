@@ -23,9 +23,9 @@ const App: React.FC<{
   user?: AmplifyUser & { signInUserSession: any };
 }> = ({ user }) => {
   const dispatch = useDispatch();
-  console.log({ user, signInUserSession: user?.signInUserSession });
 
   useEffect(() => {
+    console.log({ user, signInUserSession: user?.signInUserSession });
     if (isLoginWithCognito) {
       if (!user?.signInUserSession) {
         toast.error("User session not found");
