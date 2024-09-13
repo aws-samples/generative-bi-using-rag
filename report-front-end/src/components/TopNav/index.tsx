@@ -1,7 +1,4 @@
-import {
-  ButtonDropdownProps,
-  TopNavigation,
-} from "@cloudscape-design/components";
+import { TopNavigation } from "@cloudscape-design/components";
 // import { Mode } from '@cloudscape-design/global-styles'
 import { Density } from "@cloudscape-design/global-styles";
 import { Auth } from "aws-amplify";
@@ -22,18 +19,6 @@ import "./style.scss";
 export default function TopNav() {
   // const [theme, setTheme] = useState<Mode>(Storage.getTheme())
   const userInfo = useSelector((state: UserState) => state.userInfo);
-
-  const onUserProfileClick = ({
-    detail,
-  }: {
-    detail: ButtonDropdownProps.ItemClickDetails;
-  }) => {
-    if (detail.id === "signout") {
-      if (isLoginWithCognito) {
-        Auth.signOut().then();
-      }
-    }
-  };
 
   const [isCompact, setIsCompact] = useState<boolean>(
     Storage.getDensity() === Density.Compact
@@ -91,7 +76,13 @@ export default function TopNav() {
             text: userInfo?.displayName || "Authenticating",
             // description: `username: ${userInfo?.username}`,
             iconName: "user-profile",
-            onItemClick: onUserProfileClick,
+            onItemClick: ({ detail }) => {
+              if (detail.id === "signout") {
+                if (isLoginWithCognito) {
+                  Auth.signOut();
+                }
+              }
+            },
             items: [
               {
                 itemType: "group",
