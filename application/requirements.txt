@@ -1,4 +1,4 @@
-streamlit~=1.33.0
+streamlit~=1.38.0
 streamlit-authenticator~=0.3.3
 boto3~=1.33.4
 psycopg2-binary==2.9.9

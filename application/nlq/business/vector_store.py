@@ -47,7 +47,9 @@ class VectorStore:
             sample_list.append({
                 'id': sample['_id'],
                 'entity': sample['_source']['entity'],
-                'comment': sample['_source']['comment']
+                'comment': sample['_source']['comment'],
+                'entity_type': sample['_source']['entity_type'],
+                'entity_table_info': sample['_source']['entity_table_info']
             })
 
         return sample_list
