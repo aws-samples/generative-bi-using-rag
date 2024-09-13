@@ -11,6 +11,7 @@ import {
   APP_LOGO,
   APP_RIGHT_LOGO,
   APP_TITLE,
+  APP_VERSION,
   CHATBOT_NAME,
   isLoginWithCognito,
 } from "../../utils/constants";
@@ -57,7 +58,7 @@ export default function TopNav() {
       <TopNavigation
         identity={{
           href: "/",
-          title: APP_TITLE,
+          title: `${APP_TITLE} ${APP_VERSION}`,
           logo: APP_LOGO
             ? {
                 src: APP_LOGO,

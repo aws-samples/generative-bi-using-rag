@@ -6,7 +6,7 @@ export const DEFAULT_USER_INFO = {
   displayName: "",
   loginExpiration: +new Date() + 6000,
   isLogin: false,
-  username: "anonymous"
+  username: "anonymous",
 };
 
 export const DEFAULT_QUERY_CONFIG = {
@@ -28,12 +28,16 @@ export const LOCALSTORAGE_KEY = "__GEN_BI_STORE_INFO__";
 export const LOGIN_TYPE = process.env.VITE_LOGIN_TYPE;
 export const isLoginWithCognito = LOGIN_TYPE === COGNITO;
 
+export const useSSOLogin =
+  import.meta.env.VITE_USE_SSO_LOGIN === "true" ? true : false;
+export const SSO_FED_AUTH_PROVIDER = import.meta.env.VITE_SSO_FED_AUTH_PROVIDER;
+
 export const BACKEND_URL = process.env.VITE_BACKEND_URL?.endsWith("/")
   ? process.env.VITE_BACKEND_URL
   : process.env.VITE_BACKEND_URL + "/";
 
 export const APP_TITLE = process.env.VITE_TITLE;
-
+export const APP_VERSION = process.env.VITE_APP_VERSION;
 export const APP_LOGO = process.env.VITE_LOGO || "";
 
 export const APP_RIGHT_LOGO = process.env.VITE_RIGHT_LOGO || "";
