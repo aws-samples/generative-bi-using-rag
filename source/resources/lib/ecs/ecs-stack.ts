@@ -136,7 +136,8 @@ export class ECSStack extends cdk.Stack {
             actions: [
                 "secretsmanager:GetSecretValue",
                 "secretsmanager:CreateSecret",
-                "secretsmanager:PutSecretValue"
+                "secretsmanager:PutSecretValue",
+                "secretsmanager:DeleteSecret",
             ],
             resources: [
                 `arn:${this.partition}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:opensearch-host-url*`,
