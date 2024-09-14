@@ -16,6 +16,11 @@ DIMENSION_VALUE = "dimension"
 
 
 def entity_data_check(entity_list):
+    """
+    check entity data format
+    :param entity_list:
+    :return:
+    """
     try:
         if isinstance(entity_list, list):
             for item in entity_list:
@@ -38,43 +43,48 @@ def edit_value(profile, entity_item, entity_id):
     comment = entity_item["comment"]
     entity_type = entity_item.get("entity_type", "")
     entity_table_info = entity_item.get("entity_table_info", "")
-    logger.info("entity_type")
-    logger.info(entity_type)
     if entity_type == DIMENSION_VALUE:
         new_entity = st.text_input("Entity", value=entity, disabled=True)
         new_comment = st.text_area("Comment", value=comment, disabled=True)
         entity_table_info = st.text_area("Entity table info", value=entity_table_info)
-        if st.button("Submit"):
-            logger.info(new_entity)
-            logger.info(new_comment)
+        left_button, right_button = st.columns([1, 2])
+        with right_button:
+            if st.button("Submit", type='primary'):
+                entity_table_info = entity_table_info.replace("'", "\"")
+                entity_table_info_list = json.loads(entity_table_info)
+                entity_valid = entity_data_check(entity_table_info_list)
+                if entity_valid:
+                    VectorStore.delete_entity_sample(profile, entity_id)
+                    time.sleep(2)
+                    VectorStore.add_entity_dimension_batch_sample(profile, entity, "", DIMENSION_VALUE,
+                                                                entity_table_info_list)
+                    st.success("Sample updated successfully!")
+                    with st.spinner('Update Index ...'):
+                        time.sleep(2)
+                    st.session_state["entity_sample_search"][profile] = VectorStore.get_all_entity_samples(profile)
+                    st.rerun()
+                else:
+                    st.success("Please Check Entity Info Format!")
 
-            entity_table_info = entity_table_info.replace("'", "\"")
-            entity_table_info_list = st.json.loads(entity_table_info)
-            entity_valid = entity_data_check(entity_table_info_list)
-            if entity_valid:
-                VectorStore.delete_sample(profile, entity_id)
-                time.sleep(2)
-                VectorStore.add_entity_dimension_batch_sample(profile, entity, "", DIMENSION_VALUE,
-                                                              entity_table_info_list)
+        with left_button:
+            if st.button("Cancel", type='primary'):
+                st.rerun()
+    else:
+        new_entity = st.text_input("Entity", value=entity, disabled=True)
+        new_comment = st.text_area("Comment", value=comment)
+        left_button, right_button = st.columns([1, 2])  # 第一个列占1份，第二个列占2份
+
+        with right_button:
+            if st.button("Submit", type='primary'):
+                VectorStore.add_entity_sample(profile, new_entity, new_comment)
                 st.success("Sample updated successfully!")
                 with st.spinner('Update Index ...'):
                     time.sleep(2)
                 st.session_state["entity_sample_search"][profile] = VectorStore.get_all_entity_samples(profile)
                 st.rerun()
-            else:
-                st.success("Please Check Entity Info Format!")
-    else:
-        new_entity = st.text_input("Entity", value=entity, disabled=True)
-        new_comment = st.text_area("Comment", value=comment)
-        if st.button("Submit"):
-            logger.info(new_entity)
-            logger.info(new_comment)
-            VectorStore.add_entity_sample(profile, new_entity, new_comment)
-            st.success("Sample updated successfully!")
-            with st.spinner('Update Index ...'):
-                time.sleep(2)
-            st.session_state["entity_sample_search"][profile] = VectorStore.get_all_entity_samples(profile)
-            st.rerun()
+        with left_button:
+            if st.button("Cancel", type='primary'):
+                st.rerun()
 
 
 def delete_entity_sample(profile_name, id):
