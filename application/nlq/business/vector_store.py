@@ -1,9 +1,7 @@
-
 import boto3
 import json
 from nlq.data_access.opensearch import OpenSearchDao
-from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info, \
-    SAGEMAKER_ENDPOINT_EMBEDDING
+from utils.env_var import BEDROCK_REGION, AOS_HOST, AOS_PORT, AOS_USER, AOS_PASSWORD, opensearch_info, embedding_info
 from utils.env_var import bedrock_ak_sk_info
 from utils.llm import invoke_model_sagemaker_endpoint
 from utils.logging import getLogger
@@ -49,7 +47,9 @@ class VectorStore:
             sample_list.append({
                 'id': sample['_id'],
                 'entity': sample['_source']['entity'],
-                'comment': sample['_source']['comment']
+                'comment': sample['_source']['comment'],
+                'entity_type': sample['_source']['entity_type'],
+                'entity_table_info': sample['_source']['entity_table_info']
             })
 
         return sample_list
@@ -75,10 +75,7 @@ class VectorStore:
     @classmethod
     def add_sample(cls, profile_name, question, answer):
         logger.info(f'add sample question: {question} to profile {profile_name}')
-        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(question)
-        else:
-            embedding = cls.create_vector_embedding_with_bedrock(question)
+        embedding = cls.create_vector_embedding(question)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['sql_index'], embedding)
         if has_same_sample:
             logger.info(f'delete sample sample entity: {question} to profile {profile_name}')
@@ -88,13 +85,10 @@ class VectorStore:
     @classmethod
     def add_entity_sample(cls, profile_name, entity, comment, entity_type="metrics"):
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
-        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(entity)
-        else:
-            embedding = cls.create_vector_embedding_with_bedrock(entity)
+        embedding = cls.create_vector_embedding(entity)
         has_same_sample = cls.search_same_query(profile_name, 5, opensearch_info['ner_index'], embedding)
         if has_same_sample:
-                logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
+            logger.info(f'delete sample sample entity: {entity} to profile {profile_name}')
         if cls.opensearch_dao.add_entity_sample(opensearch_info['ner_index'], profile_name, entity, comment, embedding,
                                                 entity_type):
             logger.info('Sample added')
@@ -106,11 +100,7 @@ class VectorStore:
             entity_value_set.add(
                 entity_table["table_name"] + "#" + entity_table["column_name"] + "#" + entity_table["value"])
         logger.info(f'add sample entity: {entity} to profile {profile_name}')
-        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(entity)
-        else:
-            embedding = cls.create_vector_embedding_with_bedrock(entity)
-
+        embedding = cls.create_vector_embedding(entity)
         same_dimension_value = cls.search_same_dimension_entity(profile_name, 5, opensearch_info['ner_index'],
                                                                 embedding)
         if len(same_dimension_value) > 0:
@@ -127,21 +117,27 @@ class VectorStore:
     @classmethod
     def add_agent_cot_sample(cls, profile_name, entity, comment):
         logger.info(f'add agent sample query: {entity} to profile {profile_name}')
-        if SAGEMAKER_ENDPOINT_EMBEDDING is not None and SAGEMAKER_ENDPOINT_EMBEDDING != "":
-            embedding = cls.create_vector_embedding_with_sagemaker(entity)
-        else:
-            embedding = cls.create_vector_embedding_with_bedrock(entity)
+        embedding = cls.create_vector_embedding(entity)
         has_same_sample = cls.search_same_query(profile_name, 1, opensearch_info['agent_index'], embedding)
         if has_same_sample:
             logger.info(f'delete agent sample sample query: {entity} to profile {profile_name}')
-        if cls.opensearch_dao.add_agent_cot_sample(opensearch_info['agent_index'], profile_name, entity, comment, embedding):
+        if cls.opensearch_dao.add_agent_cot_sample(opensearch_info['agent_index'], profile_name, entity, comment,
+                                                   embedding):
             logger.info('Sample added')
 
     @classmethod
-    def create_vector_embedding_with_bedrock(cls, text):
+    def create_vector_embedding(cls, text):
+        model_name = embedding_info["embedding_name"]
+        if embedding_info["embedding_platform"] == "bedrock":
+            return cls.create_vector_embedding_with_bedrock(text, model_name)
+        else:
+            return cls.create_vector_embedding_with_sagemaker(text, model_name)
+
+    @classmethod
+    def create_vector_embedding_with_bedrock(cls, text, model_name):
         payload = {"inputText": f"{text}"}
         body = json.dumps(payload)
-        modelId = "amazon.titan-embed-text-v1"
+        modelId = model_name
         accept = "application/json"
         contentType = "application/json"
 
@@ -155,7 +151,7 @@ class VectorStore:
         return embedding
 
     @classmethod
-    def create_vector_embedding_with_sagemaker(cls, text):
+    def create_vector_embedding_with_sagemaker(cls, text, model_name):
         try:
             body = json.dumps(
                 {
@@ -163,7 +159,7 @@ class VectorStore:
                     "is_query": True
                 }
             )
-            response = invoke_model_sagemaker_endpoint(SAGEMAKER_ENDPOINT_EMBEDDING, body, model_type="embedding")
+            response = invoke_model_sagemaker_endpoint(model_name, body, model_type="embedding")
             embeddings = response[0]
             return embeddings
         except Exception as e:

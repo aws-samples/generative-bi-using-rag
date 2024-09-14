@@ -99,7 +99,7 @@ def get_sql_result_tool(profile, sql):
         with engine.connect() as connection:
             logger.info(f'{sql=}')
             executed_result_df = pd.read_sql_query(text(sql), connection)
-            result_dict["data"] = executed_result_df
+            result_dict["data"] = executed_result_df.fillna("")
     except Exception as e:
         logger.error("get_sql_result is error: {}".format(e))
         result_dict["error_info"] = e

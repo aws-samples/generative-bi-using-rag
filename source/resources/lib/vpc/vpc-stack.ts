@@ -1,40 +1,38 @@
 import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-
-interface VpcStackProps extends cdk.StackProps {
-    existing_vpc_id: string;
+interface VPCStackProps extends cdk.StackProps {
+    existing_vpc_id?: string;
 }
 
 export class VPCStack extends cdk.Stack {
     public readonly vpc: ec2.IVpc;
     public readonly publicSubnets: ec2.ISubnet[];
 
-    constructor(scope: Construct, id: string, props: VpcStackProps) {
+    constructor(scope: Construct, id: string, props: VPCStackProps) {
         super(scope, id, props);
-        if (props.existing_vpc_id !== "") {
-            // Reuse an existing VPC
+        // Create a VPC
+        if (props.existing_vpc_id) {
             this.vpc = ec2.Vpc.fromLookup(this, 'GenBIVpc', {
-                vpcId: props.existing_vpc_id
+                vpcId: props.existing_vpc_id,
             });
-        } else {
-            // Create a VPC
+        } else{
             this.vpc = new ec2.Vpc(this, 'GenBIVpc', {
-                maxAzs: 3, // Default is all AZs in the region
-                natGateways: 1,
-                subnetConfiguration: [
-                    {
-                        cidrMask: 24,
-                        name: 'public-subnet',
-                        subnetType: ec2.SubnetType.PUBLIC,
-                    },
-                    {
-                        cidrMask: 24,
-                        name: 'private-subnet',
-                        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                    },
-                ],
-            });
+            maxAzs: 3, // Default is all AZs in the region
+            natGateways: 1,
+            subnetConfiguration: [
+                {
+                    cidrMask: 24,
+                    name: 'public-subnet',
+                    subnetType: ec2.SubnetType.PUBLIC,
+                },
+                {
+                    cidrMask: 24,
+                    name: 'private-subnet',
+                    subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                },
+            ],
+        });
         }
 
         // Output the VPC ID

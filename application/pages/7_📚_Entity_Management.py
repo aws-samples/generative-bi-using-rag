@@ -1,3 +1,4 @@
+import json
 import time
 
 import pandas as pd
@@ -12,6 +13,78 @@ from utils.env_var import opensearch_info
 logger = getLogger()
 
 DIMENSION_VALUE = "dimension"
+
+
+def entity_data_check(entity_list):
+    """
+    check entity data format
+    :param entity_list:
+    :return:
+    """
+    try:
+        if isinstance(entity_list, list):
+            for item in entity_list:
+                if "column_name" not in item:
+                    return False
+                if "table_name" not in item:
+                    return False
+                if "value" not in item:
+                    return False
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
+@st.dialog("Modify the entity value")
+def edit_value(profile, entity_item, entity_id):
+    entity = entity_item["entity"]
+    comment = entity_item["comment"]
+    entity_type = entity_item.get("entity_type", "")
+    entity_table_info = entity_item.get("entity_table_info", "")
+    if entity_type == DIMENSION_VALUE:
+        new_entity = st.text_input("Entity", value=entity, disabled=True)
+        new_comment = st.text_area("Comment", value=comment, disabled=True)
+        entity_table_info = st.text_area("Entity table info", value=entity_table_info)
+        left_button, right_button = st.columns([1, 2])
+        with right_button:
+            if st.button("Submit"):
+                entity_table_info = entity_table_info.replace("'", "\"")
+                entity_table_info_list = json.loads(entity_table_info)
+                entity_valid = entity_data_check(entity_table_info_list)
+                if entity_valid:
+                    VectorStore.delete_entity_sample(profile, entity_id)
+                    time.sleep(2)
+                    VectorStore.add_entity_dimension_batch_sample(profile, entity, "", DIMENSION_VALUE,
+                                                                entity_table_info_list)
+                    st.success("Sample updated successfully!")
+                    with st.spinner('Update Index ...'):
+                        time.sleep(2)
+                    st.session_state["entity_sample_search"][profile] = VectorStore.get_all_entity_samples(profile)
+                    st.rerun()
+                else:
+                    st.success("Please Check Entity Info Format!")
+
+        with left_button:
+            if st.button("Cancel"):
+                st.rerun()
+    else:
+        new_entity = st.text_input("Entity", value=entity, disabled=True)
+        new_comment = st.text_area("Comment", value=comment)
+        left_button, right_button = st.columns([1, 2])  # 第一个列占1份，第二个列占2份
+
+        with right_button:
+            if st.button("Submit"):
+                VectorStore.add_entity_sample(profile, new_entity, new_comment)
+                st.success("Sample updated successfully!")
+                with st.spinner('Update Index ...'):
+                    time.sleep(2)
+                st.session_state["entity_sample_search"][profile] = VectorStore.get_all_entity_samples(profile)
+                st.rerun()
+        with left_button:
+            if st.button("Cancel"):
+                st.rerun()
 
 
 def delete_entity_sample(profile_name, id):
@@ -113,15 +186,16 @@ def main():
             if current_profile is not None:
                 st.write("The display page can show a maximum of 5000 pieces of data")
                 for sample in st.session_state["entity_sample_search"][current_profile]:
-                    # st.write(f"Sample: {sample}")
                     with st.expander(sample['entity']):
                         st.code(sample['comment'])
+                        st.button('Edit ' + sample['id'], on_click=edit_value,
+                                  args=[current_profile, sample, sample['id']])
                         st.button('Delete ' + sample['id'], on_click=delete_entity_sample,
                                   args=[current_profile, sample['id']])
 
         with tab_add:
             if current_profile is not None:
-                with st.form(key='add_form'):
+                with st.form(key='entity_add_form'):
                     entity = st.text_input('Entity', key='index_question')
                     comment = st.text_area('Comment', key='index_answer', height=300)
 
@@ -132,28 +206,37 @@ def main():
                             st.success('Update Index')
                             with st.spinner('Update Index ...'):
                                 time.sleep(2)
-                            st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(
+                            st.session_state["entity_sample_search"][
+                                current_profile] = VectorStore.get_all_entity_samples(
                                 current_profile)
                             st.rerun()
                         else:
                             st.error('please input valid question and answer')
         with tab_dimension:
             if current_profile is not None:
-                entity = st.text_input('Entity', key='index_entity')
-                table = st.text_input('Table', key='index_table')
-                column = st.text_input('Column', key='index_column')
-                value = st.text_input('Dimension value', key='index_value')
-                if st.button('Add Dimension Entity', type='primary'):
-                    if len(entity) > 0 and len(table) > 0 and len(column) > 0 and len(value) > 0:
-                        entity_item_table_info = {}
-                        entity_item_table_info["table_name"] = table
-                        entity_item_table_info["column_name"] = column
-                        entity_item_table_info["value"] = value
-                        VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE,
-                                                                      [entity_item_table_info])
-                        st.success('Sample added')
-                    else:
-                        st.error('please input valid question and answer')
+                with st.form(key='entity_add_form_dimension'):
+                    entity = st.text_input('Entity', key='index_entity')
+                    table = st.text_input('Table', key='index_table')
+                    column = st.text_input('Column', key='index_column')
+                    value = st.text_input('Dimension value', key='index_value')
+                    if st.form_submit_button('Add Dimension Entity', type='primary'):
+                        if len(entity) > 0 and len(table) > 0 and len(column) > 0 and len(value) > 0:
+                            entity_item_table_info = {}
+                            entity_item_table_info["table_name"] = table
+                            entity_item_table_info["column_name"] = column
+                            entity_item_table_info["value"] = value
+                            VectorStore.add_entity_dimension_batch_sample(current_profile, entity, "", DIMENSION_VALUE,
+                                                                          [entity_item_table_info])
+                            st.success('Sample added')
+                            st.success('Update Index')
+                            with st.spinner('Update Index ...'):
+                                time.sleep(2)
+                            st.session_state["entity_sample_search"][
+                                current_profile] = VectorStore.get_all_entity_samples(
+                                current_profile)
+                            st.rerun()
+                        else:
+                            st.error('please input valid question and answer')
 
         with tab_search:
             if current_profile is not None:
@@ -204,6 +287,11 @@ def main():
                             progress_bar.empty()
                         st.session_state.ner_refresh_view = True
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
+                    with st.spinner('Update Index ...'):
+                        time.sleep(2)
+                    st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(
+                        current_profile)
+                    st.rerun()
 
         with batch_dimension_entity:
             if current_profile is not None:
@@ -253,6 +341,11 @@ def main():
                             progress_bar.empty()
                         st.session_state.ner_refresh_view = True
                         st.success("{uploaded_file} uploaded successfully!".format(uploaded_file=uploaded_file.name))
+                    with st.spinner('Update Index ...'):
+                        time.sleep(2)
+                    st.session_state["entity_sample_search"][current_profile] = VectorStore.get_all_entity_samples(
+                        current_profile)
+                    st.rerun()
 
     else:
         st.info('Please select data profile in the left sidebar.')

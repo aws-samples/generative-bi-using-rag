@@ -3,6 +3,8 @@ import streamlit as st
 from nlq.business.vector_store import VectorStore
 from utils.navigation import make_sidebar
 from utils.opensearch import opensearch_index_init
+from utils.prompts.check_prompt import check_model_id_prompt
+
 
 st.set_page_config(
     page_title="Generative BI",
@@ -34,3 +36,5 @@ else:
     entity = "Month on month ratio"
     comment = "The month on month growth rate refers to the growth rate compared to the previous period, and the calculation formula is: month on month growth rate=(current period number - previous period number)/previous period number x 100%"
     VectorStore.add_entity_sample(current_profile, entity, comment)
+
+check_model_id_prompt()

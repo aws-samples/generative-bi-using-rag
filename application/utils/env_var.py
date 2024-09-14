@@ -29,6 +29,7 @@ AOS_DOMAIN = os.getenv('AOS_DOMAIN')
 AOS_INDEX = os.getenv('AOS_INDEX')
 AOS_INDEX_NER = os.getenv('AOS_INDEX_NER')
 AOS_INDEX_AGENT = os.getenv('AOS_INDEX_AGENT')
+QUERY_LOG_INDEX = os.getenv('QUERY_LOG_INDEX')
 
 EMBEDDING_DIMENSION = os.getenv('EMBEDDING_DIMENSION')
 
@@ -41,14 +42,6 @@ OPENSEARCH_SECRETS_URL_HOST = os.getenv('OPENSEARCH_SECRETS_URL_HOST', 'opensear
 OPENSEARCH_SECRETS_USERNAME_PASSWORD = os.getenv('OPENSEARCH_SECRETS_USERNAME_PASSWORD', 'opensearch-master-user')
 
 BEDROCK_SECRETS_AK_SK = os.getenv('BEDROCK_SECRETS_AK_SK', '')
-
-BEDROCK_EMBEDDING_MODEL = os.getenv('BEDROCK_EMBEDDING_MODEL', '')
-
-SAGEMAKER_ENDPOINT_EMBEDDING = os.getenv('SAGEMAKER_ENDPOINT_EMBEDDING', '')
-
-SAGEMAKER_ENDPOINT_SQL = os.getenv('SAGEMAKER_ENDPOINT_SQL', '')
-
-SAGEMAKER_EMBEDDING_REGION = os.getenv('SAGEMAKER_EMBEDDING_REGION', '')
 
 SAGEMAKER_SQL_REGION = os.getenv('SAGEMAKER_SQL_REGION', '')
 
@@ -95,6 +88,7 @@ def get_bedrock_parameter():
         logging.error(e)
     return bedrock_ak_sk_info
 
+
 if OPENSEARCH_TYPE == "service":
     opensearch_host, opensearch_port, opensearch_username, opensearch_password = get_opensearch_parameter()
     AOS_HOST = opensearch_host
@@ -115,6 +109,20 @@ opensearch_info = {
     'embedding_dimension': EMBEDDING_DIMENSION
 }
 
-query_log_name = os.getenv("QUERY_LOG_INDEX_NAME", "genbi_query_logging")
+query_log_name = os.getenv("QUERY_LOG_INDEX", "genbi_query_logging")
 
 bedrock_ak_sk_info = get_bedrock_parameter()
+
+embedding_info = {
+    "embedding_platform": os.getenv('EMBEDDING_PLATFORM', "bedrock"),
+    "embedding_name": os.getenv('EMBEDDING_NAME', "amazon.titan-embed-text-v1"),
+    "embedding_dimension": int(os.getenv('EMBEDDING_DIMENSION', 1536)),
+    "embedding_region": os.getenv('EMBEDDING_REGION', AWS_DEFAULT_REGION)
+}
+
+if embedding_info["embedding_platform"] == "bedrock":
+    SAGEMAKER_EMBEDDING_REGION = ""
+    SAGEMAKER_ENDPOINT_EMBEDDING = ""
+else:
+    SAGEMAKER_EMBEDDING_REGION = embedding_info["embedding_region"]
+    SAGEMAKER_ENDPOINT_EMBEDDING = embedding_info["embedding_name"]
