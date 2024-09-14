@@ -79,7 +79,7 @@ class OpenSearchDao:
                 }
             ],
             "_source": {
-                "includes": ["entity", "comment"]
+                "includes": ["entity", "comment", "entity_type", "entity_count", "entity_table_info"]
             },
             "size": 5000,
             "query": {
