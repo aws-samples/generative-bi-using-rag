@@ -49,7 +49,7 @@ def edit_value(profile, entity_item, entity_id):
         entity_table_info = st.text_area("Entity table info", value=entity_table_info)
         left_button, right_button = st.columns([1, 2])
         with right_button:
-            if st.button("Submit", type='primary'):
+            if st.button("Submit"):
                 entity_table_info = entity_table_info.replace("'", "\"")
                 entity_table_info_list = json.loads(entity_table_info)
                 entity_valid = entity_data_check(entity_table_info_list)
@@ -67,7 +67,7 @@ def edit_value(profile, entity_item, entity_id):
                     st.success("Please Check Entity Info Format!")
 
         with left_button:
-            if st.button("Cancel", type='primary'):
+            if st.button("Cancel"):
                 st.rerun()
     else:
         new_entity = st.text_input("Entity", value=entity, disabled=True)
@@ -75,7 +75,7 @@ def edit_value(profile, entity_item, entity_id):
         left_button, right_button = st.columns([1, 2])  # 第一个列占1份，第二个列占2份
 
         with right_button:
-            if st.button("Submit", type='primary'):
+            if st.button("Submit"):
                 VectorStore.add_entity_sample(profile, new_entity, new_comment)
                 st.success("Sample updated successfully!")
                 with st.spinner('Update Index ...'):
@@ -83,7 +83,7 @@ def edit_value(profile, entity_item, entity_id):
                 st.session_state["entity_sample_search"][profile] = VectorStore.get_all_entity_samples(profile)
                 st.rerun()
         with left_button:
-            if st.button("Cancel", type='primary'):
+            if st.button("Cancel"):
                 st.rerun()
 
 

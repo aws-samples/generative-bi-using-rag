@@ -27,7 +27,7 @@ def edit_value(profile, entity_item, entity_id):
     comment = st.text_area('Answer(SQL)', value=comment_value, height=300)
     left_button, right_button = st.columns([1, 2])
     with right_button:
-        if st.button("Submit", type='primary'):
+        if st.button("Submit"):
             if query == query_value:
                 VectorStore.add_sample(profile, query, comment)
             else:
@@ -39,7 +39,7 @@ def edit_value(profile, entity_item, entity_id):
                 st.session_state["cot_sample_search"][profile] = VectorStore.get_all_samples(profile)
                 st.rerun()
     with left_button:
-        if st.button("Cancel", type='primary'):
+        if st.button("Cancel"):
             st.rerun()
 
 def main():

@@ -228,7 +228,7 @@ def edit_value(profile, entity_item, entity_id):
     sql = st.text_area('Answer(SQL)', value=sql_value, height=300)
     left_button, right_button = st.columns([1, 2])
     with right_button:
-        if st.button("Submit", type='primary'):
+        if st.button("Submit"):
             if text == text_value:
                 VectorStore.add_sample(profile, text, sql)
             else:
@@ -240,7 +240,7 @@ def edit_value(profile, entity_item, entity_id):
                 st.session_state["sql_sample_search"][profile] = VectorStore.get_all_samples(profile)
                 st.rerun()
     with left_button:
-        if st.button("Cancel", type='primary'):
+        if st.button("Cancel"):
             st.rerun()
 
 
@@ -348,15 +348,18 @@ def main():
                                   args=[current_profile, sample['id']])
 
         with tab_add:
-            if current_profile is not None:
+            with st.form(key='sql_add_form'):
                 question = st.text_input('Question', key='index_question')
                 answer = st.text_area('Answer(SQL)', key='index_answer', height=300)
 
-                if st.button('Submit', type='primary'):
+                if st.form_submit_button('Add SQL Info', type='primary'):
                     if len(question) > 0 and len(answer) > 0:
                         VectorStore.add_sample(current_profile, question, answer)
                         st.success('Sample added')
-                        time.sleep(2)
+                        st.success('Update Index')
+                        with st.spinner('Update Index ...'):
+                            time.sleep(2)
+                        st.session_state["sql_sample_search"][current_profile] = VectorStore.get_all_samples(current_profile)
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
