@@ -1,11 +1,13 @@
 import json
 from dotenv import load_dotenv
+import os
 
 from nlq.business.connection import ConnectionManagement
 from nlq.business.log_feedback import FeedBackManagement
 from nlq.business.model import ModelManagement
 from nlq.business.nlq_chain import NLQChain
 from nlq.business.profile import ProfileManagement
+from nlq.business.user_profile import UserProfileManagement
 from nlq.business.vector_store import VectorStore
 from nlq.business.log_store import LogManagement
 from nlq.core.chat_context import ProcessingContext
@@ -24,18 +26,34 @@ logger = getLogger()
 
 load_dotenv()
 
+ENABLE_USER_PROFILE_MAP = os.getenv("ENABLE_USER_PROFILE_MAP")
 
-def get_option() -> Option:
+def get_option(id: str=None) -> Option:
+    logger.info(f'{id} user try to get option , ENABLE_USER_PROFILE_MAP=[{ENABLE_USER_PROFILE_MAP}]')
     all_profiles = ProfileManagement.get_all_profiles_with_info()
     all_sagemaker = ModelManagement.get_all_models()
     all_model_list = BEDROCK_MODEL_IDS
     for model_name in all_sagemaker:
         if model_name not in all_model_list:
             all_model_list.append(model_name)
-    option = Option(
-        data_profiles=all_profiles.keys(),
-        bedrock_model_ids=all_model_list,
-    )
+    if ENABLE_USER_PROFILE_MAP and ENABLE_USER_PROFILE_MAP == True and id is not None:
+        user_profile_map = UserProfileManagement.get_user_profile_by_id(id)
+        if user_profile_map is not None:
+            profile_name_list = user_profile_map.to_dict()['profile_name_list']
+            option = Option(
+                data_profiles=profile_name_list,
+                bedrock_model_ids=all_model_list,
+            )
+        else:
+            option = Option(
+                data_profiles=['No_Profile'],
+                bedrock_model_ids=all_model_list,
+            )
+    else:
+        option = Option(
+            data_profiles=all_profiles.keys(),
+            bedrock_model_ids=all_model_list,
+        )
     return option
 
 
