@@ -55,8 +55,7 @@ class ConnectConfigEntity:
 
 class ConnectConfigDao:
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_AWS_REGION)
-        self.secrets_manager = boto3.client('secretsmanager', region_name=DYNAMODB_AWS_REGION)
+        self.dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:8001', region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + CONNECT_CONFIG_TABLE_NAME
 
         if self.exists():
@@ -133,24 +132,10 @@ class ConnectConfigDao:
         if 'Item' in response:
             item = response['Item']
             db_sm = item.get('db_sm', None)  # 获取 db_sm 值,如果不存在则为 None
-
-            # 先判断 db_sm 是否存在
-            if db_sm:
-                # 如果 db_sm 存在,则从 Secrets Manager 中获取 db_host、db_port、db_user、db_pwd
-                secrets_manager_name = db_sm
-                secrets_response = self.secrets_manager.get_secret_value(SecretId=secrets_manager_name)
-                if 'SecretString' in secrets_response:
-                    secrets = json.loads(secrets_response['SecretString'])
-                    db_host = secrets['db_host']
-                    db_port = secrets['db_port']
-                    db_user = secrets['db_user']
-                    db_pwd = secrets['db_pwd']
-            else:
-                # 如果 db_sm 不存在,则从 DynamoDB 中获取 db_host、db_port、db_user、db_pwd
-                db_host = item.get('db_host', '')
-                db_port = item.get('db_port', 0)
-                db_user = item.get('db_user', '')
-                db_pwd = item.get('db_pwd', '')
+            db_host = item.get('db_host', '')
+            db_port = item.get('db_port', 0)
+            db_user = item.get('db_user', '')
+            db_pwd = item.get('db_pwd', '')
 
             # 创建 ConnectConfigEntity 实例
             return ConnectConfigEntity(
@@ -175,81 +160,30 @@ class ConnectConfigDao:
 
         # 将 db_host、db_port、db_user、db_pwd 存储在 Secrets Manager 中
         secrets_manager_name = entity.get_secrets_manager_name()
-        secrets = {
+        entity.db_host = entity.db_host
+        entity.db_port = str(entity.db_port)
+        entity.db_user = entity.db_user
+        entity.db_pwd = entity.db_pwd
+        entity.db_sm = secrets_manager_name
+        self.table.put_item(Item=entity.to_dict())
+
+    def update(self, entity):
+        dynamodb_item = {
+            'conn_name': entity.conn_name,
+            'db_type': entity.db_type,
+            'db_name': entity.db_name,
+            'db_sm': entity.db_sm,
+            'comment': entity.comment,
             'db_host': entity.db_host,
             'db_port': str(entity.db_port),
             'db_user': entity.db_user,
             'db_pwd': entity.db_pwd
         }
-        self.secrets_manager.create_secret(
-            Name=secrets_manager_name,
-            SecretString=json.dumps(secrets)
-        )
-
-        # 在 DynamoDB 中存储其他数据和 Secrets Manager 名称
-        entity.db_host = ''
-        entity.db_port = 0
-        entity.db_user = ''
-        entity.db_pwd = ''
-        entity.db_sm = secrets_manager_name
-        self.table.put_item(Item=entity.to_dict())
-
-    def update(self, entity):
-        # 如果修改了 db_host、db_port、db_user、db_pwd 中的任何一个
-        if entity.db_sm:
-            secrets_manager_name = entity.db_sm
-            logger.info(f"Updating secrets for: {secrets_manager_name}")
-
-            secrets = {
-                'db_host': entity.db_host,
-                'db_port': str(entity.db_port),
-                'db_user': entity.db_user,
-                'db_pwd': entity.db_pwd
-            }
-
-            try:
-                self.secrets_manager.put_secret_value(
-                    SecretId=secrets_manager_name,
-                    SecretString=json.dumps(secrets)
-                )
-            except self.secrets_manager.exceptions.ResourceNotFoundException as e:
-                logger.error(f"Secrets Manager key not found: {secrets_manager_name}")
-                logger.error(f"Error details: {str(e)}")
-                raise Exception(f"Failed to update Secrets Manager key: {secrets_manager_name}")
-            # 创建一个新的字典,只包含需要保存到 DynamoDB 的字段
-            dynamodb_item = {
-                'conn_name': entity.conn_name,
-                'db_type': entity.db_type,
-                'db_name': entity.db_name,
-                'db_sm': entity.db_sm,
-                'comment': entity.comment,
-                'db_host': '',
-                'db_port': '',
-                'db_user': '',
-                'db_pwd': ''
-            }
-        else:
-            # 如果 entity.db_sm 为空值,则将所有字段都存储到 DynamoDB 中
-            dynamodb_item = {
-                'conn_name': entity.conn_name,
-                'db_type': entity.db_type,
-                'db_name': entity.db_name,
-                'db_sm': entity.db_sm,
-                'comment': entity.comment,
-                'db_host': entity.db_host,
-                'db_port': str(entity.db_port),
-                'db_user': entity.db_user,
-                'db_pwd': entity.db_pwd
-            }
 
         # 将新字典保存到 DynamoDB 表中
         self.table.put_item(Item=dynamodb_item)
 
     def delete(self, conn_name):
-        entity = self.get_by_name(conn_name)
-        if entity.db_sm:
-            # 删除 Secrets Manager 中的数据
-            self.secrets_manager.delete_secret(SecretId=entity.db_sm)
         # 删除 DynamoDB 中的数据
         self.table.delete_item(Key={'conn_name': conn_name})
         return True
@@ -293,15 +227,5 @@ class ConnectConfigDao:
                 db_sm = None
             else:
                 db_sm = item['db_sm']
-            if db_sm:
-                # 从 Secrets Manager 中获取 db_host、db_port、db_user、db_pwd
-                secrets_manager_name = db_sm
-                secrets_response = self.secrets_manager.get_secret_value(SecretId=secrets_manager_name)
-                if 'SecretString' in secrets_response:
-                    secrets = json.loads(secrets_response['SecretString'])
-                    item['db_host'] = secrets['db_host']
-                    item['db_port'] = secrets['db_port']
-                    item['db_user'] = secrets['db_user']
-                    item['db_pwd'] = secrets['db_pwd']
             db_list.append(ConnectConfigEntity(**item))
         return db_list

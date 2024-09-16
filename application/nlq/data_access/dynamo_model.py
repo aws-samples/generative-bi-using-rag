@@ -38,7 +38,7 @@ class ModelConfigEntity:
 class ModelConfigDao:
 
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_AWS_REGION)
+        self.dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:8001', region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + MODEL_CONFIG_TABLE_NAME
         if not self.exists():
             self.create_table()
