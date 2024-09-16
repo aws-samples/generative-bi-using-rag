@@ -134,5 +134,6 @@ volumes:
   opensearch-data1:
   opensearch-data2:
   mysql-data:
+  dynamodb-data:
 networks:
   opensearch-net:
