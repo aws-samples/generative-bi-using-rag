@@ -5,6 +5,8 @@ import logging
 from typing import List
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+
+from utils.env_var import DYNAMODB_ENDPOINT
 from utils.prompts.generate_prompt import prompt_map_dict
 
 logger = logging.getLogger(__name__)
@@ -32,7 +34,7 @@ class UserProfileConfigEntity:
 class UserProfileConfigDao:
 
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb',  endpoint_url='http://localhost:8001', region_name=DYNAMODB_AWS_REGION)
+        self.dynamodb = boto3.resource('dynamodb',  endpoint_url=DYNAMODB_ENDPOINT, region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + PROFILE_CONFIG_TABLE_NAME
         if not self.exists():
             self.create_table()
