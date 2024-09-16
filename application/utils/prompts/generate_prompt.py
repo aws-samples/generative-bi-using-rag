@@ -12,7 +12,7 @@ support_model_ids_map = {
     "anthropic.claude-3-sonnet-20240229-v1:0": "sonnet-20240229v1-0",
     "anthropic.claude-3-5-sonnet-20240620-v1:0": "sonnet-3-5-20240620v1-0",
     "mistral.mixtral-8x7b-instruct-v0:1": "mixtral-8x7b-instruct-0",
-    "meta.llama3-70b-instruct-v1:0": "llama3-70b-instruct-0"
+    "meta.llama3-1-70b-instruct-v1": "llama3-70b-instruct-0"
 }
 
 # text2SQL prompt
