@@ -67,3 +67,5 @@ docker-compose build
 docker-compose up -d
 
 docker images -q --filter "dangling=true" | xargs -r docker rmi
+
+docker builder prune
