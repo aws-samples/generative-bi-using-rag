@@ -264,7 +264,7 @@ def main():
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
         auto_correction_flag = st.checkbox("Auto Correcting SQL", True)
         show_token_cost = st.checkbox("Show Token Cost", False)
-        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 5)
+        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 0)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
 

@@ -240,7 +240,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         model_response.token_info = response.get("usage", {})
     else:
         model_response.token_info = {}
-    if model_id.startswith('meta.llama3-70b'):
+    if model_id.startswith('meta.llama3-70b') or model_id.startswith('meta.llama3-1'):
         model_response.text = response["generation"]
         return model_response
     elif model_id.startswith('sagemaker.'):
