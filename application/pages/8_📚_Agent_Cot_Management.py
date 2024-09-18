@@ -64,7 +64,7 @@ def main():
         st.session_state["cot_sample_search"] = {}
 
     if 'cot_refresh_view' not in st.session_state:
-        st.session_state['sql_refresh_view'] = False
+        st.session_state['cot_refresh_view'] = False
 
     if 'profiles' not in st.session_state:
         all_profiles = ProfileManagement.get_all_profiles_with_info()
