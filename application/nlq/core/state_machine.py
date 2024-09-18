@@ -601,7 +601,7 @@ class QueryStateMachine:
                     each.sql_search_result.data_show_type = model_select_type
                     each.sql_search_result.sql_data = show_select_data
                     agent_sql_search_result_with_visualization.append(each)
-                self.answer.agent_search_result = agent_sql_search_result_with_visualization
+                self.answer.agent_search_result.agent_sql_search_result = agent_sql_search_result_with_visualization
         except Exception as e:
             self.answer.error_log[QueryState.DATA_VISUALIZATION.name] = str(e)
             logger.error(
