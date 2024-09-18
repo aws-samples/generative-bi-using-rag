@@ -97,4 +97,5 @@ def get_sql_result_tool(profile, sql):
         logger.error("get_sql_result is error: {}".format(e))
         result_dict["error_info"] = e
         result_dict["status_code"] = 500
+        result_dict["data"] = []
     return result_dict
