@@ -114,15 +114,18 @@ def main():
                                   args=[current_profile, sample['id']])
 
         with tab_add:
-            if current_profile is not None:
+            with st.form(key='sql_add_form'):
                 question = st.text_input('Question', key='index_question')
                 answer = st.text_area('Answer(SQL)', key='index_answer', height=300)
 
-                if st.button('Submit', type='primary'):
+                if st.form_submit_button('Add SQL Info', type='primary'):
                     if len(question) > 0 and len(answer) > 0:
                         VectorStore.add_sample(current_profile, question, answer)
                         st.success('Sample added')
-                        time.sleep(2)
+                        st.success('Update Index')
+                        with st.spinner('Update Index ...'):
+                            time.sleep(2)
+                        st.session_state["sql_sample_search"][current_profile] = VectorStore.get_all_samples(current_profile)
                         st.rerun()
                     else:
                         st.error('please input valid question and answer')
