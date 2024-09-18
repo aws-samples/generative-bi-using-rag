@@ -72,7 +72,7 @@ def main():
     if current_profile is not None:
         if st.session_state.cot_refresh_view or st.session_state["cot_sample_search"][current_profile] is None:
             st.session_state["cot_sample_search"][current_profile] = VectorStore.get_all_agent_cot_samples(current_profile)
-            st.session_state.sql_refresh_view = False
+            st.session_state.cot_refresh_view = False
 
     tab_view, tab_add, tab_search = st.tabs(['View Samples', 'Add New Sample', 'Sample Search'])
     if current_profile is not None:
@@ -80,7 +80,7 @@ def main():
         with tab_view:
             if current_profile is not None:
                 st.write("The display page can show a maximum of 5000 pieces of data")
-                for sample in VectorStore.get_all_agent_cot_samples(current_profile):
+                for sample in st.session_state["cot_sample_search"][current_profile]:
                     # st.write(f"Sample: {sample}")
                     with st.expander(sample['query']):
                         st.code(sample['comment'])
