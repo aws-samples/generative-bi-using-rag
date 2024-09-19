@@ -164,7 +164,7 @@ const PanelConfigs = ({
               <Input
                 type="number"
                 inputMode="numeric"
-                value={contextWindow.toString()}
+                value={contextWindow?.toString()}
                 onChange={({ detail }) => {
                   if (Number(detail.value) > 10 || Number(detail.value) < 0) {
                     return;
@@ -204,7 +204,7 @@ const PanelConfigs = ({
                 <Input
                   type="number"
                   inputMode="decimal"
-                  value={temperature.toString()}
+                  value={temperature?.toString()}
                   onChange={({ detail }) => {
                     if (Number(detail.value) > 1 || Number(detail.value) < 0) {
                       return;
@@ -236,7 +236,7 @@ const PanelConfigs = ({
                 <Input
                   type="number"
                   inputMode="numeric"
-                  value={topP.toString()}
+                  value={topP?.toString()}
                   onChange={({ detail }) => {
                     if (Number(detail.value) > 1 || Number(detail.value) < 0) {
                       return;
@@ -274,7 +274,7 @@ const PanelConfigs = ({
                 <Input
                   type="number"
                   inputMode="numeric"
-                  value={maxLength.toString()}
+                  value={maxLength?.toString()}
                   onChange={({ detail }) => {
                     if (
                       Number(detail.value) > 2048 ||
@@ -308,7 +308,7 @@ const PanelConfigs = ({
                 <Input
                   type="number"
                   inputMode="numeric"
-                  value={topK.toString()}
+                  value={topK?.toString()}
                   onChange={({ detail }) => {
                     if (
                       Number(detail.value) > 500 ||
