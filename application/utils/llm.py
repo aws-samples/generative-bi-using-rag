@@ -341,6 +341,7 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
     else:
         all_columns_data = search_data
         columns = all_columns_data[0]
+        search_data = pd.DataFrame(search_data[1:], columns=search_data[0])
     all_columns_data = convert_timestamps_to_str(all_columns_data)
     try:
         if len(all_columns_data) < 1:
