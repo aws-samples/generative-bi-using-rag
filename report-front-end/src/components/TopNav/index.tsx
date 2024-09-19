@@ -10,11 +10,14 @@ import {
   APP_TITLE,
   APP_VERSION,
   CHATBOT_NAME,
-  isLoginWithCognito,
+  AUTH_WITH_COGNITO,
+  AUTH_WITH_OIDC,
+  AUTH_WITH_SSO,
 } from "../../utils/constants";
 import { Storage } from "../../utils/helpers/storage";
 import { UserState } from "../../utils/helpers/types";
 import "./style.scss";
+import { useAuth } from "react-oidc-context";
 
 export default function TopNav() {
   // const [theme, setTheme] = useState<Mode>(Storage.getTheme())
@@ -23,6 +26,7 @@ export default function TopNav() {
   const [isCompact, setIsCompact] = useState<boolean>(
     Storage.getDensity() === Density.Compact
   );
+  const auth = useAuth();
 
   // const onChangeThemeClick = () => {
   //   if (theme === Mode.Dark) {
@@ -78,8 +82,11 @@ export default function TopNav() {
             iconName: "user-profile",
             onItemClick: ({ detail }) => {
               if (detail.id === "signout") {
-                if (isLoginWithCognito) {
+                if (AUTH_WITH_COGNITO || AUTH_WITH_SSO) {
                   Auth.signOut();
+                }
+                if (AUTH_WITH_OIDC) {
+                  auth.signoutSilent();
                 }
               }
             },

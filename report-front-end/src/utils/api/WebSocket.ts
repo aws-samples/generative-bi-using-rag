@@ -7,7 +7,11 @@ import {
   ChatBotMessageType,
 } from "../../components/SectionChat/types";
 import useGlobalContext from "../../hooks/useGlobalContext";
-import { DEFAULT_QUERY_CONFIG, isLoginWithCognito } from "../constants";
+import {
+  DEFAULT_QUERY_CONFIG,
+  AUTH_WITH_COGNITO,
+  AUTH_WITH_SSO,
+} from "../constants";
 import { logout } from "../helpers/tools";
 import { UserState } from "../helpers/types";
 import { getBearerTokenObj } from "./API";
@@ -34,7 +38,7 @@ export function useCreateWssClient(
       console.log("Received WebSocketMessage: ", message.data);
       const messageJson = JSON.parse(message.data);
 
-      if (isLoginWithCognito) {
+      if (AUTH_WITH_COGNITO || AUTH_WITH_SSO) {
         if (messageJson.content["X-Status-Code"] === 401) {
           setIsSearching(false);
           return logout();
@@ -108,7 +112,7 @@ export const useQueryWithTokens = () => {
           };
         });
       });
-      const extraToken = isLoginWithCognito ? getBearerTokenObj() : {};
+      const extraToken = AUTH_WITH_COGNITO ? getBearerTokenObj() : {};
       const params = {
         query: query,
         bedrock_model_id:

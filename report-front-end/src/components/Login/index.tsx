@@ -1,6 +1,13 @@
-import CognitoLogin from "./CognitoLogin";
-import CustomLogin from "./CustomLogin";
+import AuthWithCognito from "./AuthWithCognito";
+import AuthWithNothing from "./AuthWithNothing";
+import OidcLogin from "./AuthWithOidc";
+import AuthWithSso from "./AuthWithSso";
 
-const Login = { Cognito: CognitoLogin, Custom: CustomLogin };
+const Login = {
+  Cognito: AuthWithCognito,
+  Sso: AuthWithSso,
+  Oidc: OidcLogin,
+  Custom: AuthWithNothing,
+};
 
 export default Login;

@@ -1,6 +1,12 @@
 import { Auth } from "aws-amplify";
+import { User } from "oidc-client-ts";
 import toast from "react-hot-toast";
 import { LOCAL_STORAGE_KEYS } from "../constants";
+
+export default function getUser() {
+  const oidcStorage = localStorage.getItem(LOCAL_STORAGE_KEYS.oidcUser);
+  return oidcStorage ? User.fromStorageString(oidcStorage) : null;
+}
 
 export const logout = () => {
   console.warn("Not authorized! Logging out");
@@ -9,6 +15,7 @@ export const logout = () => {
     localStorage.removeItem(key)
   );
   Auth.signOut();
+  window.location.reload();
 };
 
 /**
