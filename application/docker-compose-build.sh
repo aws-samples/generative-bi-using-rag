@@ -44,8 +44,6 @@ sed -i "s|^VITE_WEBSOCKET_URL=ws://.*:8000/qa/ws|VITE_WEBSOCKET_URL=ws://$PUBLIC
 echo "VITE_BACKEND_URL和VITE_WEBSOCKET_URL已更新为公网IP地址: $PUBLIC_IP"
 
 
-docker system prune --all --force
-
 
 # 查找与输入名称匹配的容器
 container_id=$(docker ps -aq --filter="name=nlq-webserver")
