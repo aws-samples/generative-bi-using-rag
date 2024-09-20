@@ -1,7 +1,51 @@
 #!/bin/bash
 
-# 提示用户输入容器名称
-# read -p "请输入要停止和删除的容器名称: " container_name
+# 获取本地IPv4地址
+LOCAL_IP=$(hostname -I | awk '{print $1}')
+
+# 获取公网IP地址
+PUBLIC_IP=$(curl -s ifconfig.me)
+
+# 获取当前目录
+CURRENT_DIR=$(pwd)
+
+# 查找当前目录下的.env文件
+ENV_FILE=$(find "$CURRENT_DIR" -name ".env")
+
+if [ -z "$ENV_FILE" ]; then
+  echo "未找到.env文件"
+  exit 1
+fi
+
+# 替换.env文件中的DYNAMODB_ENDPOINT变量
+sed -i "s|^DYNAMODB_ENDPOINT=.*|DYNAMODB_ENDPOINT=http://$LOCAL_IP:8001|" "$ENV_FILE"
+
+echo "DYNAMODB_ENDPOINT已更新为本地IPv4地址: $LOCAL_IP"
+
+
+# 获取公网IP地址
+PUBLIC_IP=$(curl -s ifconfig.me)
+
+# 获取当前目录
+CURRENT_DIR=$(pwd)
+
+# 查找report-front-end目录下的.env文件
+ENV_FILE=$(find "$CURRENT_DIR/../report-front-end" -name ".env")
+
+if [ -z "$ENV_FILE" ]; then
+  echo "未找到report-front-end目录下的.env文件"
+  exit 1
+fi
+
+# 替换.env文件中的VITE_BACKEND_URL和VITE_WEBSOCKET_URL变量
+sed -i "s|^VITE_BACKEND_URL=http://.*:8000|VITE_BACKEND_URL=http://$PUBLIC_IP:8000|" "$ENV_FILE"
+sed -i "s|^VITE_WEBSOCKET_URL=ws://.*:8000/qa/ws|VITE_WEBSOCKET_URL=ws://$PUBLIC_IP:8000/qa/ws|" "$ENV_FILE"
+
+echo "VITE_BACKEND_URL和VITE_WEBSOCKET_URL已更新为公网IP地址: $PUBLIC_IP"
+
+
+docker system prune --all --force
+
 
 # 查找与输入名称匹配的容器
 container_id=$(docker ps -aq --filter="name=nlq-webserver")
@@ -67,5 +111,3 @@ docker-compose build
 docker-compose up -d
 
 docker images -q --filter "dangling=true" | xargs -r docker rmi
-
-docker builder prune
