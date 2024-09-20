@@ -1,4 +1,10 @@
-import { Authenticator, Button, Divider, View } from "@aws-amplify/ui-react";
+import {
+  Authenticator,
+  Button,
+  Divider,
+  Heading,
+  View,
+} from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { Amplify, Auth } from "aws-amplify";
 import { useEffect, useState } from "react";
@@ -31,12 +37,21 @@ export default function AuthWithSso() {
     <WrapperThemeProvider>
       <Authenticator
         signUpAttributes={["email"]}
+        hideSignUp
         components={{
           Header: AuthTitle,
           SignIn: {
             Header() {
               return (
-                <View width="87%" margin="1rem auto">
+                <View padding="0.5rem 2rem">
+                  <Heading
+                    fontSize="24px"
+                    padding="1rem 0"
+                    fontWeight={300}
+                    textAlign="center"
+                  >
+                    Please Sign In
+                  </Heading>
                   <Button
                     colorTheme="overlay"
                     variation="primary"
