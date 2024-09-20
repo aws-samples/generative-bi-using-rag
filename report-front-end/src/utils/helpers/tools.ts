@@ -11,11 +11,11 @@ export default function getUser() {
 export const logout = () => {
   console.warn("Not authorized! Logging out");
   toast.error("Please login first!");
-  Object.keys(LOCAL_STORAGE_KEYS).forEach((key) =>
-    localStorage.removeItem(key)
-  );
+  // Object.values(LOCAL_STORAGE_KEYS).forEach((key) =>
+  //   localStorage.removeItem(key)
+  // );
   Auth.signOut();
-  window.location.reload();
+  // window.location.reload();
 };
 
 /**

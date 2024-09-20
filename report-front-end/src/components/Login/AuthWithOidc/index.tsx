@@ -92,7 +92,9 @@ const AppWrapper: React.FC = () => {
     return (
       <WrapperOidcLogin>
         {!auth.error ? null : (
-          <div>Oops... Authentication error: {auth.error.message}</div>
+          <div className="oidc-login-div-children-auth-error">
+            Oops... Authentication error: <u>{auth.error.message}</u>
+          </div>
         )}
         <Button
           // color="orange"
