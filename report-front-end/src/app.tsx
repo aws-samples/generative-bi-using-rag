@@ -11,10 +11,12 @@ import { Session } from "./components/PanelSideNav/types";
 import SectionChat from "./components/SectionChat";
 import TopNav from "./components/TopNav";
 import { GlobalContext } from "./hooks/useGlobalContext";
+import useUnauthorized from "./hooks/useUnauthorized";
 
 export type SignOut = UseAuthenticator["signOut"];
 
 const App: React.FC = () => {
+  useUnauthorized();
   return (
     <div style={{ height: "100%" }}>
       <BrowserRouter>

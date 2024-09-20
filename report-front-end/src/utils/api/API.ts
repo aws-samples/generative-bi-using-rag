@@ -11,7 +11,7 @@ import {
   BACKEND_URL,
   LOCAL_STORAGE_KEYS,
 } from "../constants";
-import { logout } from "../helpers/tools";
+import { dispatchUnauthorizedEvent } from "../helpers/tools";
 
 export const getLSTokens = () => {
   const accessToken =
@@ -23,7 +23,7 @@ export const getLSTokens = () => {
   return {
     accessToken: `Bearer ${accessToken}`,
     idToken: `Bearer ${idToken}`,
-    refreshToken: `Bearer ${refreshToken}`,
+    refreshToken: refreshToken ? `Bearer ${refreshToken}` : '',
     noToken: !accessToken || !idToken || !refreshToken,
   };
 };
@@ -52,7 +52,7 @@ request.interceptors.request.use((url, options) => {
 request.interceptors.response.use((response) => {
   if (response.status === 500) toast.error(`Internal Server Error: 500`);
   if (AUTH_WITH_NOTHING) return response;
-  if (response.status === 401) logout();
+  if (response.status === 401) dispatchUnauthorizedEvent();
   return response;
 });
 

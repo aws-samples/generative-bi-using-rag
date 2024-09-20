@@ -1,24 +1,25 @@
 import { TopNavigation } from "@cloudscape-design/components";
 // import { Mode } from '@cloudscape-design/global-styles'
+import { useMsal } from "@azure/msal-react";
 import { Density } from "@cloudscape-design/global-styles";
 import { Auth } from "aws-amplify";
 import { useState } from "react";
+import { useAuth } from "react-oidc-context";
 import { useSelector } from "react-redux";
 import {
   APP_LOGO,
   APP_RIGHT_LOGO,
   APP_TITLE,
   APP_VERSION,
-  CHATBOT_NAME,
+  AUTH_WITH_AZUREAD,
   AUTH_WITH_COGNITO,
   AUTH_WITH_OIDC,
   AUTH_WITH_SSO,
+  CHATBOT_NAME,
 } from "../../utils/constants";
 import { Storage } from "../../utils/helpers/storage";
 import { UserState } from "../../utils/helpers/types";
 import "./style.scss";
-import { useAuth } from "react-oidc-context";
-
 export default function TopNav() {
   // const [theme, setTheme] = useState<Mode>(Storage.getTheme())
   const userInfo = useSelector((state: UserState) => state.userInfo);
@@ -26,6 +27,7 @@ export default function TopNav() {
   const [isCompact, setIsCompact] = useState<boolean>(
     Storage.getDensity() === Density.Compact
   );
+  const { instance } = useMsal();
   const auth = useAuth();
 
   // const onChangeThemeClick = () => {
@@ -87,6 +89,11 @@ export default function TopNav() {
                 }
                 if (AUTH_WITH_OIDC) {
                   auth.signoutSilent();
+                }
+                if (AUTH_WITH_AZUREAD) {
+                  instance.logoutRedirect({
+                    postLogoutRedirectUri: "/",
+                  });
                 }
               }
             },

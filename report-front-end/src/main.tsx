@@ -9,6 +9,7 @@ import {
   AUTH_WITH_COGNITO,
   LOGIN_TYPE,
   AUTH_WITH_SSO,
+  AUTH_WITH_AZUREAD,
 } from "./utils/constants";
 import { Storage } from "./utils/helpers/storage";
 import userReduxStore from "./utils/helpers/store";
@@ -33,6 +34,9 @@ if (AUTH_WITH_OIDC) {
 }
 if (AUTH_WITH_SSO) {
   rootComponent = <Login.Sso />;
+}
+if (AUTH_WITH_AZUREAD) {
+  rootComponent = <Login.AzureAd />;
 }
 
 root.render(

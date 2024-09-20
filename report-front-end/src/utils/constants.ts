@@ -27,14 +27,16 @@ export const LOCALSTORAGE_KEY = "__GEN_BI_STORE_INFO__";
 export enum AUTH_METHOD {
   COGNITO = "Cognito",
   OIDC = "OIDC",
+  AZUREAD = "AZUREAD",
   SSO = "SSO", // Single Sign On method
 }
 export const LOGIN_TYPE = process.env.VITE_LOGIN_TYPE;
 export const AUTH_WITH_COGNITO = LOGIN_TYPE === AUTH_METHOD.COGNITO;
 export const AUTH_WITH_OIDC = LOGIN_TYPE === AUTH_METHOD.OIDC;
 export const AUTH_WITH_SSO = LOGIN_TYPE === AUTH_METHOD.SSO;
+export const AUTH_WITH_AZUREAD = LOGIN_TYPE === AUTH_METHOD.AZUREAD;
 export const AUTH_WITH_NOTHING =
-  !AUTH_WITH_COGNITO && !AUTH_WITH_OIDC && !AUTH_WITH_SSO;
+  !AUTH_WITH_COGNITO && !AUTH_WITH_OIDC && !AUTH_WITH_SSO && !AUTH_WITH_AZUREAD;
 
 export const SSO_FED_AUTH_PROVIDER = import.meta.env.VITE_SSO_FED_AUTH_PROVIDER;
 
@@ -68,4 +70,5 @@ export const LOCAL_STORAGE_KEYS = {
   idToken: "idToken",
   refreshToken: "refreshToken",
   oidcUser: `oidc.user:${OIDC.ISSUER}:${OIDC.CLIENT_ID}`,
+  azureAd: `msal.token.keys.${OIDC.CLIENT_ID}`,
 } as const;

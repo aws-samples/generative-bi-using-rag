@@ -1,12 +1,14 @@
+import AuthWithAzureAd from "./AuthWithAzureAd";
 import AuthWithCognito from "./AuthWithCognito";
 import AuthWithNothing from "./AuthWithNothing";
-import OidcLogin from "./AuthWithOidc";
+import AuthWithOidc from "./AuthWithOidc";
 import AuthWithSso from "./AuthWithSso";
 
 const Login = {
   Cognito: AuthWithCognito,
   Sso: AuthWithSso,
-  Oidc: OidcLogin,
+  Oidc: AuthWithOidc,
+  AzureAd: AuthWithAzureAd,
   Custom: AuthWithNothing,
 };
 

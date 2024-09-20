@@ -8,11 +8,11 @@ import {
 } from "../../components/SectionChat/types";
 import useGlobalContext from "../../hooks/useGlobalContext";
 import {
-  DEFAULT_QUERY_CONFIG,
   AUTH_WITH_COGNITO,
   AUTH_WITH_SSO,
+  DEFAULT_QUERY_CONFIG,
 } from "../constants";
-import { logout } from "../helpers/tools";
+import { dispatchUnauthorizedEvent } from "../helpers/tools";
 import { UserState } from "../helpers/types";
 import { getBearerTokenObj } from "./API";
 
@@ -41,7 +41,7 @@ export function useCreateWssClient(
       if (AUTH_WITH_COGNITO || AUTH_WITH_SSO) {
         if (messageJson.content["X-Status-Code"] === 401) {
           setIsSearching(false);
-          return logout();
+          return dispatchUnauthorizedEvent();
         } else if (messageJson.content["X-Status-Code"] === 200) {
           setIsSearching(false);
           // Do something extra here
