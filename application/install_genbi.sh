@@ -25,6 +25,9 @@ else
     exit 1
 fi
 
+sleep 20s
+echo "database Start ..."
+
 # 执行第三个脚本
 echo "Running import_sql_data.sh..."
 bash import_sql_data.sh
