@@ -28,11 +28,12 @@
     - [Cost](#cost)
 2. [Prerequisites](#prerequisites)
     - [Operating System](#operating-system)
-3. [Deployment Steps](#deployment-steps)
-4. [Deployment Validation](#deployment-validation)
-5. [Running the Guidance](#running-the-guidance)
-6. [Next Steps](#next-steps)
-7. [Cleanup](#cleanup)
+3. [Workshop](#workshop)
+4. [Deployment Steps](#deployment-steps)
+5. [Deployment Validation](#deployment-validation)
+6. [Running the Guidance](#running-the-guidance)
+7. [Next Steps](#next-steps)
+8. [Cleanup](#cleanup)
 
 ## 概述
 
@@ -91,6 +92,13 @@ CDK 经过优化，最适合在 **Amazon Linux 2023 AMI** 上启动。在其他�
 ### 支持的区域
 
 us-west-2, us-east-2, us-east-1, ap-south-1, ap-southeast-1, ap-southeast-2, ap-northeast-1, eu-central-1, eu-west-1, eu-west-3, 以及其他支持bedrock的区域
+
+## Workshop
+
+更多更详细的使用说明，请查看下方的Workshop
+
+🔥🔥🔥 [The Workshop Content](https://catalog.us-east-1.prod.workshops.aws/workshops/37b20322-fc96-4716-8e51-4568b0641448)
+
 
 ## 部署步骤
 
