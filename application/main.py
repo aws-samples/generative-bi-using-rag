@@ -22,8 +22,6 @@ app.add_middleware(
 
 @app.middleware("http")
 async def http_authenticate(request: Request, call_next):
-    # print('---HTTP REQUEST---', vars(request), request.headers)
-
     if request.url.path == "/":
         return await call_next(request)
 
@@ -35,29 +33,21 @@ async def http_authenticate(request: Request, call_next):
         return response
 
     if not skipAuthentication:
-        access_token = request.headers.get("X-Access-Token")
-        id_token = request.headers.get("X-Id-Token")
-        refresh_token = request.headers.get("X-Refresh-Token")
+        access_token = request.headers.get("x-access-token")
 
-        response = authenticate(access_token, id_token, refresh_token)
+        response = authenticate(access_token)
     else:
-        response = {'X-Status-Code': status.HTTP_200_OK}
+        response = {'x-status-code': status.HTTP_200_OK}
 
-    if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
-
-        response_error = Response(status_code=response["X-Status-Code"])
+    if not skipAuthentication and response["x-status-code"] != status.HTTP_200_OK:
+        response_error = Response(status_code=response["x-status-code"])
         response_error.headers["Access-Control-Allow-Origin"] = "*"
         response_error.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response_error.headers["Access-Control-Allow-Headers"] = "*"
         return response_error
     else:
-        if not skipAuthentication:
-            username = response["X-User-Name"]
-        else:
-            username = "admin"
         response = await call_next(request)
         if not skipAuthentication:
-            response.headers["X-User-Name"] = username
             response.headers["Access-Control-Allow-Origin"] = "*"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
             response.headers["Access-Control-Allow-Headers"] = "*"
