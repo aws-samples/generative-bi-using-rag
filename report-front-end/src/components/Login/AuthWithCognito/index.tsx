@@ -139,7 +139,7 @@ export function AuthTitle() {
   return (
     <View
       textAlign="center"
-      margin={`${tokens.space.xl} auto`}
+      margin={`${tokens.space.xxl} auto ${tokens.space.large} auto`}
       position="relative"
     >
       <View padding={tokens.space.small}>
