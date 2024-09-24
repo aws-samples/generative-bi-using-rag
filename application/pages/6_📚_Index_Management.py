@@ -411,7 +411,7 @@ def main():
                 model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                              'anthropic.claude-3-opus-20240229-v1:0',
                              'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
-                             'meta.llama3-1-70b-instruct-v1']
+                             'meta.llama3-1-405b-instruct-v1:0']
                 if 'current_model_id' in st.session_state.keys() and st.session_state.current_model_id != "" and st.session_state.current_model_id in model_ids:
                     model_index = model_ids.index(st.session_state.current_model_id)
                     model_type = st.selectbox("Choose your model", model_ids, index=model_index)
