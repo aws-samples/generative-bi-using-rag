@@ -389,7 +389,9 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
                     return model_select_type, [model_select_type_columns] + data_list, "-1", [], model_response
     except Exception as e:
         logger.error("data_visualization is error {}", e)
-        return "table", all_columns_data, "-1", [], None
+        model_response = ModelResponse()
+        model_response.token_info = {}
+        return "table", all_columns_data, "-1", [], model_response
 
 
 def create_vector_embedding(text, index_name):
