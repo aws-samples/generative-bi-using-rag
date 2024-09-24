@@ -19,6 +19,8 @@ import ChatInput from "./ChatInput";
 import MessageRenderer from "./MessageRenderer";
 import styles from "./chat.module.scss";
 import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
+import toast from "react-hot-toast";
+import { Heading } from "@aws-amplify/ui-react";
 
 export default function SectionChat({
   setToolsHide,
@@ -41,28 +43,60 @@ export default function SectionChat({
   const dispatch = useDispatch();
   const queryConfig = useSelector((state: UserState) => state.queryConfig);
   const userInfo = useSelector((state: UserState) => state.userInfo);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   useEffect(() => {
     if (!queryConfig.selectedLLM || !queryConfig.selectedDataPro) {
-      getSelectData().then((response) => {
-        if (!response) return;
-        if (!queryConfig.selectedLLM && response.bedrock_model_ids?.length) {
-          const configInfo: LLMConfigState = {
-            ...queryConfig,
-            selectedLLM: response.bedrock_model_ids[0],
-          };
+      setLoadingProfile(true);
+      try {
+        getSelectData().then((response) => {
+          if (!response) return;
+          const { bedrock_model_ids, data_profiles } = response;
+          const configInfo: LLMConfigState = { ...queryConfig };
+          if (!queryConfig.selectedLLM && bedrock_model_ids?.length) {
+            const defaultLLM = bedrock_model_ids[0];
+            configInfo.selectedLLM = defaultLLM;
+            // toast.success(`Default LLM selected: ${defaultLLM}`, {
+            //   position: "top-left",
+            // });
+          }
+          if (!queryConfig.selectedDataPro && data_profiles?.length) {
+            const defaultProfile = data_profiles[0];
+            configInfo.selectedDataPro = defaultProfile;
+            toast.success(
+              <div>
+                Default data profile selected:
+                <Heading>
+                  <em>{defaultProfile}</em>
+                </Heading>
+              </div>,
+              { duration: 8000 }
+            );
+          }
           dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-        } else if (
-          !queryConfig.selectedDataPro &&
-          response.data_profiles?.length
-        ) {
-          const configInfo: LLMConfigState = {
-            ...queryConfig,
-            selectedDataPro: response.data_profiles[0],
-          };
-          dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-        }
-      });
+
+          // if (!queryConfig.selectedLLM && response.bedrock_model_ids?.length) {
+          //   const configInfo: LLMConfigState = {
+          //     ...queryConfig,
+          //     selectedLLM: response.bedrock_model_ids[0],
+          //   };
+          //   dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+          // } else if (
+          //   !queryConfig.selectedDataPro &&
+          //   response.data_profiles?.length
+          // ) {
+          //   const configInfo: LLMConfigState = {
+          //     ...queryConfig,
+          //     selectedDataPro: response.data_profiles[0],
+          //   };
+          //   dispatch({ type: ActionType.UpdateConfig, state: configInfo });
+          // }
+        });
+      } catch (error) {
+        console.warn("getSelectData error in useEffect init: ", error);
+      } finally {
+        setLoadingProfile(false);
+      }
     }
   }, [dispatch, queryConfig]);
 
@@ -109,7 +143,7 @@ export default function SectionChat({
   return (
     <section className={styles.chat_container}>
       <SpaceBetween size="xxs">
-        {isLoadingSessionHistory ? (
+        {isLoadingSessionHistory || loadingProfile ? (
           <Box variant="h3" margin="xxl" padding="xxl">
             <Spinner /> Loading latest chat records...
           </Box>
@@ -164,7 +198,8 @@ export default function SectionChat({
       <div className={styles.welcome_text}>
         {messageHistory?.length === 0 &&
           statusMessage?.length === 0 &&
-          !isLoadingSessionHistory && <center>GenBI Chatbot</center>}
+          !isLoadingSessionHistory &&
+          !loadingProfile && <center>GenBI Chatbot</center>}
       </div>
 
       <div className={styles.input_container}>
