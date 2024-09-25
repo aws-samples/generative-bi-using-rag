@@ -29,6 +29,7 @@ export function useCreateWssClient(
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: () => true,
     onMessage: (message) => handleWebSocketMessage(message),
+    heartbeat: true,
   });
 
   const handleWebSocketMessage = useCallback(
