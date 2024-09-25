@@ -1,6 +1,15 @@
-import CognitoLogin from "./CognitoLogin";
-import CustomLogin from "./CustomLogin";
+import AuthWithAzureAd from "./AuthWithAzureAd";
+import AuthWithCognito from "./AuthWithCognito";
+import AuthWithNothing from "./AuthWithNothing";
+import AuthWithOidc from "./AuthWithOidc";
+import AuthWithSso from "./AuthWithSso";
 
-const Login = { Cognito: CognitoLogin, Custom: CustomLogin };
+const Login = {
+  Cognito: AuthWithCognito,
+  Sso: AuthWithSso,
+  Oidc: AuthWithOidc,
+  AzureAd: AuthWithAzureAd,
+  Custom: AuthWithNothing,
+};
 
 export default Login;

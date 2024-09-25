@@ -288,7 +288,6 @@ def find_missing_prompt_syntax(system_prompt, user_prompt, prompt_type, model_id
 
     return missing_system_prompt_syntax, missing_user_prompt_syntax
 
-
 def check_model_id_prompt():
     """
     check model id in prompt in dynamoDB

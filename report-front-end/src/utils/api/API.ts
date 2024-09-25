@@ -1,17 +1,17 @@
 import toast from "react-hot-toast";
 import { extend } from "umi-request";
+import { Session } from "../../components/PanelSideNav/types";
 import {
   FeedBackItem,
   HistoryItem,
   SessionItem,
 } from "../../components/SectionChat/types";
 import {
+  AUTH_WITH_NOTHING,
   BACKEND_URL,
-  isLoginWithCognito,
   LOCAL_STORAGE_KEYS,
 } from "../constants";
-import { logout } from "../helpers/tools";
-import { Session } from "../../components/PanelSideNav/types";
+import { dispatchUnauthorizedEvent } from "../helpers/tools";
 
 export const getLSTokens = () => {
   const accessToken =
@@ -23,7 +23,7 @@ export const getLSTokens = () => {
   return {
     accessToken: `Bearer ${accessToken}`,
     idToken: `Bearer ${idToken}`,
-    refreshToken: `Bearer ${refreshToken}`,
+    refreshToken: refreshToken ? `Bearer ${refreshToken}` : '',
     noToken: !accessToken || !idToken || !refreshToken,
   };
 };
@@ -44,15 +44,15 @@ export const request = extend({
 });
 
 request.interceptors.request.use((url, options) => {
-  if (!isLoginWithCognito) return { url, options };
+  if (AUTH_WITH_NOTHING) return { url, options };
   const headers = { ...getBearerTokenObj(), ...options.headers };
   return { url, options: { ...options, headers } };
 });
 
 request.interceptors.response.use((response) => {
-  if (response.status === 500) toast.error("Internal Server Error");
-  if (!isLoginWithCognito) return response;
-  if (response.status === 401) logout();
+  if (response.status === 500) toast.error(`Internal Server Error: 500`);
+  if (AUTH_WITH_NOTHING) return response;
+  if (response.status === 401) dispatchUnauthorizedEvent();
   return response;
 });
 

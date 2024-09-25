@@ -19,7 +19,7 @@ export default function MessageRenderer({
     <SpaceBetween size="xs">
       {message.type === ChatBotMessageType.Human && (
         <div className={styles.question}>
-          <Icon name="user-profile" /> {message.content.toString()}
+          <Icon name="user-profile" /> {message?.content?.toString()}
         </div>
       )}
       {message.type === ChatBotMessageType.AI && (

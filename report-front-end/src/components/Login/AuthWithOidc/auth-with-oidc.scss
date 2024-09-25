@@ -1,0 +1,41 @@
+.oidc-login {
+  &-container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 1vh;
+  }
+  &-div {
+    margin-bottom: 30vh;
+    padding: 2rem 6rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgb(203, 203, 203);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    min-width: 500px;
+    min-height: 200px;
+    h2 {
+      padding: 0;
+      margin: 0;
+      font-weight: 300;
+    }
+    &-children {
+      margin-bottom: 4vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+
+      &-auth-error {
+        color: maroon;
+      }
+    }
+  }
+}
