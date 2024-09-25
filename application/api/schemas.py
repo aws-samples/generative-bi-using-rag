@@ -20,6 +20,11 @@ class Question(BaseModel):
     context_window: int = 5
     session_id: str = "-1"
     user_id: str = "admin"
+    username: str = ''
+    query_rewrite: str = ""
+    previous_intent: str = ""
+    entity_user_select: dict = {}
+    entity_retrieval: list = []
 
 
 class Example(BaseModel):
@@ -54,6 +59,9 @@ class FeedBackInput(BaseModel):
     query_answer: str
     session_id: str = "-1"
     user_id: str = "admin"
+    error_description: str = ""
+    error_categories: str = ""
+    correct_sql_reference: str = ""
 
 
 class Option(BaseModel):
@@ -98,8 +106,8 @@ class AskReplayResult(BaseModel):
 
 
 class AskEntitySelect(BaseModel):
-    entity_select: str
-    entity_info: dict[str, Any]
+    entity_select_info: dict[str, Any]
+    entity_retrieval: list[Any]
 
 
 class Answer(BaseModel):
@@ -112,6 +120,7 @@ class Answer(BaseModel):
     ask_rewrite_result: AskReplayResult
     suggested_question: list[str]
     ask_entity_select: AskEntitySelect
+    error_log: dict[str, Any]
 
 
 class Message(BaseModel):

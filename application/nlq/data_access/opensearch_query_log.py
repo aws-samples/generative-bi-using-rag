@@ -1,9 +1,10 @@
-import logging
+
 import os
 from utils.env_var import opensearch_info
+from utils.logging import getLogger
 from utils.opensearch import check_opensearch_index, get_opensearch_cluster_client
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 QUERY_LOG_TABLE_NAME = os.getenv("QUERY_LOG_TABLE_NAME", "genbi_query_logging")
 

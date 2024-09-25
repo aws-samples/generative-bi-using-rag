@@ -6,13 +6,14 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import * as crypto from 'crypto';
 
+
 export class AOSStack extends cdk.Stack {
   _securityGroup;
   public readonly endpoint: string;
   public readonly OSMasterUserSecretName: string;
   public readonly OSHostSecretName: string;
 
-  constructor(scope: Construct, id: string, props: cdk.StackProps & {vpc: ec2.Vpc} & { subnets: cdk.aws_ec2.ISubnet[] }) {
+  constructor(scope: Construct, id: string, props: cdk.StackProps & {vpc: ec2.IVpc} & { subnets: cdk.aws_ec2.ISubnet[] }) {
     super(scope, id, props);
 
     // Create a Security Group for OpenSearch
@@ -24,8 +25,11 @@ export class AOSStack extends cdk.Stack {
     this._securityGroup.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
 
     const OSMasterUserSecretNamePrefix = 'opensearch-master-user'; // Add the secret name here
-    const guid = crypto.randomBytes(3).toString('hex');
-    this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${guid}`;
+    // const guid = crypto.randomBytes(3).toString('hex');
+    const vpcIdSuffix = props.vpc.vpcId
+    console.log(`VPC ID Suffix: ${vpcIdSuffix}`);
+    this.OSMasterUserSecretName = `${OSMasterUserSecretNamePrefix}-${vpcIdSuffix}`;
+    console.log(`OSMasterUserSecretName: ${this.OSMasterUserSecretName}`);
     const templatedSecret = new secretsmanager.Secret(this, 'TemplatedSecret', {
       secretName: this.OSMasterUserSecretName,
       description: 'Templated secret used for OpenSearch master user password',
@@ -99,8 +103,8 @@ export class AOSStack extends cdk.Stack {
     this.endpoint = domain.domainEndpoint.toString();
     
     const OSHostSecretNamePrefix = 'opensearch-host-url'; // Add the secret name here
-    this.OSHostSecretName = `${OSHostSecretNamePrefix}-${guid}`;
-
+    this.OSHostSecretName = `${OSHostSecretNamePrefix}-${vpcIdSuffix}`;
+    console.log(`OSHostSecretName: ${this.OSHostSecretName}`);
     const hostSecret = new secretsmanager.Secret(this, 'HostSecret', {
       secretName: this.OSHostSecretName,
       generateSecretString: {

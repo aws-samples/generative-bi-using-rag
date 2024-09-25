@@ -1,13 +1,13 @@
 import os
 
 import boto3
-import logging
 from typing import List
-from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+
+from utils.logging import getLogger
 from utils.prompts.generate_prompt import prompt_map_dict
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 # DynamoDB table name
 PROFILE_CONFIG_TABLE_NAME = 'NlqProfileConfig'
@@ -24,6 +24,9 @@ class ProfileConfigEntity:
         self.comments = comments
         self.tables_info = tables_info
         self.prompt_map = prompt_map
+        self.db_type = kwargs.get('db_type', None)
+        self.enable_row_level_security = kwargs.get('enable_row_level_security', False)
+        self.row_level_security_config = kwargs.get('row_level_security_config', None)
 
     def to_dict(self):
         """Convert to DynamoDB item format"""
@@ -33,7 +36,10 @@ class ProfileConfigEntity:
             'schemas': self.schemas,
             'tables': self.tables,
             'comments': self.comments,
-            'prompt_map': self.prompt_map
+            'prompt_map': self.prompt_map,
+            'db_type': self.db_type,
+            'enable_row_level_security':  self.enable_row_level_security,
+            'row_level_security_config': self.row_level_security_config
         }
         if self.tables_info:
             base_props['tables_info'] = self.tables_info

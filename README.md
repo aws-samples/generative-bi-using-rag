@@ -23,11 +23,12 @@ A Generative BI  demo using Amazon Bedrock, Amazon OpenSearch with RAG technique
     - [Cost](#cost)
 2. [Prerequisites](#prerequisites)
     - [Operating System](#operating-system)
-3. [Deployment Steps](#deployment-steps)
-4. [Deployment Validation](#deployment-validation)
-5. [Running the Guidance](#running-the-guidance)
-6. [Next Steps](#next-steps)
-7. [Cleanup](#cleanup)
+3. [Workshop](#workshop)
+4. [Deployment Steps](#deployment-steps)
+5. [Deployment Validation](#deployment-validation)
+6. [Running the Guidance](#running-the-guidance)
+7. [Next Steps](#next-steps)
+8. [Cleanup](#cleanup)
 
 ## Overview
 This is a comprehensive framework designed to enable Generative BI capabilities on customized data sources (RDS/Redshift) hosted on AWS. It offers the following key features:
@@ -76,6 +77,12 @@ The following table provides a sample cost breakdown for deploying this Guidance
 ### Supported Regions
 
 us-west-2, us-east-2, us-east-1, ap-south-1, ap-southeast-1, ap-southeast-2, ap-northeast-1, eu-central-1, eu-west-1, eu-west-3, or any other region that supports the services (bedrock) used in the Guidance.
+
+## WorkShop
+
+For more detailed usage instructions, please refer to the workshop below.
+
+🔥🔥🔥 [The Workshop Content](https://catalog.us-east-1.prod.workshops.aws/workshops/37b20322-fc96-4716-8e51-4568b0641448)
 
 ## Deployment Steps
 
@@ -127,6 +134,8 @@ cd generative-bi-using-rag/source/resources
 Deploy the CDK stack, change the region to your own region if needed, for example, us-west-2, us-east-1, etc.:
 ```
 export AWS_DEFAULT_REGION=us-west-1
+# avoid 403 Forbidden of the public ECR
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 cdk bootstrap
 cdk deploy GenBiMainStack --require-approval never
 ```

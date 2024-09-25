@@ -1,9 +1,9 @@
 import json
-import logging
 
 from nlq.data_access.opensearch_query_log import OpenSearchQueryLogDao
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 
 class LogManagement:

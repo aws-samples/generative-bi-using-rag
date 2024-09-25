@@ -1,16 +1,16 @@
 import os
 import boto3
-import logging
 import random
 import string
-from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 import json
 
+from utils.logging import getLogger
+
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 # DynamoDB 表名
 CONNECT_CONFIG_TABLE_NAME = 'NlqConnectConfig'

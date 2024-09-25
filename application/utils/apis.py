@@ -1,12 +1,14 @@
+import json
+
 import sqlalchemy as db
 from sqlalchemy import text
 from utils.env_var import RDS_MYSQL_HOST, RDS_MYSQL_PORT, RDS_MYSQL_USERNAME, RDS_MYSQL_PASSWORD, RDS_MYSQL_DBNAME, RDS_PQ_SCHEMA
 import pandas as pd
-import logging
 import sqlparse
 from nlq.business.connection import ConnectionManagement
+from utils.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 ALLOWED_QUERY_TYPES = ['SELECT']
 def query_from_database(p_db_url: str, query, schema=None):
@@ -71,7 +73,6 @@ def query_from_sql_pd(p_db_url: str, query, schema=None):
             logger.error(e)
         return res
 
-
 def get_sql_result_tool(profile, sql):
     result_dict = {"data": pd.DataFrame(), "sql": sql, "status_code": 200, "error_info": ""}
     try:
@@ -89,13 +90,19 @@ def get_sql_result_tool(profile, sql):
                 RDS_MYSQL_DBNAME=RDS_MYSQL_DBNAME,
             ))
         else:
-            engine = db.create_engine(p_db_url)
+            if profile['db_type'] == "bigquery":
+                password, host = ConnectionManagement.get_db_password_host_by_name(profile['conn_name'])
+                password = json.loads(password)
+                engine = db.create_engine(url=host, credentials_info=password)
+            else:
+                engine = db.create_engine(p_db_url)
         with engine.connect() as connection:
             logger.info(f'{sql=}')
             executed_result_df = pd.read_sql_query(text(sql), connection)
-            result_dict["data"] = executed_result_df
+            result_dict["data"] = executed_result_df.fillna("")
     except Exception as e:
         logger.error("get_sql_result is error: {}".format(e))
-        result_dict["error_info"] = e
+        result_dict["error_info"] = str(e)
         result_dict["status_code"] = 500
+        result_dict["data"] = []
     return result_dict

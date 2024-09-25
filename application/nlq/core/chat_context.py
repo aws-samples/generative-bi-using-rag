@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
 @dataclass
@@ -7,6 +7,7 @@ class ProcessingContext:
     query_rewrite: str
     session_id: str
     user_id: str
+    username: str
     selected_profile: str
     database_profile: Dict[str, Any]
     model_type: str
@@ -23,4 +24,5 @@ class ProcessingContext:
     user_query_history: List[str]
     opensearch_info: Dict[str, Any]
     previous_state: str = "INITIAL"
-
+    entity_retrieval: List[str] = field(default_factory=list)
+    entity_user_select: List[str] = field(default_factory=list)

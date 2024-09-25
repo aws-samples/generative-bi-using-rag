@@ -11,10 +11,36 @@ import {VPCStack} from './vpc/vpc-stack';
 
 interface MainStackProps extends StackProps {
     deployRds?: boolean;
+    bedrock_region: string;
+    existing_vpc_id: string;
+    cognito_sign_in_aliases_username?: boolean;
+    embedding_platform : string;
+    embedding_name : string;
+    embedding_dimension : number;
+    bedrock_ak_sk: string;
+    sql_index: string;
+    ner_index: string;
+    cot_index: string;
+    log_index: string;
+    embedding_region: string;
 }
 
 export class MainStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, props: MainStackProps = {deployRds: false}) {
+    constructor(scope: Construct, id: string, props: MainStackProps = {
+        deployRds: false,
+        bedrock_region: cdk.Aws.REGION,
+        existing_vpc_id: "",
+        cognito_sign_in_aliases_username: false,
+        embedding_platform: "bedrock",
+        embedding_name: "amazon.titan-embed-text-v1",
+        embedding_dimension : 1536,
+        sql_index: "uba",
+        ner_index: "uba_ner",
+        cot_index: "uba_agent",
+        log_index: "genbi_query_logging",
+        bedrock_ak_sk: "",
+        embedding_region: cdk.Aws.REGION
+    }) {
         super(scope, id, props);
 
         const _deployRds = props.deployRds || false;
@@ -22,14 +48,9 @@ export class MainStack extends cdk.Stack {
         // ======== Step 0. Define the VPC =========
         const _VpcStack = new VPCStack(this, 'vpc-Stack', {
             env: props.env,
+            existing_vpc_id: props.existing_vpc_id
         });
 
-        // ======== Step 1. Define the LLMStack =========
-        // const s3ModelAssetsBucket = new CfnParameter(this, "S3ModelAssetsBucket", {
-        //   type: "String",
-        //   description: "S3 Bucket for model & code assets",
-        //   default: "not-set"
-        // });
 
         // ======== Step 2. Define the AOSStack =========
         const aosSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
@@ -61,7 +82,8 @@ export class MainStack extends cdk.Stack {
         let _CognitoStack: CognitoStack | undefined;
         if (!isChinaRegion) {
             _CognitoStack = new CognitoStack(this, 'cognito-Stack', {
-                env: props.env
+                env: props.env,
+                sign_in_aliases_username: props.cognito_sign_in_aliases_username
             });
         }
 
@@ -90,10 +112,18 @@ export class MainStack extends cdk.Stack {
                 authenticationType: _CognitoStack ? "Cognito" : "None",
                 cognitoUserPoolId: _CognitoStack?.userPoolId ?? "",
                 cognitoUserPoolClientId: _CognitoStack?.userPoolClientId ?? "",
-                OSMasterUserSecretName:
-                _AosStack.OSMasterUserSecretName,
-                OSHostSecretName:
-                _AosStack.OSHostSecretName,
+                OSMasterUserSecretName: _AosStack.OSMasterUserSecretName,
+                OSHostSecretName: _AosStack.OSHostSecretName,
+                bedrock_region: props.bedrock_region,
+                embedding_platform: props.embedding_platform,
+                embedding_name: props.embedding_name,
+                embedding_dimension: props.embedding_dimension,
+                bedrock_ak_sk: props.bedrock_ak_sk,
+                sql_index: props.sql_index,
+                ner_index: props.ner_index,
+                cot_index: props.cot_index,
+                log_index: props.log_index,
+                embedding_region: props.embedding_region
             })
         ;
 

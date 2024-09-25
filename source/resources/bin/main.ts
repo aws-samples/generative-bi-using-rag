@@ -26,12 +26,18 @@ const vpc = config.vpc
 const cdkConfig = {
     env: devEnv,
     deployRds: rds.deploy,
-    bedrock_embedding_name: embedding.bedrock_embedding_name,
+    embedding_platform: embedding.embedding_platform,
+    embedding_region: embedding.embedding_region,
+    embedding_name: embedding.embedding_name,
     embedding_dimension: embedding.embedding_dimension,
-    opensearch_sql_index : opensearch.sql_index,
-    opensearch_ner_index : opensearch.ner_index,
-    opensearch_cot_index : opensearch.cot_index,
-    vpc_id : vpc.id
+    sql_index : opensearch.sql_index,
+    ner_index : opensearch.ner_index,
+    cot_index : opensearch.cot_index,
+    log_index : opensearch.log_index,
+    existing_vpc_id : vpc.existing_vpc_id,
+    bedrock_ak_sk : config.ecs.bedrock_ak_sk,
+    bedrock_region: config.ecs.bedrock_region,
+    cognito_sign_in_aliases_username: config.cognito.sign_in_aliases_username
 };
 
 new MainStack(app, 'GenBiMainStack', cdkConfig); // Pass deployRDS flag to MainStack constructor

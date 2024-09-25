@@ -1,11 +1,11 @@
+from utils.logging import getLogger
 from utils.prompt import POSTGRES_DIALECT_PROMPT_CLAUDE3, MYSQL_DIALECT_PROMPT_CLAUDE3, \
     DEFAULT_DIALECT_PROMPT, AGENT_COT_EXAMPLE, AWS_REDSHIFT_DIALECT_PROMPT_CLAUDE3, STARROCKS_DIALECT_PROMPT_CLAUDE3, \
-    CLICKHOUSE_DIALECT_PROMPT_CLAUDE3, HIVE_DIALECT_PROMPT_CLAUDE3
+    CLICKHOUSE_DIALECT_PROMPT_CLAUDE3, HIVE_DIALECT_PROMPT_CLAUDE3, BIGQUERY_DIALECT_PROMPT_CLAUDE3
 from utils.prompts import guidance_prompt
 from utils.prompts import table_prompt
-import logging
 
-logger = logging.getLogger(__name__)
+logger = getLogger()
 
 support_model_ids_map = {
     "anthropic.claude-3-haiku-20240307-v1:0": "haiku-20240307v1-0",
@@ -780,7 +780,7 @@ You are a knowledge QA bot. And please answer questions based on the knowledge c
 
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
+[{'Acronym': 'NDDC', 'Full name': 'Direct Digital Commerce'},
  {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
  {'Acronym': 'SKU',
   'Full name': 'Stock Keeping Unit',
@@ -799,7 +799,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Acronym': 'AP', 'Full name': 'APPAREL'},
  {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
  {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
+ {'Acronym': 'NSW', 'Full name': 'SPORTSWEAR'},
  {'Acronym': 'MTD',
   'Full name': 'Month to Date',
   'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
@@ -858,7 +858,7 @@ You are a knowledge QA bot. And please answer questions based on the knowledge c
 
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
+[{'Acronym': 'NDDC', 'Full name': 'Direct Digital Commerce'},
  {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
  {'Acronym': 'SKU',
   'Full name': 'Stock Keeping Unit',
@@ -877,7 +877,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Acronym': 'AP', 'Full name': 'APPAREL'},
  {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
  {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
+ {'Acronym': 'NSW', 'Full name': 'SPORTSWEAR'},
  {'Acronym': 'MTD',
   'Full name': 'Month to Date',
   'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
@@ -936,7 +936,7 @@ You are a knowledge QA bot. And please answer questions based on the knowledge c
 
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
+[{'Acronym': 'NDDC', 'Full name': 'Direct Digital Commerce'},
  {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
  {'Acronym': 'SKU',
   'Full name': 'Stock Keeping Unit',
@@ -955,7 +955,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Acronym': 'AP', 'Full name': 'APPAREL'},
  {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
  {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
+ {'Acronym': 'NSW', 'Full name': 'SPORTSWEAR'},
  {'Acronym': 'MTD',
   'Full name': 'Month to Date',
   'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
@@ -1014,7 +1014,7 @@ You are a knowledge QA bot. And please answer questions based on the knowledge c
 
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
+[{'Acronym': 'NDDC', 'Full name': 'Direct Digital Commerce'},
  {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
  {'Acronym': 'SKU',
   'Full name': 'Stock Keeping Unit',
@@ -1033,7 +1033,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Acronym': 'AP', 'Full name': 'APPAREL'},
  {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
  {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
+ {'Acronym': 'NSW', 'Full name': 'SPORTSWEAR'},
  {'Acronym': 'MTD',
   'Full name': 'Month to Date',
   'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
@@ -1091,7 +1091,7 @@ You are a knowledge QA bot. And please answer questions based on the knowledge c
 
 <context>
 Here is a list of acronyms and their full names plus some comments, which may help you understand the context of the question.
-[{'Acronym': 'NDDC', 'Full name': 'Nike Direct Digital Commerce'},
+[{'Acronym': 'NDDC', 'Full name': 'Direct Digital Commerce'},
  {'Acronym': 'D2N', 'Full name': 'Demand to Net Revenue'},
  {'Acronym': 'SKU',
   'Full name': 'Stock Keeping Unit',
@@ -1110,7 +1110,7 @@ Here is a list of acronyms and their full names plus some comments, which may he
  {'Acronym': 'AP', 'Full name': 'APPAREL'},
  {'Acronym': 'EQP', 'Full name': 'EQUIPMENT'},
  {'Acronym': 'EQ', 'Full name': 'EQUIPMENT'},
- {'Acronym': 'NSW', 'Full name': 'NIKE SPORTSWEAR'},
+ {'Acronym': 'NSW', 'Full name': 'SPORTSWEAR'},
  {'Acronym': 'MTD',
   'Full name': 'Month to Date',
   'Comment': "It's the period starting from the beginning of the current month up until now, but not including today's date, because it might not be complete yet."},
@@ -2209,6 +2209,8 @@ def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, n
         dialect_prompt = CLICKHOUSE_DIALECT_PROMPT_CLAUDE3
     elif dialect == 'hive':
         dialect_prompt = HIVE_DIALECT_PROMPT_CLAUDE3
+    elif dialect == 'bigquery':
+        dialect_prompt = BIGQUERY_DIALECT_PROMPT_CLAUDE3
     else:
         dialect_prompt = DEFAULT_DIALECT_PROMPT
 
@@ -2224,7 +2226,9 @@ def generate_llm_prompt(ddl, hints, prompt_map, search_box, sql_examples=None, n
             example_ner_prompt += "ner: " + item['_source']['entity'] + "\n"
             example_ner_prompt += "ner info:" + item['_source']['comment'] + "\n"
 
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
     system_prompt = prompt_map.get('text2sql', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('text2sql', {}).get('user_prompt', {}).get(name)
     if long_string == '':
@@ -2358,7 +2362,9 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
             agent_cot_example_str += "train of thought:" + item['_source']['comment'] + "\n"
 
     # fetch system/user prompt from DynamoDB prompt map
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
     system_prompt = prompt_map.get('agent', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('agent', {}).get('user_prompt', {}).get(name)
 
@@ -2375,7 +2381,9 @@ def generate_agent_cot_system_prompt(ddl, prompt_map, search_box, model_id, agen
 
 
 def generate_intent_prompt(prompt_map, search_box, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('intent', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('intent', {}).get('user_prompt', {}).get(name)
@@ -2386,7 +2394,9 @@ def generate_intent_prompt(prompt_map, search_box, model_id):
 
 
 def generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_query):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('query_rewrite', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('query_rewrite', {}).get('user_prompt', {}).get(name)
@@ -2397,7 +2407,9 @@ def generate_query_rewrite_prompt(prompt_map, search_box, model_id, history_quer
 
 
 def generate_knowledge_prompt(prompt_map, search_box, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('knowledge', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('knowledge', {}).get('user_prompt', {}).get(name)
@@ -2408,7 +2420,9 @@ def generate_knowledge_prompt(prompt_map, search_box, model_id):
 
 
 def generate_data_visualization_prompt(prompt_map, search_box, search_data, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('data_visualization', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('data_visualization', {}).get('user_prompt', {}).get(name)
@@ -2419,7 +2433,9 @@ def generate_data_visualization_prompt(prompt_map, search_box, search_data, mode
 
 
 def generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('agent_analyse', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('agent_analyse', {}).get('user_prompt', {}).get(name)
@@ -2430,7 +2446,9 @@ def generate_agent_analyse_prompt(prompt_map, search_box, model_id, sql_data):
 
 
 def generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('data_summary', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('data_summary', {}).get('user_prompt', {}).get(name)
@@ -2441,7 +2459,9 @@ def generate_data_summary_prompt(prompt_map, search_box, model_id, sql_data):
 
 
 def generate_suggest_question_prompt(prompt_map, search_box, model_id):
-    name = support_model_ids_map[model_id]
+    name = support_model_ids_map.get(model_id, model_id)
+    if name.startswith("sagemaker."):
+        name = name[10:]
 
     system_prompt = prompt_map.get('suggestion', {}).get('system_prompt', {}).get(name)
     user_prompt = prompt_map.get('suggestion', {}).get('user_prompt', {}).get(name)

@@ -1,19 +1,21 @@
 import json
-import logging
 import time
 import random
 import datetime
 
 import pandas as pd
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from utils.logging import getLogger
 
+logger = getLogger()
 
 def get_generated_sql(generated_sql_response):
     sql = ""
     try:
-        return generated_sql_response.split("<sql>")[1].split("</sql>")[0]
+        if "<sql>" in generated_sql_response:
+            return generated_sql_response.split("<sql>")[1].split("</sql>")[0]
+        elif "```sql" in generated_sql_response:
+            return generated_sql_response.split("```sql")[1].split("```")[0]
     except IndexError:
         logger.error("No SQL found in the LLM's response")
         logger.error(generated_sql_response)
@@ -34,12 +36,17 @@ def get_current_time():
 
 
 def get_generated_sql_explain(generated_sql_response):
-    index = generated_sql_response.find("</sql>")
-    if index != -1:
-        return generated_sql_response[index + len("</sql>"):]
-    else:
-        return generated_sql_response
-
+    try:
+        if "<sql>" in generated_sql_response:
+            return generated_sql_response.split("<sql>")[1].split("</sql>")[1]
+        elif "```sql" in generated_sql_response:
+            return generated_sql_response.split("```sql")[1].split("```")[1]
+        else:
+            return generated_sql_response
+    except IndexError:
+        logger.error("No generated found in the LLM's response")
+        logger.error(generated_sql_response)
+    return generated_sql_response
 
 def change_class_to_str(result):
     try:

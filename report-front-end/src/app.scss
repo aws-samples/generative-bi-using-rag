@@ -10,11 +10,9 @@
 html,
 body,
 #root,
-div[data-amplify-authenticator],
 div[data-amplify-theme] {
   height: 100%;
 }
-
 body {
   background-color: #ffffff;
   overflow-y: scroll;
@@ -63,7 +61,6 @@ body.awsui-dark-mode {
 
 .jsonStrings {
   color: rgb(74, 234, 167);
-  
 }
 
 .jsonNumbers {
@@ -76,6 +73,6 @@ body.awsui-dark-mode {
 }
 
 .jsonNull {
-  color:rgb(74, 205, 234);
+  color: rgb(74, 205, 234);
   font-weight: 600;
 }

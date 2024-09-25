@@ -1,7 +1,8 @@
-import logging
-from nlq.data_access.dynamo_profile import ProfileConfigDao, ProfileConfigEntity
 
-logger = logging.getLogger(__name__)
+from nlq.data_access.dynamo_profile import ProfileConfigDao, ProfileConfigEntity
+from utils.logging import getLogger
+
+logger = getLogger()
 
 class ProfileManagement:
     profile_config_dao = ProfileConfigDao()
@@ -19,19 +20,21 @@ class ProfileManagement:
         for profile in profile_list:
             profile_map[profile.profile_name] = {
                 'db_url': '',
+                'db_type': profile.db_type,
                 'conn_name': profile.conn_name,
                 'tables_info': profile.tables_info,
                 'hints': '',
                 'search_samples': [],
                 'comments':  profile.comments,
-                'prompt_map': profile.prompt_map
+                'prompt_map': profile.prompt_map,
+                'row_level_security_config': profile.row_level_security_config if profile.enable_row_level_security else None
             }
 
         return profile_map
 
     @classmethod
-    def add_profile(cls, profile_name, conn_name, schemas, tables, comment):
-        entity = ProfileConfigEntity(profile_name, conn_name, schemas, tables, comment)
+    def add_profile(cls, profile_name, conn_name, schemas, tables, comment, db_type: str):
+        entity = ProfileConfigEntity(profile_name, conn_name, schemas, tables, comment, db_type=db_type)
         cls.profile_config_dao.add(entity)
         logger.info(f"Profile {profile_name} added")
 
@@ -40,10 +43,23 @@ class ProfileManagement:
         return cls.profile_config_dao.get_by_name(profile_name)
 
     @classmethod
-    def update_profile(cls, profile_name, conn_name, schemas, tables, comment, tables_info):
+    def update_profile(cls, profile_name, conn_name, schemas, tables, comment, tables_info, db_type, rls_enable, rls_config):
         all_profiles = ProfileManagement.get_all_profiles_with_info()
         prompt_map = all_profiles[profile_name]["prompt_map"]
-        entity = ProfileConfigEntity(profile_name, conn_name, schemas, tables, comment, tables_info, prompt_map)
+        entity = ProfileConfigEntity(profile_name, conn_name, schemas, tables, comment, tables_info, prompt_map,
+                                     db_type=db_type,
+                                     enable_row_level_security=rls_enable, row_level_security_config=rls_config)
+        cls.profile_config_dao.update(entity)
+        logger.info(f"Profile {profile_name} updated")
+
+    @classmethod
+    def update_prompt_map(cls, profile_name, prompt_map):
+        profile_info = ProfileManagement.get_profile_by_name(profile_name)
+        entity = ProfileConfigEntity(profile_name, profile_info.conn_name, profile_info.schemas, profile_info.tables, profile_info.comments,
+                                     tables_info=profile_info.tables_info, prompt_map=prompt_map,
+                                     db_type=profile_info.db_type,
+                                     enable_row_level_security=profile_info.enable_row_level_security,
+                                     row_level_security_config=profile_info.row_level_security_config)
         cls.profile_config_dao.update(entity)
         logger.info(f"Profile {profile_name} updated")
 
