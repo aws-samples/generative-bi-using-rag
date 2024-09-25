@@ -56,9 +56,6 @@ export default function SectionChat({
           if (!queryConfig.selectedLLM && bedrock_model_ids?.length) {
             const defaultLLM = bedrock_model_ids[0];
             configInfo.selectedLLM = defaultLLM;
-            // toast.success(`Default LLM selected: ${defaultLLM}`, {
-            //   position: "top-left",
-            // });
           }
           if (!queryConfig.selectedDataPro && data_profiles?.length) {
             const defaultProfile = data_profiles[0];
@@ -74,23 +71,6 @@ export default function SectionChat({
             );
           }
           dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-
-          // if (!queryConfig.selectedLLM && response.bedrock_model_ids?.length) {
-          //   const configInfo: LLMConfigState = {
-          //     ...queryConfig,
-          //     selectedLLM: response.bedrock_model_ids[0],
-          //   };
-          //   dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-          // } else if (
-          //   !queryConfig.selectedDataPro &&
-          //   response.data_profiles?.length
-          // ) {
-          //   const configInfo: LLMConfigState = {
-          //     ...queryConfig,
-          //     selectedDataPro: response.data_profiles[0],
-          //   };
-          //   dispatch({ type: ActionType.UpdateConfig, state: configInfo });
-          // }
         });
       } catch (error) {
         console.warn("getSelectData error in useEffect init: ", error);
