@@ -15,13 +15,13 @@ import { deleteHistoryBySession } from "../../utils/api/API";
 import { useQueryWithTokens } from "../../utils/api/WebSocket";
 import styles from "./chat.module.scss";
 import CustomQuestions from "./CustomQuestions";
-import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
+import { ChatBotHistoryItem, WSResponseStatusMessageItem } from "./types";
 
 export interface ChatInputPanelProps {
   toolsHide: boolean;
   setToolsHide: Dispatch<SetStateAction<boolean>>;
   messageHistory: ChatBotHistoryItem[];
-  setStatusMessage: Dispatch<SetStateAction<ChatBotMessageItem[]>>;
+  setStatusMessage: Dispatch<SetStateAction<WSResponseStatusMessageItem[]>>;
   sendJsonMessage: SendJsonMessage;
 }
 

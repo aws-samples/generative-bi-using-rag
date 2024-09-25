@@ -18,7 +18,7 @@ import {
 import ChatInput from "./ChatInput";
 import MessageRenderer from "./MessageRenderer";
 import styles from "./chat.module.scss";
-import { ChatBotHistoryItem, ChatBotMessageItem } from "./types";
+import { ChatBotHistoryItem, WSResponseStatusMessageItem } from "./types";
 import toast from "react-hot-toast";
 import { Heading } from "@aws-amplify/ui-react";
 
@@ -34,7 +34,7 @@ export default function SectionChat({
   );
   const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
 
-  const [statusMessage, setStatusMessage] = useState<ChatBotMessageItem[]>([]);
+  const [statusMessage, setStatusMessage] = useState<WSResponseStatusMessageItem[]>([]);
   const { sessions, setSessions, currentSessionId, isSearching } =
     useGlobalContext();
 
@@ -96,9 +96,7 @@ export default function SectionChat({
               setMessageHistory(messages);
               return { ...item, messages };
             }
-            return session_id === item.session_id
-              ? { ...item, messages }
-              : item;
+            return item;
           });
         });
       })
@@ -133,9 +131,7 @@ export default function SectionChat({
               return (
                 <div key={idx}>
                   <MessageRenderer
-                    key={idx}
                     message={message}
-                    setMessageHistory={setMessageHistory}
                     sendJsonMessage={sendJsonMessage}
                   />
                 </div>

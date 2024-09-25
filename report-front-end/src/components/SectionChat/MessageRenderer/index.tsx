@@ -1,20 +1,18 @@
 import { Icon, SpaceBetween } from "@cloudscape-design/components";
-import { Dispatch, SetStateAction } from "react";
 import { SendJsonMessage } from "react-use-websocket/src/lib/types";
-import { ChatBotHistoryItem, ChatBotMessageType } from "../types";
 import styles from "../chat.module.scss";
+import { ChatBotHistoryItem, ChatBotMessageType } from "../types";
 import AiMessage from "./AiMessage";
 
-export interface ChatMessageProps<T = ChatBotHistoryItem> {
+export interface MessageRendererProps<T = ChatBotHistoryItem> {
   message: T;
-  setMessageHistory: Dispatch<SetStateAction<ChatBotHistoryItem[]>>;
   sendJsonMessage: SendJsonMessage;
 }
 
 export default function MessageRenderer({
   message,
   sendJsonMessage,
-}: ChatMessageProps) {
+}: MessageRendererProps) {
   return (
     <SpaceBetween size="xs">
       {message.type === ChatBotMessageType.Human && (
