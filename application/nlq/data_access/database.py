@@ -18,6 +18,7 @@ class RelationDatabase():
         'hive': 'hive',
         'athena': 'awsathena+rest',
         'bigquery': 'bigquery',
+        'presto': 'presto'
         # Add more mappings here for other databases
     }
 
@@ -45,6 +46,13 @@ class RelationDatabase():
                 drivername=cls.db_mapping[db_type],
                 host=host,  # BigQuery project. Note: without dataset
                 query={'credentials_path': json.dumps(password)}
+            )
+        elif db_type == 'presto':
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                host=host,
+                port=port,
+                database=db_name
             )
         else:
             db_url = db.engine.URL.create(
@@ -124,6 +132,9 @@ class RelationDatabase():
         if connection.db_type == 'bigquery':
             metadata.reflect(bind=engine)
             return metadata
+        elif connection.db_type == 'presto':
+            for s in schemas:
+                metadata.reflect(bind=engine, schema=s)
         else:
             for s in schemas:
                 metadata.reflect(bind=engine, schema=s, views=True)
