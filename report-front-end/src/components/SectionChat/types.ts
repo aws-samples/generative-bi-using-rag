@@ -17,14 +17,23 @@ export type ChatBotHistoryItem =
       content: ChatBotAnswerItem;
     };
 
-export interface ChatBotMessageItem {
+export interface WSResponseStatusMessageItem {
   session_id: string;
   user_id: string;
-  content_type: string;
-  content: StatusMessageItem;
+  content_type: "state";
+  content: IStatusMessageItem & IStatusCode;
+}
+interface IStatusCode {
+  "X-Status-Code"?: 401 | 200;
+}
+export interface WSResponseQueryResult {
+  session_id: string;
+  user_id: string;
+  content_type: "end";
+  content: ChatBotAnswerItem & IStatusCode;
 }
 
-export interface StatusMessageItem {
+export interface IStatusMessageItem {
   status: string;
   text: string;
 }

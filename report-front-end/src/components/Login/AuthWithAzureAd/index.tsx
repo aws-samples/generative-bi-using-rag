@@ -30,7 +30,7 @@ export default AuthWithAzureAd;
 const AppWrapper: React.FC = () => {
   const isAuthenticated = useIsAuthenticated();
   const { inProgress } = useMsal();
-  console.log({ inProgress });
+
   if (!isAuthenticated) {
     return (
       <WrapperOidcLogin>

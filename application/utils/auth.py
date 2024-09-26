@@ -37,6 +37,8 @@ def jwt_decode(token):
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
 
+    print('---JWT_DECODE Params---')
+    print(token, AUDIENCE, OPTIONS)
     return jwt.decode(
         token,
         key=rsa_pem_key_bytes,

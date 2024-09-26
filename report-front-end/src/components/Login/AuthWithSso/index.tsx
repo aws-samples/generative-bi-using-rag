@@ -43,18 +43,21 @@ export default function AuthWithSso() {
           SignIn: {
             Header() {
               return (
-                <View padding="0.5rem 2rem">
+                <View
+                  padding="0.3rem 2rem"
+                  style={{ borderTop: "2px solid black" }}
+                >
                   <Heading
-                    fontSize="24px"
+                    fontSize="20px"
                     padding="1rem 0"
-                    fontWeight={300}
+                    fontWeight={400}
                     textAlign="center"
                   >
                     Please Sign In
                   </Heading>
                   <Button
                     colorTheme="overlay"
-                    variation="primary"
+                    // variation="primary"
                     loadingText="Signing in..."
                     isLoading={isLoading}
                     disabled={isLoading}
@@ -70,7 +73,7 @@ export default function AuthWithSso() {
                       }
                     }}
                   >
-                    Sign In with SSO
+                    Click to sign in with SSO
                   </Button>
                   <Divider
                     orientation="horizontal"

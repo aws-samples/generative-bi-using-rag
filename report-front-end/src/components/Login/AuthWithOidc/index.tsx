@@ -106,7 +106,7 @@ const AppWrapper: React.FC = () => {
           loadingText="Signing in..."
           onClick={() => void auth.signinRedirect()}
         >
-          Click to sign in with OIDC
+          Click to sign in with OIDC IdP
         </Button>
       </WrapperOidcLogin>
     );
