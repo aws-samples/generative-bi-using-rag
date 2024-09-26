@@ -16,13 +16,11 @@ from dotenv import load_dotenv
 from utils.auth import authenticate, skipAuthentication
 
 from .service import ask_websocket
-import os
 
 logger = getLogger()
 router = APIRouter(prefix="/qa", tags=["qa"])
 load_dotenv()
 
-ENABLE_USER_PROFILE_MAP = os.getenv("ENABLE_USER_PROFILE_MAP")
 
 @router.get("/option", response_model=Option)
 def option(id: str=None):
@@ -138,25 +136,17 @@ async def websocket_endpoint(websocket: WebSocket):
             session_id = question.session_id
             user_id = question.user_id
             if not skipAuthentication:
-                access_token = question_json.get('X-Access-Token')
+                access_token = question_json.get('x-access-token')
                 if access_token:
-                    del question_json['X-Access-Token']
+                    del question_json['x-access-token']
 
-                id_token = question_json.get('X-Id-Token')
-                if id_token:
-                    del question_json['X-Id-Token']
-
-                refresh_token = question_json.get('X-Refresh-Token')
-                if refresh_token:
-                    del question_json['X-Refresh-Token']
-
-                response = authenticate(access_token, id_token, refresh_token)
+                response = authenticate(access_token)
             else:
-                response = {'X-Status-Code': status.HTTP_200_OK}
+                response = {'x-status-code': status.HTTP_200_OK}
 
-            if not skipAuthentication and response["X-Status-Code"] != status.HTTP_200_OK:
+            if not skipAuthentication and response["x-status-code"] != status.HTTP_200_OK:
                 answer = {}
-                answer['X-Status-Code'] = response["X-Status-Code"]
+                answer['x-status-code'] = response["x-status-code"]
                 await response_websocket(websocket, session_id, answer, ContentEnum.END)
             else:
                 try:
