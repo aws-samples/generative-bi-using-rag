@@ -18,7 +18,8 @@ db_type_mapping = {
     'clickhouse': 'Clickhouse',
     'hive': 'Hive',
     'athena': 'Athena',
-    'bigquery': 'BigQuery'
+    'bigquery': 'BigQuery',
+    'presto': 'Presto'
 }
 
 
@@ -95,6 +96,21 @@ def main():
                 ConnectionManagement.add_connection(connection_name, db_type, host, port, user, password, db_name, comment)
                 st.success(f"{connection_name} added successfully!")
                 st.session_state.new_connection_mode = False
+        elif db_type == "presto":
+            host = st.text_input("Enter host")
+            port = st.text_input("Enter port", placeholder="8889")
+            db_name = st.text_input("Enter database name", placeholder="hive/default")
+            comment = st.text_input("Enter comment")
+
+            test_connection_view(db_type, "", "", host, port, db_name)
+
+            if st.button('Add Connection', type='primary'):
+                if db_name == '':
+                    st.error("Database name is required!")
+                else:
+                    ConnectionManagement.add_connection(connection_name, db_type, host, port, "", "", db_name, comment)
+                    st.success(f"{connection_name} added successfully!")
+                    st.session_state.new_connection_mode = False
 
         else:
             host = st.text_input("Enter host")
@@ -123,12 +139,27 @@ def main():
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
         if db_type == 'athena':
             st.info("Please enter S3 staging directory in the database name field. You can leave other fields empty. Please also make sure that IAM role is able to access Athena and S3.")
-        host = st.text_input("Enter host", current_conn.db_host)
-        port = st.text_input("Enter port", current_conn.db_port)
-        user = st.text_input("Enter username", current_conn.db_user)
-        password = st.text_input("Enter password", type="password", value=current_conn.db_pwd)
-        db_name = st.text_input("Enter database name", current_conn.db_name)
-        comment = st.text_input("Enter comment", current_conn.comment)
+            host = st.text_input("Enter host", current_conn.db_host)
+            port = st.text_input("Enter port", current_conn.db_port)
+            user = st.text_input("Enter username", current_conn.db_user)
+            password = st.text_input("Enter password", type="password", value=current_conn.db_pwd)
+            db_name = st.text_input("Enter database name", current_conn.db_name)
+            comment = st.text_input("Enter comment", current_conn.comment)
+        elif db_type == "bigquery":
+            host = st.text_input("Enter host")
+            password = st.text_area("Credentials Info", height=200, value=current_conn.db_pwd)
+            # credentials_info = json.loads(credentials_info)
+            port = ""
+            user = ""
+            db_name = ""
+            comment = st.text_input("Enter comment")
+        else:
+            host = st.text_input("Enter host", current_conn.db_host)
+            port = st.text_input("Enter port", current_conn.db_port)
+            user = st.text_input("Enter username", current_conn.db_user)
+            password = st.text_input("Enter password", type="password", value=current_conn.db_pwd)
+            db_name = st.text_input("Enter database name", current_conn.db_name)
+            comment = st.text_input("Enter comment", current_conn.comment)
 
         test_connection_view(db_type, user, password, host, port, db_name)
 
