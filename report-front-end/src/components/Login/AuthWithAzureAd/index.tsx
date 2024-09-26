@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import App from "../../../app";
 import {
   AUTH_WITH_AZUREAD,
+  AZURE_AD_SCOPE,
   LOCAL_STORAGE_KEYS,
 } from "../../../utils/constants";
 import { ActionType, UserInfo } from "../../../utils/helpers/types";
@@ -76,7 +77,7 @@ function AppContainer() {
     if (AUTH_WITH_AZUREAD) {
       try {
         instance
-          .acquireTokenSilent({ scopes: ["User.Read"], account })
+          .acquireTokenSilent({ scopes: AZURE_AD_SCOPE, account })
           .then((accountDetails) => {
             console.log({ "AzureAD Account Details": accountDetails });
             // window.accountDetails = accountDetails;

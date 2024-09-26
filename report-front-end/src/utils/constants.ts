@@ -39,7 +39,12 @@ export const AUTH_WITH_NOTHING =
   !AUTH_WITH_COGNITO && !AUTH_WITH_OIDC && !AUTH_WITH_SSO && !AUTH_WITH_AZUREAD;
 
 export const SSO_FED_AUTH_PROVIDER = import.meta.env.VITE_SSO_FED_AUTH_PROVIDER;
-
+export let AZURE_AD_SCOPE = import.meta.env.VITE_AZURE_AD_SCOPE;
+try {
+  AZURE_AD_SCOPE = JSON.parse(AZURE_AD_SCOPE);
+} catch (error) {
+  console.error("Parsing error - AZURE_AD_SCOPE: ", error);
+}
 export const BACKEND_URL = process.env.VITE_BACKEND_URL?.endsWith("/")
   ? process.env.VITE_BACKEND_URL
   : process.env.VITE_BACKEND_URL + "/";
