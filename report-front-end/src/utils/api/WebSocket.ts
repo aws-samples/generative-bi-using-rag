@@ -29,14 +29,18 @@ export function useCreateWssClient(
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: () => true,
     onMessage: (message) => handleWebSocketMessage(message),
-    // heartbeat: true,
+    heartbeat: true,
   });
 
   const handleWebSocketMessage = useCallback(
     (message: MessageEvent) => {
-      console.log("Received WebSocketMessage: ", message?.data);
+      const data = message?.data;
+      console.log("Received WebSocketMessage: ", data);
+      if (data === undefined)
+        return console.warn('Received WS message.data === "undefined"');
+      if (data === "pong") return;
       const messageJson: WSResponseStatusMessageItem | WSResponseQueryResult =
-        JSON.parse(message?.data);
+        JSON.parse(data);
 
       if (!AUTH_WITH_NOTHING) {
         if (messageJson.content?.["X-Status-Code"] === 401) {
