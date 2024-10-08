@@ -132,14 +132,17 @@ hashed_passwords = Hasher(['password123']).generate()
 CDK プロジェクトのディレクトリに移動:
 ```
 cd generative-bi-using-rag/source/resources
+
+npm install aws-cdk-lib
 ```
 CDK スタックをデプロイします。必要に応じてリージョンを変更してください(例: us-west-2、us-east-1 など)。
 ```
-export AWS_DEFAULT_REGION=us-west-1
-# パブリック ECR への 403 Forbidden を回避
-aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-cdk bootstrap
+export AWS_ACCOUNT_ID=XXXXXXXXXXXX
+export AWS_REGION=us-west-2
+
+cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION 
 cdk deploy GenBiMainStack --require-approval never
+
 ```
 デプロイが成功すると、以下のように表示されます。
 ```
