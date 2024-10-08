@@ -18,6 +18,7 @@ class RelationDatabase():
         'hive': 'hive',
         'athena': 'awsathena+rest',
         'bigquery': 'bigquery',
+        'presto': 'presto'
         # Add more mappings here for other databases
     }
 
@@ -45,6 +46,13 @@ class RelationDatabase():
                 drivername=cls.db_mapping[db_type],
                 host=host,  # BigQuery project. Note: without dataset
                 query={'credentials_path': json.dumps(password)}
+            )
+        elif db_type == 'presto':
+            db_url = db.engine.URL.create(
+                drivername=cls.db_mapping[db_type],
+                host=host,
+                port=port,
+                database=db_name
             )
         else:
             db_url = db.engine.URL.create(
@@ -96,7 +104,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena', 'bigquery'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena', 'bigquery', 'presto'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")
@@ -123,6 +131,10 @@ class RelationDatabase():
         metadata = db.MetaData()
         if connection.db_type == 'bigquery':
             metadata.reflect(bind=engine)
+            return metadata
+        elif connection.db_type == 'presto':
+            for s in schemas:
+                metadata.reflect(bind=engine, schema=s)
             return metadata
         else:
             for s in schemas:
