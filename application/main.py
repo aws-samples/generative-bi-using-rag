@@ -24,7 +24,7 @@ app.add_middleware(
 async def http_authenticate(request: Request, call_next):
     # print('---HTTP REQUEST---', vars(request), request.headers)
 
-    if request.url.path == "/":
+    if request.url.path == "/" or request.url.path == "/ping":
         return await call_next(request)
 
     if request.method == "OPTIONS":
@@ -78,6 +78,10 @@ def index():
 # health check
 @app.get("/")
 def health():
+    return {"status": "ok"}
+
+@app.get("/ping")
+def ping():
     return {"status": "ok"}
 
 

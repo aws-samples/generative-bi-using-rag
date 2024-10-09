@@ -1,180 +1,102 @@
-# AWS上でRAGを使用した生成型BI
+# AWS上でのRAGを使用した生成ビジネスインテリジェンス
+[中文文檔](README_CN.md) | [日本語ドキュメント](README_JP.md)
 
-このフレームワークは、AWS上でカスタマイズされたデータソース（RDS/Redshift）に対して生成型BI機能を有効にするためのものです。以下の主要な機能を提供します：
-- 自然言語を使用してカスタマイズされたデータソースをクエリするためのText-to-SQL機能。
-- データソース、テーブル、および列の説明を追加、編集、および管理するためのユーザーフレンドリーなインターフェース。
-- 歴史的な質問-回答のランキングとエンティティ認識を統合することによるパフォーマンスの向上。
-- エンティティ情報、公式、SQLサンプル、複雑なビジネス問題の分析アイデアなど、ビジネス情報のカスタマイズ。
-- 複雑な帰属分析問題を処理するためのエージェントタスク分割機能の追加。
-- 基盤となるText-to-SQLメカニズムについての洞察を提供する直感的な質問応答UI。
-- 対話的なアプローチを通じて複雑なクエリを処理するためのシンプルなエージェント設計インターフェース。
+ここに記載されているのはCDKのみの導入ガイドです。手動導入や詳細ガイドについては、[中国語の手動導入ガイド](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E8%B0%83%E8%AF%95%E7%95%8C%E9%9D%A2%E4%BB%A5%E5%8F%8AAPI%E9%83%A8%E7%BD%B2)を参照してください。
 
-## 導入
+![Screenshot](./assets/interface.png)
 
-Amazon BedrockとAmazon OpenSearchを使用したNLQ（自然言語クエリ）デモです。
+## 紹介
 
-![スクリーンショット](./assets/screenshot-genbi.png)
+Amazon Bedrock、Amazon OpenSearchとRAG技術を使用した生成ビジネスインテリジェンスのデモ。
 
-[ユーザー操作マニュアル](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C%E6%89%8B%E5%86%8C)
+![Screenshot](./assets/aws_architecture.png)
+*AWS上のリファレンスアーキテクチャ*
 
-[プロジェクトデータフローチャート](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E9%A1%B9%E7%9B%AE%E6%B5%81%E7%A8%8B%E5%9B%BE)
+![Screenshot](./assets/logic.png)
+*設計論理*
 
-## デプロイガイド
+[ユーザー操作マニュアル](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98%E6%93%8D%E4%BD%9C)
 
-### 1. EC2インスタンスの準備
-以下の設定でEC2を作成します：
+[プロジェクトデータフローチャート](https://github.com/aws-samples/generative-bi-using-rag/wiki/%E6%9E%B6%E6%9E%84%E5%9B%B3)
 
-    - OSイメージ（AMI）：Amazon Linux 2023、Amazon Linux 2（AL2のサポート終了は2025-06-30）
-    - インスタンスタイプ：t3.largeまたはそれ以上
-    - VPC：デフォルトを使用し、パブリックサブネットを選択
-    - セキュリティグループ：22、80、8000ポートへのアクセスをどこからでも許可（「SSHトラフィックをどこからでも許可」と「インターネットからのHTTPトラフィックを許可」を選択）
-    - ストレージ（ボリューム）：1 GP3ボリューム - 30 GiB
+## 目次
+1. [概要](#overview)
+    - [コスト](#cost)
+2. [前提条件](#prerequisites)
+    - [オペレーティングシステム](#operating-system)
+3. [ワークショップ](#workshop)
+4. [デプロイ手順](#deployment-steps)
+5. [デプロイの検証](#deployment-validation)
+6. [ガイダンスの実行](#running-the-guidance)
+7. [次のステップ](#next-steps)
+8. [クリーンアップ](#cleanup)
 
-### 2. 権限の設定
+## 概要
+このフレームワークは、AWSでホストされているカスタムデータソース(RDS/Redshift)に対してGenerative BIの機能を可能にするように設計されています。主な機能は以下の通りです。
 
-2.1 IAMロールの権限
+- 自然言語を使ってカスタムデータソースを問い合わせるためのText-to-SQLの機能
+- データソース、テーブル、列の説明を追加、編集、管理するためのユーザーフレンドリーなインターフェース
+- 過去の質問と回答のランキングとエンティティ認識の統合による性能向上
+- エンティティ情報、数式、SQLサンプル、複雑なビジネス問題の分析アイデアなどのビジネス情報をカスタマイズ可能
+- 複雑な帰属分析問題を処理するためのエージェントタスク分割機能の追加
+- 基礎となるText-to-SQLメカニズムの洞察を提供する直感的な質問応答UI
+- 対話型アプローチで複雑な質問に対処するためのシンプルなエージェント設計インターフェース
 
-新しいIAMロールを作成し、名前をgenbirag-service-roleとします。設定は以下の通りです：
-   - 信頼されたエンティティタイプ：AWSサービス
-   - サービス：EC2
-   - 使用事例：EC2 - EC2インスタンスが代わりにAWSサービスを呼び出すことを許可します。
+### コスト
 
-「権限の追加」をスキップして、まずこのロールを作成します。
+2024年5月現在、デフォルト設定でこのガイダンスを_us-west-2_リージョンで実行する場合、2000リクエストを処理するのに約1,337.8ドル/月のコストがかかります。
 
-ロールが作成されたら、インラインポリシーを作成して以下の権限を追加します：
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": [
-                "bedrock:*",
-                "dynamodb:*"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
+### サンプルコストテーブル
 
-最後に、このIAMインスタンスプロファイル（IAMロール）をEC2インスタンスにバインドします。
+以下の表は、デフォルトのパラメーターでこのガイダンスをUSイースト(バージニア北部)リージョンに1か月間デプロイした場合のサンプルコスト内訳を示しています。
 
-2.2 Amazon Bedrockのモデル権限
+| AWSサービス | 内訳 | コスト[USD]/月 |
+| ----------- | ------------ | ------------ |
+| Amazon ECS | vCPU 0.75、5GB | $11.51 |
+| Amazon DynamoDB | プロビジョンドライト&リードキャパシティユニット25個/月 | $14.04 |
+| Amazon Bedrock | 2000リクエスト/月、リクエストあたり10000入力トークン、1000出力トークン | $90.00 |
+| Amazon OpenSearch Service | m5.large.searchインスタンス×1ドメイン | $103.66 |
 
-Anthropic ClaudeモデルとAmazon Titan埋め込みモデルのモデルアクセスを、AWSコンソールのus-west-2（オレゴン）リージョンで有効にしていることを確認してください。
-![Bedrock](assets/bedrock_model_access.png)
+## 前提条件
 
-### 3. DockerとDocker Composeのインストール
+### オペレーティングシステム
+"CDKは **<Amazon Linux 2023 AMI>** 上で最適に動作するよう最適化されています。他のOSでのデプロイには追加の手順が必要になる可能性があります。"
 
-EC2インスタンスにSSHコマンドでec2-userユーザーとしてログインするか、EC2コンソールのEC2インスタンスコネクト機能を使用してコマンドラインにログインします。
+### AWS アカウントの要件
 
-セッションで、以下のコマンドを実行します。**注：各コマンドを1行ずつ実行してください。**
+- VPC
+- 特定の権限を持つIAMロール
+- Amazon Bedrock
+- Amazon ECS  
+- Amazon DynamoDB
+- Amazon Cognito
+- Amazon OpenSearch Service
+- Amazon Elastic Load Balancing
+- Amazon SageMaker (オプション、カスタムモデルをデプロイする場合)
+- Amazon Secrets Manager
 
-このユーザーでない場合は、以下のコマンドで切り替えることができます：
-```bash
-sudo su - ec2-user
-```
+### サポートされているリージョン
 
-```bash  
-# コンポーネントのインストール
-sudo yum install docker python3-pip git -y && pip3 install -U awscli
+us-west-2、us-east-2、us-east-1、ap-south-1、ap-southeast-1、ap-southeast-2、ap-northeast-1、eu-central-1、eu-west-1、eu-west-3、またはガイダンスで使用されているサービス(bedrock)がサポートされている他のリージョン。
 
-# Amazon Linux 2の場合、dnfをyumで置き換えることができます
+## ワークショップ
 
-sudo yum install docker python3-pip git -y && pip3 install -U awscli && sudo pip3 install docker-compose
+より詳細な使用手順については、以下のワークショップを参照してください。
 
-# docker pythonラッパー7.0 SSLバージョンの問題を修正  
-pip3 install docker==6.1.3
+🔥🔥🔥 [ワークショップコンテンツ](https://catalog.us-east-1.prod.workshops.aws/workshops/37b20322-fc96-4716-8e51-4568b0641448)
 
-# コンポーネントの設定
-sudo systemctl enable docker && sudo systemctl start docker && sudo usermod -aG docker $USER
 
-# ターミナルを終了
-exit
-```
+## デプロイの手順
 
-### 4. デモアプリケーションのインストール
+### 1. CDK の前提条件を準備する
+[CDK ワークショップ](https://cdkworkshop.com/15-prerequisites.html)の手順に従って、CDK ツールキットをインストールしてください。環境にリソースを作成する権限があることを確認してください。
 
-ターミナルセッションを再開し、以下のコマンドを続けて実行します：
+### 2. GenBI 管理ウェブ UI のパスワードを設定する
 
-注：各コマンドを1行ずつ実行してください。
+GenBI 管理ウェブ UI のデフォルトのパスワードは[空白]です。GenBI 管理ウェブ UI のパスワードを設定する必要がある場合は、以下のファイルでパスワードを更新できます。
+```application/config_files/stauth_config.yaml```
 
-```bash
-# ユーザーec2-userとしてログイン
-
-# OpenSearchサーバーパラメータの設定
-sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
-
-# コードのクローン
-git clone https://github.com/aws-samples/generative-bi-using-rag.git
-
-# .envファイルで環境変数を設定し、AWS_DEFAULT_REGIONをEC2インスタンスと同じリージョンに変更
-cd generative-bi-using-rag/application && cp .env.template .env 
-
-# ローカルでdockerイメージをビルド
-docker-compose build
-
-# すべてのサービスを起動
-docker-compose up -d
-
-# MySQLとOpenSearchの初期化が完了するまで3分待機
-sleep 180
-```
-
-### 5. MySQLの初期化
-
-ターミナルで以下のコマンドを続けて実行します：
-```bash
-cd initial_data && wget https://github.com/fengxu1211/generative-bi-using-rag/raw/demo_data/application/initial_data/init_mysql_db.sql.zip
-
-unzip init_mysql_db.sql.zip && cd ..
-
-docker exec nlq-mysql sh -c "mysql -u root -ppassword -D llm  < /opt/data/init_mysql_db.sql"
-```
-
-### 6. Amazon OpenSearch dockerバージョンの初期化
-
-6.1 新しいインデックスを作成してサンプルデータのインデックスを初期化
-```bash
-docker exec nlq-webserver python opensearch_deploy.py
-```
-
-スクリプトの実行が何らかのエラーで失敗した場合は、以下のコマンドでインデックスを削除し、前のコマンドを再実行してください。
-```bash
-curl -XDELETE -k -u admin:admin "https://localhost:9200/uba"
-```
-
-6.2 (オプション)既存のインデックスにデータを追加してカスタムQAデータを一括インポート
-```bash
-docker exec nlq-webserver python opensearch_deploy.py custom false
-```
-
-### 7. Streamlit Web UIへのアクセス
-
-ブラウザでURLを開きます：`http://<your-ec2-public-ip>` 
-
-注：HTTPを使用し、HTTPSではありません。
-
-### 8. APIへのアクセス
-
-ブラウザでURLを開きます：`http://<your-ec2-public-ip>:8000` 
-
-注：HTTPを使用し、HTTPSではありません。
-
-デフォルトのアカウントは
-
-```
-username: admin
-password: # 以下の手順に従ってパスワードを設定してください
-```
-
-パスワードを変更するか、ユーザー名を追加する場合は、以下のファイルを変更できます。
-
-application/config_files/stauth_config.yaml
-
-例えば
+例:
 
 ```yaml
 credentials:
@@ -182,61 +104,60 @@ credentials:
     jsmith:
       email: jsmith@gmail.com
       name: John Smith
-      password: abc # ハッシュ化されたパスワードに置き換える
+      password: XXXXXX # ハッシュ化されたパスワードに置き換える
     rbriggs:
       email: rbriggs@gmail.com
       name: Rebecca Briggs
-      password: def # ハッシュ化されたパスワードに置き換える
+      password: XXXXXX # ハッシュ化されたパスワードに置き換える
 cookie:
   expiry_days: 30
-  key: random_signature_key # 文字列である必要があります
+  key: random_signature_key # 文字列でなければならない
   name: random_cookie_name
 preauthorized:
   emails:
   - melsby@gmail.com
 ```
 
-パスワードを平文からハッシュ化されたパスワードに変更するには、以下の方法で取得できます。
+パスワード 'XXXXXX' をハッシュ化されたパスワードに変更します。
 
+以下の Python コードを使用して XXXXXX を生成します。Python 3.8 以上が必要です。
 ```python
 from streamlit_authenticator.utilities.hasher import Hasher
-hashed_passwords = Hasher(['abc', 'def']).generate()
+hashed_passwords = Hasher(['password123']).generate()
 ```
 
+### 3. CDK スタックをデプロイする
+グローバルリージョンの場合、以下のコマンドを実行します。
 
-## デモアプリケーションでカスタムデータソースを使用する方法
-1. 最初に、Data Connection ManagementおよびData Profile Managementページで対応するData Profileを作成します。
+CDK プロジェクトのディレクトリに移動:
+```
+cd generative-bi-using-rag/source/resources
 
-![AddConnect](assets/add_database_connect.png)
+npm install aws-cdk-lib
+```
+CDK スタックをデプロイします。必要に応じてリージョンを変更してください(例: us-west-2、us-east-1 など)。
+```
+export AWS_ACCOUNT_ID=XXXXXXXXXXXX
+export AWS_REGION=us-west-2
 
-2. Data Profileを選択した後、質問を開始します。簡単な質問に対しては、LLMが直接正しいSQLを生成できます。生成されたSQLが正しくない場合は、Schemaに注釈を追加してみてください。
+cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION 
+cdk deploy GenBiMainStack --require-approval never
 
-![CreateProfile](assets/create_data_profile.png)
+```
+デプロイが成功すると、以下のように表示されます。
+```
+GenBiMainStack.AOSDomainEndpoint = XXXXX.us-west-2.es.amazonaws.com
+GenBiMainStack.APIEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+GenBiMainStack.FrontendEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+GenBiMainStack.StreamlitEndpoint = XXXXX.us-west-2.elb.amazonaws.com
+```
 
-このWebページを更新し、Fetch table definitionをクリックします。
+## Guidance の実行
 
-![UpdateProfile](assets/update_data_profile.png)
+CDK スタックがデプロイされた後、初期化が完了するのを約40分待ってから、ブラウザで Web UI を開きます: https://your-public-dns
 
-3. Schema Managementページを使用し、Data Profileを選択した後、テーブルとフィールドにコメントを追加します。これらのコメントは、LLMに送信されるプロンプトに含まれます。
-   (1) いくつかのフィールドのAnnotation属性に、そのフィールドに表示される可能性のある値を追加します。例："Values: Y|N", "Values: 上海市|江蘇省"
-   (2) テーブルのコメントに、ビジネスの質問に答えるためのドメイン知識を追加します。
-
-![AddSchema](assets/add_schema_management.png)
-
-
-![UpdateSchema](assets/update_schema_management.png)
-
-4. 再度質問をします。正しいSQLを生成できない場合は、Sample QAペアをOpenSearchに追加します。
-   (1) Index Managementページを使用し、Data Profileを選択した後、QAペアを追加、表示、削除できます。
-
-![AddIndex](assets/add_index_sample.png) 
-
-5. 再度質問をします。理論的には、RAGアプローチ（PEはFew shotsを使用）が正しいSQLを生成できるはずです。
-
-## セキュリティ
-
-詳細については、[CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications)を参照してください。
-
-## ライセンス
-
-このライブラリはMIT-0ライセンスの下でライセンスされています。LICENSEファイルを参照してください。
+## クリーンアップ
+- CDK スタックを削除する:
+```
+cdk destroy GenBiMainStack
+```
