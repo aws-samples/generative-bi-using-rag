@@ -1,3 +1,5 @@
+from api.enum import ContentEnum
+from api.main import response_websocket
 from nlq.business.connection import ConnectionManagement
 from utils.domain import SearchTextSqlResult
 from utils.llm import text_to_sql
@@ -109,6 +111,63 @@ def agent_text_search(search_box, model_type, database_profile, entity_slot, ope
                                                              ner_example=entity_slot_retrieve,
                                                              dialect=database_profile['db_type'],
                                                              model_provider=None)
+            if model_response.token_info is not None and len(model_response.token_info) > 0:
+                sub_token_info = model_response.token_info
+                if "input_tokens" in sub_token_info:
+                    token_info["input_tokens"] = token_info["input_tokens"] + sub_token_info["input_tokens"]
+                if "output_tokens" in sub_token_info:
+                    token_info["output_tokens"] = token_info["output_tokens"] + sub_token_info["output_tokens"]
+            each_task_sql = get_generated_sql(each_task_response)
+            each_res_dict["response"] = each_task_response
+            each_res_dict["sql"] = each_task_sql
+            if each_res_dict["sql"] != "":
+                agent_search_results.append(each_res_dict)
+        return agent_search_results, token_info
+    except Exception as e:
+        logger.error(e)
+    return default_agent_search_results, token_info
+
+
+async def agent_text_search_websocket(websocket, session_id, user_id, search_box, model_type, database_profile,
+                                      entity_slot, opensearch_info, selected_profile, use_rag,
+                                      agent_cot_task_result):
+    agent_search_results = []
+    default_agent_search_results = []
+    default_each_res_dict = {}
+    default_each_res_dict["query"] = search_box
+    default_each_res_dict["response"] = ""
+    default_each_res_dict["sql"] = "-1"
+    token_info = {}
+    token_info["input_tokens"] = 0
+    token_info["output_tokens"] = 0
+    index = 1
+    try:
+        for each_task in agent_cot_task_result:
+            await response_websocket(websocket, session_id, "Agent SQL Task_{index} Generating".format(index=str(index)),
+                                     ContentEnum.STATE,"start", user_id)
+            each_res_dict = {}
+            each_task_query = agent_cot_task_result[each_task]
+            each_res_dict["query"] = each_task_query
+            entity_slot_retrieve = []
+            retrieve_result = []
+            if use_rag:
+                entity_slot_retrieve = get_retrieve_opensearch(opensearch_info, each_task_query, "ner",
+                                                               selected_profile, 3, 0.5)
+
+                retrieve_result = get_retrieve_opensearch(opensearch_info, each_task_query, "query",
+                                                          selected_profile, 3, 0.5)
+            each_task_response, model_response = text_to_sql(database_profile['tables_info'],
+                                                             database_profile['hints'],
+                                                             database_profile['prompt_map'],
+                                                             each_task_query,
+                                                             model_id=model_type,
+                                                             sql_examples=retrieve_result,
+                                                             ner_example=entity_slot_retrieve,
+                                                             dialect=database_profile['db_type'],
+                                                             model_provider=None)
+            await response_websocket(websocket, session_id, "Agent SQL Task_{index} Generating".format(index=str(index)),  ContentEnum.STATE,
+                                     "end", user_id)
+            index = index + 1
             if model_response.token_info is not None and len(model_response.token_info) > 0:
                 sub_token_info = model_response.token_info
                 if "input_tokens" in sub_token_info:
