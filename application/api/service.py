@@ -223,7 +223,9 @@ async def ask_websocket(websocket: WebSocket, question: Question):
         elif state_machine.get_state() == QueryState.AGENT_SEARCH:
             await response_websocket(websocket, session_id, "Agent SQL Generating", ContentEnum.STATE,
                                      "start", user_id)
-            state_machine.handle_agent_sql_generation()
+            await state_machine.handle_agent_sql_generation_websocket(websocket=websocket, session_id=session_id,
+                                                                      user_id=user_id)
+            # state_machine.handle_agent_sql_generation()
             await response_websocket(websocket, session_id, "Agent SQL Generating", ContentEnum.STATE,
                                      "end", user_id)
         elif state_machine.get_state() == QueryState.AGENT_DATA_SUMMARY:

@@ -320,8 +320,9 @@ class QueryStateMachine:
         self.agent_search_result = agent_search_result
         self.transition(QueryState.AGENT_DATA_SUMMARY)
 
-    @log_execution
     def handle_agent_sql_generation_websocket(self, websocket, session_id, user_id):
+        state_name = self.get_state().name if self.get_state() else "Unknown State"
+        logger.info(f"Executing handle_agent_sql_generation_websocket in state {state_name}")
         agent_search_result, token_info = agent_text_search_websocket(websocket, session_id, user_id, self.context.query_rewrite, self.context.model_type,
                                                             self.context.database_profile,
                                                             self.entity_slot, self.context.opensearch_info,

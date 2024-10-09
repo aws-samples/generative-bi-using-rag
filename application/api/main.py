@@ -132,6 +132,9 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+                continue
             # print('---WEBSOCKET MESSAGE---', data)
             question_json = json.loads(data)
             question = Question(**question_json)
@@ -170,6 +173,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                              content_type=ContentEnum.END, user_id=user_id)
                 except Exception:
                     msg = traceback.format_exc()
+                    logger.error(msg)
                     logger.exception(msg)
                     await response_websocket(websocket=websocket, session_id=session_id, content=msg,
                                              content_type=ContentEnum.EXCEPTION, user_id=user_id)
