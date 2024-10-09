@@ -149,6 +149,8 @@ hashed_passwords = Hasher(['password123']).generate()
 
 ```
 cd generative-bi-using-rag/source/resources
+
+npm install aws-cdk-lib
 ```
 
 部署 CDK 堆栈，如果需要,请将区域更改为您自己的区域，例如 us-west-2、us-east-1 等:
@@ -156,8 +158,10 @@ cd generative-bi-using-rag/source/resources
 ```
 export AWS_ACCOUNT_ID=XXXXXXXXXXXX
 export AWS_REGION=us-west-2
-cdk bootstrap
+
+cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION 
 cdk deploy GenBiMainStack --require-approval never
+
 ```
 
 当部署成功时，您可以看到如下信息

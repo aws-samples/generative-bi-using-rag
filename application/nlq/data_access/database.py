@@ -135,6 +135,7 @@ class RelationDatabase():
         elif connection.db_type == 'presto':
             for s in schemas:
                 metadata.reflect(bind=engine, schema=s)
+            return metadata
         else:
             for s in schemas:
                 metadata.reflect(bind=engine, schema=s, views=True)
