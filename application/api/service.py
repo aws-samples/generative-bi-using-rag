@@ -95,6 +95,115 @@ def get_history_by_user_profile(user_id: str, profile_name: str):
     return chat_history
 
 
+def query_ask(question: Question):
+    logger.info(question)
+    session_id = question.session_id
+    user_id = question.user_id
+    username = question.username
+
+    intent_ner_recognition_flag = question.intent_ner_recognition_flag
+    agent_cot_flag = question.agent_cot_flag
+
+    model_type = question.bedrock_model_id
+    search_box = question.query
+    selected_profile = question.profile_name
+    use_rag_flag = question.use_rag_flag
+    explain_gen_process_flag = question.explain_gen_process_flag
+    gen_suggested_question_flag = question.gen_suggested_question_flag
+    answer_with_insights = question.answer_with_insights
+    context_window = question.context_window
+
+    log_id = generate_log_id()
+
+    all_profiles = ProfileManagement.get_all_profiles_with_info()
+    database_profile = all_profiles[selected_profile]
+
+    if database_profile['db_url'] == '':
+        conn_name = database_profile['conn_name']
+        db_url = ConnectionManagement.get_db_url_by_name(conn_name)
+        database_profile['db_url'] = db_url
+        database_profile['db_type'] = ConnectionManagement.get_db_type_by_name(conn_name)
+
+    user_query_history = []
+    if context_window > 0:
+        user_query_history = LogManagement.get_history_by_session(profile_name=selected_profile, user_id=user_id,
+                                                                  session_id=session_id, size=context_window,
+                                                                  log_type='chat_history')
+        user_query_history.append("user:" + search_box)
+
+    if question.previous_intent == "entity_select":
+        previous_state = QueryState.USER_SELECT_ENTITY.name
+    else:
+        previous_state = QueryState.INITIAL.name
+    processing_context = ProcessingContext(
+        search_box=search_box,
+        query_rewrite=question.query_rewrite,
+        session_id=session_id,
+        user_id=user_id,
+        username=username,
+        selected_profile=selected_profile,
+        database_profile=database_profile,
+        model_type=model_type,
+        use_rag_flag=use_rag_flag,
+        intent_ner_recognition_flag=intent_ner_recognition_flag,
+        agent_cot_flag=agent_cot_flag,
+        explain_gen_process_flag=explain_gen_process_flag,
+        visualize_results_flag=True,
+        data_with_analyse=answer_with_insights,
+        gen_suggested_question_flag=gen_suggested_question_flag,
+        auto_correction_flag=True,
+        context_window=context_window,
+        entity_same_name_select={},
+        user_query_history=user_query_history,
+        opensearch_info=opensearch_info,
+        previous_state=previous_state)
+
+    state_machine = QueryStateMachine(processing_context)
+    if state_machine.previous_state == QueryState.USER_SELECT_ENTITY:
+        state_machine.transition(QueryState.USER_SELECT_ENTITY)
+    while state_machine.get_state() != QueryState.COMPLETE and state_machine.get_state() != QueryState.ERROR:
+        if state_machine.get_state() == QueryState.INITIAL:
+            state_machine.handle_initial()
+        elif state_machine.get_state() == QueryState.REJECT_INTENT:
+            state_machine.handle_reject_intent()
+        elif state_machine.get_state() == QueryState.KNOWLEDGE_SEARCH:
+            state_machine.handle_knowledge_search()
+        elif state_machine.get_state() == QueryState.ENTITY_RETRIEVAL:
+            state_machine.handle_entity_retrieval()
+        elif state_machine.get_state() == QueryState.QA_RETRIEVAL:
+            state_machine.handle_qa_retrieval()
+        elif state_machine.get_state() == QueryState.SQL_GENERATION:
+            state_machine.handle_sql_generation()
+        elif state_machine.get_state() == QueryState.INTENT_RECOGNITION:
+            state_machine.handle_intent_recognition()
+        elif state_machine.get_state() == QueryState.EXECUTE_QUERY:
+            state_machine.handle_execute_query()
+        elif state_machine.get_state() == QueryState.ANALYZE_DATA:
+            state_machine.handle_analyze_data()
+        elif state_machine.get_state() == QueryState.ASK_ENTITY_SELECT:
+            state_machine.handle_entity_selection()
+        elif state_machine.get_state() == QueryState.AGENT_TASK:
+            state_machine.handle_agent_task()
+        elif state_machine.get_state() == QueryState.AGENT_SEARCH:
+            state_machine.handle_agent_sql_generation()
+        elif state_machine.get_state() == QueryState.AGENT_DATA_SUMMARY:
+            state_machine.handle_agent_analyze_data()
+        elif state_machine.get_state() == QueryState.USER_SELECT_ENTITY:
+            state_machine.handle_user_select_entity()
+        else:
+            state_machine.state = QueryState.ERROR
+
+    if processing_context.gen_suggested_question_flag and state_machine.get_answer().query_intent != "entity_select":
+        if state_machine.search_intent_flag or state_machine.agent_intent_flag:
+            state_machine.handle_suggest_question()
+
+    if state_machine.get_state() == QueryState.COMPLETE:
+        state_machine.handle_data_visualization()
+        state_machine.handle_add_to_log(log_id=log_id)
+
+    return state_machine.get_answer()
+
+
 async def ask_websocket(websocket: WebSocket, question: Question):
     logger.info(question)
     session_id = question.session_id
