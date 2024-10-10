@@ -1,11 +1,12 @@
+import json
+from websocket import WebSocket
 from api.enum import ContentEnum
-from api.main import response_websocket
 from nlq.business.connection import ConnectionManagement
 from utils.domain import SearchTextSqlResult
 from utils.llm import text_to_sql
 from utils.logging import getLogger
 from utils.opensearch import get_retrieve_opensearch
-from utils.tool import get_generated_sql
+from utils.tool import get_generated_sql, serialize_timestamp
 
 logger = getLogger()
 
@@ -183,3 +184,23 @@ async def agent_text_search_websocket(websocket, session_id, user_id, search_box
     except Exception as e:
         logger.error(e)
     return default_agent_search_results, token_info
+
+async def response_websocket(websocket: WebSocket, session_id: str, content,
+                             content_type: ContentEnum = ContentEnum.COMMON, status: str = "-1",
+                             user_id: str = "admin"):
+    if content_type == ContentEnum.STATE:
+        content_json = {
+            "text": content,
+            "status": status
+        }
+        content = content_json
+
+    content_obj = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "content_type": content_type.value,
+        "content": content,
+    }
+    logger.info(content_obj)
+    final_content = json.dumps(content_obj, default=serialize_timestamp)
+    await websocket.send_text(final_content)
