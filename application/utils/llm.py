@@ -345,8 +345,10 @@ def select_data_visualization_type(model_id, search_box, search_data, prompt_map
 
 
 def data_visualization(model_id, search_box, search_data, prompt_map):
+    model_response = ModelResponse()
+    model_response.token_info = {}
     if len(search_data) == 0:
-        return "table", [], "-1", []
+        return "table", [], "-1", [], model_response
     if isinstance(search_data, pd.DataFrame):
         search_data = search_data.fillna("")
         columns = list(search_data.columns)
@@ -356,10 +358,12 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
         all_columns_data = search_data
         columns = all_columns_data[0]
         search_data = pd.DataFrame(search_data[1:], columns=search_data[0])
+        if len(search_data) == 0:
+            return "table", search_data, "-1", [], model_response
     all_columns_data = convert_timestamps_to_str(all_columns_data)
     try:
         if len(all_columns_data) < 1:
-            return "table", all_columns_data, "-1", [], None
+            return "table", all_columns_data, "-1", [], model_response
         else:
             if len(all_columns_data) > 10:
                 all_columns_data_sample = all_columns_data[0:5]
@@ -389,7 +393,9 @@ def data_visualization(model_id, search_box, search_data, prompt_map):
                     return model_select_type, [model_select_type_columns] + data_list, "-1", [], model_response
     except Exception as e:
         logger.error("data_visualization is error {}", e)
-        return "table", all_columns_data, "-1", [], None
+        model_response = ModelResponse()
+        model_response.token_info = {}
+        return "table", all_columns_data, "-1", [], model_response
 
 
 def create_vector_embedding(text, index_name):
