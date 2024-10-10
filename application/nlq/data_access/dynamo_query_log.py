@@ -4,6 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 
+from utils.env_var import DYNAMODB_ENDPOINT
 from utils.logging import getLogger
 
 logger = getLogger()
@@ -45,7 +46,7 @@ class DynamoQueryLogEntity:
 class DynamoQueryLogDao:
 
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_AWS_REGION)
+        self.dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT, region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + QUERY_LOG_TABLE_NAME
         if not self.exists():
             self.create_table()
