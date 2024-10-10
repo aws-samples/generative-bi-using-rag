@@ -169,6 +169,7 @@ cdk.out
 cdk.context.json
 **/cdk.out
 package-lock.json
+yarn.lock
 !source/resources/lib/
 
 # Model Artifact
