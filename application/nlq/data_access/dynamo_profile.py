@@ -4,6 +4,7 @@ import boto3
 from typing import List
 from botocore.exceptions import ClientError
 
+from utils.env_var import DYNAMODB_ENDPOINT
 from utils.logging import getLogger
 from utils.prompts.generate_prompt import prompt_map_dict
 
@@ -49,7 +50,7 @@ class ProfileConfigEntity:
 class ProfileConfigDao:
 
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_AWS_REGION)
+        self.dynamodb = boto3.resource('dynamodb',  endpoint_url=DYNAMODB_ENDPOINT, region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + PROFILE_CONFIG_TABLE_NAME
         if not self.exists():
             self.create_table()

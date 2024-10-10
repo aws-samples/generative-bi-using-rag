@@ -3,6 +3,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
+from utils.env_var import DYNAMODB_ENDPOINT
 from utils.logging import getLogger
 
 
@@ -38,7 +39,7 @@ class ModelConfigEntity:
 class ModelConfigDao:
 
     def __init__(self, table_name_prefix=''):
-        self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_AWS_REGION)
+        self.dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT, region_name=DYNAMODB_AWS_REGION)
         self.table_name = table_name_prefix + MODEL_CONFIG_TABLE_NAME
         if not self.exists():
             self.create_table()

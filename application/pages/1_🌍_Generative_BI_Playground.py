@@ -207,10 +207,9 @@ def main():
         st.session_state.samaker_model = ModelManagement.get_all_models()
 
 
-    model_ids = ['anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+    model_ids = ['meta.llama3-1-405b-instruct-v1:0' ,'anthropic.claude-3-sonnet-20240229-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0',
                  'anthropic.claude-3-opus-20240229-v1:0',
-                 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1',
-                 'meta.llama3-70b-instruct-v1:0']
+                 'anthropic.claude-3-haiku-20240307-v1:0', 'mistral.mixtral-8x7b-instruct-v0:1']
 
     if len(st.session_state.samaker_model) > 0:
         model_ids.extend(st.session_state.samaker_model)
@@ -265,7 +264,7 @@ def main():
         gen_suggested_question_flag = st.checkbox("Generate Suggested Questions", False)
         auto_correction_flag = st.checkbox("Auto Correcting SQL", True)
         show_token_cost = st.checkbox("Show Token Cost", False)
-        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 5)
+        context_window = st.slider("Multiple Rounds of Context Window", 0, 10, 0)
 
         clean_history = st.button("clean history", on_click=clean_st_history, args=[selected_profile])
 
