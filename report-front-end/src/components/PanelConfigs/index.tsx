@@ -1,4 +1,4 @@
-import { Divider } from "@aws-amplify/ui-react";
+import { Divider, Heading } from "@aws-amplify/ui-react";
 import {
   Button,
   Drawer,
@@ -46,6 +46,7 @@ const PanelConfigs = ({
   const [maxLength, setMaxLength] = useState(queryConfig.maxLength);
   const [llmOptions, setLLMOptions] = useState([] as any[]);
   const [dataProOptions, setDataProOptions] = useState([] as any[]);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [selectedLLM, setSelectedLLM] = useState({
     label: queryConfig.selectedLLM,
     value: queryConfig.selectedLLM,
@@ -56,27 +57,35 @@ const PanelConfigs = ({
   } as any);
 
   useEffect(() => {
-    getSelectData().then((response) => {
-      const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
-        [];
-      response.data_profiles.forEach((item: any) => {
-        tempDataPro.push({ label: item, value: item });
-      });
-      setDataProOptions(tempDataPro);
-      if (!queryConfig?.selectedDataPro) {
-        setSelectedDataPro(tempDataPro[0]);
-      }
+    setLoadingProfile(true);
+    try {
+      getSelectData().then((response) => {
+        const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
+        response.bedrock_model_ids?.forEach((item: any) => {
+          tempLLM.push({ label: item, value: item });
+        });
+        setLLMOptions(tempLLM);
+        if (!queryConfig?.selectedLLM) {
+          setSelectedLLM(tempLLM[0]);
+          toast.success(`Now using LLM: ${tempLLM[0]}`);
+        }
 
-      const tempLLM: SetStateAction<null> | { label: any; value: any }[] = [];
-      response.bedrock_model_ids.forEach((item: any) => {
-        tempLLM.push({ label: item, value: item });
+        const tempDataPro: SetStateAction<null> | { label: any; value: any }[] =
+          [];
+        response.data_profiles?.forEach((item: any) => {
+          tempDataPro.push({ label: item, value: item });
+        });
+        setDataProOptions(tempDataPro);
+        if (!queryConfig?.selectedDataPro) {
+          setSelectedDataPro(tempDataPro[0]);
+          toast.success(`Now viewing data profile: ${tempDataPro[0]}`);
+        }
       });
-
-      setLLMOptions(tempLLM);
-      if (!queryConfig?.selectedLLM) {
-        setSelectedLLM(tempLLM[0]);
-      }
-    });
+    } catch (error) {
+      console.warn("getSelectData error in useEffect: ", error);
+    } finally {
+      setLoadingProfile(false);
+    }
   }, [queryConfig?.selectedDataPro, queryConfig?.selectedLLM]);
 
   useEffect(() => {
@@ -117,16 +126,29 @@ const PanelConfigs = ({
             <Select
               options={llmOptions}
               selectedOption={selectedLLM}
+              loadingText="loading models..."
+              statusType={loadingProfile ? "loading" : "finished"}
               onChange={({ detail }) => setSelectedLLM(detail.selectedOption)}
             />
           </FormField>
-          <FormField label="Data Profile/Workspace">
+          <FormField label="Data Profile / Workspace">
             <Select
               options={dataProOptions}
+              loadingText="loading profiles..."
+              statusType={loadingProfile ? "loading" : "finished"}
               selectedOption={selectedDataPro}
-              onChange={({ detail }) =>
-                setSelectedDataPro(detail.selectedOption)
-              }
+              onChange={({ detail }) => {
+                const newProfile = detail.selectedOption;
+                setSelectedDataPro(newProfile);
+                toast.success(
+                  <div>
+                    Now viewing data profile:
+                    <Heading>
+                      <em>{newProfile.value}</em>
+                    </Heading>
+                  </div>
+                );
+              }}
             />
           </FormField>
         </SpaceBetween>
@@ -158,7 +180,7 @@ const PanelConfigs = ({
           >
             Answer with Insights
           </Toggle>
-
+          <div style={{ height: "3px" }} />
           <FormField label="Context window">
             <div className="input-wrapper">
               <Input
