@@ -71,11 +71,13 @@ else
     exit 1
 fi
 
+sleep 30
+
 # 执行第三个脚本
 echo "Running import_sql_data.sh..."
 bash import_sql_data.sh
 
-sleep 30
+
 
 # 检查上一个脚本是否成功执行
 if [ $? -eq 0 ]; then
