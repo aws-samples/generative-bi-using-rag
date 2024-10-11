@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 提示用户输入容器名称
-# read -p "请输入要停止和删除的容器名称: " container_name
+# 使用 newgrp docker 切换到 docker 组
+newgrp docker << EOF
 
 # 定义一个函数来处理容器的停止和删除
 stop_and_remove_container() {
@@ -20,10 +20,6 @@ stop_and_remove_container() {
         echo "没有找到名称为 $container_name 的容器."
     fi
 }
-
-# 使用 newgrp docker 切换到 docker 组
-newgrp docker << EOF
-
 # 处理每个容器
 stop_and_remove_container "nlq-webserver"
 stop_and_remove_container "nlq-api"
