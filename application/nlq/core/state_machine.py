@@ -14,7 +14,7 @@ from utils.llm import get_query_intent, get_query_rewrite, knowledge_search, tex
     generate_suggested_question, get_agent_cot_task, data_visualization
 from utils.logging import getLogger
 from utils.opensearch import get_retrieve_opensearch
-from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search, agent_text_search_websocket
+from utils.text_search import entity_retrieve_search, qa_retrieve_search, agent_text_search
 from utils.tool import get_generated_sql, get_generated_sql_explain, change_class_to_str, get_current_time
 
 logger = getLogger()
@@ -321,17 +321,6 @@ class QueryStateMachine:
         self.transition(QueryState.AGENT_DATA_SUMMARY)
 
     @log_execution
-    def handle_agent_sql_generation_websocket(self, websocket, session_id, user_id):
-        agent_search_result, token_info = agent_text_search_websocket(websocket, session_id, user_id, self.context.query_rewrite, self.context.model_type,
-                                                            self.context.database_profile,
-                                                            self.entity_slot, self.context.opensearch_info,
-                                                            self.context.selected_profile, self.context.use_rag_flag,
-                                                            self.agent_task_split)
-        self.token_info[QueryState.SQL_GENERATION.name + "AGENT"] = token_info
-        self.agent_search_result = agent_search_result
-        self.transition(QueryState.AGENT_DATA_SUMMARY)
-
-    @log_execution
     def handle_intent_recognition(self):
         try:
             if self.context.intent_ner_recognition_flag:
@@ -612,7 +601,7 @@ class QueryStateMachine:
                     each.sql_search_result.data_show_type = model_select_type
                     each.sql_search_result.sql_data = show_select_data
                     agent_sql_search_result_with_visualization.append(each)
-                self.answer.agent_search_result.agent_sql_search_result = agent_sql_search_result_with_visualization
+                self.answer.agent_search_result = agent_sql_search_result_with_visualization
         except Exception as e:
             self.answer.error_log[QueryState.DATA_VISUALIZATION.name] = str(e)
             logger.error(

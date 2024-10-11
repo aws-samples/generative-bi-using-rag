@@ -185,7 +185,6 @@ class ConnectConfigDao:
         self.table.put_item(Item=dynamodb_item)
 
     def delete(self, conn_name):
-        entity = self.get_by_name(conn_name)
         # 删除 DynamoDB 中的数据
         self.table.delete_item(Key={'conn_name': conn_name})
         return True

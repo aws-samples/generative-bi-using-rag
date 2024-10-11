@@ -75,7 +75,7 @@ fi
 echo "Running import_sql_data.sh..."
 bash import_sql_data.sh
 
-sleep 20
+sleep 30
 
 # 检查上一个脚本是否成功执行
 if [ $? -eq 0 ]; then

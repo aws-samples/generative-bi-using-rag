@@ -219,7 +219,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         response = invoke_model_claude3(model_id, system_prompt, messages, max_tokens, with_response_stream)
     elif model_id.startswith('mistral.mixtral-8x7b'):
         response = invoke_mixtral_8x7b(model_id, system_prompt, messages, max_tokens, with_response_stream)
-    elif model_id.startswith('meta.llama3-70b'):
+    elif model_id.startswith('meta.llama3-70b') or model_id.startswith('meta.llama3-1'):
         response = invoke_llama_70b(model_id, system_prompt, user_prompt, max_tokens, with_response_stream)
     elif model_id.startswith('sagemaker.'):
         model_config = ModelManagement.get_model_by_id(model_id)
@@ -240,7 +240,7 @@ def invoke_llm_model(model_id, system_prompt, user_prompt, max_tokens=2048, with
         model_response.token_info = response.get("usage", {})
     else:
         model_response.token_info = {}
-    if model_id.startswith('meta.llama3-70b'):
+    if model_id.startswith('meta.llama3-70b') or model_id.startswith('meta.llama3-1'):
         model_response.text = response["generation"]
         return model_response
     elif model_id.startswith('sagemaker.'):
