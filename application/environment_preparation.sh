@@ -27,25 +27,17 @@ sudo systemctl start docker
 sudo usermod -aG docker $USER
 echo "Docker service configured successfully."
 
-newgrp docker
-
-## 使用子shell执行newgrp docker及后续命令
-#(
-#    newgrp docker << EOF
-#    # 刷新当前用户的组成员身份
-#    echo "Refreshing current user's group membership..."
-#    echo "Current user's group membership refreshed successfully."
-#
-#    # 配置OpenSearch的服务器参数
-#    echo "Configuring OpenSearch server parameters..."
-#    sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
-#    echo "OpenSearch server parameters configured successfully."
-#EOF
-#)
+# 使用子shell执行newgrp docker及后续命令
+newgrp docker << EOF
+    echo "Refreshing current user's group membership..."
+    echo "Current user's group membership refreshed successfully."
 
     # 配置OpenSearch的服务器参数
-echo "Configuring OpenSearch server parameters..."
-sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
-echo "OpenSearch server parameters configured successfully."
+    echo "Configuring OpenSearch server parameters..."
+    sudo sh -c "echo 'vm.max_map_count=262144' > /etc/sysctl.conf" && sudo sysctl -p
+    echo "OpenSearch server parameters configured successfully."
+EOF
+
+echo "Script execution completed."
 
 echo "Script execution completed."
