@@ -83,6 +83,8 @@ def main():
         db_type = db_type.lower()  # Convert to lowercase for matching with db_mapping keys
         if db_type == 'athena':
             st.info("Please enter S3 staging directory in the database name field. You can leave other fields empty. Please also make sure that IAM role is able to access Athena and S3.")
+        elif db_type == 'maxcompute':
+            st.info("Please enter 1) ALIBABA_CLOUD_ACCESS_KEY_ID in the 'user' session, 2) ALIBABA_CLOUD_ACCESS_KEY_SECRET in the 'password' session. 3) project in the 'db_name' session. 4) endpoint in the 'host' session. You can leave other fields empty.")
 
         if db_type == "bigquery":
             host = st.text_input("Enter host")
