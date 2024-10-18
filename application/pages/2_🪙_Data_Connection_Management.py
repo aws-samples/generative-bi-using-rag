@@ -19,7 +19,8 @@ db_type_mapping = {
     'hive': 'Hive',
     'athena': 'Athena',
     'bigquery': 'BigQuery',
-    'presto': 'Presto'
+    'presto': 'Presto',
+    'maxcompute': 'MaxCompute'
 }
 
 

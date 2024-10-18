@@ -18,7 +18,8 @@ class RelationDatabase():
         'hive': 'hive',
         'athena': 'awsathena+rest',
         'bigquery': 'bigquery',
-        'presto': 'presto'
+        'presto': 'presto',
+        'maxcompute': 'odps'
         # Add more mappings here for other databases
     }
 
@@ -54,6 +55,12 @@ class RelationDatabase():
                 port=port,
                 database=db_name
             )
+        elif db_type == 'maxcompute':
+            db_url = 'odps://%s:%s@%s/?endpoint=%s' % (
+                user,
+                password,
+                db_name,
+                host)
         else:
             db_url = db.engine.URL.create(
                 drivername=cls.db_mapping[db_type],
@@ -104,7 +111,7 @@ class RelationDatabase():
         if db_type == 'postgresql':
             schemas = [schema for schema in inspector.get_schema_names() if
                        schema not in ('pg_catalog', 'information_schema', 'public')]
-        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena', 'bigquery', 'presto'):
+        elif db_type in ('redshift', 'mysql', 'starrocks', 'clickhouse', 'hive', 'athena', 'bigquery', 'presto', 'maxcompute'):
             schemas = inspector.get_schema_names()
         else:
             raise ValueError("Unsupported database type")

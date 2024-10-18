@@ -25,3 +25,4 @@ thrift==0.20.0
 thrift-sasl==0.4.3
 sqlalchemy-bigquery==1.11.0
 fastapi~=0.110.1
+pyodps~=0.12.0
