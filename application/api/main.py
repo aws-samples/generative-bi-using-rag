@@ -1,6 +1,6 @@
 import json
 import traceback
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, HTTPException
 
 from nlq.business.log_store import LogManagement
 from nlq.business.profile import ProfileManagement
@@ -33,7 +33,15 @@ def option(id: str=None):
 @router.get("/get_custom_question", response_model=CustomQuestion)
 def get_custom_question(data_profile: str):
     all_profiles = ProfileManagement.get_all_profiles_with_info()
-    comments = all_profiles[data_profile]['comments']
+    
+    # FIX: Check if profile exists before accessing
+    if data_profile not in all_profiles:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Profile '{data_profile}' not found."
+        )
+    
+    comments = all_profiles[data_profile].get('comments', '')
     comments_questions = []
     if len(comments.split("Examples:")) > 1:
         comments_questions_txt = comments.split("Examples:")[1]
