@@ -1,5 +1,9 @@
 # Generative BI using RAG on AWS
 
+> [!WARNING]
+> **This repository is no longer maintained and is not intended for production use.**
+> It is provided as a sample/demo for reference only. There are no ongoing updates, security patches, or support. Use it at your own risk and do not deploy it in production environments.
+
 ## The further updates of this repo is moved to internal gitlab
 
 [中文文档](README_CN.md) | [日本語ドキュメント](README_JP.md)
